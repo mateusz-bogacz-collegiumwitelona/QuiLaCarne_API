@@ -8,12 +8,11 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "dishes")
-@Getter
-@Setter
+@Getter @Setter
 public class Dishes extends BaseNamedEntity {
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id" )
-    private DishesCategories dishesCategories;
+    @JoinColumn(name = "category_id")
+    private DishesCategories category;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -21,6 +20,9 @@ public class Dishes extends BaseNamedEntity {
     private int price;
     private boolean isAvailable;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "unavailable_reason", columnDefinition = "TEXT")
     private String unavailableReason;
+
+    @ManyToMany(mappedBy = "dishes")
+    private java.util.Set<Ingredients> ingredients = new java.util.HashSet<>();
 }

@@ -66,30 +66,14 @@ CREATE TABLE users
     updated_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE audit_logs
+CREATE TABLE restaurant_tables
 (
-    id         UUID PRIMARY KEY,
-    token      VARCHAR(64) UNIQUE NOT NULL,
-    user_id    UUID REFERENCES users (id),
-    action     VARCHAR(255)       NOT NULL,
-    ip_address VARCHAR(255),
-    details    JSONB,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE dishes
-(
-    id                 UUID PRIMARY KEY,
-    token              VARCHAR(64) UNIQUE NOT NULL,
-    category_id        UUID REFERENCES dishes_categories (id),
-    name               VARCHAR(255)       NOT NULL,
-    description        TEXT,
-    price              INTEGER            NOT NULL,
-    is_available       BOOLEAN     DEFAULT TRUE,
-    unavailable_reason TEXT,
-    created_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    id           UUID PRIMARY KEY,
+    token        VARCHAR(64) UNIQUE NOT NULL,
+    table_number INTEGER UNIQUE     NOT NULL,
+    capacity     INTEGER            NOT NULL,
+    created_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE ingredients
@@ -110,14 +94,18 @@ CREATE TABLE allergens
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE restaurant_tables
+CREATE TABLE dishes
 (
-    id           UUID PRIMARY KEY,
-    token        VARCHAR(64) UNIQUE NOT NULL,
-    table_number INTEGER UNIQUE     NOT NULL,
-    capacity     INTEGER            NOT NULL,
-    created_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    id                 UUID PRIMARY KEY,
+    token              VARCHAR(64) UNIQUE NOT NULL,
+    category_id        UUID REFERENCES dishes_categories (id),
+    name               VARCHAR(255)       NOT NULL,
+    description        TEXT,
+    price              INTEGER            NOT NULL,
+    is_available       BOOLEAN     DEFAULT TRUE,
+    unavailable_reason TEXT,
+    created_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE reservations
@@ -155,6 +143,18 @@ CREATE TABLE order_items
     note                   TEXT,
     created_at             TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at             TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE audit_logs
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(64) UNIQUE NOT NULL,
+    user_id    UUID REFERENCES users (id),
+    action     VARCHAR(255)       NOT NULL,
+    ip_address VARCHAR(255),
+    details    JSONB,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE x_user_roles

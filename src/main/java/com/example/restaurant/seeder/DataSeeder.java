@@ -28,22 +28,20 @@ public class DataSeeder implements CommandLineRunner {
     private final IJpaUserRepository _jpaUserRepos;
     private final PasswordEncoder _passwordEncoder;
 
-
     @Override
     @Transactional
     public void run(String... args){
         log.info("Start data seeding...");
 
-        seedNamedEntity(_jpaRoleRepo, Roles::new, List.of("ROLE_ADMIN", "ROLE_WAITER", "ROLE_CHEF", "ROLE_CLIENT"));
+        seedNamedEntity(_jpaRoleRepo, Roles::new, List.of("ROLE_MANAGER", "ROLE_WAITER", "ROLE_CLIENT"));
         seedNamedEntity(_jpaTableStatusRepo, TableStatus::new, List.of("AVAILABLE", "RESERVED", "OCCUPIED", "OUT_OF_SERVICE"));
         seedNamedEntity(_jpaOrederStatusRepo, OrderStatus::new, List.of("PENDING", "IN_PROGRESS", "SERVED", "CANCELLED"));
         seedNamedEntity(_jpaReservationStatusRepo, ReservationStatus::new, List.of("ACTIVE", "COMPLETED", "CANCELLED", "NO_SHOW"));
         seedNamedEntity(_jpaOrederItemStatusRepo, OrderItemsStatus::new, List.of("PENDING", "PREPARING", "SERVED", "CANCELLED"));
 
         createAccount("client", "ROLE_CLIENT", "Client123!");
-        createAccount("admin", "ROLE_ADMIN", "Admin123!");
+        createAccount("admin", "ROLE_MANAGER", "Admin123!");
         createAccount("waiter", "ROLE_WAITER", "Waiter123!");
-        createAccount("chef", "ROLE_CHEF", "Chef123!");
     }
 
     private <T extends BaseNamedEntity> void seedNamedEntity(
@@ -57,12 +55,12 @@ public class DataSeeder implements CommandLineRunner {
                 entity.setName(name);
                 repo.save(entity);
             });
-            log.info("Seed table: {}", names.get(0).getClass().getSimpleName()); // Mała poprawka loga
+            log.info("Seed table: {}", names.get(0).getClass().getSimpleName());
         }
     }
 
     private void createAccount(String name, String roleName, String password) {
-        if (_jpaUserRepos.findByName(name).isPresent()) return;
+        if (_jpaUserRepos.findByUsername(name).isPresent()) return;
 
         Roles userRole = _jpaRoleRepo.findByName(roleName)
                 .orElseThrow(() -> new RuntimeException("Error: Role " + roleName + " not found"));

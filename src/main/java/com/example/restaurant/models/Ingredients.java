@@ -1,6 +1,6 @@
 package com.example.restaurant.models;
 
-import com.example.restaurant.models.base.BaseEntity;
+import com.example.restaurant.models.base.BaseNamedEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,15 +13,20 @@ import java.util.Set;
 @Table(name = "ingredients")
 @Getter
 @Setter
-public class Ingredients extends BaseEntity {
-    @Column(name = "name")
-    private String name;
-
-    @ManyToMany(fetch = FetchType.EAGER)
+public class Ingredients extends BaseNamedEntity {
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "dish_composition",
-            joinColumns = @JoinColumn(name = "dish_id"),
-            inverseJoinColumns = @JoinColumn(name = "  ingredient_id")
+            name = "x_dish_composition",
+            joinColumns = @JoinColumn(name = "ingredient_id"),
+            inverseJoinColumns = @JoinColumn(name = "dish_id")
     )
-    private Set<Dishes> dishes = new HashSet<>();
+    private java.util.Set<Dishes> dishes = new java.util.HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "x_ingredient_allergens",
+            joinColumns = @JoinColumn(name = "ingredient_id"),
+            inverseJoinColumns = @JoinColumn(name = "allergen_id")
+    )
+    private java.util.Set<Allergens> allergens = new java.util.HashSet<>();
 }

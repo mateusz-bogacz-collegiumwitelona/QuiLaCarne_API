@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "order_staus")
+@Table(name = "order_status")
 @Getter
 @Setter
 public class OrderStatus extends BaseNamedEntity {}
