@@ -1,6 +1,6 @@
 package com.example.restaurant.repository.interfaces.jpa;
 
-import com.example.restaurant.models.named.OrderStatus;
+import com.example.restaurant.models.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

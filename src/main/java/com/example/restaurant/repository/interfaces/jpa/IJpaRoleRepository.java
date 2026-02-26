@@ -1,6 +1,6 @@
 package com.example.restaurant.repository.interfaces.jpa;
 
-import com.example.restaurant.models.named.Roles;
+import com.example.restaurant.models.Roles;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

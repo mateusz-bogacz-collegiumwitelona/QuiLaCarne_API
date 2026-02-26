@@ -1,8 +1,7 @@
 package com.example.restaurant.seeder;
 
-import com.example.restaurant.models.Users;
+import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseNamedEntity;
-import com.example.restaurant.models.named.*;
 import com.example.restaurant.repository.interfaces.jpa.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

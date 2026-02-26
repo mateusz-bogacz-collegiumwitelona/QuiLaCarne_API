@@ -1,7 +1,6 @@
 package com.example.restaurant.models;
 
 import com.example.restaurant.models.base.BaseEntity;
-import com.example.restaurant.models.named.Roles;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

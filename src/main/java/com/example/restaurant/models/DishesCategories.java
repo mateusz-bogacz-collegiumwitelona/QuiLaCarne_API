@@ -1,4 +1,4 @@
-package com.example.restaurant.models.named;
+package com.example.restaurant.models;
 
 import com.example.restaurant.models.base.BaseNamedEntity;
 import jakarta.persistence.Entity;
@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "reservations_status")
+@Table(name = "dishes_categories")
 @Getter
 @Setter
-public class ReservationStatus extends BaseNamedEntity {}
+public class DishesCategories extends BaseNamedEntity {}

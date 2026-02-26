@@ -52,6 +52,24 @@ CREATE TABLE dishes_categories
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE ban_status
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(64) UNIQUE NOT NULL,
+    name       VARCHAR(100)       NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE guest_report_status
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(64) UNIQUE  NOT NULL,
+    name       VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE users
 (
     id                 UUID PRIMARY KEY,
@@ -157,6 +175,30 @@ CREATE TABLE audit_logs
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE guest_reports
+(
+    id          UUID PRIMARY KEY,
+    token       VARCHAR(64) UNIQUE NOT NULL,
+    guest_id    UUID REFERENCES users (id) ON DELETE CASCADE,
+    reporter_id UUID REFERENCES users (id),
+    reason      TEXT               NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE bans
+(
+    id           UUID PRIMARY KEY,
+    token        VARCHAR(64) UNIQUE NOT NULL,
+    user_id      UUID REFERENCES users (id) ON DELETE CASCADE,
+    banned_by_id UUID REFERENCES users (id),
+    reason       TEXT               NOT NULL,
+    expires_at   TIMESTAMPTZ,
+    is_active    BOOLEAN     DEFAULT TRUE,
+    created_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE x_user_roles
 (
     user_id UUID REFERENCES users (id) ON DELETE CASCADE,
@@ -205,4 +247,18 @@ CREATE TABLE x_order_items_status
     order_items_id        UUID REFERENCES order_items (id) ON DELETE CASCADE,
     order_items_status_id UUID REFERENCES order_items_status (id) ON DELETE CASCADE,
     PRIMARY KEY (order_items_id, order_items_status_id)
+);
+
+CREATE TABLE x_ban_status
+(
+    ban_id        UUID REFERENCES bans (id) ON DELETE CASCADE,
+    ban_status_id UUID REFERENCES ban_status (id) ON DELETE CASCADE,
+    PRIMARY KEY (ban_id, ban_status_id)
+);
+
+CREATE TABLE x_guest_report_status
+(
+    guest_report_id UUID REFERENCES guest_reports (id) ON DELETE CASCADE,
+    status_id       UUID REFERENCES guest_report_status (id) ON DELETE CASCADE,
+    PRIMARY KEY (guest_report_id, status_id)
 );
