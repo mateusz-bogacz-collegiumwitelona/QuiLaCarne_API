@@ -1,3 +1,57 @@
+CREATE TABLE roles
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(64) UNIQUE  NOT NULL,
+    name       VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE table_status
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(64) UNIQUE NOT NULL,
+    name       VARCHAR(50) UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_status
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(64) UNIQUE NOT NULL,
+    name       VARCHAR(50) UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items_status
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(64) UNIQUE NOT NULL,
+    name       VARCHAR(50) UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE reservations_status
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(64) UNIQUE NOT NULL,
+    name       VARCHAR(50) UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE dishes_categories
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(64) UNIQUE NOT NULL,
+    name       VARCHAR(100)       NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE users
 (
     id                 UUID PRIMARY KEY,
@@ -12,37 +66,14 @@ CREATE TABLE users
     updated_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE roles
-(
-    id         UUID PRIMARY KEY,
-    name       VARCHAR(255) UNIQUE NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE user_roles
-(
-    user_id UUID REFERENCES users (id) ON DELETE CASCADE,
-    role_id UUID REFERENCES roles (id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, role_id)
-);
-
 CREATE TABLE audit_logs
 (
     id         UUID PRIMARY KEY,
-    user_id    UUID REFERENCES users (id),
-    action     VARCHAR(255) NOT NULL,
-    ip_address VARCHAR(255),
-    details    JSONB, -- Poprawiono z JSOB
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE dishes_categories
-(
-    id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE NOT NULL,
-    name       VARCHAR(100)       NOT NULL,
+    user_id    UUID REFERENCES users (id),
+    action     VARCHAR(255)       NOT NULL,
+    ip_address VARCHAR(255),
+    details    JSONB,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -55,8 +86,8 @@ CREATE TABLE dishes
     name               VARCHAR(255)       NOT NULL,
     description        TEXT,
     price              INTEGER            NOT NULL,
-    is_available       BOOLEAN     DEFAULT TRUE, -- Poprawiono literówkę
-    unavailable_reason TEXT,                     -- Poprawiono literówkę
+    is_available       BOOLEAN     DEFAULT TRUE,
+    unavailable_reason TEXT,
     created_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -70,14 +101,6 @@ CREATE TABLE ingredients
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE dish_composition
-(
-    dish_id       UUID REFERENCES dishes (id) ON DELETE CASCADE,
-    ingredient_id UUID REFERENCES ingredients (id) ON DELETE CASCADE,
-    quantity      VARCHAR(50),
-    PRIMARY KEY (dish_id, ingredient_id)
-);
-
 CREATE TABLE allergens
 (
     id         UUID PRIMARY KEY,
@@ -87,20 +110,12 @@ CREATE TABLE allergens
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE ingredient_allergens
-(
-    ingredient_id UUID REFERENCES ingredients (id) ON DELETE CASCADE,
-    allergen_id   UUID REFERENCES allergens (id) ON DELETE CASCADE,
-    PRIMARY KEY (ingredient_id, allergen_id)
-);
-
 CREATE TABLE restaurant_tables
-( -- Zmieniono z TABLES na restaurant_tables
+(
     id           UUID PRIMARY KEY,
     token        VARCHAR(64) UNIQUE NOT NULL,
     table_number INTEGER UNIQUE     NOT NULL,
     capacity     INTEGER            NOT NULL,
-    status       VARCHAR(50)        NOT NULL,
     created_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -113,7 +128,6 @@ CREATE TABLE reservations
     table_id   UUID REFERENCES restaurant_tables (id),
     start_time TIMESTAMPTZ        NOT NULL,
     end_time   TIMESTAMPTZ        NOT NULL,
-    status     VARCHAR(50)        NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -126,7 +140,6 @@ CREATE TABLE orders
     waiter_id      UUID REFERENCES users (id),
     reservation_id UUID REFERENCES reservations (id),
     total_price    INTEGER     DEFAULT 0,
-    status         VARCHAR(50)        NOT NULL,
     created_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -140,7 +153,56 @@ CREATE TABLE order_items
     quantity               INTEGER            NOT NULL,
     price_at_time_of_order INTEGER            NOT NULL,
     note                   TEXT,
-    item_status            VARCHAR(50)        NOT NULL,
     created_at             TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at             TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE x_user_roles
+(
+    user_id UUID REFERENCES users (id) ON DELETE CASCADE,
+    role_id UUID REFERENCES roles (id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, role_id)
+);
+
+CREATE TABLE x_dish_composition
+(
+    dish_id       UUID REFERENCES dishes (id) ON DELETE CASCADE,
+    ingredient_id UUID REFERENCES ingredients (id) ON DELETE CASCADE,
+    quantity      VARCHAR(50),
+    PRIMARY KEY (dish_id, ingredient_id)
+);
+
+CREATE TABLE x_ingredient_allergens
+(
+    ingredient_id UUID REFERENCES ingredients (id) ON DELETE CASCADE,
+    allergen_id   UUID REFERENCES allergens (id) ON DELETE CASCADE,
+    PRIMARY KEY (ingredient_id, allergen_id)
+);
+
+CREATE TABLE x_table_status
+(
+    table_id        UUID REFERENCES restaurant_tables (id) ON DELETE CASCADE,
+    table_status_id UUID REFERENCES table_status (id) ON DELETE CASCADE,
+    PRIMARY KEY (table_id, table_status_id)
+);
+
+CREATE TABLE x_reservations_status
+(
+    reservations_id        UUID REFERENCES reservations (id) ON DELETE CASCADE,
+    reservations_status_id UUID REFERENCES reservations_status (id) ON DELETE CASCADE,
+    PRIMARY KEY (reservations_id, reservations_status_id)
+);
+
+CREATE TABLE x_order_status
+(
+    order_id        UUID REFERENCES orders (id) ON DELETE CASCADE,
+    order_status_id UUID REFERENCES order_status (id) ON DELETE CASCADE,
+    PRIMARY KEY (order_id, order_status_id)
+);
+
+CREATE TABLE x_order_items_status
+(
+    order_items_id        UUID REFERENCES order_items (id) ON DELETE CASCADE,
+    order_items_status_id UUID REFERENCES order_items_status (id) ON DELETE CASCADE,
+    PRIMARY KEY (order_items_id, order_items_status_id)
 );

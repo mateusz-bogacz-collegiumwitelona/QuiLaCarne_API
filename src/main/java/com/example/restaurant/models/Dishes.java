@@ -1,0 +1,26 @@
+package com.example.restaurant.models;
+
+import com.example.restaurant.models.base.BaseNamedEntity;
+import com.example.restaurant.models.named.DishesCategories;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+@Entity
+@Table(name = "dishes")
+@Getter
+@Setter
+public class Dishes extends BaseNamedEntity {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id" )
+    private DishesCategories dishesCategories;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private int price;
+    private boolean isAvailable;
+
+    @Column(columnDefinition = "TEXT")
+    private String unavailableReason;
+}
