@@ -28,6 +28,8 @@ public class DataSeeder implements CommandLineRunner {
     private final IJpaUserRepository _jpaUserRepos;
     private final IJpaBanStatusRepository _jpaBanStatusRepo;
     private final IJpaGuestReportStatusRepository _jpaGuestReportStatusRepo;
+    private final IJpaAllergensRepository _jpaAllergensRepo;
+    private final IJpaDishesCategoryRepository _jpaDishesCategoryRepo;
     private final PasswordEncoder _passwordEncoder;
 
     @Override
@@ -42,6 +44,8 @@ public class DataSeeder implements CommandLineRunner {
         seedNamedEntity(_jpaOrederItemStatusRepo, OrderItemsStatus::new, List.of("PENDING", "PREPARING", "SERVED", "CANCELLED"));
         seedNamedEntity(_jpaGuestReportStatusRepo, GuestReportStatus::new, List.of("PENDING", "ACCEPTED", "REJECTED"));
         seedNamedEntity(_jpaBanStatusRepo, BanStatus::new, List.of("PENDING", "ACCEPTED", "REJECTED"));
+        seedNamedEntity(_jpaAllergensRepo, Allergens::new, List.of("Gluten", "Laktoza", "Orzechy"));
+        seedNamedEntity(_jpaDishesCategoryRepo, DishesCategories::new, List.of("Przystawki", "Zupy", "Dania główne", "Desery", "Napoje"));
 
         createAccount("client", "ROLE_CLIENT", "Client123!");
         createAccount("admin", "ROLE_MANAGER", "Admin123!");
