@@ -33,6 +33,8 @@ public class DataSeeder implements CommandLineRunner {
     private final IJpaGuestReportStatusRepository _jpaGuestReportStatusRepo;
     private final IJpaAllergensRepository _jpaAllergensRepo;
     private final IJpaDishesCategoryRepository _jpaDishesCategoryRepo;
+    private final IJpaDishRepository _jpaDishRepo;
+    private final IJpaIngredientsRepository _jpaIngredientsRepo;
     private final PasswordEncoder _passwordEncoder;
 
     @Override
@@ -76,6 +78,24 @@ public class DataSeeder implements CommandLineRunner {
                 new TranslatedData("CANCELLED", "Anulowana", "Cancelled"),
                 new TranslatedData("NO_SHOW", "Nieobecność", "No show")
         ));
+
+        seedTranslatedEntity(_jpaOrederStatusRepo, OrderStatus::new, List.of(
+                new TranslatedData("ACTIVE", "Aktywna", "Active"),
+                new TranslatedData("COMPLETED", "Zakończona", "Completed"),
+                new TranslatedData("CANCELLED", "Anulowana", "Cancelled")
+        ));
+
+        seedTranslatedEntity(_jpaBanStatusRepo, BanStatus::new, List.of(
+                new TranslatedData("ACCEPTED", "Zaakceptowane", "Accepted"),
+                new TranslatedData("REJECTED", "Odrzucone", "Rejected")
+        ));
+
+        seedTranslatedEntity(_jpaGuestReportStatusRepo, GuestReportStatus::new, List.of(
+                new TranslatedData("ACCEPTED", "Zaakceptowane", "Accepted"),
+                new TranslatedData("REJECTED", "Odrzucone", "Rejected")
+        ));
+
+        createMenu();
 
         createAccount("client", "ROLE_CLIENT", "Client123!");
         createAccount("admin", "ROLE_MANAGER", "Admin123!");
@@ -130,5 +150,49 @@ public class DataSeeder implements CommandLineRunner {
 
         _jpaUserRepos.save(user);
         log.info("User created: {} with role: {}", name, roleName);
+    }
+
+    private void createMenu()
+    {
+        if (_jpaDishRepo.count() > 0 ) return;
+
+        Allergens gluten = _jpaAllergensRepo.findByToken("GLUTEN").orElseThrow();
+        Allergens lactose  = _jpaAllergensRepo.findByToken("LACTOSE").orElseThrow();
+        Allergens nuts = _jpaAllergensRepo.findByToken("NUTS").orElseThrow();
+
+        Ingredients beef = createIngredient("Wołowina Chianina", "Chianina Beef", "beef-chianina", Set.of());
+        Ingredients tomato = createIngredient("Pomidory San Marzano", "San Marzano Tomatoes", "tomatoes-sm", Set.of());
+        Ingredients mozzarella = createIngredient("Mozzarella di Bufala", "Buffalo Mozzarella", "mozzarella-bufala", Set.of(lactose));
+        Ingredients pasta = createIngredient("Makaron Tagliatelle", "Tagliatelle Pasta", "tagliatelle-pasta", Set.of(gluten));
+        Ingredients parmesan = createIngredient("Ser Grana Padano", "Grana Padano Cheese", "grana-padano", Set.of(lactose));
+        Ingredients oliveOil = createIngredient("Oliwa z oliwek", "Olive Oil", "olive-oil", Set.of());
+
+        DishesCategories startCat = _jpaDishesCategoryRepo.findByToken("STARTER").orElseThrow();
+        DishesCategories mainCat = _jpaDishesCategoryRepo.findByToken("MAIN").orElseThrow();
+
+        Dishes steak = new Dishes();
+        steak.setName("Bistecca alla Fiorentina");
+        steak.setPrice(12000);
+        steak.setCategory(mainCat);
+        steak.setAvailable(true);
+        steak.setIngredients(Set.of(beef, oliveOil));
+        _jpaDishRepo.save(steak);
+
+        Dishes pastaDish = new Dishes();
+        pastaDish.setName("Tagliatelle Ragu");
+        pastaDish.setPrice(4200);
+        pastaDish.setCategory(mainCat);
+        pastaDish.setAvailable(true);
+        pastaDish.setIngredients(Set.of(pasta, beef, tomato, parmesan));
+        _jpaDishRepo.save(pastaDish);
+    }
+
+    private Ingredients createIngredient(String pl, String en, String token, Set<Allergens> allergens) {
+        Ingredients ing = new Ingredients();
+        ing.setNamePl(pl);
+        ing.setNameEn(en);
+        ing.setToken(token);
+        ing.setAllergens(allergens);
+        return _jpaIngredientsRepo.save(ing);
     }
 }
