@@ -25,6 +25,8 @@ public class DataSeeder implements CommandLineRunner {
     private final IJpaReservationStatusRepository _jpaReservationStatusRepo;
     private final IJpaOrderItemStatusRepository _jpaOrederItemStatusRepo;
     private final IJpaUserRepository _jpaUserRepos;
+    private final IJpaBanStatusRepository _jpaBanStatusRepo;
+    private final IJpaGuestReportStatusRepository _jpaGuestReportStatusRepo;
     private final PasswordEncoder _passwordEncoder;
 
     @Override
@@ -37,6 +39,8 @@ public class DataSeeder implements CommandLineRunner {
         seedNamedEntity(_jpaOrederStatusRepo, OrderStatus::new, List.of("PENDING", "IN_PROGRESS", "SERVED", "CANCELLED"));
         seedNamedEntity(_jpaReservationStatusRepo, ReservationStatus::new, List.of("ACTIVE", "COMPLETED", "CANCELLED", "NO_SHOW"));
         seedNamedEntity(_jpaOrederItemStatusRepo, OrderItemsStatus::new, List.of("PENDING", "PREPARING", "SERVED", "CANCELLED"));
+        seedNamedEntity(_jpaGuestReportStatusRepo, GuestReportStatus::new, List.of("PENDING", "ACCEPTED", "REJECTED"));
+        seedNamedEntity(_jpaBanStatusRepo, BanStatus::new, List.of("PENDING", "ACCEPTED", "REJECTED"));
 
         createAccount("client", "ROLE_CLIENT", "Client123!");
         createAccount("admin", "ROLE_MANAGER", "Admin123!");
@@ -54,8 +58,7 @@ public class DataSeeder implements CommandLineRunner {
                 entity.setName(name);
                 repo.save(entity);
             });
-            log.info("Seed table: {}", names.get(0).getClass().getSimpleName());
-        }
+            log.info("Seed table: {} (added {} items)", factory.get().getClass().getSimpleName(), names.size());        }
     }
 
     private void createAccount(String name, String roleName, String password) {
