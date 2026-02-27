@@ -1,5 +1,6 @@
-package com.example.restaurant.models;
+package com.example.restaurant.models.lookup;
 
+import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.base.BaseNamedEntity;
 import jakarta.persistence.*;
 import lombok.Getter;

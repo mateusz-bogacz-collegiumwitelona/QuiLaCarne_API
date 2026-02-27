@@ -2,6 +2,7 @@ package com.example.restaurant.seeder;
 
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseNamedEntity;
+import com.example.restaurant.models.lookup.*;
 import com.example.restaurant.repository.interfaces.jpa.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

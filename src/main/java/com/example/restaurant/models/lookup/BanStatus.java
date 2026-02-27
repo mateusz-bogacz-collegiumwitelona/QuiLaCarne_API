@@ -1,4 +1,4 @@
-package com.example.restaurant.models;
+package com.example.restaurant.models.lookup;
 
 import com.example.restaurant.models.base.BaseNamedEntity;
 import jakarta.persistence.Entity;
@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "table_status")
+@Table(name = "ban_status")
 @Getter
 @Setter
-public class TableStatus extends BaseNamedEntity {}
+public class BanStatus extends BaseNamedEntity {}
