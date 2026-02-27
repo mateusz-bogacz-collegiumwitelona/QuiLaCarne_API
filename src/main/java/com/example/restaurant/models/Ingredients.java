@@ -1,6 +1,6 @@
 package com.example.restaurant.models;
 
-import com.example.restaurant.models.base.BaseNamedEntity;
+import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.Allergens;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import lombok.Setter;
 @Table(name = "ingredients")
 @Getter
 @Setter
-public class Ingredients extends BaseNamedEntity {
+public class Ingredients extends BaseTranslatedEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "x_dish_composition",

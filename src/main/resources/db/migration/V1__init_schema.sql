@@ -11,7 +11,8 @@ CREATE TABLE table_status
 (
     id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE NOT NULL,
-    name       VARCHAR(50) UNIQUE NOT NULL,
+    name_pl    VARCHAR(50) UNIQUE NOT NULL,
+    name_en    VARCHAR(50) UNIQUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -20,7 +21,8 @@ CREATE TABLE order_status
 (
     id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE NOT NULL,
-    name       VARCHAR(50) UNIQUE NOT NULL,
+    name_pl    VARCHAR(50) UNIQUE NOT NULL,
+    name_en    VARCHAR(50) UNIQUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -29,7 +31,8 @@ CREATE TABLE order_items_status
 (
     id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE NOT NULL,
-    name       VARCHAR(50) UNIQUE NOT NULL,
+    name_pl    VARCHAR(50) UNIQUE NOT NULL,
+    name_en    VARCHAR(50) UNIQUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -38,7 +41,8 @@ CREATE TABLE reservations_status
 (
     id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE NOT NULL,
-    name       VARCHAR(50) UNIQUE NOT NULL,
+    name_pl    VARCHAR(50) UNIQUE NOT NULL,
+    name_en    VARCHAR(50) UNIQUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -47,7 +51,8 @@ CREATE TABLE dishes_categories
 (
     id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE NOT NULL,
-    name       VARCHAR(100)       NOT NULL,
+    name_pl    VARCHAR(100)       NOT NULL,
+    name_en    VARCHAR(100)       NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -56,7 +61,8 @@ CREATE TABLE ban_status
 (
     id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE NOT NULL,
-    name       VARCHAR(100)       NOT NULL,
+    name_pl    VARCHAR(100)       NOT NULL,
+    name_en    VARCHAR(100)       NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -65,7 +71,8 @@ CREATE TABLE guest_report_status
 (
     id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE  NOT NULL,
-    name       VARCHAR(100) UNIQUE NOT NULL,
+    name_pl    VARCHAR(100) UNIQUE NOT NULL,
+    name_en    VARCHAR(100) UNIQUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -98,7 +105,8 @@ CREATE TABLE ingredients
 (
     id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE NOT NULL,
-    name       VARCHAR(100)       NOT NULL,
+    name_pl    VARCHAR(50) UNIQUE NOT NULL,
+    name_en    VARCHAR(50) UNIQUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -107,7 +115,8 @@ CREATE TABLE allergens
 (
     id         UUID PRIMARY KEY,
     token      VARCHAR(64) UNIQUE NOT NULL,
-    name       VARCHAR(100)       NOT NULL,
+    name_pl    VARCHAR(100)       NOT NULL,
+    name_en    VARCHAR(100)       NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -117,8 +126,8 @@ CREATE TABLE dishes
     id                 UUID PRIMARY KEY,
     token              VARCHAR(64) UNIQUE NOT NULL,
     category_id        UUID REFERENCES dishes_categories (id),
-    name               VARCHAR(255)       NOT NULL,
-    description        TEXT,
+    name_pl            VARCHAR(100)       NOT NULL,
+    name_en            VARCHAR(100)       NOT NULL,
     price              INTEGER            NOT NULL,
     is_available       BOOLEAN     DEFAULT TRUE,
     unavailable_reason TEXT,

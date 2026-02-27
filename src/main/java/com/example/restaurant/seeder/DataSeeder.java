@@ -1,9 +1,12 @@
 package com.example.restaurant.seeder;
 
+import com.example.restaurant.helpers.TranslatedData;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseNamedEntity;
+import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.*;
 import com.example.restaurant.repository.interfaces.jpa.*;
+import com.example.restaurant.repository.interfaces.jpa.base.IJpaTranslatedRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,18 +37,45 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     @Transactional
-    public void run(String... args){
+    public void run(String... args) {
         log.info("Start data seeding...");
 
         seedNamedEntity(_jpaRoleRepo, Roles::new, List.of("ROLE_MANAGER", "ROLE_WAITER", "ROLE_CLIENT"));
-        seedNamedEntity(_jpaTableStatusRepo, TableStatus::new, List.of("AVAILABLE", "RESERVED", "OCCUPIED", "OUT_OF_SERVICE"));
-        seedNamedEntity(_jpaOrederStatusRepo, OrderStatus::new, List.of("PENDING", "IN_PROGRESS", "SERVED", "CANCELLED"));
-        seedNamedEntity(_jpaReservationStatusRepo, ReservationStatus::new, List.of("ACTIVE", "COMPLETED", "CANCELLED", "NO_SHOW"));
-        seedNamedEntity(_jpaOrederItemStatusRepo, OrderItemsStatus::new, List.of("PENDING", "PREPARING", "SERVED", "CANCELLED"));
-        seedNamedEntity(_jpaGuestReportStatusRepo, GuestReportStatus::new, List.of("PENDING", "ACCEPTED", "REJECTED"));
-        seedNamedEntity(_jpaBanStatusRepo, BanStatus::new, List.of("PENDING", "ACCEPTED", "REJECTED"));
-        seedNamedEntity(_jpaAllergensRepo, Allergens::new, List.of("Gluten", "Laktoza", "Orzechy"));
-        seedNamedEntity(_jpaDishesCategoryRepo, DishesCategories::new, List.of("Przystawki", "Zupy", "Dania główne", "Desery", "Napoje"));
+
+        seedTranslatedEntity(_jpaTableStatusRepo, TableStatus::new, List.of(
+                new TranslatedData("AVAILABLE", "Wolny", "Available"),
+                new TranslatedData("RESERVED", "Zarezerwowany", "Reserved"),
+                new TranslatedData("OCCUPIED", "Zajęty", "Occupied"),
+                new TranslatedData("OUT_OF_SERVICE", "Wyłączony z użytku", "Out of service")
+        ));
+
+        seedTranslatedEntity(_jpaOrederStatusRepo, OrderStatus::new, List.of(
+                new TranslatedData("PENDING", "Oczekujące", "Pending"),
+                new TranslatedData("IN_PROGRESS", "W realizacji", "In progress"),
+                new TranslatedData("SERVED", "Podano", "Served"),
+                new TranslatedData("CANCELLED", "Anulowano", "Cancelled")
+        ));
+
+        seedTranslatedEntity(_jpaDishesCategoryRepo, DishesCategories::new, List.of(
+                new TranslatedData("STARTER", "Przystawki", "Starters"),
+                new TranslatedData("SOUP", "Zupy", "Soups"),
+                new TranslatedData("MAIN", "Dania główne", "Main courses"),
+                new TranslatedData("DESSERT", "Desery", "Desserts"),
+                new TranslatedData("DRINK", "Napoje", "Drinks")
+        ));
+
+        seedTranslatedEntity(_jpaAllergensRepo, Allergens::new, List.of(
+                new TranslatedData("GLUTEN", "Gluten", "Gluten"),
+                new TranslatedData("LACTOSE", "Laktoza", "Lactose"),
+                new TranslatedData("NUTS", "Orzechy", "Nuts")
+        ));
+
+        seedTranslatedEntity(_jpaReservationStatusRepo, ReservationStatus::new, List.of(
+                new TranslatedData("ACTIVE", "Aktywna", "Active"),
+                new TranslatedData("COMPLETED", "Zakończona", "Completed"),
+                new TranslatedData("CANCELLED", "Anulowana", "Cancelled"),
+                new TranslatedData("NO_SHOW", "Nieobecność", "No show")
+        ));
 
         createAccount("client", "ROLE_CLIENT", "Client123!");
         createAccount("admin", "ROLE_MANAGER", "Admin123!");
@@ -63,7 +93,25 @@ public class DataSeeder implements CommandLineRunner {
                 entity.setName(name);
                 repo.save(entity);
             });
-            log.info("Seed table: {} (added {} items)", factory.get().getClass().getSimpleName(), names.size());        }
+            log.info("Seed table: {} (added {} items)", factory.get().getClass().getSimpleName(), names.size());
+        }
+    }
+
+    private <T extends BaseTranslatedEntity> void seedTranslatedEntity(
+            IJpaTranslatedRepository<T> repo,
+            Supplier<T> factory,
+            List<TranslatedData> data
+    ) {
+        if (repo.count() == 0) {
+            data.forEach(item -> {
+                T entity = factory.get();
+                entity.setToken(item.token());
+                entity.setNamePl(item.pl());
+                entity.setNameEn(item.en());
+                repo.save(entity);
+            });
+            log.info("Seeded table: {} ({} items)", factory.get().getClass().getSimpleName(), data.size());
+        }
     }
 
     private void createAccount(String name, String roleName, String password) {

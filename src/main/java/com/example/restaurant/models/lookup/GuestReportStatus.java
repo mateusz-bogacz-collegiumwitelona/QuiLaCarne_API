@@ -1,6 +1,6 @@
 package com.example.restaurant.models.lookup;
 
-import com.example.restaurant.models.base.BaseNamedEntity;
+import com.example.restaurant.models.base.BaseTranslatedEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,4 +10,4 @@ import lombok.Setter;
 @Table(name = "guest_report_status")
 @Getter
 @Setter
-public class GuestReportStatus extends BaseNamedEntity {}
+public class GuestReportStatus extends BaseTranslatedEntity {}
