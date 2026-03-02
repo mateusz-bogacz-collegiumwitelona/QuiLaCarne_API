@@ -8,7 +8,7 @@ import lombok.Setter;
 @MappedSuperclass
 @Getter
 @Setter
-public class BaseTranslatedEntity extends BaseEntity{
+public abstract class BaseTranslatedEntity extends BaseEntity{
     @Column(nullable = false, unique = true)
     private String namePl;
 
