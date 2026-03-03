@@ -127,5 +127,31 @@ public class AuthServices implements IAuthServices {
                     List.of(ex.getMessage())
             );
         }
+
+
+    }
+
+    @Transactional
+    public ResultHandler<String> registerConfirm(String token)
+    {
+        try
+        {
+            boolean isSuccess = _userRepository.activeUser(token);
+
+            if (!isSuccess)
+                return ResultHandler.failure("Invalid token", HttpStatus.BAD_REQUEST.value());
+
+            return ResultHandler.success(
+                    "User activated successfully",
+                    HttpStatus.OK.value());
+        }
+        catch (Exception ex)
+        {
+            return ResultHandler.failure(
+                    "Server error",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    List.of(ex.getMessage())
+            );
+        }
     }
 }

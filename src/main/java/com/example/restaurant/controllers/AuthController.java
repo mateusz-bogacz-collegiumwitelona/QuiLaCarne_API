@@ -79,4 +79,11 @@ public class AuthController {
 
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
+
+    @GetMapping("/register-confirm")
+    public ResponseEntity<ResultHandler<String>> registerConfirm(@RequestParam String token)
+    {
+        var result = _authServices.registerConfirm(token);
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
 }

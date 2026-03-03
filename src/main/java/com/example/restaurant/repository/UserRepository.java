@@ -21,6 +21,7 @@ public class UserRepository implements IUserRepository {
     private final PasswordEncoder _passwordEncoder;
     private final IJpaUserRepository _jpaUserRepository;
 
+    @Override
     @Transactional
     public String createUser(RegisterRequest request, String userRole, boolean isActive)
     {
@@ -33,11 +34,24 @@ public class UserRepository implements IUserRepository {
         user.setIsActive(isActive);
         user.setRoles(Set.of(role));
 
-        Users saved = _jpaUserRepository.save(user);
+        Users saved = _jpaUserRepository.saveAndFlush(user);
         return saved.getToken();
     }
 
+    @Override
     public boolean existsByUsername(String username) {
         return _jpaUserRepository.findByUsername(username).isPresent();
     }
+
+    @Override
+    @Transactional
+    public boolean activeUser(String token)
+    {
+        return _jpaUserRepository.findByToken(token).map(user -> {
+            user.setIsActive(true);
+            _jpaUserRepository.saveAndFlush(user);
+            return true;
+        }).orElse(false);
+    }
+
 }
