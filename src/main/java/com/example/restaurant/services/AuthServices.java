@@ -117,7 +117,7 @@ public class AuthServices implements IAuthServices {
 
             return ResultHandler.success(
                     "User registered successfully",
-                    HttpStatus.OK.value());
+                    HttpStatus.CREATED.value());
         }
         catch (Exception ex)
         {

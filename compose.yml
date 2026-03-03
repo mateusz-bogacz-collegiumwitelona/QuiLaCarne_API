@@ -97,7 +97,7 @@ services:
       - SPRING_MAIL_PORT=1025
       - JWT_SECRET_KEY=${API_JWT_SECRET_KEY}
       - JWT_EXPIRATION=${API_JWT_EXPIRATION:-86400000}
-    command: ./gradlew test --no-daemon
+    command: ./gradlew test --no-daemon -g /tmp/.gradle
     networks:
       - dev
     depends_on:
