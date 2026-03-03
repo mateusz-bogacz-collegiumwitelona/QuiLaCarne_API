@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -29,11 +30,9 @@ public class AuthServices implements IAuthServices {
                     )
             );
 
-            if (!auth.isAuthenticated()) return ResultHandler.failure("No user found", HttpStatus.BAD_REQUEST.value());
-
             UserDetails userDetails = (UserDetails) auth.getPrincipal();
 
-            if (!userDetails.isEnabled()) return ResultHandler.failure("User no enabled", HttpStatus.BAD_REQUEST.value());
+            if (!userDetails.isEnabled()) return ResultHandler.failure("User no enabled", HttpStatus.UNAUTHORIZED.value());
 
             String jwtToken = _jwtServices.generateToken(userDetails);
 
@@ -55,12 +54,21 @@ public class AuthServices implements IAuthServices {
                     HttpStatus.OK.value(),
                     response);
         }
+        catch (AuthenticationException aex)
+        {
+            return ResultHandler.failure(
+                    "Invalid credentials",
+                    HttpStatus.UNAUTHORIZED.value(),
+                    List.of(aex.getMessage())
+            );
+        }
         catch (Exception ex)
         {
             return ResultHandler.failure(
-                    "An error occurred while retrieving persons",
+                    "Server error",
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    List.of(ex.getMessage()));
+                    List.of(ex.getMessage())
+            );
         }
     }
 
