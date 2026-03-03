@@ -1,4 +1,4 @@
-name: Tests
+name: CI Pipeline
 
 on:
   push:
@@ -9,22 +9,29 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      API_JWT_SECRET_KEY: ${{ secrets.API_JWT_SECRET_KEY }}
+      API_JWT_EXPIRATION: 3600000
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      API_PORT: 8080
+      POSTGRES_PORT: 5432
+      REDIS_PORT: 6379
+      MAILPIT_UI_PORT: 8025
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create .env file
-        run: |
-          echo "API_JWT_SECRET_KEY=${{ secrets.API_JWT_SECRET_KEY }}" >> .env
-          echo "API_JWT_EXPIRATION=3600000" >> .env
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
-          echo "API_PORT=8080" >> .env
-          echo "POSTGRES_PORT=5432" >> .env
-          echo "REDIS_PORT=6379" >> .env
-          echo "MAILPIT_UI_PORT=8025" >> .env
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build and run tests
+      - name: Run Tests
         run: docker compose run --rm test
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down --volumes --remove-orphans
