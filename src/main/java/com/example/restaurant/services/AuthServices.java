@@ -1,10 +1,14 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.dto.request.LoginRequest;
+import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.repository.interfaces.IRoleRepository;
+import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -20,6 +25,9 @@ public class AuthServices implements IAuthServices {
     private  final AuthenticationManager _authManager;
     private final JwtServices _jwtServices;
     private final IJpaUserRepository _jpaUserRepository;
+    private final IUserRepository _userRepository;
+    private final IRoleRepository _roleRepository;
+    private final EmailServices _emailServices;
 
     public ResultHandler<AuthResponse> authenticate(LoginRequest request) {
         try {
@@ -72,4 +80,52 @@ public class AuthServices implements IAuthServices {
         }
     }
 
+    @Transactional
+    public ResultHandler<String> register(RegisterRequest request)
+    {
+        try
+        {
+            if (_userRepository.existsByUsername(request.getUsername()))
+                return ResultHandler.failure(
+                        "Username already exists",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+            if (!request.getPassword().equals(request.getConfirmPassword()))
+                return ResultHandler.failure(
+                        "Passwords do not match",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+            String role = "ROLE_CLIENT";
+
+            if (!_roleRepository.isRoleExists(role))
+                return ResultHandler.failure(
+                        "Role does not exist",
+                        HttpStatus.INTERNAL_SERVER_ERROR.value()
+                );
+
+            String result = _userRepository.createUser(request, role, false);
+
+            if (result == null)
+                return ResultHandler.failure(
+                    "User already exists",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+                );
+
+            _emailServices.sendActivationEmail(request.getEmail(), request.getUsername(), result);
+
+            return ResultHandler.success(
+                    "User registered successfully",
+                    HttpStatus.OK.value());
+        }
+        catch (Exception ex)
+        {
+            return ResultHandler.failure(
+                    "Server error",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    List.of(ex.getMessage())
+            );
+        }
+    }
 }

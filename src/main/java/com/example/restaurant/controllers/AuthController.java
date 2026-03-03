@@ -1,6 +1,7 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.LoginRequest;
+import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IAuthServices;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -60,8 +62,20 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/login")
-    public ResponseEntity<ResultHandler<AuthResponse>> login(@RequestBody LoginRequest request) {
-        ResultHandler<AuthResponse> result = _authServices.authenticate(request);
+    public ResponseEntity<ResultHandler<AuthResponse>> login(@RequestBody LoginRequest request)
+    {
+        var result = _authServices.authenticate(request);
+
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<ResultHandler<String>> register(
+            @RequestBody
+            @Valid
+            RegisterRequest request)
+    {
+        var result = _authServices.register(request);
 
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }

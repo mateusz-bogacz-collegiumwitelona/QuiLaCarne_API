@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; font-family: sans-serif; }
+        .header { background-color: #aa0000; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .button { display: inline-block; padding: 15px 30px; background-color: #aa0000; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header"><h1>Qui la Carne</h1></div>
+    <div style="padding: 20px; background: white;">
+        <p>Dear <strong th:text="${username}">User</strong>,</p>
+        <p>Thank you for registering! To activate your account, please click the button below:</p>
+        <div style="text-align: center;">
+            <a th:href="${activationUrl}" class="button">Activate Account</a>
+        </div>
+        <p>If the button doesn't work, copy this link: <br/> <span th:text="${activationUrl}"></span></p>
+    </div>
+</div>
+</body>
+</html>
