@@ -6,6 +6,7 @@ import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IAuthServices;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -69,6 +70,16 @@ public class AuthController {
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 
+    @Operation(
+            summary = "Register a new customer account (Step 1)",
+            description = "Creates a new account with 'isActive' set to false and sends an activation email containing a unique token. " +
+                    "The user must call the /confirm endpoint with this token to enable the account.",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "User registered successfully, activation email sent"),
+                    @ApiResponse(responseCode = "400", description = "Invalid input data, password mismatch or username taken"),
+                    @ApiResponse(responseCode = "500", description = "Server error or email delivery failure")
+            }
+    )
     @PostMapping("/register")
     public ResponseEntity<ResultHandler<String>> register(
             @RequestBody
@@ -80,6 +91,19 @@ public class AuthController {
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 
+    @Operation(
+            summary = "Activate account with email token (Step 2)",
+            description = "Finalizes the registration process by activating the user account. " +
+                    "Expects a unique token received via email. Once activated, the user can log in.",
+            parameters = {
+                    @Parameter(name = "token", description = "The unique activation token from the email", required = true, example = "f47ac10b-58cc-4372-a567-0e02b2c3d479")
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Account activated successfully"),
+                    @ApiResponse(responseCode = "400", description = "Invalid, expired or already used token"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
     @GetMapping("/register-confirm")
     public ResponseEntity<ResultHandler<String>> registerConfirm(@RequestParam String token)
     {
