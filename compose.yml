@@ -22,6 +22,7 @@ services:
       - SPRING_MAIL_PORT=1025
       - JWT_SECRET_KEY=${API_JWT_SECRET_KEY}
       - JWT_EXPIRATION=${API_JWT_EXPIRATION:-86400000}
+      - FRONTEND_URL=${FRONTEND_URL}
     depends_on:
       postgres:
         condition: service_healthy

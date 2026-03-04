@@ -19,7 +19,7 @@ public class EmailServices {
     private final JavaMailSender _mailSender;
     private final TemplateEngine _templateEngine;
 
-    @Value("${app.url}")
+    @Value("${app.cors.allowed-origins}")
     private String _appUrl;
 
     @Async
