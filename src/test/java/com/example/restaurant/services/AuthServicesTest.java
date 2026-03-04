@@ -1,11 +1,15 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.dto.domain.UserMinimalDTO;
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
+import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +21,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -47,6 +53,9 @@ public class AuthServicesTest {
 
     @Mock
     private EmailServices _emailServices;
+
+    @Mock
+    private IVerificationTokenRepository _verificationTokenRepository;
 
     private LoginRequest _loginRequest;
 
@@ -84,9 +93,8 @@ public class AuthServicesTest {
     }
 
     @Test
-    void regiser_ShouldFail_WhenPasswordIsNotMatch()
-    {
-        RegisterRequest  request = new RegisterRequest();
+    void regiser_ShouldFail_WhenPasswordIsNotMatch() {
+        RegisterRequest request = new RegisterRequest();
         request.setUsername("testuser");
         request.setEmail("testuser@exaple.pl");
         request.setPassword("Pass123!");
@@ -100,9 +108,8 @@ public class AuthServicesTest {
     }
 
     @Test
-    void register_ShouldSuccess_AndSendEmail()
-    {
-        RegisterRequest  request = new RegisterRequest();
+    void register_ShouldSuccess_AndSendEmail() {
+        RegisterRequest request = new RegisterRequest();
         request.setUsername("testuser2");
         request.setEmail("testuser2@exaple.pl");
         request.setPassword("Pass123!");
@@ -110,12 +117,54 @@ public class AuthServicesTest {
 
         when(_userRepository.existsByUsername("testuser2")).thenReturn(false);
         when(_roleRepository.isRoleExists("ROLE_CLIENT")).thenReturn(true);
-        when(_userRepository.createUser(any(), anyString(), anyBoolean())).thenReturn("fake-token");
+        when(_userRepository.createUser(any(), anyString(), anyBoolean())).thenReturn("fake-user-token");
+
+        when(_verificationTokenRepository.createToken(eq("fake-user-token"), eq(TokenTypeEnum.ACTIVATION), anyInt()))
+                .thenReturn("fake-activation-token");
 
         var result = _authServices.register(request);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.CREATED.value(), result.getStatusCode());
-        verify(_emailServices).sendActivationEmail(eq("testuser2@exaple.pl"), eq("testuser2"), eq("fake-token"));
+
+
+        verify(_emailServices).sendActivationEmail(
+                eq("testuser2@exaple.pl"),
+                eq("testuser2"),
+                eq("fake-activation-token")
+        );
+    }
+
+    @Test
+    void resetPassword_ShouldSendEmail_WhenUserExists() {
+        String email = "test@test.pl";
+        UserMinimalDTO userDto = new UserMinimalDTO("fake-token", "testuser", email);
+
+        when(_userRepository.findMinimalByEmail(email)).thenReturn(Optional.of(userDto));
+        when(_verificationTokenRepository
+                .createToken(
+                        anyString(),
+                        eq(TokenTypeEnum.PASSWORD_RESET),
+                        anyInt()
+                )
+        ).thenReturn("res-token");
+
+        var result = _authServices.resetPassowrd(email);
+
+        assertTrue(result.isSuccess());
+        verify(_emailServices).sendResetPasswordEmail(eq(email), eq("testuser"), eq("res-token"));
+    }
+
+    @Test
+    void setNewPassword_ShouldReturnBadRequest_WhenPasswordIsNotMatch() {
+        ResetPasswordRequest request = new ResetPasswordRequest();
+        request.setPassword("Pass123!");
+        request.setConfirmPassword("DiffPass123!");
+
+        var result = _authServices.setNewPassword(request);
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
+        assertEquals("Passwords do not match", result.getMessage());
     }
 }
