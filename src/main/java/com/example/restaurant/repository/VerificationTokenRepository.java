@@ -3,6 +3,7 @@ package com.example.restaurant.repository;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.VerificationToken;
+import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaVerificationTokenRepository;
@@ -18,11 +19,11 @@ import java.util.UUID;
 public class VerificationTokenRepository implements IVerificationTokenRepository {
     private final IJpaVerificationTokenRepository _jpaTokenRepo;
     private final IJpaUserRepository _jpaUserRepo;
+    private final IUserRepository _userRepo;
 
     @Override
     @Transactional
-    public String createToken(String userToken, TokenTypeEnum type, int expiryMinutes)
-    {
+    public String createToken(String userToken, TokenTypeEnum type, int expiryMinutes) {
         var user = _jpaUserRepo.findByToken(userToken)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -41,8 +42,7 @@ public class VerificationTokenRepository implements IVerificationTokenRepository
 
     @Override
     @Transactional
-    public boolean activeUser(String token)
-    {
+    public boolean activeUser(String token) {
         return _jpaTokenRepo.findByTokenAndType(token, TokenTypeEnum.ACTIVATION)
                 .map(vt -> {
                     if (vt.isExpired()) return false;
@@ -55,6 +55,26 @@ public class VerificationTokenRepository implements IVerificationTokenRepository
                     _jpaTokenRepo.delete(vt);
 
                     return true;
+                }).orElse(false);
+    }
+
+    @Override
+    @Transactional
+    public boolean resetUserPassowrd(String verificationTokenValue, String newPassword) {
+        return _jpaTokenRepo.findByTokenAndType(verificationTokenValue, TokenTypeEnum.PASSWORD_RESET)
+                .map(vt -> {
+                    if (vt.isExpired()) return false;
+
+                    Users user = vt.getUser();
+
+                    boolean isChanged = _userRepo.changePassword(user.getToken(), newPassword);
+
+                    if (isChanged) {
+                        _jpaTokenRepo.delete(vt);
+                        return true;
+                    }
+
+                    return false;
                 }).orElse(false);
     }
 }

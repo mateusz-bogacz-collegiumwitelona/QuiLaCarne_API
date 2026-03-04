@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.dto.domain.UserMinimalDTO;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
@@ -12,6 +13,7 @@ import org.apache.catalina.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -42,5 +44,31 @@ public class UserRepository implements IUserRepository {
     public boolean existsByUsername(String username) {
         return _jpaUserRepository.findByUsername(username).isPresent();
     }
+
+    @Override
+    public Optional<UserMinimalDTO> findMinimalByEmail(String email)
+    {
+        return _jpaUserRepository.findByEmail(email)
+                .map(u -> new  UserMinimalDTO(
+                        u.getToken(),
+                        u.getUsername(),
+                        u.getEmail()
+                )
+        );
+    }
+
+    @Override
+    @Transactional
+    public boolean changePassword(String token, String newPassword)
+    {
+       return _jpaUserRepository.findByToken(token).map(u -> {
+           u.setPassword(_passwordEncoder.encode(newPassword));
+           _jpaUserRepository.saveAndFlush(u);
+           return true;
+       }).orElse(false);
+    }
+
+
+
 
 }

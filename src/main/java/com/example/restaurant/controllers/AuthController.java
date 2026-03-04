@@ -2,6 +2,7 @@ package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
+import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IAuthServices;
@@ -108,6 +109,20 @@ public class AuthController {
     public ResponseEntity<ResultHandler<String>> registerConfirm(@RequestParam String token)
     {
         var result = _authServices.registerConfirm(token);
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ResultHandler<String>> resetPassword(@RequestParam String email)
+    {
+        var result = _authServices.resetPassowrd(email);
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
+
+    @PostMapping("/set-password")
+    public ResponseEntity<ResultHandler<String>> setNewPassword(@RequestBody ResetPasswordRequest request)
+    {
+        var result = _authServices.setNewPassword(request);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 }
