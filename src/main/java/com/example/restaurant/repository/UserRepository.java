@@ -43,15 +43,4 @@ public class UserRepository implements IUserRepository {
         return _jpaUserRepository.findByUsername(username).isPresent();
     }
 
-    @Override
-    @Transactional
-    public boolean activeUser(String token)
-    {
-        return _jpaUserRepository.findByToken(token).map(user -> {
-            user.setIsActive(true);
-            _jpaUserRepository.saveAndFlush(user);
-            return true;
-        }).orElse(false);
-    }
-
 }

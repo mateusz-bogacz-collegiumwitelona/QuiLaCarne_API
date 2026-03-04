@@ -3,10 +3,13 @@ package com.example.restaurant.services;
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
+import com.example.restaurant.repository.interfaces.jpa.IJpaVerificationTokenRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ public class AuthServices implements IAuthServices {
     private final IUserRepository _userRepository;
     private final IRoleRepository _roleRepository;
     private final EmailServices _emailServices;
+    private final IVerificationTokenRepository _verificationTokenRepository;
 
     public ResultHandler<AuthResponse> authenticate(LoginRequest request) {
         try {
@@ -113,7 +117,16 @@ public class AuthServices implements IAuthServices {
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
                 );
 
-            _emailServices.sendActivationEmail(request.getEmail(), request.getUsername(), result);
+            String activationToken = _verificationTokenRepository.createToken(result, TokenTypeEnum.ACTIVATION, 24*60);
+
+            if (activationToken == null)
+                return ResultHandler.failure(
+                        "Activate token not Create",
+                        HttpStatus.INTERNAL_SERVER_ERROR.value()
+                );
+
+
+            _emailServices.sendActivationEmail(request.getEmail(), request.getUsername(), activationToken);
 
             return ResultHandler.success(
                     "User registered successfully",
@@ -136,7 +149,7 @@ public class AuthServices implements IAuthServices {
     {
         try
         {
-            boolean isSuccess = _userRepository.activeUser(token);
+            boolean isSuccess = _verificationTokenRepository.activeUser(token);
 
             if (!isSuccess)
                 return ResultHandler.failure("Invalid token", HttpStatus.BAD_REQUEST.value());

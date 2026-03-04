@@ -207,6 +207,16 @@ CREATE TABLE bans
     updated_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE verification_tokens
+(
+    id          UUID PRIMARY KEY,
+    token       VARCHAR(100) UNIQUE NOT NULL,
+    user_id     UUID REFERENCES users (id) ON DELETE CASCADE,
+    type        VARCHAR(20)         NOT NULL,
+    expiry_date TIMESTAMPTZ         NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE x_user_roles
 (
     user_id UUID REFERENCES users (id) ON DELETE CASCADE,
