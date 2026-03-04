@@ -112,6 +112,13 @@ public class AuthController {
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 
+    @Operation(
+            summary = "Request password reset",
+            description = "Sends a password reset link to the provided email address if the account exists. For privacy reasons, always returns a success message."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Request processed")
+    })
     @PostMapping("/reset-password")
     public ResponseEntity<ResultHandler<String>> resetPassword(@RequestParam String email)
     {
@@ -119,6 +126,14 @@ public class AuthController {
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 
+    @Operation(
+            summary = "Set new password",
+            description = "Updates the user's password using the reset token received via email."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Password updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid token or password mismatch")
+    })
     @PostMapping("/set-password")
     public ResponseEntity<ResultHandler<String>> setNewPassword(@RequestBody ResetPasswordRequest request)
     {
