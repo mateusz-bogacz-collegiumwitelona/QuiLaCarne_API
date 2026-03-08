@@ -6,6 +6,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "dishes")
 @Getter @Setter
@@ -20,6 +23,11 @@ public class Dishes extends BaseNamedEntity {
     @Column(name = "unavailable_reason", columnDefinition = "TEXT")
     private String unavailableReason;
 
-    @ManyToMany(mappedBy = "dishes")
-    private java.util.Set<Ingredients> ingredients = new java.util.HashSet<>();
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "x_dish_composition",
+            joinColumns = @JoinColumn(name = "dish_id"),
+            inverseJoinColumns = @JoinColumn(name = "ingredient_id")
+    )
+    private Set<Ingredients> ingredients = new HashSet<>();
 }

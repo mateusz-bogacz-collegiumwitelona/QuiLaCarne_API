@@ -14,4 +14,8 @@ public abstract class BaseTranslatedEntity extends BaseEntity{
 
     @Column(nullable = false, unique = true)
     private String nameEn;
+
+    public String translate(String lang) {
+        return "en".equalsIgnoreCase(lang) ? nameEn : namePl;
+    }
 }
