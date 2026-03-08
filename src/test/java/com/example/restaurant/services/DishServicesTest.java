@@ -29,7 +29,7 @@ public class DishServicesTest {
 
     @Test
     void getMenu_ShouldUseCurrnetLocale_AndReturnSuccess() {
-        LocaleContextHolder.setLocale(new Locale("en"));
+        LocaleContextHolder.setLocale(Locale.ENGLISH);
         List<DishListResponse> mockData = List.of(DishListResponse
                 .builder()
                 .name("Steak")
