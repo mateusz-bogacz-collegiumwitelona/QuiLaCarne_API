@@ -1,32 +1,34 @@
 package com.example.restaurant.services;
 
-import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.repository.interfaces.IDishRepository;
-import com.example.restaurant.services.interfaces.IDishServices;
+import com.example.restaurant.repository.interfaces.ITableRespository;
+import com.example.restaurant.services.interfaces.ITableServices;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.context.i18n.LocaleContextHolder;
-import java.util.List;
 
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class DishServices implements IDishServices {
-    private final IDishRepository _dishRepo;
+public class TableServices implements ITableServices {
+    private final ITableRespository _tableRepo;
 
     @Override
-    public ResultHandler<List<DishListResponse>> getMenu() {
+    public ResultHandler<List<TableListResponse>> getTables()
+    {
         try {
             String lang = LocaleContextHolder.getLocale().getLanguage();
 
-            var result = _dishRepo.findAllDishes(lang);
+            var result = _tableRepo.findAllTables(lang);
 
             return ResultHandler.success(
-                    "Menu retrived",
+                    "Tables retrived",
                     HttpStatus.OK.value(),
-                    result);
+                    result
+            );
         }
         catch (Exception ex) {
             return ResultHandler.failure(

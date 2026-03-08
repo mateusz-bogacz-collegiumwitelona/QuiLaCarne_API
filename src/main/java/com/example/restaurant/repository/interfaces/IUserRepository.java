@@ -2,7 +2,6 @@ package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.dto.domain.UserMinimalDTO;
 import com.example.restaurant.dto.request.RegisterRequest;
-import com.example.restaurant.models.Users;
 
 import java.util.Optional;
 
