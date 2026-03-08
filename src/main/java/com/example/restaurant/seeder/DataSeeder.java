@@ -36,6 +36,7 @@ public class DataSeeder implements CommandLineRunner {
     private final IJpaDishRepository _jpaDishRepo;
     private final IJpaIngredientsRepository _jpaIngredientsRepo;
     private final PasswordEncoder _passwordEncoder;
+    private final IJpaTableRepository _jpaTableRepo;
 
     @Override
     @Transactional
@@ -96,6 +97,7 @@ public class DataSeeder implements CommandLineRunner {
         ));
 
         createMenu();
+        createTables();
 
         createAccount("client", "ROLE_CLIENT", "Client123!");
         createAccount("admin", "ROLE_MANAGER", "Admin123!");
@@ -152,12 +154,11 @@ public class DataSeeder implements CommandLineRunner {
         log.info("User created: {} with role: {}", name, roleName);
     }
 
-    private void createMenu()
-    {
-        if (_jpaDishRepo.count() > 0 ) return;
+    private void createMenu() {
+        if (_jpaDishRepo.count() > 0) return;
 
         Allergens gluten = _jpaAllergensRepo.findByToken("GLUTEN").orElseThrow();
-        Allergens lactose  = _jpaAllergensRepo.findByToken("LACTOSE").orElseThrow();
+        Allergens lactose = _jpaAllergensRepo.findByToken("LACTOSE").orElseThrow();
         Allergens nuts = _jpaAllergensRepo.findByToken("NUTS").orElseThrow();
 
         Ingredients beef = createIngredient("Wołowina Chianina", "Chianina Beef", "beef-chianina", Set.of());
@@ -194,5 +195,27 @@ public class DataSeeder implements CommandLineRunner {
         ing.setToken(token);
         ing.setAllergens(allergens);
         return _jpaIngredientsRepo.save(ing);
+    }
+
+    private void createTables() {
+        if (_jpaTableRepo.count() > 0) return;
+
+        TableStatus availableStatus = _jpaTableStatusRepo.findByToken("AVAILABLE")
+                .orElseThrow(() -> new RuntimeException("Status AVAILABLE not found"));
+
+        createSingleTable(1, 2, availableStatus);
+        createSingleTable(2, 4, availableStatus);
+        createSingleTable(3, 6, availableStatus);
+
+        log.info("Seed: 3 restaurant table create");
+    }
+
+    private void createSingleTable(int number, int capacity, TableStatus status) {
+        RestaurantTables table = new RestaurantTables();
+        table.setTableNumber(number);
+        table.setCapacity(capacity);
+
+        table.setTableStatus(Set.of(status));
+        _jpaTableRepo.save(table);
     }
 }
