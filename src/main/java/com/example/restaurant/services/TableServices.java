@@ -21,11 +21,14 @@ public class TableServices implements ITableServices {
     public ResultHandler<List<TableListResponse>> getTables(OffsetDateTime startTime, OffsetDateTime endTime)
     {
         try {
-            if (startTime.isAfter(endTime) || startTime.isEqual(endTime))
-                return ResultHandler.failure(
-                        "Start time must be before end time",
-                        HttpStatus.BAD_REQUEST.value()
-                );
+            if (startTime != null && endTime != null) {
+                if (startTime.isAfter(endTime) || startTime.isEqual(endTime)) {
+                    return ResultHandler.failure(
+                            "Start time must be before end time",
+                            HttpStatus.BAD_REQUEST.value()
+                    );
+                }
+            }
 
             String lang = LocaleContextHolder.getLocale().getLanguage();
 

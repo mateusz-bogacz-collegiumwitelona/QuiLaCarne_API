@@ -33,7 +33,7 @@ public class TableRespository implements ITableRespository {
         for (RestaurantTables table : tables) {
             String statusName = "UNKNOWN";
 
-            if (table.getTableStatus() != null && table.getTableStatus().isEmpty()) {
+            if (table.getTableStatus() != null && !table.getTableStatus().isEmpty()) {
                 var status = table.getTableStatus().iterator().next();
                 statusName = "pl".equalsIgnoreCase(lang) ? status.getNamePl() : status.getNameEn();
             }

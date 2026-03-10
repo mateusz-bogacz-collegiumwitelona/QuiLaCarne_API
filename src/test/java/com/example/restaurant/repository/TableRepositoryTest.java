@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -27,7 +28,7 @@ public class TableRepositoryTest {
     @Test
     void findAllTables_ShouldMapEntityToDto_WithTranslation() {
         TableStatus mockStatus = mock(TableStatus.class);
-        when(mockStatus.translate("pl")).thenReturn("Wolny");
+        when(mockStatus.getNamePl()).thenReturn("Wolny");
 
         RestaurantTables mockTable = new RestaurantTables();
         mockTable.setTableNumber(100);
@@ -37,15 +38,15 @@ public class TableRepositoryTest {
 
         when(_jpaTableRepo.findAll()).thenReturn(List.of(mockTable));
 
-        var result = _tableRepo.findAllTables("pl");
+        var result = _tableRepo.findAllTables("pl", null, null);
 
         assertEquals(1, result.size());
         var dto = result.get(0);
         assertEquals(TestConstants.FAKE_TOKEN, dto.getToken());
-        assertEquals(100, dto.getTableNuber());
+        assertEquals(100, dto.getTableNumber());
         assertEquals("Wolny", dto.getStatus());
 
-        verify(mockStatus).translate("pl");
+        verify(mockStatus).getNamePl();
     }
 
     @Test
@@ -55,8 +56,30 @@ public class TableRepositoryTest {
 
         when(_jpaTableRepo.findAll()).thenReturn(List.of(mockTable));
 
-        var result = _tableRepo.findAllTables("pl");
+        var result = _tableRepo.findAllTables("pl", null, null);
 
         assertEquals("UNKNOWN", result.get(0).getStatus());
+    }
+
+    @Test
+    void findAllTables_ShouldReturnAvailableStatus_WhenCheckingAvailability() {
+        RestaurantTables mockTable = new RestaurantTables();
+        mockTable.setTableNumber(101);
+        mockTable.setCapacity(4);
+        mockTable.setToken(TestConstants.FAKE_TOKEN);
+        mockTable.setTableStatus(Set.of());
+
+        OffsetDateTime startTime = OffsetDateTime.now();
+        OffsetDateTime endTime = startTime.plusHours(2);
+
+        when(_jpaTableRepo.findAvailableTablesInTimeframe(startTime, endTime)).thenReturn(List.of(mockTable));
+
+        var result = _tableRepo.findAllTables("pl", startTime, endTime);
+
+        assertEquals(1, result.size());
+        assertEquals("Wolny", result.get(0).getStatus());
+
+        verify(_jpaTableRepo).findAvailableTablesInTimeframe(startTime, endTime);
+        verify(_jpaTableRepo, never()).findAll();
     }
 }
