@@ -11,11 +11,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
@@ -25,8 +28,8 @@ public class TableController {
     private final ITableServices _tableServices;
 
     @Operation(
-            summary = "Get full list of restaurant tables",
-            description = "Returns a list of all tables in restaurant. " +
+            summary = "Get full list of restaurant tables or check availability",
+            description = "Returns a list of tables. If startTime and endTime are provided, it filters out tables that are reserved or unavailable in that timeframe. " +
                     "The names of table status are translated based on the 'Accept-Language' header."
     )
     @Parameter(
@@ -45,9 +48,18 @@ public class TableController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping
-    public ResponseEntity<ResultHandler<List<TableListResponse>>> getTables() {
-        var result = _tableServices.getTables();
+    public ResponseEntity<ResultHandler<List<TableListResponse>>> getTables(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @Parameter(description = "Start time for availability check (ISO 8601, np. 2026-03-10T18:00:00Z)")
+            OffsetDateTime startTime,
 
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @Parameter(description = "End time for availability check (ISO 8601, np. 2026-03-10T20:00:00Z)")
+            OffsetDateTime endTime
+    ) {
+        var result = _tableServices.getTables(startTime, endTime);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 }

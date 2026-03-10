@@ -9,6 +9,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -17,12 +18,18 @@ public class TableServices implements ITableServices {
     private final ITableRespository _tableRepo;
 
     @Override
-    public ResultHandler<List<TableListResponse>> getTables()
+    public ResultHandler<List<TableListResponse>> getTables(OffsetDateTime startTime, OffsetDateTime endTime)
     {
         try {
+            if (startTime.isAfter(endTime) || startTime.isEqual(endTime))
+                return ResultHandler.failure(
+                        "Start time must be before end time",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
             String lang = LocaleContextHolder.getLocale().getLanguage();
 
-            var result = _tableRepo.findAllTables(lang);
+            var result = _tableRepo.findAllTables(lang, startTime, endTime);
 
             return ResultHandler.success(
                     "Tables retrived",

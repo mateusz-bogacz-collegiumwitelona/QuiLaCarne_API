@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 @Builder
 public class TableListResponse {
     private String token;
-    private int tableNuber;
+    private int tableNumber;
     private int capacity;
     private String status;
     private OffsetDateTime updatedAt;
