@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.helpers.PagedResultWrapper;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.services.interfaces.IDishServices;
@@ -10,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.context.i18n.LocaleContextHolder;
-import java.util.List;
 
 
 @Service
@@ -19,7 +19,7 @@ public class DishServices implements IDishServices {
     private final IDishRepository _dishRepo;
 
     @Override
-    public ResultHandler<List<DishListResponse>> getMenu(DishFilterRequest request, PaggedRequest pagged) {
+    public ResultHandler<PagedResultWrapper<DishListResponse>> getMenu(DishFilterRequest request, PaggedRequest pagged) {
         try {
             String lang = LocaleContextHolder.getLocale().getLanguage();
 

@@ -3,6 +3,7 @@ package com.example.restaurant.repository;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.helpers.PagedResultWrapper;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.repository.interfaces.IDishRepository;
@@ -13,8 +14,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 @RequiredArgsConstructor
 public class DishRepository implements IDishRepository {
@@ -22,7 +21,7 @@ public class DishRepository implements IDishRepository {
     private final DishMapper _dishMapper;
 
     @Override
-    public List<DishListResponse> findAllDishes(String lang, DishFilterRequest request, PaggedRequest pagged) {
+    public PagedResultWrapper<DishListResponse> findAllDishes(String lang, DishFilterRequest request, PaggedRequest pagged) {
         Pageable pageable = PageRequest.of(pagged.getPage() - 1, pagged.getSize());
         Page<Dishes> dishPage;
 
@@ -33,6 +32,9 @@ public class DishRepository implements IDishRepository {
         } else {
             dishPage = _jpaDishRepo.findAll(pageable);
         }
-        return dishPage.map(dish -> _dishMapper.toDishListResponse(dish, lang)).getContent();
+
+        Page<DishListResponse> dtoPage =  dishPage.map(dish -> _dishMapper.toDishListResponse(dish, lang));
+
+        return new PagedResultWrapper<>(dtoPage);
     }
 }
