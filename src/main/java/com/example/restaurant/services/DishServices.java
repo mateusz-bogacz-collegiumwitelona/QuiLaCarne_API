@@ -1,5 +1,7 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.dto.request.DishFilterRequest;
+import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IDishRepository;
@@ -17,11 +19,11 @@ public class DishServices implements IDishServices {
     private final IDishRepository _dishRepo;
 
     @Override
-    public ResultHandler<List<DishListResponse>> getMenu() {
+    public ResultHandler<List<DishListResponse>> getMenu(DishFilterRequest request, PaggedRequest pagged) {
         try {
             String lang = LocaleContextHolder.getLocale().getLanguage();
 
-            var result = _dishRepo.findAllDishes(lang);
+            var result = _dishRepo.findAllDishes(lang, request, pagged);
 
             return ResultHandler.success(
                     "Menu retrived",
