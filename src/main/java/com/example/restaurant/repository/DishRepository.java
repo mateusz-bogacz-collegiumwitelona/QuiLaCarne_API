@@ -3,7 +3,7 @@ package com.example.restaurant.repository;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
-import com.example.restaurant.helpers.PagedResultWrapper;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.repository.interfaces.IDishRepository;
@@ -21,7 +21,7 @@ public class DishRepository implements IDishRepository {
     private final DishMapper _dishMapper;
 
     @Override
-    public PagedResultWrapper<DishListResponse> findAllDishes(String lang, DishFilterRequest request, PaggedRequest pagged) {
+    public PagedResult<DishListResponse> findAllDishes(String lang, DishFilterRequest request, PaggedRequest pagged) {
         Pageable pageable = PageRequest.of(pagged.getPage() - 1, pagged.getSize());
         Page<Dishes> dishPage;
 
@@ -35,6 +35,6 @@ public class DishRepository implements IDishRepository {
 
         Page<DishListResponse> dtoPage =  dishPage.map(dish -> _dishMapper.toDishListResponse(dish, lang));
 
-        return new PagedResultWrapper<>(dtoPage);
+        return new PagedResult<>(dtoPage);
     }
 }

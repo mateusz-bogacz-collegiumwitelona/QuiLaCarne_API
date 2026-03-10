@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 @Data
-public class PagedResultWrapper<T> {
+public class PagedResult<T> {
     private List<T> items;
     private int pageNumber;
     private int pageSize;
@@ -15,7 +15,7 @@ public class PagedResultWrapper<T> {
     private boolean hasPreviousPage;
     private boolean hasNextPage;
 
-    public PagedResultWrapper(Page<T> page) {
+    public PagedResult(Page<T> page) {
         this.items = page.getContent();
         this.pageNumber = page.getNumber() + 1;
         this.pageSize = page.getSize();

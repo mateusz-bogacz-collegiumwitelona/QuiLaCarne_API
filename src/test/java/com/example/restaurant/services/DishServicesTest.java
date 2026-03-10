@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
@@ -36,22 +40,31 @@ public class DishServicesTest {
         DishFilterRequest request = new DishFilterRequest();
         PaggedRequest pagged = new PaggedRequest();
 
-        List<DishListResponse> mockData = List.of(DishListResponse
+        DishListResponse dishResponse = DishListResponse
                 .builder()
                 .name("Steak")
-                .build()
+                .build();
+
+        Page<DishListResponse> mockPage = new PageImpl<>(
+                List.of(dishResponse),
+                PageRequest.of(0, 1),
+                1
         );
 
-        when(_dishRepo.findAllDishes("en", request, pagged)).thenReturn(mockData);
+        PagedResult<DishListResponse> mockPageResult = new PagedResult<>(mockPage);
 
-        ResultHandler<List<DishListResponse>> result = _dishServices.getMenu(request, pagged);
+        when(_dishRepo.findAllDishes("en", request, pagged)).thenReturn(mockPageResult);
+
+        ResultHandler<PagedResult<DishListResponse>> result = _dishServices.getMenu(request, pagged);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertEquals(1, result.getData().size());
-        assertEquals("Steak", result.getData().get(0).getName());
-        verify(_dishRepo).findAllDishes("en", request, pagged);
-        LocaleContextHolder.resetLocaleContext();
 
+        assertEquals(1, result.getData().getItems().size());
+        assertEquals("Steak", result.getData().getItems().get(0).getName());
+        assertEquals(1, result.getData().getTotalPages());
+
+        verify(_dishRepo).findAllDishes("en", request, pagged);
+        LocaleContextHolder.setLocale(Locale.ENGLISH);
     }
 }

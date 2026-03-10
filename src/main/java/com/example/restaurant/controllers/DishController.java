@@ -3,7 +3,7 @@ package com.example.restaurant.controllers;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
-import com.example.restaurant.helpers.PagedResultWrapper;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IDishServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,7 +46,7 @@ public class DishController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping
-    public ResponseEntity<ResultHandler<PagedResultWrapper<DishListResponse>>> getMenu(
+    public ResponseEntity<ResultHandler<PagedResult<DishListResponse>>> getMenu(
             @ParameterObject @Valid @ModelAttribute PaggedRequest pagged,
             @ParameterObject @ModelAttribute DishFilterRequest request
     )

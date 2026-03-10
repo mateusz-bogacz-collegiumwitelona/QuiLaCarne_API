@@ -3,10 +3,8 @@ package com.example.restaurant.repository.interfaces;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
-import com.example.restaurant.helpers.PagedResultWrapper;
-
-import java.util.List;
+import com.example.restaurant.helpers.PagedResult;
 
 public interface IDishRepository {
-    public PagedResultWrapper<DishListResponse> findAllDishes(String lang, DishFilterRequest request, PaggedRequest pagged);
+    public PagedResult<DishListResponse> findAllDishes(String lang, DishFilterRequest request, PaggedRequest pagged);
 }

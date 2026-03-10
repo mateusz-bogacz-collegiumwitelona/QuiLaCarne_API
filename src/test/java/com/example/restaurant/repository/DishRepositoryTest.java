@@ -4,6 +4,7 @@ package com.example.restaurant.repository;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.repository.interfaces.jpa.IJpaDishRepository;
@@ -46,19 +47,22 @@ public class DishRepositoryTest {
                 .build();
 
         DishFilterRequest filterRequest = new DishFilterRequest();
-
         PaggedRequest paggedRequest = new PaggedRequest();
+
         Pageable expectedPageable = PageRequest.of(0, 10);
 
-        Page<Dishes> mockPage = new PageImpl<>(List.of(dishes));
+        Page<Dishes> mockPage = new PageImpl<>(List.of(dishes), expectedPageable, 1);
 
         when(_jpaDishRepo.findAll(expectedPageable)).thenReturn(mockPage);
         when(_dishMapper.toDishListResponse(any(Dishes.class), eq("pl"))).thenReturn(dishResponse);
 
-        List<DishListResponse> result = _dishRepo.findAllDishes("pl", filterRequest, paggedRequest);
+        PagedResult<DishListResponse> result = _dishRepo.findAllDishes("pl", filterRequest, paggedRequest);
 
-        assertEquals(1, result.size());
-        assertEquals("Pizza", result.get(0).getName());
+        assertEquals(1, result.getItems().size());
+        assertEquals("Pizza", result.getItems().get(0).getName());
+        assertEquals(1, result.getPageNumber());
+        assertEquals(10, result.getPageSize());
+        assertEquals(1, result.getTotalPages());
 
         verify(_jpaDishRepo, times(1)).findAll(expectedPageable);
         verify(_dishMapper, times(1)).toDishListResponse(any(Dishes.class), eq("pl"));
@@ -83,17 +87,19 @@ public class DishRepositoryTest {
 
         Pageable expectedPageable = PageRequest.of(1, 5);
 
-        Page<Dishes> mockPage = new PageImpl<>(List.of(dishes));
+        Page<Dishes> mockPage = new PageImpl<>(List.of(dishes), expectedPageable, 10);
 
         when(_jpaDishRepo.findWithoutAllergens(List.of("GLUTEN"), expectedPageable)).thenReturn(mockPage);
         when(_dishMapper.toDishListResponse(any(Dishes.class), eq("pl"))).thenReturn(dishList);
 
-        List<DishListResponse> result = _dishRepo.findAllDishes("pl", filter, pagged);
+        PagedResult<DishListResponse> result = _dishRepo.findAllDishes("pl", filter, pagged);
 
-        assertEquals(1, result.size());
-        assertEquals("Salad", result.get(0).getName());
+        assertEquals(1, result.getItems().size());
+        assertEquals("Salad", result.getItems().get(0).getName());
+        assertEquals(2, result.getPageNumber());
+        assertEquals(5, result.getPageSize());
+
         verify(_jpaDishRepo, times(1)).findWithoutAllergens(List.of("GLUTEN"), expectedPageable);
-
         verify(_jpaDishRepo, never()).findAll(any(Pageable.class));
         verify(_dishMapper, times(1)).toDishListResponse(any(Dishes.class), eq("pl"));
     }
