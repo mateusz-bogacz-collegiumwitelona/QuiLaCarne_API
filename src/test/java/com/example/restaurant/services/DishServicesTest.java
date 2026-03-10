@@ -1,5 +1,7 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.dto.request.DishFilterRequest;
+import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IDishRepository;
@@ -30,21 +32,25 @@ public class DishServicesTest {
     @Test
     void getMenu_ShouldUseCurrnetLocale_AndReturnSuccess() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
+
+        DishFilterRequest request = new DishFilterRequest();
+        PaggedRequest pagged = new PaggedRequest();
+
         List<DishListResponse> mockData = List.of(DishListResponse
                 .builder()
                 .name("Steak")
                 .build()
         );
 
-        when(_dishRepo.findAllDishes("en")).thenReturn(mockData);
+        when(_dishRepo.findAllDishes("en", request, pagged)).thenReturn(mockData);
 
-        ResultHandler<List<DishListResponse>> result = _dishServices.getMenu();
+        ResultHandler<List<DishListResponse>> result = _dishServices.getMenu(request, pagged);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertEquals(1, result.getData().size());
         assertEquals("Steak", result.getData().get(0).getName());
-        verify(_dishRepo).findAllDishes("en");
+        verify(_dishRepo).findAllDishes("en", request, pagged);
         LocaleContextHolder.resetLocaleContext();
 
     }
