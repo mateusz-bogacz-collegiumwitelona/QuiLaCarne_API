@@ -4,6 +4,7 @@ import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
+import com.example.restaurant.repository.interfaces.jpa.IJpaTableStatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -15,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TableRespository implements ITableRespository {
     private final IJpaTableRepository _jpaTableRepo;
+    private final IJpaTableStatusRepository _jpaTableStatusRepo;
 
     @Override
     public List<TableListResponse> findAllTables(String lang, OffsetDateTime startTime, OffsetDateTime endTime) {
@@ -52,5 +54,26 @@ public class TableRespository implements ITableRespository {
         }
 
         return responses;
+    }
+
+    @Override
+    public boolean isTableExist(String token) {
+        RestaurantTables table = _jpaTableRepo.findByToken(token);
+
+        if (table == null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public boolean isTableAvalaible(String token) {
+        RestaurantTables table = _jpaTableRepo.findByToken(token);
+
+        if (table == null || table.getTableStatus() == null || table.getTableStatus().isEmpty())
+            return false;
+
+        return table.getTableStatus().stream()
+                .anyMatch(status -> "AVAILABLE".equals(status.getToken()));
     }
 }

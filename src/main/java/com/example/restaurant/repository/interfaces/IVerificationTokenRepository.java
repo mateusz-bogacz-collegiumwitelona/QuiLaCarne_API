@@ -3,7 +3,7 @@ package com.example.restaurant.repository.interfaces;
 import com.example.restaurant.enums.TokenTypeEnum;
 
 public interface IVerificationTokenRepository {
-    public String createToken(String userToken, TokenTypeEnum type, int expiryMinutes);
-    public boolean activeUser(String token);
-    public boolean resetUserPassowrd(String token, String newPassword);
+    String createToken(String userToken, TokenTypeEnum type, int expiryMinutes);
+    boolean activeUser(String token);
+    boolean resetUserPassowrd(String token, String newPassword);
 }

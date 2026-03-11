@@ -1,6 +1,6 @@
 package com.example.restaurant.repository;
 
-import com.example.restaurant.dto.domain.UserMinimalDTO;
+import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
@@ -9,7 +9,6 @@ import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
@@ -46,10 +45,10 @@ public class UserRepository implements IUserRepository {
     }
 
     @Override
-    public Optional<UserMinimalDTO> findMinimalByEmail(String email)
+    public Optional<UserDomain> findMinimalByEmail(String email)
     {
         return _jpaUserRepository.findByEmail(email)
-                .map(u -> new  UserMinimalDTO(
+                .map(u -> new UserDomain(
                         u.getToken(),
                         u.getUsername(),
                         u.getEmail()

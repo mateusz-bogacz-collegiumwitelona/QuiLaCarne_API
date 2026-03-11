@@ -14,6 +14,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class DishRepository implements IDishRepository {
@@ -36,5 +38,12 @@ public class DishRepository implements IDishRepository {
         Page<DishListResponse> dtoPage =  dishPage.map(dish -> _dishMapper.toDishListResponse(dish, lang));
 
         return new PagedResult<>(dtoPage);
+    }
+
+    @Override
+    public boolean isDishExist(String token) {
+        Optional<Dishes> dish = _jpaDishRepo.findByToken(token);
+
+        return dish.isPresent();
     }
 }

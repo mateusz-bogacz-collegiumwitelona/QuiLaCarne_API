@@ -1,6 +1,6 @@
 package com.example.restaurant.services;
 
-import com.example.restaurant.dto.domain.UserMinimalDTO;
+import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
@@ -138,7 +138,7 @@ public class AuthServicesTest {
     @Test
     void resetPassword_ShouldSendEmail_WhenUserExists() {
         String email = "test@test.pl";
-        UserMinimalDTO userDto = new UserMinimalDTO("fake-token", "testuser", email);
+        UserDomain userDto = new UserDomain("fake-token", "testuser", email);
 
         when(_userRepository.findMinimalByEmail(email)).thenReturn(Optional.of(userDto));
         when(_verificationTokenRepository

@@ -7,5 +7,5 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface ITableServices {
-    public ResultHandler<List<TableListResponse>> getTables(OffsetDateTime startTime, OffsetDateTime endTime);
+    ResultHandler<List<TableListResponse>> getTables(OffsetDateTime startTime, OffsetDateTime endTime);
 }

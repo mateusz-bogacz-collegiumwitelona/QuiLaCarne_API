@@ -6,5 +6,6 @@ import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
 
 public interface IDishRepository {
-    public PagedResult<DishListResponse> findAllDishes(String lang, DishFilterRequest request, PaggedRequest pagged);
+    PagedResult<DishListResponse> findAllDishes(String lang, DishFilterRequest request, PaggedRequest pagged);
+    boolean isDishExist(String token);
 }

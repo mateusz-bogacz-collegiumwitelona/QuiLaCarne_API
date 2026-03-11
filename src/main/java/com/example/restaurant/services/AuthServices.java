@@ -1,6 +1,6 @@
 package com.example.restaurant.services;
 
-import com.example.restaurant.dto.domain.UserMinimalDTO;
+import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
@@ -163,7 +163,7 @@ public class AuthServices implements IAuthServices {
             var userOpt = _userRepository.findMinimalByEmail(email);
 
             if (userOpt.isPresent()) {
-                UserMinimalDTO userMiniml = userOpt.get();
+                UserDomain userMiniml = userOpt.get();
 
                 String resetToken = _verificationTokenRepository.createToken(
                         userMiniml.token(),

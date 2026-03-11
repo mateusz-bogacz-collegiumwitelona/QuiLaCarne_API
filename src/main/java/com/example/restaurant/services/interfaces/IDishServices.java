@@ -7,5 +7,5 @@ import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 
 public interface IDishServices {
-    public ResultHandler<PagedResult<DishListResponse>> getMenu(DishFilterRequest request, PaggedRequest pagged);
+    ResultHandler<PagedResult<DishListResponse>> getMenu(DishFilterRequest request, PaggedRequest pagged);
 }

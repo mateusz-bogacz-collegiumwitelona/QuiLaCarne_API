@@ -22,4 +22,6 @@ public interface IJpaDishRepository extends IJpaNamedEntityRepository<Dishes> {
             @Param("excludedAllergens") List<String> excludedAllergens,
             Pageable pagable
     );
+
+    List<Dishes> findAllByTokenIn(List<String> tokens);
 }

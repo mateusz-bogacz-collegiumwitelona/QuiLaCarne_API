@@ -6,5 +6,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface ITableRespository {
-    public List<TableListResponse> findAllTables(String lang, OffsetDateTime startTime, OffsetDateTime endTime);
+    List<TableListResponse> findAllTables(String lang, OffsetDateTime startTime, OffsetDateTime endTime);
+    boolean isTableExist(String token);
+    boolean isTableAvalaible(String token);
 }

@@ -19,7 +19,7 @@ public class DishServices implements IDishServices {
     private final IDishRepository _dishRepo;
 
     @Override
-    public ResultHandler<PagedResult<DishListResponse>> getMenu(DishFilterRequest request, PaggedRequest pagged) {
+    public ResultHandler<PagedResult<DishListResponse>> getMenu (DishFilterRequest request, PaggedRequest pagged) {
         try {
             String lang = LocaleContextHolder.getLocale().getLanguage();
 

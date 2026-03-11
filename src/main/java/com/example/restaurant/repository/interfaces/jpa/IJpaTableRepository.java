@@ -26,4 +26,6 @@ public interface IJpaTableRepository extends JpaRepository<RestaurantTables, UUI
             @Param("startTime") OffsetDateTime startTime,
             @Param("endTime") OffsetDateTime endTime
             );
+
+    RestaurantTables findByToken(String token);
 }
