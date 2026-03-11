@@ -37,6 +37,9 @@ public class TableServicesTest {
     public void getTables_ShouldReturnSuccess_WithCorrectLanguage() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
 
+        OffsetDateTime startTime = OffsetDateTime.now().plusHours(1);
+        OffsetDateTime endTime = startTime.plusHours(2);
+
         List<TableListResponse> mockData = List.of(
                 TableListResponse.builder()
                         .token(TestConstants.FAKE_TOKEN)
@@ -44,16 +47,16 @@ public class TableServicesTest {
                         .build()
         );
 
-        when(_tableRepo.findAllTables("en", null, null)).thenReturn(mockData);
+        when(_tableRepo.findAllTables("en", startTime, endTime)).thenReturn(mockData);
 
-        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(null, null);
+        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(startTime, endTime);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertEquals(1, result.getData().size());
         assertEquals("Available", result.getData().get(0).getStatus());
 
-        verify(_tableRepo, times(1)).findAllTables("en", null, null);
+        verify(_tableRepo, times(1)).findAllTables("en", startTime, endTime);
 
         LocaleContextHolder.resetLocaleContext();
     }
@@ -75,7 +78,7 @@ public class TableServicesTest {
     @Test
     public void getTables_ShouldReturnSuccess_WhenValidDatesProvided() {
         LocaleContextHolder.setLocale(Locale.forLanguageTag("pl"));
-        OffsetDateTime startTime = OffsetDateTime.now();
+        OffsetDateTime startTime = OffsetDateTime.now().plusHours(1);
         OffsetDateTime endTime = startTime.plusHours(2);
 
         List<TableListResponse> mockData = List.of(

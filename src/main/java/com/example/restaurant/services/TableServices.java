@@ -22,7 +22,7 @@ public class TableServices implements ITableServices {
     {
         try {
             if (startTime == null || endTime == null)
-            return ResultHandler.failure(
+                return ResultHandler.failure(
                     "Dates cannot be null",
                     HttpStatus.BAD_REQUEST.value()
             );
