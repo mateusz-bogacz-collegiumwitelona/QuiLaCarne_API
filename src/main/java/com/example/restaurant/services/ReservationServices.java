@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -31,9 +33,39 @@ public class ReservationServices implements IReservationServices {
                         HttpStatus.BAD_REQUEST.value()
                 );
 
-            if (request.getStartTime().isAfter(request.getEndTime()) || request.getStartTime().isEqual(request.getEndTime()))
+            OffsetDateTime now = OffsetDateTime.now();
+
+            if (request.getStartTime().isAfter(request.getEndTime()) ||
+                    request.getStartTime().isEqual(request.getEndTime())
+            )
                 return ResultHandler.failure(
                         "Start time must be before end time",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+            if (request.getStartTime().isBefore(now.plusMinutes(30)))
+                return ResultHandler.failure(
+                        "Reservations must be made at least 30 minutes in advance",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+            if (request.getStartTime().isAfter(now.plusDays(60)))
+                return ResultHandler.failure(
+                        "Reservations can only be made up to 60 days in advance",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+
+            Duration duration = Duration.between(request.getStartTime(), request.getEndTime());
+            if (duration.toMinutes() < 30)
+                return ResultHandler.failure(
+                        "Reservation must be at least 30 minutes long",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+            if (duration.toHours() > 3)
+                return ResultHandler.failure(
+                        "Reservation cannot exceed 3 hours",
                         HttpStatus.BAD_REQUEST.value()
                 );
 
