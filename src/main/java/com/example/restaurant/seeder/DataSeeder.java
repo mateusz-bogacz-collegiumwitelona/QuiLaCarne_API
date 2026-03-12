@@ -1,7 +1,10 @@
 package com.example.restaurant.seeder;
 
 import com.example.restaurant.helpers.TranslatedData;
-import com.example.restaurant.models.*;
+import com.example.restaurant.models.Dishes;
+import com.example.restaurant.models.Ingredients;
+import com.example.restaurant.models.RestaurantTables;
+import com.example.restaurant.models.Users;
 import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.*;

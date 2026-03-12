@@ -64,8 +64,7 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/login")
-    public ResponseEntity<ResultHandler<AuthResponse>> login(@RequestBody LoginRequest request)
-    {
+    public ResponseEntity<ResultHandler<AuthResponse>> login(@RequestBody LoginRequest request) {
         var result = _authServices.authenticate(request);
 
         return ResponseEntity.status(result.getStatusCode()).body(result);
@@ -85,8 +84,7 @@ public class AuthController {
     public ResponseEntity<ResultHandler<String>> register(
             @RequestBody
             @Valid
-            RegisterRequest request)
-    {
+            RegisterRequest request) {
         var result = _authServices.register(request);
 
         return ResponseEntity.status(result.getStatusCode()).body(result);
@@ -106,8 +104,7 @@ public class AuthController {
             }
     )
     @GetMapping("/register-confirm")
-    public ResponseEntity<ResultHandler<String>> registerConfirm(@RequestParam String token)
-    {
+    public ResponseEntity<ResultHandler<String>> registerConfirm(@RequestParam String token) {
         var result = _authServices.registerConfirm(token);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
@@ -120,8 +117,7 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Request processed")
     })
     @PostMapping("/reset-password")
-    public ResponseEntity<ResultHandler<String>> resetPassword(@RequestParam String email)
-    {
+    public ResponseEntity<ResultHandler<String>> resetPassword(@RequestParam String email) {
         var result = _authServices.resetPassowrd(email);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
@@ -135,8 +131,7 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid token or password mismatch")
     })
     @PostMapping("/set-password")
-    public ResponseEntity<ResultHandler<String>> setNewPassword(@RequestBody ResetPasswordRequest request)
-    {
+    public ResponseEntity<ResultHandler<String>> setNewPassword(@RequestBody ResetPasswordRequest request) {
         var result = _authServices.setNewPassword(request);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }

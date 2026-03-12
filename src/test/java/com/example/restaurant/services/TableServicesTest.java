@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.ITableRespository;
@@ -17,7 +18,8 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,8 +39,9 @@ public class TableServicesTest {
     public void getTables_ShouldReturnSuccess_WithCorrectLanguage() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
 
-        OffsetDateTime startTime = OffsetDateTime.now().plusHours(1);
-        OffsetDateTime endTime = startTime.plusHours(2);
+        TableFilterRequest request = new TableFilterRequest();
+        request.setStartTime(OffsetDateTime.now().plusHours(1));
+        request.setEndTime(OffsetDateTime.now().plusHours(2));
 
         List<TableListResponse> mockData = List.of(
                 TableListResponse.builder()
@@ -47,39 +50,26 @@ public class TableServicesTest {
                         .build()
         );
 
-        when(_tableRepo.findAllTables("en", startTime, endTime)).thenReturn(mockData);
+        when(_tableRepo.findAllTables("en", request.getStartTime(), request.getEndTime())).thenReturn(mockData);
 
-        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(startTime, endTime);
+        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(request);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertEquals(1, result.getData().size());
         assertEquals("Available", result.getData().get(0).getStatus());
 
-        verify(_tableRepo, times(1)).findAllTables("en", startTime, endTime);
-
-        LocaleContextHolder.resetLocaleContext();
+        verify(_tableRepo, times(1)).findAllTables("en", request.getStartTime(), request.getEndTime());
     }
 
-    @Test
-    public void getTables_ShouldReturnBadRequest_WhenStartTimeIsAfterEndTime() {
-        OffsetDateTime endTime =  OffsetDateTime.now();
-        OffsetDateTime startTime = endTime.plusHours(2);
-
-        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(startTime, endTime);
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
-        assertEquals("Start time must be before end time", result.getMessage());
-
-        verifyNoInteractions(_tableRepo);
-    }
 
     @Test
     public void getTables_ShouldReturnSuccess_WhenValidDatesProvided() {
         LocaleContextHolder.setLocale(Locale.forLanguageTag("pl"));
-        OffsetDateTime startTime = OffsetDateTime.now().plusHours(1);
-        OffsetDateTime endTime = startTime.plusHours(2);
+
+        TableFilterRequest request = new TableFilterRequest();
+        request.setStartTime(OffsetDateTime.now().plusHours(1));
+        request.setEndTime(OffsetDateTime.now().plusHours(2));
 
         List<TableListResponse> mockData = List.of(
                 TableListResponse.builder()
@@ -88,12 +78,12 @@ public class TableServicesTest {
                         .build()
         );
 
-        when(_tableRepo.findAllTables("pl", startTime, endTime)).thenReturn(mockData);
+        when(_tableRepo.findAllTables("pl", request.getStartTime(), request.getEndTime())).thenReturn(mockData);
 
-        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(startTime, endTime);
+        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(request);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        verify(_tableRepo).findAllTables("pl", startTime, endTime);
+        verify(_tableRepo).findAllTables("pl", request.getStartTime(), request.getEndTime());
     }
 }

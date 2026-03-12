@@ -1,12 +1,12 @@
 package com.example.restaurant.models.lookup;
 
 import com.example.restaurant.models.Ingredients;
-import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-
 
 import java.util.HashSet;
 import java.util.Set;

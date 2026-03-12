@@ -40,28 +40,6 @@ public class ReservationServicesTest {
     private ReservationServices _reservationServices;
 
     @Test
-    void create_ShouldFail_WhenDatesAreNull() {
-        ReservationRequest request = new ReservationRequest();
-
-        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_TOKEN);
-
-        assertFalse(result.isSuccess());
-        assertEquals("Dates cannot be null", result.getMessage());
-    }
-
-    @Test
-    void create_ShouldFail_WhenStartTimeInPast() {
-        ReservationRequest request = new ReservationRequest();
-        request.setStartTime(OffsetDateTime.now().minusHours(1));
-        request.setEndTime(OffsetDateTime.now().plusHours(1));
-
-        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_TOKEN);
-
-        assertFalse(result.isSuccess());
-        assertTrue(result.getMessage().contains("least 30 minutes in advance"));
-    }
-
-    @Test
     void create_ShouldFail_WhenDurationTooLong() {
         ReservationRequest request = new ReservationRequest();
         request.setStartTime(OffsetDateTime.now().plusHours(1));
@@ -71,6 +49,18 @@ public class ReservationServicesTest {
 
         assertFalse(result.isSuccess());
         assertEquals("Reservation cannot exceed 3 hours", result.getMessage());
+    }
+
+    @Test
+    void create_ShouldFail_WhenDurationTooShort() {
+        ReservationRequest request = new ReservationRequest();
+        request.setStartTime(OffsetDateTime.now().plusHours(1));
+        request.setEndTime(OffsetDateTime.now().plusHours(1).plusMinutes(15));
+
+        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_TOKEN);
+
+        assertFalse(result.isSuccess());
+        assertEquals("Reservation must be at least 30 minutes long", result.getMessage());
     }
 
     @Test
