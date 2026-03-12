@@ -27,36 +27,8 @@ public class ReservationServices implements IReservationServices {
     @Transactional
     public ResultHandler<ReservationResponse> create(ReservationRequest request, String userToken) {
         try {
-            if (request.getStartTime() == null || request.getEndTime() == null)
-                return ResultHandler.failure(
-                        "Dates cannot be null",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            OffsetDateTime now = OffsetDateTime.now();
-
-            if (request.getStartTime().isAfter(request.getEndTime()) ||
-                    request.getStartTime().isEqual(request.getEndTime())
-            )
-                return ResultHandler.failure(
-                        "Start time must be before end time",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            if (request.getStartTime().isBefore(now.plusMinutes(30)))
-                return ResultHandler.failure(
-                        "Reservations must be made at least 30 minutes in advance",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            if (request.getStartTime().isAfter(now.plusDays(60)))
-                return ResultHandler.failure(
-                        "Reservations can only be made up to 60 days in advance",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-
             Duration duration = Duration.between(request.getStartTime(), request.getEndTime());
+
             if (duration.toMinutes() < 30)
                 return ResultHandler.failure(
                         "Reservation must be at least 30 minutes long",

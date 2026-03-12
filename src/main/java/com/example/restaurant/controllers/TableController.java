@@ -1,5 +1,6 @@
 package com.example.restaurant.controllers;
 
+import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.ITableServices;
@@ -10,13 +11,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -48,18 +47,8 @@ public class TableController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping
-    public ResponseEntity<ResultHandler<List<TableListResponse>>> getTables(
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            @Parameter(description = "Start time for availability check (ISO 8601, np. 2026-03-10T18:00:00Z)")
-            OffsetDateTime startTime,
-
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            @Parameter(description = "End time for availability check (ISO 8601, np. 2026-03-10T20:00:00Z)")
-            OffsetDateTime endTime
-    ) {
-        var result = _tableServices.getTables(startTime, endTime);
+    public ResponseEntity<ResultHandler<List<TableListResponse>>> getTables(@Valid TableFilterRequest request) {
+        var result = _tableServices.getTables(request);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 }

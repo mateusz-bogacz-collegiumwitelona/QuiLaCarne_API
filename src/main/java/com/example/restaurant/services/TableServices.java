@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.ITableRespository;
@@ -18,41 +19,12 @@ public class TableServices implements ITableServices {
     private final ITableRespository _tableRepo;
 
     @Override
-    public ResultHandler<List<TableListResponse>> getTables(OffsetDateTime startTime, OffsetDateTime endTime)
+    public ResultHandler<List<TableListResponse>> getTables(TableFilterRequest request)
     {
         try {
-            if (startTime == null || endTime == null)
-                return ResultHandler.failure(
-                    "Dates cannot be null",
-                    HttpStatus.BAD_REQUEST.value()
-            );
-
-            OffsetDateTime now = OffsetDateTime.now();
-
-            if (startTime.isAfter(endTime) ||
-                    startTime.isEqual(endTime)
-            )
-                return ResultHandler.failure(
-                        "Start time must be before end time",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            if (startTime.isBefore(now.plusMinutes(30)))
-                return ResultHandler.failure(
-                        "Reservations must be made at least 30 minutes in advance",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            if (startTime.isAfter(now.plusDays(60)))
-                return ResultHandler.failure(
-                        "Reservations can only be made up to 60 days in advance",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-
             String lang = LocaleContextHolder.getLocale().getLanguage();
 
-            var result = _tableRepo.findAllTables(lang, startTime, endTime);
+            var result = _tableRepo.findAllTables(lang, request.getStartTime(), request.getEndTime());
 
             return ResultHandler.success(
                     "Tables retrived",

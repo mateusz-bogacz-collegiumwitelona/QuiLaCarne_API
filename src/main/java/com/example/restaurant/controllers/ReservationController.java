@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,7 +43,7 @@ public class ReservationController {
     })
     @PostMapping
     public ResponseEntity<ResultHandler<ReservationResponse>> create(
-            @RequestBody ReservationRequest request,
+            @RequestBody @Valid ReservationRequest request,
             @AuthenticationPrincipal(expression = "token") String userToken
     ) {
         var result = _reservationServices.create(request, userToken);
