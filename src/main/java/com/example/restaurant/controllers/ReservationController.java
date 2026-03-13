@@ -10,6 +10,7 @@ import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IReservationServices;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -56,6 +57,21 @@ public class ReservationController {
                 .body(result);
     }
 
+    @Operation(
+            summary = "Get user reservations history",
+            description = "Retrieves a paginated and filterable list of reservations made by the currently authenticated user. " +
+                    "Supports filtering by date range and status."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Reservations retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid pagination or filter parameters"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping
     public ResponseEntity<ResultHandler<PagedResult<ClientReservationResponse>>> list(
             @ParameterObject @Valid @ModelAttribute PaggedRequest pagged,
@@ -69,9 +85,25 @@ public class ReservationController {
                 .body(result);
     }
 
+    @Operation(
+            summary = "Get reservation details",
+            description = "Retrieves the full details of a specific reservation, including pre-ordered dishes and total price."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Reservation details retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "404", description = "Reservation not found or access denied"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @GetMapping("/{token}")
     public ResponseEntity<ResultHandler<ReservationDetailsResponse>> detail(
-            @PathVariable String token,
+            @Parameter(description = "Reservaton token ")
+            @PathVariable
+            String token,
             @AuthenticationPrincipal(expression = "token") String userToken
 
     ) {
