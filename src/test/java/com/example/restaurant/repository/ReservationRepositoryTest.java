@@ -5,6 +5,7 @@ import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
+import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
@@ -58,6 +59,8 @@ public class ReservationRepositoryTest {
     @Captor
     private ArgumentCaptor<Pageable> pageableCaptor;
 
+    private final String PL = "pl";
+
     @Test
     void createReservation_ShouldReturnToken_WhenDataIsValid() {
         ReservationRequest request = new ReservationRequest();
@@ -69,17 +72,17 @@ public class ReservationRepositoryTest {
         RestaurantTables table = new RestaurantTables();
         ReservationStatus status = new ReservationStatus();
 
-        when(_jpaUserRepo.findByToken(TestConstants.FAKE_TOKEN)).thenReturn(Optional.of(user));
+        when(_jpaUserRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(Optional.of(user));
         when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
         when(_jpaReservationStatusRepo.findByToken("ACTIVE")).thenReturn(Optional.of(status));
 
         when(_jpaReservationsRepo.saveAndFlush(any(Reservations.class))).thenAnswer(i -> {
             Reservations res = i.getArgument(0);
-            res.setToken("mocked-generated-token");
+            res.setToken(TestConstants.FAKE_USER_TOKEN);
             return res;
         });
 
-        String token = _reservationRepo.createReservation(request, TestConstants.FAKE_TOKEN);
+        String token = _reservationRepo.createReservation(request, TestConstants.FAKE_USER_TOKEN);
 
         assertNotNull(token);
         verify(_jpaReservationsRepo, times(1)).saveAndFlush(any(Reservations.class));
@@ -92,7 +95,7 @@ public class ReservationRepositoryTest {
         when(_jpaUserRepo.findByToken(anyString())).thenReturn(Optional.empty());
 
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                _reservationRepo.createReservation(request, "invalid-user")
+                _reservationRepo.createReservation(request, TestConstants.FAKE_USER_TOKEN)
         );
 
         assertEquals("User not found", exception.getMessage());
@@ -100,8 +103,6 @@ public class ReservationRepositoryTest {
 
     @Test
     void history_ShouldApplyPaginationAndMappingCorrectly() {
-        String userToken = "user-token-123";
-        String lang = "pl";
 
         ClientReservationRequest filter = new ClientReservationRequest();
         PaggedRequest pagged = new PaggedRequest();
@@ -109,27 +110,75 @@ public class ReservationRepositoryTest {
         pagged.setSize(5);
 
         Reservations mockEntity = new Reservations();
-        mockEntity.setToken("res-token");
+        mockEntity.setToken(TestConstants.FAKE_RESERVATION_TOKEN);
         Page<Reservations> entityPage = new PageImpl<>(List.of(mockEntity));
 
-        ClientReservationResponse mockDto = ClientReservationResponse.builder().token("res-token").build();
+        ClientReservationResponse mockDto = ClientReservationResponse.builder()
+                .token(TestConstants.FAKE_RESERVATION_TOKEN)
+                .build();
 
         when(_jpaReservationsRepo.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(entityPage);
 
-        when(_reservationMapper.toClientReservationResponse(mockEntity, lang))
+        when(_reservationMapper.toClientReservationResponse(mockEntity, PL))
                 .thenReturn(mockDto);
 
-        PagedResult<ClientReservationResponse> result = _reservationRepo.history(userToken, lang, filter, pagged);
+        PagedResult<ClientReservationResponse> result = _reservationRepo.history(
+                TestConstants.FAKE_USER_TOKEN,
+                PL,
+                filter,
+                pagged
+        );
 
         assertNotNull(result);
         assertEquals(1, result.getItems().size());
-        assertEquals("res-token", result.getItems().get(0).getToken());
+        assertEquals(TestConstants.FAKE_RESERVATION_TOKEN, result.getItems().get(0).getToken());
 
         verify(_jpaReservationsRepo).findAll(any(Specification.class), pageableCaptor.capture());
         Pageable capturedPageable = pageableCaptor.getValue();
 
         assertEquals(1, capturedPageable.getPageNumber());
         assertEquals(5, capturedPageable.getPageSize());
+    }
+
+    @Test
+    void details_ShouldReturnMappedResponse_WhenReservationExists() {
+        Reservations mockEntity = new Reservations();
+        ReservationDetailsResponse mockResponse = new ReservationDetailsResponse();
+        mockResponse.setStatus("Aktywna");
+
+        when(_jpaReservationsRepo.findByTokenAndUser_Token(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(Optional.of(mockEntity));
+
+        when(_reservationMapper.toReservationDetailsResponse(mockEntity, PL))
+                .thenReturn(mockResponse);
+
+        ReservationDetailsResponse result = _reservationRepo.details(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN,
+                PL
+        );
+
+        assertNotNull(result);
+        assertEquals("Aktywna", result.getStatus());
+    }
+
+    @Test
+    void details_ShouldThrowException_WhenReservationNotFoundOrNotOwned() {
+        when(_jpaReservationsRepo.findByTokenAndUser_Token(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> _reservationRepo.details(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN,
+                PL
+        ));
+
+        assertEquals("Reservation not found", exception.getMessage());
+        verify(_reservationMapper, never()).toReservationDetailsResponse(any(), anyString());
     }
 }

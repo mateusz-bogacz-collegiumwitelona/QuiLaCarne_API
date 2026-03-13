@@ -41,11 +41,11 @@ public class VerificationTokenRepositoryTest {
 
         when(_jpaTokenRepo
                 .findByTokenAndType(
-                        TestConstants.FAKE_TOKEN,
+                        TestConstants.FAKE_USER_TOKEN,
                         TokenTypeEnum.ACTIVATION)
         ).thenReturn(Optional.of(vt));
 
-        boolean result = _tokenRepo.activeUser(TestConstants.FAKE_TOKEN);
+        boolean result = _tokenRepo.activeUser(TestConstants.FAKE_USER_TOKEN);
 
         assertFalse(result);
         verify(_jpaUserRepo, never()).save(any());
@@ -54,23 +54,21 @@ public class VerificationTokenRepositoryTest {
     @Test
     void resetUserPassowrd_ShouldSuccessed_AndDeleteToken() {
         Users user = new Users();
-        user.setToken(TestConstants.FAKE_TOKEN);
+        user.setToken(TestConstants.FAKE_USER_TOKEN);
 
         VerificationToken vt = new VerificationToken();
         vt.setUser(user);
         vt.setExpiryDate(OffsetDateTime.now().plusMinutes(15));
 
-        when(_jpaTokenRepo.findByTokenAndType(TestConstants.FAKE_TOKEN, TokenTypeEnum.PASSWORD_RESET))
+        when(_jpaTokenRepo.findByTokenAndType(TestConstants.FAKE_USER_TOKEN, TokenTypeEnum.PASSWORD_RESET))
                 .thenReturn(Optional.of(vt));
 
-        when(_userRepo.changePassword(TestConstants.FAKE_TOKEN, TestConstants.FAKE_PASSWORD))
+        when(_userRepo.changePassword(TestConstants.FAKE_USER_TOKEN, TestConstants.FAKE_PASSWORD))
                 .thenReturn(true);
 
-        boolean result = _tokenRepo.resetUserPassowrd(TestConstants.FAKE_TOKEN, TestConstants.FAKE_PASSWORD);
+        boolean result = _tokenRepo.resetUserPassowrd(TestConstants.FAKE_USER_TOKEN, TestConstants.FAKE_PASSWORD);
 
         assertTrue(result);
         verify(_jpaTokenRepo).delete(vt);
     }
-
-
 }

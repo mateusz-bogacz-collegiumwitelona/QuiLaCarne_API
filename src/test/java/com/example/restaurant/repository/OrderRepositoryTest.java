@@ -1,12 +1,10 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
-import com.example.restaurant.models.Dishes;
-import com.example.restaurant.models.Orders;
-import com.example.restaurant.models.Reservations;
-import com.example.restaurant.models.RestaurantTables;
+import com.example.restaurant.models.*;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.jpa.*;
 import org.junit.jupiter.api.Test;
@@ -24,20 +22,24 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderRepositoryTest {
-    @Mock private IJpaDishRepository _jpaDishRepo;
-    @Mock private IJpaOrderRepository _jpaOrderRepo;
-    @Mock private IJpaOrderItemsRepository _jpaOrderItemRepo;
-    @Mock private IJpaOrederStatusRepositry _jpaOrderStatusRepo;
-    @Mock private IJpaReservationsRepository _jpaReservationsRepo;
-    @Mock private IJpaTableRepository _jpaTableRepo;
+    @Mock
+    private IJpaDishRepository _jpaDishRepo;
+    @Mock
+    private IJpaOrderRepository _jpaOrderRepo;
+    @Mock
+    private IJpaOrderItemsRepository _jpaOrderItemRepo;
+    @Mock
+    private IJpaOrederStatusRepositry _jpaOrderStatusRepo;
+    @Mock
+    private IJpaReservationsRepository _jpaReservationsRepo;
+    @Mock
+    private IJpaTableRepository _jpaTableRepo;
 
     @InjectMocks
     private OrderRepository _orderRepo;
 
     @Test
     void createOrderForReservation_ShouldCalculatePriceAndReturnDomain_WhenSuccessful() {
-
-
         ReservationDishRequest dishReq = new ReservationDishRequest();
         dishReq.setDishToken(TestConstants.FAKE_DISH_TOKEN);
         dishReq.setQuantity(2);
@@ -89,5 +91,47 @@ public class OrderRepositoryTest {
                 )
         );
         assertEquals("Dish not found", exception.getMessage());
+    }
+
+    @Test
+    void getOrderSummaryForReservation_ShouldReturnEmpty_WhenNoOrderExists() {
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.empty());
+
+        OrderSummaryDomain result = _orderRepo
+                .getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertNotNull(result);
+        assertEquals(0, result.totalPrice());
+        assertTrue(result.dishes().isEmpty());
+    }
+
+    @Test
+    void getOrderSummaryForReservation_ShouldReturnMappedDishes_WhenOrderExists() {
+        Orders mockOrder = new Orders();
+        mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
+        mockOrder.setTotalPrice(150);
+
+        Dishes mockDish = new Dishes();
+        mockDish.setName("Pizza");
+
+        OrderItems mockItem = new OrderItems();
+        mockItem.setProduct(mockDish);
+        mockItem.setQuantity(3);
+        mockItem.setPriceAtTimeOfOrder(50);
+
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockOrder));
+        when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
+                .thenReturn(List.of(mockItem));
+
+        OrderSummaryDomain result = _orderRepo.getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertNotNull(result);
+        assertEquals(150, result.totalPrice());
+        assertEquals(1, result.dishes().size());
+        assertEquals("Pizza", result.dishes().get(0).getDishName());
+        assertEquals(50, result.dishes().get(0).getPrice());
+        assertEquals(3, result.dishes().get(0).getQuantity());
     }
 }

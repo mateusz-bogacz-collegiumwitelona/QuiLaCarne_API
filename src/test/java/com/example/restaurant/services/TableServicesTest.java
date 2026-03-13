@@ -45,7 +45,7 @@ public class TableServicesTest {
 
         List<TableListResponse> mockData = List.of(
                 TableListResponse.builder()
-                        .token(TestConstants.FAKE_TOKEN)
+                        .token(TestConstants.FAKE_USER_TOKEN)
                         .status("Available")
                         .build()
         );
@@ -73,7 +73,7 @@ public class TableServicesTest {
 
         List<TableListResponse> mockData = List.of(
                 TableListResponse.builder()
-                        .token(TestConstants.FAKE_TOKEN)
+                        .token(TestConstants.FAKE_USER_TOKEN)
                         .status("Wolny")
                         .build()
         );

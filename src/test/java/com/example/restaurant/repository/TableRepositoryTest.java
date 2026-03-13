@@ -33,7 +33,7 @@ public class TableRepositoryTest {
         RestaurantTables mockTable = new RestaurantTables();
         mockTable.setTableNumber(100);
         mockTable.setCapacity(4);
-        mockTable.setToken(TestConstants.FAKE_TOKEN);
+        mockTable.setToken(TestConstants.FAKE_USER_TOKEN);
         mockTable.setTableStatus(Set.of(mockStatus));
 
         when(_jpaTableRepo.findAll()).thenReturn(List.of(mockTable));
@@ -42,7 +42,7 @@ public class TableRepositoryTest {
 
         assertEquals(1, result.size());
         var dto = result.get(0);
-        assertEquals(TestConstants.FAKE_TOKEN, dto.getToken());
+        assertEquals(TestConstants.FAKE_USER_TOKEN, dto.getToken());
         assertEquals(100, dto.getTableNumber());
         assertEquals("Wolny", dto.getStatus());
 
@@ -66,7 +66,7 @@ public class TableRepositoryTest {
         RestaurantTables mockTable = new RestaurantTables();
         mockTable.setTableNumber(101);
         mockTable.setCapacity(4);
-        mockTable.setToken(TestConstants.FAKE_TOKEN);
+        mockTable.setToken(TestConstants.FAKE_USER_TOKEN);
         mockTable.setTableStatus(Set.of());
 
         OffsetDateTime startTime = OffsetDateTime.now();

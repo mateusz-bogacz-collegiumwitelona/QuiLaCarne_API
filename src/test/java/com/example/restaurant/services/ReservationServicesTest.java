@@ -1,15 +1,14 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
-import com.example.restaurant.dto.response.ClientReservationResponse;
-import com.example.restaurant.dto.response.ReservationResponse;
-import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
@@ -53,7 +52,7 @@ public class ReservationServicesTest {
         request.setStartTime(OffsetDateTime.now().plusHours(1));
         request.setEndTime(OffsetDateTime.now().plusHours(5));
 
-        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_TOKEN);
+        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_USER_TOKEN);
 
         assertFalse(result.isSuccess());
         assertEquals("Reservation cannot exceed 3 hours", result.getMessage());
@@ -65,7 +64,7 @@ public class ReservationServicesTest {
         request.setStartTime(OffsetDateTime.now().plusHours(1));
         request.setEndTime(OffsetDateTime.now().plusHours(1).plusMinutes(15));
 
-        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_TOKEN);
+        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_USER_TOKEN);
 
         assertFalse(result.isSuccess());
         assertEquals("Reservation must be at least 30 minutes long", result.getMessage());
@@ -79,7 +78,7 @@ public class ReservationServicesTest {
         when(_tableRepo.findAllTables(eq("pl"), any(OffsetDateTime.class), any(OffsetDateTime.class)))
                 .thenReturn(List.of());
 
-        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_TOKEN);
+        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_USER_TOKEN);
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.CONFLICT.value(), result.getStatusCode());
@@ -102,11 +101,11 @@ public class ReservationServicesTest {
         when(_tableRepo.findAllTables(eq("pl"), any(OffsetDateTime.class), any(OffsetDateTime.class)))
                 .thenReturn(List.of(TableListResponse.builder().token(TestConstants.FAKE_TABLE_TOKEN).build()));
 
-        when(_reservationRepo.createReservation(request, TestConstants.FAKE_TOKEN)).thenReturn(TestConstants.FAKE_RESERVATION_TOKEN);
+        when(_reservationRepo.createReservation(request, TestConstants.FAKE_USER_TOKEN)).thenReturn(TestConstants.FAKE_RESERVATION_TOKEN);
         when(_orderRepo.createOrderForReservation(TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_TABLE_TOKEN, request.getDishes()))
                 .thenReturn(domainResponse);
 
-        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_TOKEN);
+        ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_USER_TOKEN);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.CREATED.value(), result.getStatusCode());
@@ -138,14 +137,14 @@ public class ReservationServicesTest {
         Page<ClientReservationResponse> emptyPage = new PageImpl<>(List.of());
         PagedResult<ClientReservationResponse> expectedResult = new PagedResult<>(emptyPage);
 
-        when(_reservationRepo.history(TestConstants.FAKE_TOKEN, "pl", filter, pagged))
+        when(_reservationRepo.history(TestConstants.FAKE_USER_TOKEN, "pl", filter, pagged))
                 .thenReturn(expectedResult);
 
         ResultHandler<PagedResult<ClientReservationResponse>> result = _reservationServices
                 .history(
                         filter,
                         pagged,
-                        TestConstants.FAKE_TOKEN
+                        TestConstants.FAKE_USER_TOKEN
                 );
 
         assertTrue(result.isSuccess());
@@ -153,14 +152,14 @@ public class ReservationServicesTest {
         assertEquals(expectedResult, result.getData());
         assertEquals("User reservations retrieved successfully", result.getMessage());
 
-        verify(_reservationRepo, times(1)).history(TestConstants.FAKE_TOKEN, "pl", filter, pagged);
+        verify(_reservationRepo, times(1)).history(TestConstants.FAKE_USER_TOKEN, "pl", filter, pagged);
 
         LocaleContextHolder.resetLocaleContext();
     }
 
     @Test
     void history_ShouldReturnFailure_WhenRepositoryThrowsException() {
-        String userToken = TestConstants.FAKE_TOKEN;
+        String userToken = TestConstants.FAKE_USER_TOKEN;
         ClientReservationRequest filter = new ClientReservationRequest();
         PaggedRequest pagged = new PaggedRequest();
 
@@ -172,5 +171,61 @@ public class ReservationServicesTest {
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
         assertEquals("Database error", result.getMessage());
+    }
+
+    @Test
+    void details_ShouldReturnSuccess_WithDishesAndPrice() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("pl"));
+
+        ReservationDetailsResponse mockDetails = new ReservationDetailsResponse();
+        mockDetails.setStatus("Aktywna");
+
+        ReservationDishResponse dishRes = new ReservationDishResponse();
+        dishRes.setDishName("Burger");
+        dishRes.setPrice(80);
+        dishRes.setQuantity(2);
+        OrderSummaryDomain mockSummary = new OrderSummaryDomain(160, List.of(dishRes));
+
+        when(_reservationRepo.details(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN,
+                "pl"
+        )).thenReturn(mockDetails);
+
+        when(_orderRepo.getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(mockSummary);
+
+        ResultHandler<ReservationDetailsResponse> result = _reservationServices.details(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("Aktywna", result.getData().getStatus());
+        assertEquals(160, result.getData().getTotalPrice());
+        assertEquals(1, result.getData().getDishes().size());
+        assertEquals("Burger", result.getData().getDishes().get(0).getDishName());
+
+        LocaleContextHolder.resetLocaleContext();
+    }
+
+    @Test
+    void details_ShouldReturnNotFound_WhenReservationDoesNotExist() {
+        when(_reservationRepo.details(
+                eq(TestConstants.FAKE_RESERVATION_TOKEN),
+                eq(TestConstants.FAKE_USER_TOKEN),
+                anyString()
+        )).thenThrow(new RuntimeException("Reservation not found"));
+
+        ResultHandler<ReservationDetailsResponse> result = _reservationServices.details(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatusCode());
+        assertEquals("Reservation not found", result.getMessage());
+
+        verify(_orderRepo, never()).getOrderSummaryForReservation(anyString());
     }
 }

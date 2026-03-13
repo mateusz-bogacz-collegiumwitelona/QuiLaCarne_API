@@ -46,7 +46,7 @@ public class UserRepositoryTest {
         mockRole.setName("ROLE_CLIENT");
 
         Users mockUser = new Users();
-        mockUser.setToken(TestConstants.FAKE_TOKEN);
+        mockUser.setToken(TestConstants.FAKE_USER_TOKEN);
 
         when(_roleRepository.setRole("ROLE_CLIENT"))
                 .thenReturn(mockRole
@@ -62,7 +62,7 @@ public class UserRepositoryTest {
 
         String token = _userRepository.createUser(request, "ROLE_CLIENT", false);
 
-        assertEquals(TestConstants.FAKE_TOKEN, token);
+        assertEquals(TestConstants.FAKE_USER_TOKEN, token);
         verify(_passwordEncoder).encode(TestConstants.FAKE_PASSWORD);
         verify(_jpaUserRepository).saveAndFlush(argThat(user ->
                 user.getPassword().equals(TestConstants.FAKE_HASH) &&
@@ -73,7 +73,7 @@ public class UserRepositoryTest {
     @Test
     void findMinimalByEmail_ShouldReturnDTO_WhenUserIsExist() {
         Users user = new Users();
-        user.setToken(TestConstants.FAKE_TOKEN);
+        user.setToken(TestConstants.FAKE_USER_TOKEN);
         user.setUsername(TestConstants.FAKE_USERNAME);
         user.setEmail(TestConstants.FAKE_EMAIL);
 
@@ -87,7 +87,7 @@ public class UserRepositoryTest {
         assertTrue(result.isPresent());
 
         assertEquals(
-                TestConstants.FAKE_TOKEN,
+                TestConstants.FAKE_USER_TOKEN,
                 result.get().token()
         );
 
@@ -100,10 +100,10 @@ public class UserRepositoryTest {
     @Test
     void changePassword_ShouldReturnHashAndSaveUser() {
         Users user = new Users();
-        user.setToken(TestConstants.FAKE_TOKEN);
+        user.setToken(TestConstants.FAKE_USER_TOKEN);
 
         when(_jpaUserRepository
-                .findByToken(TestConstants.FAKE_TOKEN)
+                .findByToken(TestConstants.FAKE_USER_TOKEN)
         ).thenReturn(Optional.of(user));
 
         when(_passwordEncoder
@@ -112,7 +112,7 @@ public class UserRepositoryTest {
 
         boolean result = _userRepository
                 .changePassword(
-                        TestConstants.FAKE_TOKEN,
+                        TestConstants.FAKE_USER_TOKEN,
                         TestConstants.FAKE_PASSWORD
                 );
 
