@@ -3,10 +3,14 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
+import com.example.restaurant.dto.request.ClientReservationRequest;
+import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
+import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
@@ -16,15 +20,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ReservationServicesTest {
@@ -116,5 +124,53 @@ public class ReservationServicesTest {
         request.setStartTime(OffsetDateTime.now().plusHours(1));
         request.setEndTime(OffsetDateTime.now().plusHours(3));
         return request;
+    }
+
+    @Test
+    void history_ShouldReturnSuccess_WithPagedResult() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("pl"));
+
+        ClientReservationRequest filter = new ClientReservationRequest();
+        PaggedRequest pagged = new PaggedRequest();
+        pagged.setPage(1);
+        pagged.setSize(10);
+
+        Page<ClientReservationResponse> emptyPage = new PageImpl<>(List.of());
+        PagedResult<ClientReservationResponse> expectedResult = new PagedResult<>(emptyPage);
+
+        when(_reservationRepo.history(TestConstants.FAKE_TOKEN, "pl", filter, pagged))
+                .thenReturn(expectedResult);
+
+        ResultHandler<PagedResult<ClientReservationResponse>> result = _reservationServices
+                .history(
+                        filter,
+                        pagged,
+                        TestConstants.FAKE_TOKEN
+                );
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals(expectedResult, result.getData());
+        assertEquals("User reservations retrieved successfully", result.getMessage());
+
+        verify(_reservationRepo, times(1)).history(TestConstants.FAKE_TOKEN, "pl", filter, pagged);
+
+        LocaleContextHolder.resetLocaleContext();
+    }
+
+    @Test
+    void history_ShouldReturnFailure_WhenRepositoryThrowsException() {
+        String userToken = TestConstants.FAKE_TOKEN;
+        ClientReservationRequest filter = new ClientReservationRequest();
+        PaggedRequest pagged = new PaggedRequest();
+
+        when(_reservationRepo.history(any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("Database error"));
+
+        ResultHandler<PagedResult<ClientReservationResponse>> result = _reservationServices.history(filter, pagged, userToken);
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
+        assertEquals("Database error", result.getMessage());
     }
 }

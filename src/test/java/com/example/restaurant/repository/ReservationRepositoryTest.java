@@ -1,7 +1,12 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.request.ClientReservationRequest;
+import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
+import com.example.restaurant.dto.response.ClientReservationResponse;
+import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.Users;
@@ -12,11 +17,18 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,10 +47,16 @@ public class ReservationRepositoryTest {
     private IJpaReservationStatusRepository _jpaReservationStatusRepo;
 
     @Mock
-    private IJpaReservationsRepository  _jpaReservationsRepo;
+    private IJpaReservationsRepository _jpaReservationsRepo;
+
+    @Mock
+    private ReservationMapper _reservationMapper;
 
     @InjectMocks
     private ReservationRepository _reservationRepo;
+
+    @Captor
+    private ArgumentCaptor<Pageable> pageableCaptor;
 
     @Test
     void createReservation_ShouldReturnToken_WhenDataIsValid() {
@@ -47,7 +65,7 @@ public class ReservationRepositoryTest {
         request.setStartTime(OffsetDateTime.now());
         request.setEndTime(OffsetDateTime.now().plusHours(2));
 
-        Users  user = new Users();
+        Users user = new Users();
         RestaurantTables table = new RestaurantTables();
         ReservationStatus status = new ReservationStatus();
 
@@ -78,5 +96,40 @@ public class ReservationRepositoryTest {
         );
 
         assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    void history_ShouldApplyPaginationAndMappingCorrectly() {
+        String userToken = "user-token-123";
+        String lang = "pl";
+
+        ClientReservationRequest filter = new ClientReservationRequest();
+        PaggedRequest pagged = new PaggedRequest();
+        pagged.setPage(2);
+        pagged.setSize(5);
+
+        Reservations mockEntity = new Reservations();
+        mockEntity.setToken("res-token");
+        Page<Reservations> entityPage = new PageImpl<>(List.of(mockEntity));
+
+        ClientReservationResponse mockDto = ClientReservationResponse.builder().token("res-token").build();
+
+        when(_jpaReservationsRepo.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(entityPage);
+
+        when(_reservationMapper.toClientReservationResponse(mockEntity, lang))
+                .thenReturn(mockDto);
+
+        PagedResult<ClientReservationResponse> result = _reservationRepo.history(userToken, lang, filter, pagged);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+        assertEquals("res-token", result.getItems().get(0).getToken());
+
+        verify(_jpaReservationsRepo).findAll(any(Specification.class), pageableCaptor.capture());
+        Pageable capturedPageable = pageableCaptor.getValue();
+
+        assertEquals(1, capturedPageable.getPageNumber());
+        assertEquals(5, capturedPageable.getPageSize());
     }
 }
