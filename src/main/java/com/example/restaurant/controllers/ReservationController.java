@@ -4,6 +4,7 @@ import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
+import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
@@ -63,6 +64,18 @@ public class ReservationController {
     ) {
         var result = _reservationServices.history(request, pagged, userToken);
 
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
+
+    @GetMapping("/{token}")
+    public ResponseEntity<ResultHandler<ReservationDetailsResponse>> detail(
+            @PathVariable String token,
+            @AuthenticationPrincipal(expression = "token") String userToken
+
+    ) {
+        var result = _reservationServices.details(token, userToken);
         return ResponseEntity
                 .status(result.getStatusCode())
                 .body(result);

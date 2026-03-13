@@ -1,8 +1,10 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
+import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -77,5 +80,26 @@ public class OrderRepository implements IOrderRepository {
         _jpaOrderItemRepo.saveAllAndFlush(orderItems);
 
         return new ReservationDomain(dishesDomain, totalPrices);
+    }
+
+    @Override
+    public OrderSummaryDomain getOrderSummaryForReservation(String reservationToken) {
+        Optional<Orders> orderOpt = _jpaOrderRepo.findByReservation_Token(reservationToken);
+
+        if (orderOpt.isEmpty()) return new OrderSummaryDomain(0, List.of());
+
+        Orders order = orderOpt.get();
+
+        List<OrderItems> items = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
+
+        List<ReservationDishResponse> dishes = items.stream().map(item -> {
+            ReservationDishResponse dish = new ReservationDishResponse();
+            dish.setDishName(item.getProduct().getName());
+            dish.setPrice(item.getPriceAtTimeOfOrder());
+            dish.setQuantity(item.getQuantity());
+            return dish;
+        }).toList();
+
+        return new OrderSummaryDomain(order.getTotalPrice(), dishes);
     }
 }

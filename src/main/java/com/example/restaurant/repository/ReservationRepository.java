@@ -4,6 +4,7 @@ import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
+import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
@@ -92,5 +93,13 @@ public class ReservationRepository implements IReservationRepository {
                 .map(res -> _reservationMapper.toClientReservationResponse(res, lang));
 
         return new PagedResult<>(dtoPage);
+    }
+
+    @Override
+    public ReservationDetailsResponse details(String reservationToken, String userToken, String lang) {
+        Reservations reservation = _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        return _reservationMapper.toReservationDetailsResponse(reservation, lang);
     }
 }

@@ -4,6 +4,7 @@ import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
+import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.helpers.PagedResult;
@@ -127,6 +128,30 @@ public class ReservationServices implements IReservationServices {
                     ex.getMessage(),
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
             );
+        }
+    }
+
+    @Override
+    public ResultHandler<ReservationDetailsResponse> details(String reservationToken, String userToken) {
+        try {
+            String lang = LocaleContextHolder.getLocale().getLanguage();
+
+            ReservationDetailsResponse response = _reservationRepo.details(reservationToken, userToken, lang);
+
+            var orderSummary = _orderRepo.getOrderSummaryForReservation(reservationToken);
+
+            response.setTotalPrice(orderSummary.totalPrice());
+            response.setDishes(orderSummary.dishes());
+
+            return ResultHandler.success(
+                    "Reservation details retrieved successfully",
+                    HttpStatus.OK.value(),
+                    response
+            );
+        } catch (RuntimeException rex) {
+            return ResultHandler.failure(rex.getMessage(), HttpStatus.NOT_FOUND.value());
+        } catch (Exception ex) {
+            return ResultHandler.failure(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 }

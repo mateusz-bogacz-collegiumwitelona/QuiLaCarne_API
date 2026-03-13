@@ -1,6 +1,7 @@
 package com.example.restaurant.mappers;
 
 import com.example.restaurant.dto.response.ClientReservationResponse;
+import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import org.mapstruct.Context;
@@ -23,4 +24,9 @@ public interface ReservationMapper {
 
         return statuses.iterator().next().translate(lang);
     }
+
+    @Mapping(target = "status", source = "reservationStatus", qualifiedByName = "mapStatus")
+    @Mapping(target = "dishes", ignore = true)
+    @Mapping(target = "totalPrice", ignore = true)
+    ReservationDetailsResponse toReservationDetailsResponse(Reservations reservations, @Context String lang);
 }

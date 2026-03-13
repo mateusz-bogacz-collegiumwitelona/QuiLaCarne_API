@@ -12,4 +12,6 @@ public interface IJpaReservationsRepository extends JpaRepository<Reservations, 
     Optional<Reservations> findByToken(String token);
 
     List<Reservations> findAllByUser_Token(String userToken);
+
+    Optional<Reservations> findByTokenAndUser_Token(String token, String userToken);
 }
