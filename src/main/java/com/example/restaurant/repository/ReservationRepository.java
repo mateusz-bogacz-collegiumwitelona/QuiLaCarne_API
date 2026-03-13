@@ -1,6 +1,7 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.dto.request.ReservationRequest;
+import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.Users;
@@ -14,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -21,8 +23,8 @@ import java.util.Set;
 public class ReservationRepository implements IReservationRepository {
     private final IJpaUserRepository _jpaUserRepo;
     private final IJpaTableRepository _jpaTableRepo;
-    private final IJpaReservationStatusRepository  _jpaReservationStatusRepo;
-    private final IJpaReservationsRepository   _jpaReservationsRepo;
+    private final IJpaReservationStatusRepository _jpaReservationStatusRepo;
+    private final IJpaReservationsRepository _jpaReservationsRepo;
 
     @Override
     @Transactional
@@ -46,5 +48,29 @@ public class ReservationRepository implements IReservationRepository {
         _jpaReservationsRepo.saveAndFlush(reservation);
 
         return reservation.getToken();
+    }
+
+    @Override
+    public List<ClientReservationResponse> history(String userToken, String lang) {
+        var reservations = _jpaReservationsRepo.findAllByUser_Token(userToken);
+
+        return reservations.stream()
+                .map(res -> {
+                            String statusName = "UNKNOWN";
+
+                            if (res.getReservationStatus() != null &&
+                                    !res.getReservationStatus().isEmpty()) {
+                                var status = res.getReservationStatus().iterator().next();
+                                statusName = status.translate(lang);
+                            }
+
+                            return ClientReservationResponse.builder()
+                                    .token(res.getToken())
+                                    .startTime(res.getStartTime())
+                                    .endTime(res.getEndTime())
+                                    .status(statusName)
+                                    .build();
+                        }
+                ).toList();
     }
 }

@@ -1,6 +1,7 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.ReservationRequest;
+import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IReservationServices;
@@ -13,10 +14,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/reservations", produces = "application/json")
@@ -48,6 +48,19 @@ public class ReservationController {
     ) {
         var result = _reservationServices.create(request, userToken);
 
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
+
+    @GetMapping
+    public ResponseEntity<ResultHandler<List<ClientReservationResponse>>> list(
+            @AuthenticationPrincipal(expression = "token") String userToken
+    ) {
+        var result = _reservationServices.history(userToken);
+
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
     }
 }

@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.dto.request.ReservationRequest;
+import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.helpers.ResultHandler;
@@ -10,6 +11,7 @@ import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.services.interfaces.IReservationServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +23,9 @@ import java.util.List;
 public class ReservationServices implements IReservationServices {
     private final ITableRespository _tableRepo;
     private final IReservationRepository _reservationRepo;
-    private final IOrderRepository  _orderRepo;
+    private final IOrderRepository _orderRepo;
 
+    @Override
     @Transactional
     public ResultHandler<ReservationResponse> create(ReservationRequest request, String userToken) {
         try {
@@ -96,9 +99,26 @@ public class ReservationServices implements IReservationServices {
                     HttpStatus.CREATED.value(),
                     response
             );
+        } catch (Exception ex) {
+            return ResultHandler.failure(
+                    ex.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
         }
-        catch (Exception ex)
-        {
+    }
+
+    @Override
+    public ResultHandler<List<ClientReservationResponse>> history(String userToken) {
+        try {
+            String lang = LocaleContextHolder.getLocale().getLanguage();
+            var response = _reservationRepo.history(userToken, lang);
+
+            return ResultHandler.success(
+                    "User reservations retrieved successfully",
+                    HttpStatus.OK.value(),
+                    response
+            );
+        } catch (Exception ex) {
             return ResultHandler.failure(
                     ex.getMessage(),
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
