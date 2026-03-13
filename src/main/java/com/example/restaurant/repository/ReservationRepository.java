@@ -1,7 +1,11 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.dto.request.ClientReservationRequest;
+import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
+import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.Users;
@@ -11,10 +15,18 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaReservationStatusRep
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationsRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -25,6 +37,7 @@ public class ReservationRepository implements IReservationRepository {
     private final IJpaTableRepository _jpaTableRepo;
     private final IJpaReservationStatusRepository _jpaReservationStatusRepo;
     private final IJpaReservationsRepository _jpaReservationsRepo;
+    private final ReservationMapper _reservationMapper;
 
     @Override
     @Transactional
@@ -51,26 +64,33 @@ public class ReservationRepository implements IReservationRepository {
     }
 
     @Override
-    public List<ClientReservationResponse> history(String userToken, String lang) {
-        var reservations = _jpaReservationsRepo.findAllByUser_Token(userToken);
+    public PagedResult<ClientReservationResponse> history(String userToken, String lang, ClientReservationRequest filter, PaggedRequest pagged) {
+        Pageable pageable = PageRequest.of(pagged.getPage() - 1, pagged.getSize(), Sort.by(Sort.Direction.ASC, "startTime"));
 
-        return reservations.stream()
-                .map(res -> {
-                            String statusName = "UNKNOWN";
+        Specification<Reservations> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-                            if (res.getReservationStatus() != null &&
-                                    !res.getReservationStatus().isEmpty()) {
-                                var status = res.getReservationStatus().iterator().next();
-                                statusName = status.translate(lang);
-                            }
+            predicates.add(criteriaBuilder.equal(root.get("user").get("token"), userToken));
 
-                            return ClientReservationResponse.builder()
-                                    .token(res.getToken())
-                                    .startTime(res.getStartTime())
-                                    .endTime(res.getEndTime())
-                                    .status(statusName)
-                                    .build();
-                        }
-                ).toList();
+            if (filter.getFromDate() != null)
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("startTime"), filter.getFromDate()));
+
+            if (filter.getToDate() != null)
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("startTime"), filter.getToDate()));
+
+            if (filter.getStatusToken() != null && !filter.getStatusToken().isEmpty()) {
+                Join<Reservations, ReservationStatus> statusJoin = root.join("reservationStatus");
+                predicates.add(criteriaBuilder.equal(statusJoin.get("token"), filter.getStatusToken()));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Reservations> reservationPage = _jpaReservationsRepo.findAll(spec, pageable);
+
+        Page<ClientReservationResponse> dtoPage = reservationPage
+                .map(res -> _reservationMapper.toClientReservationResponse(res, lang));
+
+        return new PagedResult<>(dtoPage);
     }
 }

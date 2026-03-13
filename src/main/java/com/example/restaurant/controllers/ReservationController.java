@@ -1,8 +1,11 @@
 package com.example.restaurant.controllers;
 
+import com.example.restaurant.dto.request.ClientReservationRequest;
+import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IReservationServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,11 +15,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/reservations", produces = "application/json")
@@ -54,10 +56,12 @@ public class ReservationController {
     }
 
     @GetMapping
-    public ResponseEntity<ResultHandler<List<ClientReservationResponse>>> list(
+    public ResponseEntity<ResultHandler<PagedResult<ClientReservationResponse>>> list(
+            @ParameterObject @Valid @ModelAttribute PaggedRequest pagged,
+            @ParameterObject @Valid @ModelAttribute ClientReservationRequest request,
             @AuthenticationPrincipal(expression = "token") String userToken
     ) {
-        var result = _reservationServices.history(userToken);
+        var result = _reservationServices.history(request, pagged, userToken);
 
         return ResponseEntity
                 .status(result.getStatusCode())

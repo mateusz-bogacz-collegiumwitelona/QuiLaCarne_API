@@ -1,9 +1,12 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.dto.request.ClientReservationRequest;
+import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
@@ -108,10 +111,11 @@ public class ReservationServices implements IReservationServices {
     }
 
     @Override
-    public ResultHandler<List<ClientReservationResponse>> history(String userToken) {
+    public ResultHandler<PagedResult<ClientReservationResponse>> history(ClientReservationRequest request, PaggedRequest pagged, String userToken) {
         try {
             String lang = LocaleContextHolder.getLocale().getLanguage();
-            var response = _reservationRepo.history(userToken, lang);
+
+            var response = _reservationRepo.history(userToken, lang, request, pagged);
 
             return ResultHandler.success(
                     "User reservations retrieved successfully",
