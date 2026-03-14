@@ -167,4 +167,72 @@ public class AuthServicesTest {
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
         assertEquals("Passwords do not match", result.getMessage());
     }
+
+
+    @Test
+    void registerConfirm_ShouldReturnSuccess_WhenTokenValidAndUserActivated() {
+        when(_verificationTokenRepository.validateToken("valid-token", TokenTypeEnum.ACTIVATION))
+                .thenReturn(Optional.of("valid-user-token"));
+
+        when(_userRepository.activeUser("valid-user-token"))
+                .thenReturn(true);
+
+        ResultHandler<String> result = _authServices.registerConfirm("valid-token");
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("User activated successfully", result.getMessage());
+    }
+
+    @Test
+    void registerConfirm_ShouldReturnFailure_WhenTokenInvalid() {
+        when(_verificationTokenRepository.validateToken("invalid-token", TokenTypeEnum.ACTIVATION))
+                .thenReturn(Optional.empty()); // Mockujemy błędny token
+
+        ResultHandler<String> result = _authServices.registerConfirm("invalid-token");
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
+        assertEquals("Invalid or expired token", result.getMessage());
+
+        verify(_userRepository, never()).activeUser(anyString());
+    }
+
+    @Test
+    void setNewPassword_ShouldReturnSuccess_WhenTokenValidAndPasswordsMatch() {
+        ResetPasswordRequest request = new ResetPasswordRequest();
+        request.setToken("valid-token");
+        request.setPassword("newPass123!");
+        request.setConfirmPassword("newPass123!");
+
+        when(_verificationTokenRepository.validateToken("valid-token", TokenTypeEnum.PASSWORD_RESET))
+                .thenReturn(Optional.of("valid-user-token"));
+
+        when(_userRepository.changePassword("valid-user-token", "newPass123!"))
+                .thenReturn(true);
+
+        ResultHandler<String> result = _authServices.setNewPassword(request);
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("Reset password successfully", result.getMessage());
+    }
+
+    @Test
+    void setNewPassword_ShouldReturnFailure_WhenTokenInvalid() {
+        ResetPasswordRequest request = new ResetPasswordRequest();
+        request.setToken("invalid-token");
+        request.setPassword("newPass123!");
+        request.setConfirmPassword("newPass123!");
+
+        when(_verificationTokenRepository.validateToken("invalid-token", TokenTypeEnum.PASSWORD_RESET))
+                .thenReturn(Optional.empty());
+
+
+        ResultHandler<String> result = _authServices.setNewPassword(request);
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
+        verify(_userRepository, never()).changePassword(anyString(), anyString());
+    }
 }

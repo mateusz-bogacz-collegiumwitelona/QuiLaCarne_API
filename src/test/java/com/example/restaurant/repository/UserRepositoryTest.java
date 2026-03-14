@@ -175,4 +175,30 @@ public class UserRepositoryTest {
         assertEquals("hashedNewPass", mockUser.getPassword());
         verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
     }
+
+    @Test
+    void activeUser_ShouldReturnTrueAndSetActive_WhenUserExists() {
+        Users mockUser = new Users();
+        mockUser.setIsActive(false);
+
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.of(mockUser));
+
+        boolean result = _userRepository.activeUser(TestConstants.FAKE_USER_TOKEN);
+
+        assertTrue(result);
+        assertTrue(mockUser.getIsActive());
+        verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
+    }
+
+    @Test
+    void activeUser_ShouldReturnFalse_WhenUserNotFound() {
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.empty());
+
+        boolean result = _userRepository.activeUser(TestConstants.FAKE_USER_TOKEN);
+
+        assertFalse(result);
+        verify(_jpaUserRepository, never()).saveAndFlush(any());
+    }
 }
