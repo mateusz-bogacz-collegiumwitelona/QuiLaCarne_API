@@ -77,4 +77,34 @@ public class UserRepository implements IUserRepository {
             return true;
         }).orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    @Override
+    @Transactional
+    public boolean updateEmail(String userToken, String email) {
+        return _jpaUserRepository.findByToken(userToken).map(u -> {
+            u.setPendingEmail(email);
+            _jpaUserRepository.saveAndFlush(u);
+            return true;
+        }).orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Override
+    public boolean isEmailExist(String email) {
+        return _jpaUserRepository.findByEmail(email).isPresent();
+    }
+
+    @Override
+    @Transactional
+    public boolean confirmEmailChange(String userToken) {
+        return _jpaUserRepository.findByToken(userToken).map(u -> {
+            if (u.getPendingEmail() == null)
+                return false;
+
+            u.setEmail(u.getPendingEmail());
+            u.setPendingEmail(null);
+
+            _jpaUserRepository.saveAndFlush(u);
+            return true;
+        }).orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }

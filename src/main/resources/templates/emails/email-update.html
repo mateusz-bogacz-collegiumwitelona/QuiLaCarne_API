@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+<div style="max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px;">
+    <h2 style="color: #aa0000;">Email Update Verification</h2>
+    <p>Hi,</p>
+    <p>You recently requested to update the email address associated with your Qui la Carne account. Click the button
+        below to confirm this change:</p>
+    <div style="text-align: center;">
+        <a th:href="${validationUrl}"
+           style="background-color: #aa0000; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Confirm
+            Email Address</a>
+    </div>
+    <p>This link is valid for 60 minutes.</p>
+    <p>If you didn't request this change, your account is safe and you can safely ignore this email. Your email address
+        will remain unchanged.</p>
+    <p>If the button doesn't work, copy this link: <br/> <span th:text="${validationUrl}"></span></p>
+</div>
+</body>
+</html>

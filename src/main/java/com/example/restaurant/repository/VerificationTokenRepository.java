@@ -77,4 +77,18 @@ public class VerificationTokenRepository implements IVerificationTokenRepository
                     return false;
                 }).orElse(false);
     }
+
+    @Override
+    @Transactional
+    public boolean validateToken(String userToken, String tokenValue, TokenTypeEnum type) {
+        return _jpaTokenRepo.findByTokenAndType(tokenValue, type)
+                .map(vt -> {
+                    if (vt.isExpired()) return false;
+                    if (!vt.getUser().getToken().equals(userToken)) return false;
+
+                    _jpaTokenRepo.delete(vt);
+
+                    return true;
+                }).orElse(false);
+    }
 }

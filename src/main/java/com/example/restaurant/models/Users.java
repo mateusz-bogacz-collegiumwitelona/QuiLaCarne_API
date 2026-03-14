@@ -21,6 +21,10 @@ import java.util.stream.Collectors;
 public class Users extends BaseEntity implements UserDetails {
     private String username;
     private String email;
+
+    @Column(name = "pending_email")
+    private String pendingEmail;
+
     private String password;
     private Boolean twoFactorEnabled;
     private String mfaSecret;
@@ -47,16 +51,24 @@ public class Users extends BaseEntity implements UserDetails {
     }
 
     @Override
-    public String getUsername() { return this.username; }
+    public String getUsername() {
+        return this.username;
+    }
 
     @Override
-    public boolean isAccountNonExpired() { return true; }
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
     @Override
-    public boolean isCredentialsNonExpired() { return true; }
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
     @Override
     public boolean isEnabled() {

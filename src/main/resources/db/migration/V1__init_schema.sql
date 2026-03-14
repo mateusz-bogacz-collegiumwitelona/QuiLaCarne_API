@@ -83,6 +83,7 @@ CREATE TABLE users
     token              VARCHAR(64) UNIQUE  NOT NULL,
     username           VARCHAR(100) UNIQUE NOT NULL,
     email              VARCHAR(255) UNIQUE NOT NULL,
+    pending_email      VARCHAR(255) UNIQUE,
     password           VARCHAR(255)        NOT NULL,
     two_factor_enabled BOOLEAN     DEFAULT FALSE,
     mfa_secret         VARCHAR(255),

@@ -15,4 +15,10 @@ public interface IUserRepository {
     Optional<UserDomain> findMinimalByEmail(String email);
 
     boolean updatePassword(String userToken, String oldPassword, String newPassword);
+
+    boolean updateEmail(String userToken, String email);
+
+    boolean isEmailExist(String email);
+
+    boolean confirmEmailChange(String userToken);
 }

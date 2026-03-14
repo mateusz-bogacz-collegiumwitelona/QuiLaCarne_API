@@ -2,5 +2,6 @@ package com.example.restaurant.enums;
 
 public enum TokenTypeEnum {
     ACTIVATION,
-    PASSWORD_RESET
+    PASSWORD_RESET,
+    EMAIL_UPDATE
 }
