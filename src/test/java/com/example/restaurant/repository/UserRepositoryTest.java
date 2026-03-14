@@ -15,12 +15,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserRepositoryTest {
@@ -124,5 +121,58 @@ public class UserRepositoryTest {
         );
 
         verify(_jpaUserRepository).saveAndFlush(user);
+    }
+
+    @Test
+    void updatePassword_ShouldThrowException_WhenUserNotFound() {
+        when(_jpaUserRepository.findByToken(anyString())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () ->
+                _userRepository.updatePassword(
+                        TestConstants.FAKE_USER_TOKEN,
+                        "oldPass",
+                        "newPass"
+                )
+        );
+
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    void updatePassword_ShouldReturnFalse_WhenOldPasswordIsIncorrect() {
+        Users mockUser = new Users();
+        mockUser.setPassword(TestConstants.FAKE_HASH);
+
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.of(mockUser));
+
+        when(_passwordEncoder.matches("wrongOldPass", TestConstants.FAKE_HASH))
+                .thenReturn(false);
+
+        boolean result = _userRepository.updatePassword(
+                TestConstants.FAKE_USER_TOKEN,
+                "wrongOldPass",
+                "newPass"
+        );
+
+        assertFalse(result);
+        verify(_jpaUserRepository, never()).saveAndFlush(mockUser);
+    }
+
+    @Test
+    void updatePassword_ShouldReturnTrueAndSave_WhenOldPasswordIsCorrect() {
+        Users mockUser = new Users();
+        mockUser.setPassword("hashedOldPass");
+
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(Optional.of(mockUser));
+
+        when(_passwordEncoder.matches("correctOldPass", "hashedOldPass")).thenReturn(true);
+        when(_passwordEncoder.encode("newPass")).thenReturn("hashedNewPass");
+
+        boolean result = _userRepository.updatePassword(TestConstants.FAKE_USER_TOKEN, "correctOldPass", "newPass");
+
+        assertTrue(result);
+        assertEquals("hashedNewPass", mockUser.getPassword());
+        verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
     }
 }
