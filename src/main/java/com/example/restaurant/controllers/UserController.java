@@ -44,6 +44,17 @@ public class UserController {
                 .body(result);
     }
 
+    @Operation(
+            summary = "Request email update",
+            description = "Initiates the email update process by saving the new email in a pending state and sending a verification link to it."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Verification link sent to the new email address"),
+            @ApiResponse(responseCode = "400", description = "Email is invalid or already in use by another user"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PatchMapping("email/update")
     public ResponseEntity<ResultHandler<String>> updateEmail(
             @RequestParam
@@ -60,6 +71,16 @@ public class UserController {
                 .body(result);
     }
 
+    @Operation(
+            summary = "Confirm email change",
+            description = "Finalizes the email update process by validating the verification token sent to the user's new email address."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid/expired token, or no pending email update found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PatchMapping("/email/confirm")
     public ResponseEntity<ResultHandler<String>> confirmEmail(
             @RequestParam(name = "verificationToken")

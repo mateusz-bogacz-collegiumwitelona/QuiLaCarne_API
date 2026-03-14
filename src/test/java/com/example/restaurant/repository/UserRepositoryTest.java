@@ -201,4 +201,61 @@ public class UserRepositoryTest {
         assertFalse(result);
         verify(_jpaUserRepository, never()).saveAndFlush(any());
     }
+
+    @Test
+    void updateEmail_ShouldSetPendingEmailAndSave_WhenUserExists() {
+        Users mockUser = new Users();
+        mockUser.setEmail("old@example.com");
+
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.of(mockUser));
+
+        boolean result = _userRepository.updateEmail(TestConstants.FAKE_USER_TOKEN, "new@example.com");
+
+        assertTrue(result);
+        assertEquals("new@example.com", mockUser.getPendingEmail());
+        assertEquals("old@example.com", mockUser.getEmail());
+        verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
+    }
+
+    @Test
+    void updateEmail_ShouldThrowException_WhenUserNotFound() {
+        when(_jpaUserRepository.findByToken(anyString())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () ->
+                _userRepository.updateEmail("invalid-token", "new@example.com")
+        );
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    void confirmEmailChange_ShouldUpdateEmailAndClearPending_WhenValid() {
+        Users mockUser = new Users();
+        mockUser.setEmail("old@example.com");
+        mockUser.setPendingEmail("new@example.com");
+
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.of(mockUser));
+
+        boolean result = _userRepository.confirmEmailChange(TestConstants.FAKE_USER_TOKEN);
+
+        assertTrue(result);
+        assertEquals("new@example.com", mockUser.getEmail());
+        assertNull(mockUser.getPendingEmail());
+        verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
+    }
+
+    @Test
+    void confirmEmailChange_ShouldReturnFalse_WhenPendingEmailIsNull() {
+        Users mockUser = new Users();
+        mockUser.setPendingEmail(null);
+
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.of(mockUser));
+
+        boolean result = _userRepository.confirmEmailChange(TestConstants.FAKE_USER_TOKEN);
+
+        assertFalse(result);
+        verify(_jpaUserRepository, never()).saveAndFlush(any());
+    }
 }

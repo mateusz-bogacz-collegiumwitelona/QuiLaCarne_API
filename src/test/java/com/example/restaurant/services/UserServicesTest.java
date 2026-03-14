@@ -2,8 +2,10 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
+import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,6 +21,12 @@ import static org.mockito.Mockito.*;
 public class UserServicesTest {
     @Mock
     private IUserRepository _userRepo;
+
+    @Mock
+    private EmailServices _emailServices;
+
+    @Mock
+    private IVerificationTokenRepository _tokenRepo;
 
     @InjectMocks
     private UserServices _userServices;
@@ -101,5 +109,76 @@ public class UserServicesTest {
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatusCode());
         assertEquals("User not found", result.getMessage());
+    }
+
+    @Test
+    void updateEmail_ShouldReturnFailure_WhenEmailIsUsedBySomeoneElse() {
+        String newEmail = "taken@example.com";
+        com.example.restaurant.dto.domain.UserDomain otherUser = new com.example.restaurant.dto.domain.UserDomain("other-user-token", "Bob", newEmail);
+
+        when(_userRepo.findMinimalByEmail(newEmail)).thenReturn(java.util.Optional.of(otherUser));
+
+        ResultHandler<String> result = _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, newEmail);
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
+        assertEquals("The email is being used by someone else", result.getMessage());
+        verify(_userRepo, never()).updateEmail(anyString(), anyString());
+    }
+
+    @Test
+    void updateEmail_ShouldReturnSuccess_AndSendEmail_WhenValid() {
+        String newEmail = "new@example.com";
+        when(_userRepo.findMinimalByEmail(newEmail)).thenReturn(java.util.Optional.empty());
+        when(_userRepo.updateEmail(TestConstants.FAKE_USER_TOKEN, newEmail)).thenReturn(true);
+        when(_tokenRepo.createToken(eq(TestConstants.FAKE_USER_TOKEN), eq(com.example.restaurant.enums.TokenTypeEnum.EMAIL_UPDATE), anyInt()))
+                .thenReturn("mock-verification-token");
+
+        ResultHandler<String> result = _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, newEmail);
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+
+        verify(_emailServices, times(1)).sendEmailChangeVerification(newEmail, "mock-verification-token");
+    }
+
+    @Test
+    void confirmEmailChange_ShouldReturnFailure_WhenTokenIsInvalid() {
+        when(_tokenRepo.validateToken(TestConstants.FAKE_USER_TOKEN, "invalid-token", TokenTypeEnum.EMAIL_UPDATE))
+                .thenReturn(false);
+
+        ResultHandler<String> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "invalid-token");
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
+        assertEquals("Invalid or expired token", result.getMessage());
+        verify(_userRepo, never()).confirmEmailChange(anyString());
+    }
+
+    @Test
+    void confirmEmailChange_ShouldReturnFailure_WhenNoPendingEmail() {
+        when(_tokenRepo.validateToken(TestConstants.FAKE_USER_TOKEN, "valid-token", TokenTypeEnum.EMAIL_UPDATE))
+                .thenReturn(true);
+
+        when(_userRepo.confirmEmailChange(TestConstants.FAKE_USER_TOKEN)).thenReturn(false);
+
+        ResultHandler<String> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
+        assertEquals("No pending email update found", result.getMessage());
+    }
+
+    @Test
+    void confirmEmailChange_ShouldReturnSuccess_WhenEverythingIsValid() {
+        when(_tokenRepo.validateToken(TestConstants.FAKE_USER_TOKEN, "valid-token", TokenTypeEnum.EMAIL_UPDATE))
+                .thenReturn(true);
+        when(_userRepo.confirmEmailChange(TestConstants.FAKE_USER_TOKEN)).thenReturn(true);
+
+        ResultHandler<String> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("Email updated successfully", result.getMessage());
     }
 }
