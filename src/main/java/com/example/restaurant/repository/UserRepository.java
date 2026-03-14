@@ -89,11 +89,6 @@ public class UserRepository implements IUserRepository {
     }
 
     @Override
-    public boolean isEmailExist(String email) {
-        return _jpaUserRepository.findByEmail(email).isPresent();
-    }
-
-    @Override
     @Transactional
     public boolean confirmEmailChange(String userToken) {
         return _jpaUserRepository.findByToken(userToken).map(u -> {
@@ -106,5 +101,15 @@ public class UserRepository implements IUserRepository {
             _jpaUserRepository.saveAndFlush(u);
             return true;
         }).orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Override
+    @Transactional
+    public boolean activeUser(String userToken) {
+        return _jpaUserRepository.findByToken(userToken).map(u -> {
+            u.setIsActive(true);
+            _jpaUserRepository.saveAndFlush(u);
+            return true;
+        }).orElse(false);
     }
 }

@@ -18,7 +18,7 @@ public interface IUserRepository {
 
     boolean updateEmail(String userToken, String email);
 
-    boolean isEmailExist(String email);
-
     boolean confirmEmailChange(String userToken);
+
+    boolean activeUser(String userToken);
 }

@@ -1,7 +1,6 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.enums.TokenTypeEnum;
-import com.example.restaurant.models.Users;
 import com.example.restaurant.models.VerificationToken;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
@@ -12,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -42,44 +42,6 @@ public class VerificationTokenRepository implements IVerificationTokenRepository
 
     @Override
     @Transactional
-    public boolean activeUser(String token) {
-        return _jpaTokenRepo.findByTokenAndType(token, TokenTypeEnum.ACTIVATION)
-                .map(vt -> {
-                    if (vt.isExpired()) return false;
-
-                    Users user = vt.getUser();
-                    user.setIsActive(true);
-
-                    _jpaUserRepo.saveAndFlush(user);
-
-                    _jpaTokenRepo.delete(vt);
-
-                    return true;
-                }).orElse(false);
-    }
-
-    @Override
-    @Transactional
-    public boolean resetUserPassowrd(String verificationTokenValue, String newPassword) {
-        return _jpaTokenRepo.findByTokenAndType(verificationTokenValue, TokenTypeEnum.PASSWORD_RESET)
-                .map(vt -> {
-                    if (vt.isExpired()) return false;
-
-                    Users user = vt.getUser();
-
-                    boolean isChanged = _userRepo.changePassword(user.getToken(), newPassword);
-
-                    if (isChanged) {
-                        _jpaTokenRepo.delete(vt);
-                        return true;
-                    }
-
-                    return false;
-                }).orElse(false);
-    }
-
-    @Override
-    @Transactional
     public boolean validateToken(String userToken, String tokenValue, TokenTypeEnum type) {
         return _jpaTokenRepo.findByTokenAndType(tokenValue, type)
                 .map(vt -> {
@@ -90,5 +52,17 @@ public class VerificationTokenRepository implements IVerificationTokenRepository
 
                     return true;
                 }).orElse(false);
+    }
+
+    @Override
+    @Transactional
+    public Optional<String> validateToken(String tokenValue, TokenTypeEnum type) {
+        return _jpaTokenRepo.findByTokenAndType(tokenValue, type)
+                .filter(vt -> !vt.isExpired())
+                .map(vt -> {
+                    String userToken = vt.getUser().getToken();
+                    _jpaTokenRepo.delete(vt);
+                    return userToken;
+                });
     }
 }

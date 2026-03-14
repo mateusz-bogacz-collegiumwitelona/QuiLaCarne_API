@@ -140,14 +140,27 @@ public class AuthServices implements IAuthServices {
     @Transactional
     public ResultHandler<String> registerConfirm(String token) {
         try {
-            boolean isSuccess = _verificationTokenRepository.activeUser(token);
+            var userTokenOpt = _verificationTokenRepository.validateToken(token, TokenTypeEnum.ACTIVATION);
 
-            if (!isSuccess)
-                return ResultHandler.failure("Invalid token", HttpStatus.BAD_REQUEST.value());
+            if (userTokenOpt.isEmpty())
+                return ResultHandler.failure(
+                        "Invalid or expired token",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+            boolean isActivated = _userRepository.activeUser(userTokenOpt.get());
+
+            if (!isActivated)
+                return ResultHandler.failure(
+                        "User not found",
+                        HttpStatus.NOT_FOUND.value()
+                );
 
             return ResultHandler.success(
                     "User activated successfully",
-                    HttpStatus.OK.value());
+                    HttpStatus.OK.value()
+            );
+
         } catch (Exception ex) {
             return ResultHandler.failure(
                     "Server error",
@@ -198,17 +211,29 @@ public class AuthServices implements IAuthServices {
                         HttpStatus.BAD_REQUEST.value()
                 );
 
-            boolean isSuccess = _verificationTokenRepository.resetUserPassowrd(
-                    request.getToken(),
+            var userTokenOpt = _verificationTokenRepository.validateToken(request.getToken(), TokenTypeEnum.PASSWORD_RESET);
+
+            if (userTokenOpt.isEmpty())
+                return ResultHandler.failure(
+                        "Invalid or expired token",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+            boolean isSuccess = _userRepository.changePassword(
+                    userTokenOpt.get(),
                     request.getConfirmPassword()
             );
 
             if (!isSuccess)
-                return ResultHandler.failure("Invalid token", HttpStatus.BAD_REQUEST.value());
+                return ResultHandler.failure(
+                        "Failed to update password",
+                        HttpStatus.INTERNAL_SERVER_ERROR.value()
+                );
 
             return ResultHandler.success(
                     "Reset password successfully",
-                    HttpStatus.OK.value());
+                    HttpStatus.OK.value()
+            );
         } catch (Exception ex) {
             return ResultHandler.failure(
                     "Server error",
