@@ -7,7 +7,12 @@ import java.util.Optional;
 
 public interface IUserRepository {
     String createUser(RegisterRequest request, String userRole, boolean isActive);
+
     boolean existsByUsername(String username);
+
     boolean changePassword(String token, String newPassword);
+
     Optional<UserDomain> findMinimalByEmail(String email);
+
+    boolean updatePassword(String userToken, String oldPassword, String newPassword);
 }

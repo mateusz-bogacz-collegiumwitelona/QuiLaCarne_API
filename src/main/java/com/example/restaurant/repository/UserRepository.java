@@ -24,8 +24,7 @@ public class UserRepository implements IUserRepository {
 
     @Override
     @Transactional
-    public String createUser(RegisterRequest request, String userRole, boolean isActive)
-    {
+    public String createUser(RegisterRequest request, String userRole, boolean isActive) {
         Roles role = _roleRepository.setRole(userRole);
 
         Users user = new Users();
@@ -45,29 +44,37 @@ public class UserRepository implements IUserRepository {
     }
 
     @Override
-    public Optional<UserDomain> findMinimalByEmail(String email)
-    {
+    public Optional<UserDomain> findMinimalByEmail(String email) {
         return _jpaUserRepository.findByEmail(email)
                 .map(u -> new UserDomain(
-                        u.getToken(),
-                        u.getUsername(),
-                        u.getEmail()
-                )
-        );
+                                u.getToken(),
+                                u.getUsername(),
+                                u.getEmail()
+                        )
+                );
     }
 
     @Override
     @Transactional
-    public boolean changePassword(String token, String newPassword)
-    {
-       return _jpaUserRepository.findByToken(token).map(u -> {
-           u.setPassword(_passwordEncoder.encode(newPassword));
-           _jpaUserRepository.saveAndFlush(u);
-           return true;
-       }).orElse(false);
+    public boolean changePassword(String token, String newPassword) {
+        return _jpaUserRepository.findByToken(token).map(u -> {
+            u.setPassword(_passwordEncoder.encode(newPassword));
+            _jpaUserRepository.saveAndFlush(u);
+            return true;
+        }).orElse(false);
     }
 
+    @Override
+    @Transactional
+    public boolean updatePassword(String userToken, String oldPassword, String newPassword) {
+        return _jpaUserRepository.findByToken(userToken).map(u -> {
+            if (!_passwordEncoder.matches(oldPassword, u.getPassword()))
+                return false;
 
+            u.setPassword(_passwordEncoder.encode(newPassword));
+            _jpaUserRepository.saveAndFlush(u);
 
-
+            return true;
+        }).orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }
