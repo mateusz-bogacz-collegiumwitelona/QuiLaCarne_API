@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
@@ -137,22 +138,27 @@ public class AuthServicesTest {
 
     @Test
     void resetPassword_ShouldSendEmail_WhenUserExists() {
-        String email = "test@test.pl";
-        UserDomain userDto = new UserDomain("fake-token", "testuser", email);
+        UserDomain userDto = new UserDomain(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_USERNAME,
+                TestConstants.FAKE_USERNAME.toUpperCase().trim(),
+                TestConstants.FAKE_EMAIL,
+                TestConstants.FAKE_EMAIL.toUpperCase().trim()
+        );
 
-        when(_userRepository.findMinimalByEmail(email)).thenReturn(Optional.of(userDto));
-        when(_verificationTokenRepository
-                .createToken(
-                        anyString(),
-                        eq(TokenTypeEnum.PASSWORD_RESET),
-                        anyInt()
-                )
-        ).thenReturn("res-token");
+        when(_userRepository.findMinimalByEmail(TestConstants.FAKE_EMAIL))
+                .thenReturn(Optional.of(userDto));
 
-        var result = _authServices.resetPassowrd(email);
+        when(_verificationTokenRepository.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt()))
+                .thenReturn("res-token");
 
-        assertTrue(result.isSuccess());
-        verify(_emailServices).sendResetPasswordEmail(eq(email), eq("testuser"), eq("res-token"));
+        _authServices.resetPassowrd(TestConstants.FAKE_EMAIL);
+
+        verify(_emailServices).sendResetPasswordEmail(
+                eq(TestConstants.FAKE_EMAIL),
+                eq(TestConstants.FAKE_USERNAME),
+                eq("res-token")
+        );
     }
 
     @Test

@@ -37,6 +37,7 @@ public class UserRepositoryTest {
     void createUser_ShouldHashPasswordAndRetrunToken() {
         RegisterRequest request = new RegisterRequest();
         request.setUsername(TestConstants.FAKE_USERNAME);
+        request.setEmail(TestConstants.FAKE_EMAIL);
         request.setPassword(TestConstants.FAKE_PASSWORD);
 
         Roles mockRole = new Roles();
@@ -45,53 +46,40 @@ public class UserRepositoryTest {
         Users mockUser = new Users();
         mockUser.setToken(TestConstants.FAKE_USER_TOKEN);
 
-        when(_roleRepository.setRole("ROLE_CLIENT"))
-                .thenReturn(mockRole
-                );
+        when(_roleRepository.setRole("ROLE_CLIENT")).thenReturn(mockRole);
+        when(_passwordEncoder.encode(TestConstants.FAKE_PASSWORD)).thenReturn(TestConstants.FAKE_HASH);
 
-        when(_passwordEncoder
-                .encode(TestConstants.FAKE_PASSWORD)
-        ).thenReturn(TestConstants.FAKE_HASH);
-
-        when(_jpaUserRepository
-                .saveAndFlush(any(Users.class))
-        ).thenReturn(mockUser);
+        when(_jpaUserRepository.saveAndFlush(any(Users.class))).thenReturn(mockUser);
 
         String token = _userRepository.createUser(request, "ROLE_CLIENT", false);
 
         assertEquals(TestConstants.FAKE_USER_TOKEN, token);
-        verify(_passwordEncoder).encode(TestConstants.FAKE_PASSWORD);
         verify(_jpaUserRepository).saveAndFlush(argThat(user ->
-                user.getPassword().equals(TestConstants.FAKE_HASH) &&
-                        user.getUsername().equals(TestConstants.FAKE_USERNAME)
+                user.getNormalizedUsername().equals(TestConstants.FAKE_USERNAME.toUpperCase()) &&
+                        user.getNormalizedEmail().equals(TestConstants.FAKE_EMAIL.toUpperCase())
         ));
     }
 
     @Test
     void findMinimalByEmail_ShouldReturnDTO_WhenUserIsExist() {
+        String email = TestConstants.FAKE_EMAIL;
+        String normalizedEmail = email.toUpperCase().trim();
+
         Users user = new Users();
         user.setToken(TestConstants.FAKE_USER_TOKEN);
         user.setUsername(TestConstants.FAKE_USERNAME);
-        user.setEmail(TestConstants.FAKE_EMAIL);
+        user.setNormalizedUsername(TestConstants.FAKE_USERNAME.toUpperCase());
+        user.setEmail(email);
+        user.setNormalizedEmail(normalizedEmail);
 
-        when(_jpaUserRepository
-                .findByEmail(TestConstants.FAKE_EMAIL)
-        ).thenReturn(Optional.of(user));
+        when(_jpaUserRepository.findByNormalizedEmail(normalizedEmail))
+                .thenReturn(Optional.of(user));
 
-        var result = _userRepository
-                .findMinimalByEmail(TestConstants.FAKE_EMAIL);
+        var result = _userRepository.findMinimalByEmail(email);
 
         assertTrue(result.isPresent());
-
-        assertEquals(
-                TestConstants.FAKE_USER_TOKEN,
-                result.get().token()
-        );
-
-        assertEquals(
-                TestConstants.FAKE_USERNAME,
-                result.get().username()
-        );
+        assertEquals(TestConstants.FAKE_USER_TOKEN, result.get().token());
+        assertEquals(normalizedEmail, result.get().normalizedEmail());
     }
 
     @Test

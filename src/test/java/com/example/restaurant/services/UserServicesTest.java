@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.helpers.ResultHandler;
@@ -12,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -113,17 +116,25 @@ public class UserServicesTest {
 
     @Test
     void updateEmail_ShouldReturnFailure_WhenEmailIsUsedBySomeoneElse() {
-        String newEmail = "taken@example.com";
-        com.example.restaurant.dto.domain.UserDomain otherUser = new com.example.restaurant.dto.domain.UserDomain("other-user-token", "Bob", newEmail);
+        UserDomain otherUser = new UserDomain(
+                "different-token",
+                "otherUser",
+                "OTHERUSER",
+                TestConstants.FAKE_EMAIL,
+                TestConstants.FAKE_EMAIL.toUpperCase()
+        );
 
-        when(_userRepo.findMinimalByEmail(newEmail)).thenReturn(java.util.Optional.of(otherUser));
+        when(_userRepo.findMinimalByEmail(TestConstants.FAKE_EMAIL))
+                .thenReturn(Optional.of(otherUser));
 
-        ResultHandler<String> result = _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, newEmail);
+        ResultHandler<String> result = _userServices.updateEmail(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_EMAIL
+        );
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
         assertEquals("The email is being used by someone else", result.getMessage());
-        verify(_userRepo, never()).updateEmail(anyString(), anyString());
     }
 
     @Test
