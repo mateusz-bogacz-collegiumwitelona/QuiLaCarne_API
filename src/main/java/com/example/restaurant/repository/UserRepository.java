@@ -131,4 +131,18 @@ public class UserRepository implements IUserRepository {
             return true;
         }).orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    @Override
+    @Transactional
+    public boolean delete(String userToken) {
+        return _jpaUserRepository.findByToken(userToken).map(u -> {
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            u.setNormalizedEmail("DELETED_" + timestamp + "_" + u.getNormalizedEmail());
+            u.setNormalizedUsername("DELETED_" + timestamp + "_" + u.getNormalizedUsername());
+
+            _jpaUserRepository.delete(u);
+
+            return true;
+        }).orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }

@@ -11,4 +11,6 @@ public interface IUserServices {
     ResultHandler<String> confirmEmailChange(String userToken, String token);
 
     ResultHandler<String> updateUserName(String userName, String userToken);
+
+    ResultHandler<String> deleteAccount(String userToken);
 }

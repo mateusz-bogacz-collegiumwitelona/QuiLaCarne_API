@@ -5,10 +5,13 @@ import com.example.restaurant.models.lookup.Roles;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,6 +21,8 @@ import java.util.stream.Collectors;
 @Table(name = "users")
 @Getter
 @Setter
+@SQLDelete(sql = "UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@Where(clause = "deleted_at IS NULL")
 public class Users extends BaseEntity implements UserDetails {
     private String username;
 
@@ -52,6 +57,9 @@ public class Users extends BaseEntity implements UserDetails {
                 .collect(Collectors.toList());
     }
 
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+
     @Override
     public String getPassword() {
         return this.password;
@@ -79,6 +87,6 @@ public class Users extends BaseEntity implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return this.isActive != null && this.isActive;
+        return (this.isActive != null && this.isActive) && (this.deletedAt == null);
     }
 }

@@ -134,7 +134,7 @@ public class UserServices implements IUserServices {
                         "Username is already taken",
                         HttpStatus.BAD_REQUEST.value()
                 );
-            
+
             boolean isChanged = _userRepo.changeUserName(userToken, userName);
 
             if (!isChanged)
@@ -145,6 +145,36 @@ public class UserServices implements IUserServices {
 
             return ResultHandler.success(
                     "User name changed successfully",
+                    HttpStatus.OK.value()
+            );
+        } catch (RuntimeException rex) {
+            return ResultHandler.failure(
+                    rex.getMessage(),
+                    HttpStatus.NOT_FOUND.value()
+            );
+        } catch (Exception ex) {
+            return ResultHandler.failure(
+                    ex.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public ResultHandler<String> deleteAccount(String userToken) {
+        try {
+
+            boolean isDeleted = _userRepo.delete(userToken);
+
+            if (!isDeleted)
+                return ResultHandler.failure(
+                        "Can't delte user",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+            return ResultHandler.success(
+                    "User deleted successfully",
                     HttpStatus.OK.value()
             );
         } catch (RuntimeException rex) {

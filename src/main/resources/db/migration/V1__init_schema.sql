@@ -91,7 +91,8 @@ CREATE TABLE users
     mfa_secret          VARCHAR(255),
     is_active           BOOLEAN     DEFAULT FALSE,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    deleted_at          TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE restaurant_tables

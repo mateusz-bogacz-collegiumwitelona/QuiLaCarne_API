@@ -115,4 +115,13 @@ public class UserController {
                 .status(result.getStatusCode())
                 .body(result);
     }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<ResultHandler<String>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
+        var result = _userServices.deleteAccount(userToken);
+
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
 }
