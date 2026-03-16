@@ -217,4 +217,29 @@ public class UserServicesTest {
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertEquals("User name changed successfully", result.getMessage());
     }
+
+    @Test
+    void deleteAccount_ShouldReturnSuccess_WhenUserExistsAndDeleted() {
+        when(_userRepo.delete(TestConstants.FAKE_USER_TOKEN)).thenReturn(true);
+
+        ResultHandler<String> result = _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("User deleted successfully", result.getMessage());
+        verify(_userRepo, times(1)).delete(TestConstants.FAKE_USER_TOKEN);
+    }
+
+    @Test
+    void deleteAccount_ShouldReturnNotFound_WhenUserDoesNotExist() {
+        when(_userRepo.delete(TestConstants.FAKE_USER_TOKEN))
+                .thenThrow(new RuntimeException("User not found"));
+
+        ResultHandler<String> result = _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatusCode());
+        assertEquals("User not found", result.getMessage());
+        verify(_userRepo, times(1)).delete(TestConstants.FAKE_USER_TOKEN);
+    }
 }

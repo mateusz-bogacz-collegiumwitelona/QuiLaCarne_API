@@ -280,4 +280,31 @@ public class UserRepositoryTest {
         assertEquals("User not found", exception.getMessage());
         verify(_jpaUserRepository, never()).saveAndFlush(any());
     }
+
+    @Test
+    void deleteUser_ShouldReturnTrue_WhenUserExists() {
+        Users mockUser = new Users();
+        mockUser.setUsername(TestConstants.FAKE_USERNAME);
+        mockUser.setNormalizedUsername(TestConstants.FAKE_USERNAME.toLowerCase().trim());
+        mockUser.setToken(TestConstants.FAKE_USER_TOKEN);
+
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(Optional.of(mockUser));
+
+        boolean resutl = _userRepository.delete(TestConstants.FAKE_USER_TOKEN);
+
+        assertTrue(resutl);
+    }
+
+    @Test
+    void deleteUser_ShouldThrowException_WhenUserNotFound() {
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () ->
+                _userRepository.delete(TestConstants.FAKE_USER_TOKEN)
+        );
+
+        assertEquals("User not found", exception.getMessage());
+        verify(_jpaUserRepository, never()).saveAndFlush(any());
+    }
 }

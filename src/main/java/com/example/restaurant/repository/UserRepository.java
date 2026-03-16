@@ -137,9 +137,14 @@ public class UserRepository implements IUserRepository {
     public boolean delete(String userToken) {
         return _jpaUserRepository.findByToken(userToken).map(u -> {
             String timestamp = String.valueOf(System.currentTimeMillis());
+
             u.setNormalizedEmail("DELETED_" + timestamp + "_" + u.getNormalizedEmail());
             u.setNormalizedUsername("DELETED_" + timestamp + "_" + u.getNormalizedUsername());
 
+            u.setEmail("deleted_" + timestamp + "_" + u.getEmail());
+            u.setUsername("deleted_" + timestamp + "_" + u.getUsername());
+
+            _jpaUserRepository.saveAndFlush(u);
             _jpaUserRepository.delete(u);
 
             return true;

@@ -116,6 +116,12 @@ public class UserController {
                 .body(result);
     }
 
+    @Operation(summary = "Delete user", description = "Allows the authenticated user to delete account.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User deleted successfully"),
+            @ApiResponse(responseCode = "400", description = "Can't delte user"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @DeleteMapping("/delete")
     public ResponseEntity<ResultHandler<String>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
         var result = _userServices.deleteAccount(userToken);
