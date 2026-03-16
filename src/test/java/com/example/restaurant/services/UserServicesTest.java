@@ -140,9 +140,9 @@ public class UserServicesTest {
     @Test
     void updateEmail_ShouldReturnSuccess_AndSendEmail_WhenValid() {
         String newEmail = "new@example.com";
-        when(_userRepo.findMinimalByEmail(newEmail)).thenReturn(java.util.Optional.empty());
+        when(_userRepo.findMinimalByEmail(newEmail)).thenReturn(Optional.empty());
         when(_userRepo.updateEmail(TestConstants.FAKE_USER_TOKEN, newEmail)).thenReturn(true);
-        when(_tokenRepo.createToken(eq(TestConstants.FAKE_USER_TOKEN), eq(com.example.restaurant.enums.TokenTypeEnum.EMAIL_UPDATE), anyInt()))
+        when(_tokenRepo.createToken(eq(TestConstants.FAKE_USER_TOKEN), eq(TokenTypeEnum.EMAIL_UPDATE), anyInt()))
                 .thenReturn("mock-verification-token");
 
         ResultHandler<String> result = _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, newEmail);
@@ -191,5 +191,30 @@ public class UserServicesTest {
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertEquals("Email updated successfully", result.getMessage());
+    }
+
+    @Test
+    void updateUserName_ShouldReturnFailure_WhenUsernameExists() {
+        String newName = "existingUser";
+        when(_userRepo.existsByUsername(newName)).thenReturn(true);
+
+        ResultHandler<String> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
+        assertEquals("Username is already taken", result.getMessage());
+    }
+
+    @Test
+    void updateUserName_ShouldReturnSuccess_WhenEverythingIsValid() {
+        String newName = "newName";
+        when(_userRepo.existsByUsername(newName)).thenReturn(false);
+        when(_userRepo.changeUserName(TestConstants.FAKE_USER_TOKEN, newName)).thenReturn(true);
+
+        ResultHandler<String> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("User name changed successfully", result.getMessage());
     }
 }

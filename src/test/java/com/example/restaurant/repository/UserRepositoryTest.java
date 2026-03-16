@@ -229,6 +229,7 @@ public class UserRepositoryTest {
 
         assertTrue(result);
         assertEquals("new@example.com", mockUser.getEmail());
+        assertEquals("NEW@EXAMPLE.COM", mockUser.getNormalizedEmail());
         assertNull(mockUser.getPendingEmail());
         verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
     }
@@ -244,6 +245,39 @@ public class UserRepositoryTest {
         boolean result = _userRepository.confirmEmailChange(TestConstants.FAKE_USER_TOKEN);
 
         assertFalse(result);
+        verify(_jpaUserRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void changeUserName_ShouldReturnTrue_AndSave_WhenUserExists() {
+        Users mockUser = new Users();
+        mockUser.setUsername(TestConstants.FAKE_USERNAME);
+        mockUser.setNormalizedUsername(TestConstants.FAKE_USERNAME.toLowerCase().trim());
+        mockUser.setIsActive(true);
+        mockUser.setToken(TestConstants.FAKE_USER_TOKEN);
+
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.of(mockUser));
+
+        boolean resutl = _userRepository.changeUserName(TestConstants.FAKE_USER_TOKEN, "user12");
+
+        assertTrue(resutl);
+        assertEquals("user12", mockUser.getUsername());
+        assertEquals("USER12", mockUser.getNormalizedUsername());
+
+        verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
+    }
+
+    @Test
+    void changeUserName_ShouldThrowException_WhenUserNotFound() {
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () ->
+                _userRepository.changeUserName(TestConstants.FAKE_USER_TOKEN, "user12")
+        );
+
+        assertEquals("User not found", exception.getMessage());
         verify(_jpaUserRepository, never()).saveAndFlush(any());
     }
 }
