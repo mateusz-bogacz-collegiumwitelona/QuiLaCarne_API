@@ -9,4 +9,6 @@ public interface IUserServices {
     ResultHandler<String> updateEmail(String userToken, String email);
 
     ResultHandler<String> confirmEmailChange(String userToken, String token);
+
+    ResultHandler<String> updateUserName(String userName, String userToken);
 }

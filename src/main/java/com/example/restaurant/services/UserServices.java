@@ -124,4 +124,39 @@ public class UserServices implements IUserServices {
             );
         }
     }
+
+    @Override
+    @Transactional
+    public ResultHandler<String> updateUserName(String userName, String userToken) {
+        try {
+            if (_userRepo.existsByUsername(userName))
+                return ResultHandler.failure(
+                        "Username is already taken",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+            
+            boolean isChanged = _userRepo.changeUserName(userToken, userName);
+
+            if (!isChanged)
+                return ResultHandler.failure(
+                        "Can't change user name",
+                        HttpStatus.BAD_REQUEST.value()
+                );
+
+            return ResultHandler.success(
+                    "User name changed successfully",
+                    HttpStatus.OK.value()
+            );
+        } catch (RuntimeException rex) {
+            return ResultHandler.failure(
+                    rex.getMessage(),
+                    HttpStatus.NOT_FOUND.value()
+            );
+        } catch (Exception ex) {
+            return ResultHandler.failure(
+                    ex.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+        }
+    }
 }

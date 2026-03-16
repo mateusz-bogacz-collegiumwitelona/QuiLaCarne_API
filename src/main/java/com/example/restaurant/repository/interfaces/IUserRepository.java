@@ -21,4 +21,6 @@ public interface IUserRepository {
     boolean confirmEmailChange(String userToken);
 
     boolean activeUser(String userToken);
+
+    boolean changeUserName(String userToken, String userName);
 }

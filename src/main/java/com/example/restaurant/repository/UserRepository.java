@@ -112,4 +112,14 @@ public class UserRepository implements IUserRepository {
             return true;
         }).orElse(false);
     }
+
+    @Override
+    @Transactional
+    public boolean changeUserName(String userToken, String userName) {
+        return _jpaUserRepository.findByToken(userToken).map(u -> {
+            u.setUsername(userName);
+            _jpaUserRepository.saveAndFlush(u);
+            return true;
+        }).orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }

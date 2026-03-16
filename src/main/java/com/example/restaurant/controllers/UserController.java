@@ -95,4 +95,24 @@ public class UserController {
                 .status(result.getStatusCode())
                 .body(result);
     }
+
+    @Operation(summary = "Update username", description = "Allows the authenticated user to change their display name.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Username updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Username already taken or invalid"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @PatchMapping("/username")
+    public ResponseEntity<ResultHandler<String>> updateUserName(
+            @RequestParam
+            @NotBlank
+            @Parameter(description = "New user name")
+            String userName,
+            @AuthenticationPrincipal(expression = "token") String userToken
+    ) {
+        var result = _userServices.updateUserName(userName, userToken);
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
 }
