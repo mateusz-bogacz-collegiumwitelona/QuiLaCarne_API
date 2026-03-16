@@ -20,7 +20,14 @@ import java.util.stream.Collectors;
 @Setter
 public class Users extends BaseEntity implements UserDetails {
     private String username;
+
+    @Column(name = "normalized_username")
+    private String normalizedUsername;
+
     private String email;
+
+    @Column(name = "normalized_email")
+    private String normalizedEmail;
 
     @Column(name = "pending_email")
     private String pendingEmail;

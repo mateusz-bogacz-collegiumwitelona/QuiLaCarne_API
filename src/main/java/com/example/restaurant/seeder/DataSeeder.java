@@ -147,7 +147,9 @@ public class DataSeeder implements CommandLineRunner {
 
         Users user = new Users();
         user.setUsername(name);
+        user.setNormalizedUsername(user.getUsername().toUpperCase().trim());
         user.setEmail(name + "@example.pl");
+        user.setNormalizedEmail(user.getEmail().toUpperCase().trim());
         user.setPassword(_passwordEncoder.encode(password));
         user.setIsActive(true);
         user.setTwoFactorEnabled(false);

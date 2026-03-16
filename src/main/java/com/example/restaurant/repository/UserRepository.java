@@ -29,7 +29,9 @@ public class UserRepository implements IUserRepository {
 
         Users user = new Users();
         user.setUsername(request.getUsername());
+        user.setNormalizedUsername(request.getUsername().toUpperCase().trim());
         user.setEmail(request.getEmail());
+        user.setNormalizedEmail(request.getEmail().toUpperCase().trim());
         user.setPassword(_passwordEncoder.encode(request.getPassword()));
         user.setIsActive(isActive);
         user.setRoles(Set.of(role));
@@ -40,16 +42,21 @@ public class UserRepository implements IUserRepository {
 
     @Override
     public boolean existsByUsername(String username) {
-        return _jpaUserRepository.findByUsername(username).isPresent();
+        return _jpaUserRepository
+                .findByNormalizedUsername(
+                        username.toUpperCase().trim()
+                ).isPresent();
     }
 
     @Override
     public Optional<UserDomain> findMinimalByEmail(String email) {
-        return _jpaUserRepository.findByEmail(email)
+        return _jpaUserRepository.findByNormalizedEmail(email.toUpperCase().trim())
                 .map(u -> new UserDomain(
                                 u.getToken(),
                                 u.getUsername(),
-                                u.getEmail()
+                                u.getNormalizedUsername(),
+                                u.getEmail(),
+                                u.getNormalizedEmail()
                         )
                 );
     }
@@ -96,6 +103,7 @@ public class UserRepository implements IUserRepository {
                 return false;
 
             u.setEmail(u.getPendingEmail());
+            u.setNormalizedEmail(u.getPendingEmail().toUpperCase());
             u.setPendingEmail(null);
 
             _jpaUserRepository.saveAndFlush(u);
@@ -118,6 +126,7 @@ public class UserRepository implements IUserRepository {
     public boolean changeUserName(String userToken, String userName) {
         return _jpaUserRepository.findByToken(userToken).map(u -> {
             u.setUsername(userName);
+            u.setNormalizedUsername(userName.toUpperCase());
             _jpaUserRepository.saveAndFlush(u);
             return true;
         }).orElseThrow(() -> new RuntimeException("User not found"));
