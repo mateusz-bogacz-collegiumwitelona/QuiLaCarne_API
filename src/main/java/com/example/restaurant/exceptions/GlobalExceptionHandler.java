@@ -5,6 +5,7 @@ import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IAuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class GlobalExceptionHandler {
     private final IAuditLogRepository _auditLogRepo;
 
@@ -55,6 +57,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResultHandler<Object>> handleGenericException(Exception ex) {
+        log.error("CRITICAL UNHANDLED EXCEPTION: ", ex);
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ResultHandler.failure(
                         "Internal server error: " + ex.getMessage(),
@@ -88,6 +92,8 @@ public class GlobalExceptionHandler {
         );
 
         _auditLogRepo.log(logDomain);
+
+        log.warn("Failed login attempt from IP: {}. Reason: {}", ipAddress, aex.getMessage());
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 ResultHandler.failure(

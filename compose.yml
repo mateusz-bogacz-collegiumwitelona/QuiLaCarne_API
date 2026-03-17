@@ -3,8 +3,8 @@ networks:
     driver: bridge
 
 volumes:
-  db-data: {}
-  redis-data: {}
+  db-data: { }
+  redis-data: { }
 
 services:
   api:
@@ -23,6 +23,10 @@ services:
       - JWT_SECRET_KEY=${API_JWT_SECRET_KEY}
       - JWT_EXPIRATION=${API_JWT_EXPIRATION:-86400000}
       - FRONTEND_URL=${FRONTEND_URL}
+      - API_SHOW_SQL=${API_SHOW_SQL}
+      - API_FORMAT_SQL=${API_FORMAT_SQL}
+      - API_LOGGING_LEVEL=${API_LOGGING_LEVEL}
+      - TZ=UTC
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,6 +42,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      TZ: UTC
     healthcheck:
       test:
         [
@@ -70,7 +75,7 @@ services:
     image: redis:8.2-alpine
     container_name: redis-dev
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -99,6 +104,7 @@ services:
       - JWT_SECRET_KEY=${API_JWT_SECRET_KEY}
       - JWT_EXPIRATION=${API_JWT_EXPIRATION:-86400000}
       - GRADLE_USER_HOME=/tmp/.gradle
+      - TZ=UTC
     command: ./gradlew test --no-daemon -g /tmp/.gradle
     networks:
       - dev
