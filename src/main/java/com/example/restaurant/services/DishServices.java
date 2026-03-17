@@ -19,22 +19,14 @@ public class DishServices implements IDishServices {
     private final IDishRepository _dishRepo;
 
     @Override
-    public ResultHandler<PagedResult<DishListResponse>> getMenu (DishFilterRequest request, PaggedRequest pagged) {
-        try {
-            String lang = LocaleContextHolder.getLocale().getLanguage();
+    public ResultHandler<PagedResult<DishListResponse>> getMenu(DishFilterRequest request, PaggedRequest pagged) {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
 
-            var result = _dishRepo.findAllDishes(lang, request, pagged);
+        var result = _dishRepo.findAllDishes(lang, request, pagged);
 
-            return ResultHandler.success(
-                    "Menu retrived",
-                    HttpStatus.OK.value(),
-                    result);
-        }
-        catch (Exception ex) {
-            return ResultHandler.failure(
-                    ex.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-        }
+        return ResultHandler.success(
+                "Menu retrived",
+                HttpStatus.OK.value(),
+                result);
     }
 }

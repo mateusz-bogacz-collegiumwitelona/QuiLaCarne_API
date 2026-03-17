@@ -32,126 +32,106 @@ public class ReservationServices implements IReservationServices {
     @Override
     @Transactional
     public ResultHandler<ReservationResponse> create(ReservationRequest request, String userToken) {
-        try {
-            Duration duration = Duration.between(request.getStartTime(), request.getEndTime());
+        Duration duration = Duration.between(request.getStartTime(), request.getEndTime());
 
-            if (duration.toMinutes() < 30)
-                return ResultHandler.failure(
-                        "Reservation must be at least 30 minutes long",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            if (duration.toHours() > 3)
-                return ResultHandler.failure(
-                        "Reservation cannot exceed 3 hours",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            if (!_tableRepo.isTableExist(request.getTableToken()))
-                return ResultHandler.failure(
-                        "Table not found",
-                        HttpStatus.NOT_FOUND.value()
-                );
-
-            boolean isFreeInTimeframe = _tableRepo.findAllTables("pl", request.getStartTime(), request.getEndTime())
-                    .stream()
-                    .anyMatch(table -> table.getToken().equals(request.getTableToken()));
-
-            if (!isFreeInTimeframe)
-                return ResultHandler.failure(
-                        "Table is already reserved in this timeframe",
-                        HttpStatus.CONFLICT.value()
-                );
-
-            String newReservationToken = _reservationRepo.createReservation(request, userToken);
-
-            if (newReservationToken == null)
-                return ResultHandler.failure(
-                        "Failed to create reservation",
-                        HttpStatus.INTERNAL_SERVER_ERROR.value()
-                );
-
-            var orderCreate = _orderRepo.createOrderForReservation(
-                    newReservationToken,
-                    request.getTableToken(),
-                    request.getDishes());
-
-            if (orderCreate == null)
-                return ResultHandler.failure(
-                        "Order can't create",
-                        HttpStatus.INTERNAL_SERVER_ERROR.value()
-                );
-
-            ReservationResponse response = new ReservationResponse();
-            response.setActive(true);
-
-            List<ReservationDishResponse> dishResponses = orderCreate.dishes().stream().map(
-                    domainDish -> {
-                        ReservationDishResponse dishRes = new ReservationDishResponse();
-                        dishRes.setDishName(domainDish.dishName());
-                        dishRes.setPrice(domainDish.price());
-                        dishRes.setQuantity(domainDish.quantity());
-                        return dishRes;
-                    }
-            ).toList();
-
-            response.setDishes(dishResponses);
-            response.setTotalPrice(orderCreate.totalPrice());
-
-            return ResultHandler.success(
-                    "Reservation created successfully",
-                    HttpStatus.CREATED.value(),
-                    response
-            );
-        } catch (Exception ex) {
+        if (duration.toMinutes() < 30)
             return ResultHandler.failure(
-                    ex.getMessage(),
+                    "Reservation must be at least 30 minutes long",
+                    HttpStatus.BAD_REQUEST.value()
+            );
+
+        if (duration.toHours() > 3)
+            return ResultHandler.failure(
+                    "Reservation cannot exceed 3 hours",
+                    HttpStatus.BAD_REQUEST.value()
+            );
+
+        if (!_tableRepo.isTableExist(request.getTableToken()))
+            return ResultHandler.failure(
+                    "Table not found",
+                    HttpStatus.NOT_FOUND.value()
+            );
+
+        boolean isFreeInTimeframe = _tableRepo.findAllTables("pl", request.getStartTime(), request.getEndTime())
+                .stream()
+                .anyMatch(table -> table.getToken().equals(request.getTableToken()));
+
+        if (!isFreeInTimeframe)
+            return ResultHandler.failure(
+                    "Table is already reserved in this timeframe",
+                    HttpStatus.CONFLICT.value()
+            );
+
+        String newReservationToken = _reservationRepo.createReservation(request, userToken);
+
+        if (newReservationToken == null)
+            return ResultHandler.failure(
+                    "Failed to create reservation",
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
             );
-        }
+
+        var orderCreate = _orderRepo.createOrderForReservation(
+                newReservationToken,
+                request.getTableToken(),
+                request.getDishes());
+
+        if (orderCreate == null)
+            return ResultHandler.failure(
+                    "Order can't create",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+
+        ReservationResponse response = new ReservationResponse();
+        response.setActive(true);
+
+        List<ReservationDishResponse> dishResponses = orderCreate.dishes().stream().map(
+                domainDish -> {
+                    ReservationDishResponse dishRes = new ReservationDishResponse();
+                    dishRes.setDishName(domainDish.dishName());
+                    dishRes.setPrice(domainDish.price());
+                    dishRes.setQuantity(domainDish.quantity());
+                    return dishRes;
+                }
+        ).toList();
+
+        response.setDishes(dishResponses);
+        response.setTotalPrice(orderCreate.totalPrice());
+
+        return ResultHandler.success(
+                "Reservation created successfully",
+                HttpStatus.CREATED.value(),
+                response
+        );
     }
 
     @Override
     public ResultHandler<PagedResult<ClientReservationResponse>> history(ClientReservationRequest request, PaggedRequest pagged, String userToken) {
-        try {
-            String lang = LocaleContextHolder.getLocale().getLanguage();
+        String lang = LocaleContextHolder.getLocale().getLanguage();
 
-            var response = _reservationRepo.history(userToken, lang, request, pagged);
+        var response = _reservationRepo.history(userToken, lang, request, pagged);
 
-            return ResultHandler.success(
-                    "User reservations retrieved successfully",
-                    HttpStatus.OK.value(),
-                    response
-            );
-        } catch (Exception ex) {
-            return ResultHandler.failure(
-                    ex.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-        }
+        return ResultHandler.success(
+                "User reservations retrieved successfully",
+                HttpStatus.OK.value(),
+                response
+        );
     }
 
     @Override
     public ResultHandler<ReservationDetailsResponse> details(String reservationToken, String userToken) {
-        try {
-            String lang = LocaleContextHolder.getLocale().getLanguage();
+        String lang = LocaleContextHolder.getLocale().getLanguage();
 
-            ReservationDetailsResponse response = _reservationRepo.details(reservationToken, userToken, lang);
+        ReservationDetailsResponse response = _reservationRepo.details(reservationToken, userToken, lang);
 
-            var orderSummary = _orderRepo.getOrderSummaryForReservation(reservationToken);
+        var orderSummary = _orderRepo.getOrderSummaryForReservation(reservationToken);
 
-            response.setTotalPrice(orderSummary.totalPrice());
-            response.setDishes(orderSummary.dishes());
+        response.setTotalPrice(orderSummary.totalPrice());
+        response.setDishes(orderSummary.dishes());
 
-            return ResultHandler.success(
-                    "Reservation details retrieved successfully",
-                    HttpStatus.OK.value(),
-                    response
-            );
-        } catch (RuntimeException rex) {
-            return ResultHandler.failure(rex.getMessage(), HttpStatus.NOT_FOUND.value());
-        } catch (Exception ex) {
-            return ResultHandler.failure(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
-        }
+        return ResultHandler.success(
+                "Reservation details retrieved successfully",
+                HttpStatus.OK.value(),
+                response
+        );
     }
 }

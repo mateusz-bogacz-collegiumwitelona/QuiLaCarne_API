@@ -87,10 +87,9 @@ public class AuthServicesTest {
         when(_authManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
-        ResultHandler<AuthResponse> result = _authServices.authenticate(_loginRequest);
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.UNAUTHORIZED.value(), result.getStatusCode());
+        assertThrows(BadCredentialsException.class, () ->
+                _authServices.authenticate(_loginRequest)
+        );
     }
 
     @Test
@@ -152,7 +151,7 @@ public class AuthServicesTest {
         when(_verificationTokenRepository.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt()))
                 .thenReturn("res-token");
 
-        _authServices.resetPassowrd(TestConstants.FAKE_EMAIL);
+        _authServices.resetPassoword(TestConstants.FAKE_EMAIL);
 
         verify(_emailServices).sendResetPasswordEmail(
                 eq(TestConstants.FAKE_EMAIL),

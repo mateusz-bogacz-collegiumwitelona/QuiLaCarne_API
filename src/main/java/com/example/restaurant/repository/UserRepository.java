@@ -69,7 +69,7 @@ public class UserRepository implements IUserRepository {
             u.setPassword(_passwordEncoder.encode(newPassword));
             _jpaUserRepository.saveAndFlush(u);
             return true;
-        }).orElse(false);
+        }).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     @Override
@@ -119,7 +119,7 @@ public class UserRepository implements IUserRepository {
             u.setIsActive(true);
             _jpaUserRepository.saveAndFlush(u);
             return true;
-        }).orElse(false);
+        }).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     @Override

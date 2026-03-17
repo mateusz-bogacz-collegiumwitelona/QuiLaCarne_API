@@ -8,8 +8,12 @@ import com.example.restaurant.helpers.ResultHandler;
 
 public interface IAuthServices {
     ResultHandler<AuthResponse> authenticate(LoginRequest request);
+
     ResultHandler<String> register(RegisterRequest request);
+
     ResultHandler<String> registerConfirm(String token);
-    ResultHandler<String> resetPassowrd(String email);
+
+    ResultHandler<String> resetPassoword(String email);
+
     ResultHandler<String> setNewPassword(ResetPasswordRequest request);
 }

@@ -18,24 +18,15 @@ public class TableServices implements ITableServices {
     private final ITableRespository _tableRepo;
 
     @Override
-    public ResultHandler<List<TableListResponse>> getTables(TableFilterRequest request)
-    {
-        try {
-            String lang = LocaleContextHolder.getLocale().getLanguage();
+    public ResultHandler<List<TableListResponse>> getTables(TableFilterRequest request) {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
 
-            var result = _tableRepo.findAllTables(lang, request.getStartTime(), request.getEndTime());
+        var result = _tableRepo.findAllTables(lang, request.getStartTime(), request.getEndTime());
 
-            return ResultHandler.success(
-                    "Tables retrived",
-                    HttpStatus.OK.value(),
-                    result
-            );
-        }
-        catch (Exception ex) {
-            return ResultHandler.failure(
-                    ex.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-        }
+        return ResultHandler.success(
+                "Tables retrived",
+                HttpStatus.OK.value(),
+                result
+        );
     }
 }

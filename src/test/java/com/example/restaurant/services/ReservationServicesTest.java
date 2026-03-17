@@ -166,11 +166,9 @@ public class ReservationServicesTest {
         when(_reservationRepo.history(any(), any(), any(), any()))
                 .thenThrow(new RuntimeException("Database error"));
 
-        ResultHandler<PagedResult<ClientReservationResponse>> result = _reservationServices.history(filter, pagged, userToken);
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
-        assertEquals("Database error", result.getMessage());
+        assertThrows(RuntimeException.class, () ->
+                _reservationServices.history(filter, pagged, userToken)
+        );
     }
 
     @Test
@@ -217,14 +215,12 @@ public class ReservationServicesTest {
                 anyString()
         )).thenThrow(new RuntimeException("Reservation not found"));
 
-        ResultHandler<ReservationDetailsResponse> result = _reservationServices.details(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN
+        assertThrows(RuntimeException.class, () ->
+                _reservationServices.details(
+                        TestConstants.FAKE_RESERVATION_TOKEN,
+                        TestConstants.FAKE_USER_TOKEN
+                )
         );
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatusCode());
-        assertEquals("Reservation not found", result.getMessage());
 
         verify(_orderRepo, never()).getOrderSummaryForReservation(anyString());
     }

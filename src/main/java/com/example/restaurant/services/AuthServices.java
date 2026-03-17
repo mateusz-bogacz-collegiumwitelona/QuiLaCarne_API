@@ -16,11 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -33,213 +30,167 @@ public class AuthServices implements IAuthServices {
     private final IVerificationTokenRepository _verificationTokenRepository;
 
     public ResultHandler<AuthResponse> authenticate(LoginRequest request) {
-        try {
-            var auth = _authManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getUsername(),
-                            request.getPassword()
-                    )
-            );
+        var auth = _authManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsername(),
+                        request.getPassword()
+                )
+        );
 
-            UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        UserDetails userDetails = (UserDetails) auth.getPrincipal();
 
-            if (!userDetails.isEnabled())
-                return ResultHandler.failure("User no enabled", HttpStatus.UNAUTHORIZED.value());
+        if (!userDetails.isEnabled())
+            return ResultHandler.failure("User no enabled", HttpStatus.UNAUTHORIZED.value());
 
-            String jwtToken = _jwtServices.generateToken(userDetails);
+        String jwtToken = _jwtServices.generateToken(userDetails);
 
-            if (jwtToken == null)
-                return ResultHandler.failure("Jwt Token no generate", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        if (jwtToken == null)
+            return ResultHandler.failure("Jwt Token no generate", HttpStatus.INTERNAL_SERVER_ERROR.value());
 
-            AuthResponse response = AuthResponse.builder()
-                    .token(jwtToken)
-                    .username(userDetails.getUsername())
-                    .build();
+        AuthResponse response = AuthResponse.builder()
+                .token(jwtToken)
+                .username(userDetails.getUsername())
+                .build();
 
-            if (response == null) return ResultHandler.failure(
-                    "Server error",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    null
-            );
+        if (response == null) return ResultHandler.failure(
+                "Server error",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+        );
 
-            return ResultHandler.success(
-                    "Login successfull",
-                    HttpStatus.OK.value(),
-                    response);
-        } catch (AuthenticationException aex) {
-            return ResultHandler.failure(
-                    "Invalid credentials",
-                    HttpStatus.UNAUTHORIZED.value(),
-                    List.of(aex.getMessage())
-            );
-        } catch (Exception ex) {
-            return ResultHandler.failure(
-                    "Server error",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    List.of(ex.getMessage())
-            );
-        }
+        return ResultHandler.success(
+                "Login successfull",
+                HttpStatus.OK.value(),
+                response);
     }
 
     @Transactional
     public ResultHandler<String> register(RegisterRequest request) {
-        try {
-            if (_userRepository.existsByUsername(request.getUsername()))
-                return ResultHandler.failure(
-                        "Username already exists",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            if (!request.getPassword().equals(request.getConfirmPassword()))
-                return ResultHandler.failure(
-                        "Passwords do not match",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            String role = "ROLE_CLIENT";
-
-            if (!_roleRepository.isRoleExists(role))
-                return ResultHandler.failure(
-                        "Role does not exist",
-                        HttpStatus.INTERNAL_SERVER_ERROR.value()
-                );
-
-            String result = _userRepository.createUser(request, role, false);
-
-            if (result == null)
-                return ResultHandler.failure(
-                        "User already exists",
-                        HttpStatus.INTERNAL_SERVER_ERROR.value()
-                );
-
-            String activationToken = _verificationTokenRepository.createToken(result, TokenTypeEnum.ACTIVATION, 24 * 60);
-
-            if (activationToken == null)
-                return ResultHandler.failure(
-                        "Activate token not Create",
-                        HttpStatus.INTERNAL_SERVER_ERROR.value()
-                );
-
-
-            _emailServices.sendActivationEmail(request.getEmail(), request.getUsername(), activationToken);
-
-            return ResultHandler.success(
-                    "User registered successfully",
-                    HttpStatus.CREATED.value());
-        } catch (Exception ex) {
+        if (_userRepository.existsByUsername(request.getUsername()))
             return ResultHandler.failure(
-                    "Server error",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    List.of(ex.getMessage())
+                    "Username already exists",
+                    HttpStatus.BAD_REQUEST.value()
             );
-        }
+
+        if (!request.getPassword().equals(request.getConfirmPassword()))
+            return ResultHandler.failure(
+                    "Passwords do not match",
+                    HttpStatus.BAD_REQUEST.value()
+            );
+
+        String role = "ROLE_CLIENT";
+
+        if (!_roleRepository.isRoleExists(role))
+            return ResultHandler.failure(
+                    "Role does not exist",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+
+        String result = _userRepository.createUser(request, role, false);
+
+        if (result == null)
+            return ResultHandler.failure(
+                    "User already exists",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+
+        String activationToken = _verificationTokenRepository.createToken(result, TokenTypeEnum.ACTIVATION, 24 * 60);
+
+        if (activationToken == null)
+            return ResultHandler.failure(
+                    "Activate token not Create",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
 
 
+        _emailServices.sendActivationEmail(request.getEmail(), request.getUsername(), activationToken);
+
+        return ResultHandler.success(
+                "User registered successfully",
+                HttpStatus.CREATED.value());
     }
 
     @Transactional
     public ResultHandler<String> registerConfirm(String token) {
-        try {
-            var userTokenOpt = _verificationTokenRepository.validateToken(token, TokenTypeEnum.ACTIVATION);
+        var userTokenOpt = _verificationTokenRepository.validateToken(token, TokenTypeEnum.ACTIVATION);
 
-            if (userTokenOpt.isEmpty())
-                return ResultHandler.failure(
-                        "Invalid or expired token",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            boolean isActivated = _userRepository.activeUser(userTokenOpt.get());
-
-            if (!isActivated)
-                return ResultHandler.failure(
-                        "User not found",
-                        HttpStatus.NOT_FOUND.value()
-                );
-
-            return ResultHandler.success(
-                    "User activated successfully",
-                    HttpStatus.OK.value()
-            );
-
-        } catch (Exception ex) {
+        if (userTokenOpt.isEmpty())
             return ResultHandler.failure(
-                    "Server error",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    List.of(ex.getMessage())
+                    "Invalid or expired token",
+                    HttpStatus.BAD_REQUEST.value()
             );
-        }
+
+        boolean isActivated = _userRepository.activeUser(userTokenOpt.get());
+
+        if (!isActivated)
+            return ResultHandler.failure(
+                    "User not found",
+                    HttpStatus.NOT_FOUND.value()
+            );
+
+        return ResultHandler.success(
+                "User activated successfully",
+                HttpStatus.OK.value()
+        );
     }
 
     @Transactional
-    public ResultHandler<String> resetPassowrd(String email) {
-        try {
-            var userOpt = _userRepository.findMinimalByEmail(email);
+    public ResultHandler<String> resetPassoword(String email) {
+        var userOpt = _userRepository.findMinimalByEmail(email);
 
-            if (userOpt.isPresent()) {
-                UserDomain userMiniml = userOpt.get();
+        if (userOpt.isPresent()) {
+            UserDomain userMiniml = userOpt.get();
 
-                String resetToken = _verificationTokenRepository.createToken(
-                        userMiniml.token(),
-                        TokenTypeEnum.PASSWORD_RESET,
-                        15
-                );
-
-                _emailServices.sendResetPasswordEmail(
-                        userMiniml.email(),
-                        userMiniml.username(),
-                        resetToken
-                );
-            }
-            return ResultHandler.success(
-                    "If account exists, a link was sent.",
-                    HttpStatus.OK.value()
+            String resetToken = _verificationTokenRepository.createToken(
+                    userMiniml.token(),
+                    TokenTypeEnum.PASSWORD_RESET,
+                    15
             );
-        } catch (Exception ex) {
-            return ResultHandler.failure(
-                    "Server error",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    List.of(ex.getMessage()));
+
+            _emailServices.sendResetPasswordEmail(
+                    userMiniml.email(),
+                    userMiniml.username(),
+                    resetToken
+            );
         }
+
+        return ResultHandler.success(
+                "If account exists, a link was sent.",
+                HttpStatus.OK.value()
+        );
     }
 
     @Transactional
     public ResultHandler<String> setNewPassword(ResetPasswordRequest request) {
-        try {
-            if (!request.getPassword().equals(request.getConfirmPassword()))
-                return ResultHandler.failure(
-                        "Passwords do not match",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            var userTokenOpt = _verificationTokenRepository.validateToken(request.getToken(), TokenTypeEnum.PASSWORD_RESET);
-
-            if (userTokenOpt.isEmpty())
-                return ResultHandler.failure(
-                        "Invalid or expired token",
-                        HttpStatus.BAD_REQUEST.value()
-                );
-
-            boolean isSuccess = _userRepository.changePassword(
-                    userTokenOpt.get(),
-                    request.getConfirmPassword()
-            );
-
-            if (!isSuccess)
-                return ResultHandler.failure(
-                        "Failed to update password",
-                        HttpStatus.INTERNAL_SERVER_ERROR.value()
-                );
-
-            return ResultHandler.success(
-                    "Reset password successfully",
-                    HttpStatus.OK.value()
-            );
-        } catch (Exception ex) {
+        if (!request.getPassword().equals(request.getConfirmPassword()))
             return ResultHandler.failure(
-                    "Server error",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    List.of(ex.getMessage())
+                    "Passwords do not match",
+                    HttpStatus.BAD_REQUEST.value()
             );
-        }
+
+        var userTokenOpt = _verificationTokenRepository.validateToken(request.getToken(), TokenTypeEnum.PASSWORD_RESET);
+
+        if (userTokenOpt.isEmpty())
+            return ResultHandler.failure(
+                    "Invalid or expired token",
+                    HttpStatus.BAD_REQUEST.value()
+            );
+
+        boolean isSuccess = _userRepository.changePassword(
+                userTokenOpt.get(),
+                request.getConfirmPassword()
+        );
+
+        if (!isSuccess)
+            return ResultHandler.failure(
+                    "Failed to update password",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+
+        return ResultHandler.success(
+                "Reset password successfully",
+                HttpStatus.OK.value()
+        );
+
     }
 }

@@ -118,7 +118,7 @@ public class AuthController {
     })
     @PostMapping("/reset-password")
     public ResponseEntity<ResultHandler<String>> resetPassword(@RequestParam String email) {
-        var result = _authServices.resetPassowrd(email);
+        var result = _authServices.resetPassoword(email);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 
