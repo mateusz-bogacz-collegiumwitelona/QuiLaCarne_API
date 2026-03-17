@@ -13,7 +13,7 @@ public interface IAuthServices {
 
     ResultHandler<String> registerConfirm(String token);
 
-    ResultHandler<String> resetPassoword(String email);
+    ResultHandler<String> resetPassword(String email);
 
     ResultHandler<String> setNewPassword(ResetPasswordRequest request);
 }

@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.helpers.ResultHandler;
@@ -19,6 +20,7 @@ public class UserServices implements IUserServices {
     private final IVerificationTokenRepository _tokenRepo;
 
     @Override
+    @Auditable(action = "UPDATE_PASSWORD")
     public ResultHandler<String> updatePassword(String userToken, UpdatePasswordRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword()))
             return ResultHandler.failure(
@@ -45,6 +47,7 @@ public class UserServices implements IUserServices {
     }
 
     @Override
+    @Auditable(action = "UPDATE_EMAIL")
     public ResultHandler<String> updateEmail(String userToken, String email) {
         var isUserExist = _userRepo.findMinimalByEmail(email);
 
@@ -72,6 +75,7 @@ public class UserServices implements IUserServices {
 
     @Override
     @Transactional
+    @Auditable(action = "CONFIRM_EMAIL_CHANGE")
     public ResultHandler<String> confirmEmailChange(String userToken, String token) {
         boolean isValidToken = _tokenRepo.validateToken(userToken, token, TokenTypeEnum.EMAIL_UPDATE);
 
@@ -96,6 +100,7 @@ public class UserServices implements IUserServices {
 
     @Override
     @Transactional
+    @Auditable(action = "UPDATE_USERNAME")
     public ResultHandler<String> updateUserName(String userName, String userToken) {
         if (_userRepo.existsByUsername(userName))
             return ResultHandler.failure(
@@ -119,6 +124,7 @@ public class UserServices implements IUserServices {
 
     @Override
     @Transactional
+    @Auditable(action = "DELETE_ACCOUNT")
     public ResultHandler<String> deleteAccount(String userToken) {
         boolean isDeleted = _userRepo.delete(userToken);
 

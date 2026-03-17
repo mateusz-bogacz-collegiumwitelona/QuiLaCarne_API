@@ -1,7 +1,7 @@
 package com.example.restaurant.dto.request;
 
+import com.example.restaurant.annotations.ValidDates;
 import com.example.restaurant.validators.ITimeFramedRequest;
-import com.example.restaurant.validators.ValidDates;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;

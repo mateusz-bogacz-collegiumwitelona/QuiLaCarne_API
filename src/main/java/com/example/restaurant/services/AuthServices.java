@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
@@ -29,6 +30,7 @@ public class AuthServices implements IAuthServices {
     private final EmailServices _emailServices;
     private final IVerificationTokenRepository _verificationTokenRepository;
 
+    @Auditable(action = "USER_LOGIN")
     public ResultHandler<AuthResponse> authenticate(LoginRequest request) {
         var auth = _authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -64,6 +66,7 @@ public class AuthServices implements IAuthServices {
                 response);
     }
 
+    @Auditable(action = "USER_REGISTERED")
     @Transactional
     public ResultHandler<String> register(RegisterRequest request) {
         if (_userRepository.existsByUsername(request.getUsername()))
@@ -110,6 +113,7 @@ public class AuthServices implements IAuthServices {
                 HttpStatus.CREATED.value());
     }
 
+    @Auditable(action = "REGISTER_CONFIRM")
     @Transactional
     public ResultHandler<String> registerConfirm(String token) {
         var userTokenOpt = _verificationTokenRepository.validateToken(token, TokenTypeEnum.ACTIVATION);
@@ -134,8 +138,9 @@ public class AuthServices implements IAuthServices {
         );
     }
 
+    @Auditable(action = "RESET_PASSWORD")
     @Transactional
-    public ResultHandler<String> resetPassoword(String email) {
+    public ResultHandler<String> resetPassword(String email) {
         var userOpt = _userRepository.findMinimalByEmail(email);
 
         if (userOpt.isPresent()) {
@@ -160,6 +165,7 @@ public class AuthServices implements IAuthServices {
         );
     }
 
+    @Auditable(action = "SET_NEW_PASSWORD")
     @Transactional
     public ResultHandler<String> setNewPassword(ResetPasswordRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword()))

@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
@@ -31,6 +32,7 @@ public class ReservationServices implements IReservationServices {
 
     @Override
     @Transactional
+    @Auditable(action = "CREATE_RESERVATION")
     public ResultHandler<ReservationResponse> create(ReservationRequest request, String userToken) {
         Duration duration = Duration.between(request.getStartTime(), request.getEndTime());
 

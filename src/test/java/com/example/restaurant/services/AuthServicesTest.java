@@ -151,7 +151,7 @@ public class AuthServicesTest {
         when(_verificationTokenRepository.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt()))
                 .thenReturn("res-token");
 
-        _authServices.resetPassoword(TestConstants.FAKE_EMAIL);
+        _authServices.resetPassword(TestConstants.FAKE_EMAIL);
 
         verify(_emailServices).sendResetPasswordEmail(
                 eq(TestConstants.FAKE_EMAIL),
