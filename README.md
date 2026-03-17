@@ -6,7 +6,8 @@
 
 Zmień nazwę pliku `.env.example` na `.env`, a następnie otwórz go w edytorze.
 
-Wejdź na stronę [https://jwtsecrets.com/#generator](https://jwtsecrets.com/#generator), skopiuj wygenerowany klucz i wklej go do zmiennej `API_JWT_SECRET_KEY`.
+Wejdź na stronę [https://jwtsecrets.com/#generator](https://jwtsecrets.com/#generator), skopiuj wygenerowany klucz i
+wklej go do zmiennej `API_JWT_SECRET_KEY`.
 
 ### 2. Uruchomienie kontenera
 
@@ -28,7 +29,9 @@ docker compose run --rm test
 
 ## Przydatne adresy
 
-| Usługa   | Adres                                          |
-|----------|------------------------------------------------|
-| Swagger  | http://localhost:8080/swagger-ui/index.html    |
-| Mailpit  | http://localhost:8025/                         |
+| Usługa  | Adres                                       |
+|---------|---------------------------------------------|
+| Swagger | http://localhost:8080/swagger-ui/index.html |
+| Mailpit | http://localhost:8025/                      |
+
+### Po klucz do google zgłosić się do matiego

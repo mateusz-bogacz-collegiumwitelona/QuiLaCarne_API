@@ -1,5 +1,6 @@
 package com.example.restaurant.services.interfaces;
 
+import com.example.restaurant.dto.request.GoogleLoginRequest;
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
@@ -16,4 +17,6 @@ public interface IAuthServices {
     ResultHandler<String> resetPassword(String email);
 
     ResultHandler<String> setNewPassword(ResetPasswordRequest request);
+
+    ResultHandler<AuthResponse> authenticateWithGoogle(GoogleLoginRequest request);
 }

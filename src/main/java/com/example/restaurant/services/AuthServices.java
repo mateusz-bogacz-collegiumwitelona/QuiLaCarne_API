@@ -2,6 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
+import com.example.restaurant.dto.request.GoogleLoginRequest;
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
@@ -12,16 +13,27 @@ import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServices implements IAuthServices {
     private final AuthenticationManager _authManager;
     private final JwtServices _jwtServices;
@@ -29,6 +41,10 @@ public class AuthServices implements IAuthServices {
     private final IRoleRepository _roleRepository;
     private final EmailServices _emailServices;
     private final IVerificationTokenRepository _verificationTokenRepository;
+    private final UserDetailsService _userDetailsService;
+
+    @Value("${application.security.google.client-id}")
+    private String googleClientId;
 
     @Auditable(action = "USER_LOGIN")
     public ResultHandler<AuthResponse> authenticate(LoginRequest request) {
@@ -41,29 +57,7 @@ public class AuthServices implements IAuthServices {
 
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
 
-        if (!userDetails.isEnabled())
-            return ResultHandler.failure("User no enabled", HttpStatus.UNAUTHORIZED.value());
-
-        String jwtToken = _jwtServices.generateToken(userDetails);
-
-        if (jwtToken == null)
-            return ResultHandler.failure("Jwt Token no generate", HttpStatus.INTERNAL_SERVER_ERROR.value());
-
-        AuthResponse response = AuthResponse.builder()
-                .token(jwtToken)
-                .username(userDetails.getUsername())
-                .build();
-
-        if (response == null) return ResultHandler.failure(
-                "Server error",
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                null
-        );
-
-        return ResultHandler.success(
-                "Login successfull",
-                HttpStatus.OK.value(),
-                response);
+        return buildSuccessAuthResponse(userDetails, "Login successful");
     }
 
     @Auditable(action = "USER_REGISTERED")
@@ -197,6 +191,99 @@ public class AuthServices implements IAuthServices {
                 "Reset password successfully",
                 HttpStatus.OK.value()
         );
+    }
 
+    @Auditable(action = "USER_GOOGLE_LOGIN")
+    @Transactional
+    @Override
+    public ResultHandler<AuthResponse> authenticateWithGoogle(GoogleLoginRequest request) {
+        try {
+            GoogleIdToken.Payload payload = verifyGoogleToken(request.getToken());
+
+            if (payload == null)
+                return ResultHandler.failure(
+                        "Invalid ID token",
+                        HttpStatus.UNAUTHORIZED.value()
+                );
+
+            String email = payload.getEmail();
+            var userOpt = _userRepository.findMinimalByEmail(email);
+
+            String usernameToLogin;
+
+            if (userOpt.isEmpty()) {
+                usernameToLogin = registerWithGoogle(payload);
+            } else {
+                usernameToLogin = userOpt.get().username();
+            }
+
+            UserDetails userDetails = _userDetailsService.loadUserByUsername(usernameToLogin);
+            return buildSuccessAuthResponse(userDetails, "Google login successful");
+
+        } catch (Exception ex) {
+            log.error("Google authentication error", ex);
+            return ResultHandler.failure("Authentication failed", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        }
+    }
+
+    private ResultHandler<AuthResponse> buildSuccessAuthResponse(UserDetails userDetails, String message) {
+        if (!userDetails.isEnabled())
+            return ResultHandler.failure(
+                    "User not enabled",
+                    HttpStatus.UNAUTHORIZED.value()
+            );
+
+        String jwtToken = _jwtServices.generateToken(userDetails);
+
+        if (jwtToken == null)
+            return ResultHandler.failure(
+                    "Jwt Token not generated",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+
+        AuthResponse response = AuthResponse.builder()
+                .token(jwtToken)
+                .username(userDetails.getUsername())
+                .build();
+
+        return ResultHandler.success(
+                message,
+                HttpStatus.OK.value(),
+                response
+        );
+    }
+
+    private GoogleIdToken.Payload verifyGoogleToken(String token) throws Exception {
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(),
+                new GsonFactory())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
+
+        GoogleIdToken idToken = verifier.verify(token);
+        return idToken != null ? idToken.getPayload() : null;
+    }
+
+    private String registerWithGoogle(GoogleIdToken.Payload payload) {
+        String email = payload.getEmail();
+        String baseUserName = email.split("@")[0];
+        int counter = 1;
+
+        while (_userRepository.existsByUsername(baseUserName)) {
+            baseUserName = baseUserName + counter;
+            counter++;
+        }
+
+        String randomPassword = UUID.randomUUID().toString() + "G00G1E#";
+
+        RegisterRequest register = new RegisterRequest();
+        register.setEmail(email);
+        register.setPassword(randomPassword);
+        register.setUsername(baseUserName);
+        register.setConfirmPassword(randomPassword);
+
+        _userRepository.createUser(register, "ROLE_CLIENT", true);
+
+        return baseUserName;
     }
 }

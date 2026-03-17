@@ -27,6 +27,7 @@ services:
       - API_FORMAT_SQL=${API_FORMAT_SQL}
       - API_LOGGING_LEVEL=${API_LOGGING_LEVEL}
       - TZ=UTC
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     depends_on:
       postgres:
         condition: service_healthy

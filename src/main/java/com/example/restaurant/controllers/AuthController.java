@@ -1,5 +1,6 @@
 package com.example.restaurant.controllers;
 
+import com.example.restaurant.dto.request.GoogleLoginRequest;
 import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
@@ -133,6 +134,26 @@ public class AuthController {
     @PostMapping("/set-password")
     public ResponseEntity<ResultHandler<String>> setNewPassword(@RequestBody ResetPasswordRequest request) {
         var result = _authServices.setNewPassword(request);
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
+
+    @Operation(
+            summary = "Continue with Google (Login/Register)",
+            description = "Accepts a Google ID Token. If the user doesn't exist, an account is created automatically. Returns a standard JWT Bearer token."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User successfully logged in, token returned",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Invalid username/email or password"),
+            @ApiResponse(responseCode = "403", description = "Account is disabled or has no permissions"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/google")
+    public ResponseEntity<ResultHandler<AuthResponse>> googleAuth(@Valid @RequestBody GoogleLoginRequest request) {
+        var result = _authServices.authenticateWithGoogle(request);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 }

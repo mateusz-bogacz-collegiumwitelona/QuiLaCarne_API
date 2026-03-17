@@ -1,7 +1,7 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.4.3'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.4.3'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.example'
@@ -9,68 +9,68 @@ version = '0.0.1-SNAPSHOT'
 description = 'Demo project for Spring Boot'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-actuator:3.4.3'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.4.3'
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.4.3'
-	implementation 'org.springframework.boot:spring-boot-starter-mail:3.4.3'
-	implementation 'org.springframework.boot:spring-boot-starter-security:3.4.3'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client:3.4.3'
-	implementation 'org.springframework.boot:spring-boot-starter-validation:3.4.3'
-	implementation 'org.springframework.boot:spring-boot-starter-web:3.4.3'
-	implementation 'org.springframework.boot:spring-boot-starter-websocket:3.4.3'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:3.4.3'
-	
-	// Flyway for database migrations
-	implementation 'org.flywaydb:flyway-core:10.8.1'
-	implementation 'org.flywaydb:flyway-database-postgresql:10.8.1'
-	
-	// OpenAPI/Swagger documentation
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:3.4.3'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.4.3'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.4.3'
+    implementation 'org.springframework.boot:spring-boot-starter-mail:3.4.3'
+    implementation 'org.springframework.boot:spring-boot-starter-security:3.4.3'
+    implementation 'com.google.api-client:google-api-client:2.4.0'
+    implementation 'org.springframework.boot:spring-boot-starter-validation:3.4.3'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.4.3'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket:3.4.3'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:3.4.3'
 
-	// JJWT dependencies for JWT token handling
-	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    // Flyway for database migrations
+    implementation 'org.flywaydb:flyway-core:10.8.1'
+    implementation 'org.flywaydb:flyway-database-postgresql:10.8.1'
 
-	compileOnly 'org.projectlombok:lombok:1.18.30'
-	
-	developmentOnly 'org.springframework.boot:spring-boot-devtools:3.4.3'
-	
-	runtimeOnly 'org.postgresql:postgresql:42.7.2'
+    // OpenAPI/Swagger documentation
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
 
-	annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    // JJWT dependencies for JWT token handling
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
-	//Tests
-	testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.3'
-	testImplementation 'org.springframework.security:spring-security-test:6.3.1'
-	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
-	testImplementation 'org.testcontainers:junit-jupiter'
-	testImplementation 'org.testcontainers:postgresql'
+    compileOnly 'org.projectlombok:lombok:1.18.30'
 
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.1'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools:3.4.3'
 
-	// Map Structure
-	implementation 'org.mapstruct:mapstruct:1.6.3'
-	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
-	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    runtimeOnly 'org.postgresql:postgresql:42.7.2'
+
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    //Tests
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.4.3'
+    testImplementation 'org.springframework.security:spring-security-test:6.3.1'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.1'
+
+    // Map Structure
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
