@@ -1,6 +1,10 @@
 package com.example.restaurant.exceptions;
 
+import com.example.restaurant.dto.domain.LogDomain;
 import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.repository.interfaces.IAuditLogRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -8,11 +12,16 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+    private final IAuditLogRepository _auditLogRepo;
+
     @ExceptionHandler(InvalidDateException.class)
     public ResponseEntity<ResultHandler<Object>> handleInvalidDateException(InvalidDateException ide) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -55,7 +64,31 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ResultHandler<Object>> handleAuthenticationException(AuthenticationException aex) {
+    public ResponseEntity<ResultHandler<Object>> handleAuthenticationException(
+            AuthenticationException aex,
+            HttpServletRequest request) {
+
+        String ipAddress = request.getHeader("X-Forwarded-For");
+
+        if (ipAddress == null) {
+            ipAddress = request.getRemoteAddr();
+        } else {
+            ipAddress = ipAddress.split(",")[0];
+        }
+
+        Map<String, Object> details = new HashMap<>();
+        details.put("error_message", aex.getMessage());
+        details.put("path", request.getRequestURI());
+
+        LogDomain logDomain = new LogDomain(
+                "UNKNOWN",
+                "FAILED_LOGIN",
+                ipAddress,
+                details
+        );
+
+        _auditLogRepo.log(logDomain);
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 ResultHandler.failure(
                         "Invalid credentials",
