@@ -23,8 +23,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ResultHandler<Object>> handleValidationExceptions(MethodArgumentNotValidException manve) {
-        List<String> errors = manve.getBindingResult()
+    public ResponseEntity<ResultHandler<Object>> handleValidationExceptions(MethodArgumentNotValidException manvex) {
+        List<String> errors = manvex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(err -> err.getDefaultMessage())
@@ -32,6 +32,14 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 ResultHandler.failure("Validation failed", HttpStatus.BAD_REQUEST.value(), errors)
+        );
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ResultHandler<Object>> handleUserNotFoundException(UserNotFoundException unfex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ResultHandler.failure(unfex.getMessage(), HttpStatus.NOT_FOUND.value()
+                )
         );
     }
 }

@@ -4,6 +4,7 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
+import com.example.restaurant.exceptions.UserNotFoundException;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
@@ -96,22 +97,18 @@ public class UserServicesTest {
     }
 
     @Test
-    void updatePassword_ShouldReturnNotFound_WhenUserNotFound() {
+    void updatePassword_ShouldThrowUserNotFoundException() {
         UpdatePasswordRequest request = new UpdatePasswordRequest();
         request.setOldPassword("oldPass123!");
         request.setPassword("newPass123!");
         request.setConfirmPassword("newPass123!");
 
         when(_userRepo.updatePassword(anyString(), anyString(), anyString()))
-                .thenThrow(new RuntimeException("User not found"));
+                .thenThrow(new UserNotFoundException("User not found"));
 
-        ResultHandler<String> result = _userServices.updatePassword(
-                TestConstants.FAKE_USER_TOKEN, request
+        assertThrows(UserNotFoundException.class, () ->
+                _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request)
         );
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatusCode());
-        assertEquals("User not found", result.getMessage());
     }
 
     @Test
@@ -231,15 +228,12 @@ public class UserServicesTest {
     }
 
     @Test
-    void deleteAccount_ShouldReturnNotFound_WhenUserDoesNotExist() {
+    void deleteAccount_ShouldThrowUserNotFoundException() {
         when(_userRepo.delete(TestConstants.FAKE_USER_TOKEN))
-                .thenThrow(new RuntimeException("User not found"));
+                .thenThrow(new UserNotFoundException("User not found"));
 
-        ResultHandler<String> result = _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatusCode());
-        assertEquals("User not found", result.getMessage());
-        verify(_userRepo, times(1)).delete(TestConstants.FAKE_USER_TOKEN);
+        assertThrows(UserNotFoundException.class, () ->
+                _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN)
+        );
     }
 }

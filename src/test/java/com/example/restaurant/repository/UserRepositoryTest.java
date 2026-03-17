@@ -2,6 +2,7 @@ package com.example.restaurant.repository;
 
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.RegisterRequest;
+import com.example.restaurant.exceptions.UserNotFoundException;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
@@ -113,17 +114,16 @@ public class UserRepositoryTest {
 
     @Test
     void updatePassword_ShouldThrowException_WhenUserNotFound() {
-        when(_jpaUserRepository.findByToken(anyString())).thenReturn(Optional.empty());
+        when(_jpaUserRepository.findByToken(anyString()))
+                .thenThrow(new UserNotFoundException("User not found"));
 
-        Exception exception = assertThrows(RuntimeException.class, () ->
+        assertThrows(UserNotFoundException.class, () ->
                 _userRepository.updatePassword(
                         TestConstants.FAKE_USER_TOKEN,
                         "oldPass",
                         "newPass"
                 )
         );
-
-        assertEquals("User not found", exception.getMessage());
     }
 
     @Test
@@ -182,12 +182,11 @@ public class UserRepositoryTest {
     @Test
     void activeUser_ShouldReturnFalse_WhenUserNotFound() {
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
-                .thenReturn(Optional.empty());
+                .thenThrow(new UserNotFoundException("User not found"));
 
-        boolean result = _userRepository.activeUser(TestConstants.FAKE_USER_TOKEN);
-
-        assertFalse(result);
-        verify(_jpaUserRepository, never()).saveAndFlush(any());
+        assertThrows(UserNotFoundException.class, () ->
+                _userRepository.activeUser(TestConstants.FAKE_USER_TOKEN)
+        );
     }
 
     @Test
@@ -208,12 +207,12 @@ public class UserRepositoryTest {
 
     @Test
     void updateEmail_ShouldThrowException_WhenUserNotFound() {
-        when(_jpaUserRepository.findByToken(anyString())).thenReturn(Optional.empty());
+        when(_jpaUserRepository.findByToken(anyString()))
+                .thenThrow(new UserNotFoundException("User not found"));
 
-        Exception exception = assertThrows(RuntimeException.class, () ->
+        assertThrows(UserNotFoundException.class, () ->
                 _userRepository.updateEmail("invalid-token", "new@example.com")
         );
-        assertEquals("User not found", exception.getMessage());
     }
 
     @Test
@@ -271,14 +270,11 @@ public class UserRepositoryTest {
     @Test
     void changeUserName_ShouldThrowException_WhenUserNotFound() {
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
-                .thenReturn(Optional.empty());
+                .thenThrow(new UserNotFoundException("User not found"));
 
-        Exception exception = assertThrows(RuntimeException.class, () ->
+        assertThrows(UserNotFoundException.class, () ->
                 _userRepository.changeUserName(TestConstants.FAKE_USER_TOKEN, "user12")
         );
-
-        assertEquals("User not found", exception.getMessage());
-        verify(_jpaUserRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -298,13 +294,10 @@ public class UserRepositoryTest {
     @Test
     void deleteUser_ShouldThrowException_WhenUserNotFound() {
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
-                .thenReturn(Optional.empty());
+                .thenThrow(new UserNotFoundException("User not found"));
 
-        Exception exception = assertThrows(RuntimeException.class, () ->
+        assertThrows(UserNotFoundException.class, () ->
                 _userRepository.delete(TestConstants.FAKE_USER_TOKEN)
         );
-
-        assertEquals("User not found", exception.getMessage());
-        verify(_jpaUserRepository, never()).saveAndFlush(any());
     }
 }

@@ -2,6 +2,7 @@ package com.example.restaurant.repository;
 
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.RegisterRequest;
+import com.example.restaurant.exceptions.UserNotFoundException;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
@@ -82,7 +83,7 @@ public class UserRepository implements IUserRepository {
             _jpaUserRepository.saveAndFlush(u);
 
             return true;
-        }).orElseThrow(() -> new RuntimeException("User not found"));
+        }).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     @Override
@@ -92,7 +93,7 @@ public class UserRepository implements IUserRepository {
             u.setPendingEmail(email);
             _jpaUserRepository.saveAndFlush(u);
             return true;
-        }).orElseThrow(() -> new RuntimeException("User not found"));
+        }).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     @Override
@@ -108,7 +109,7 @@ public class UserRepository implements IUserRepository {
 
             _jpaUserRepository.saveAndFlush(u);
             return true;
-        }).orElseThrow(() -> new RuntimeException("User not found"));
+        }).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     @Override
@@ -129,7 +130,7 @@ public class UserRepository implements IUserRepository {
             u.setNormalizedUsername(userName.toUpperCase());
             _jpaUserRepository.saveAndFlush(u);
             return true;
-        }).orElseThrow(() -> new RuntimeException("User not found"));
+        }).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     @Override
@@ -148,6 +149,6 @@ public class UserRepository implements IUserRepository {
             _jpaUserRepository.delete(u);
 
             return true;
-        }).orElseThrow(() -> new RuntimeException("User not found"));
+        }).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 }
