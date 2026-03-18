@@ -6,6 +6,8 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
+import com.example.restaurant.exceptions.ReservationNotFoundException;
+import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
@@ -180,5 +182,62 @@ public class ReservationRepositoryTest {
 
         assertEquals("Reservation not found", exception.getMessage());
         verify(_reservationMapper, never()).toReservationDetailsResponse(any(), anyString());
+    }
+
+    @Test
+    void cancel_ShouldReturnTrue_WhenReservationIsSuccessfullyCancelled() {
+        Reservations mockEntity = new Reservations();
+        ReservationStatus mockStatus = new ReservationStatus();
+        mockStatus.setToken("CANCELLED");
+
+        when(_jpaReservationsRepo.findByTokenAndUser_Token(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(Optional.of(mockEntity));
+
+        when(_jpaReservationStatusRepo.findByToken("CANCELLED"))
+                .thenReturn(Optional.of(mockStatus));
+
+        boolean result = _reservationRepo.cancel(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertTrue(result);
+        assertTrue(mockEntity.getReservationStatus().contains(mockStatus));
+        verify(_jpaReservationsRepo, times(1)).saveAndFlush(mockEntity);
+    }
+
+    @Test
+    void cancel_ShouldThrowReservationNotFoundException_WhenReservationDoesNotExist() {
+        when(_jpaReservationsRepo.findByTokenAndUser_Token(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(Optional.empty());
+
+        ReservationNotFoundException exception = assertThrows(ReservationNotFoundException.class,
+                () -> _reservationRepo.cancel(TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_USER_TOKEN));
+
+        assertEquals("Reservation not found", exception.getMessage());
+        verify(_jpaReservationsRepo, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void cancel_ShouldThrowReservationStatusNotFoundException_WhenStatusIsMissing() {
+        Reservations mockEntity = new Reservations();
+
+        when(_jpaReservationsRepo.findByTokenAndUser_Token(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(Optional.of(mockEntity));
+
+        when(_jpaReservationStatusRepo.findByToken("CANCELLED"))
+                .thenReturn(Optional.empty());
+
+        ReservationStatusNotFoundException exception = assertThrows(ReservationStatusNotFoundException.class,
+                () -> _reservationRepo.cancel(TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_USER_TOKEN));
+
+        assertEquals("Reservation Status not found", exception.getMessage());
+        verify(_jpaReservationStatusRepo, never()).saveAndFlush(any());
     }
 }

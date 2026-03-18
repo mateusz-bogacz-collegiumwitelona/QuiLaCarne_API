@@ -9,6 +9,7 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.*;
+import com.example.restaurant.exceptions.ReservationNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
@@ -223,5 +224,46 @@ public class ReservationServicesTest {
         );
 
         verify(_orderRepo, never()).getOrderSummaryForReservation(anyString());
+    }
+
+    @Test
+    void cancel_ShouldReturnSuccess_WhenReservationCancelled() {
+        when(_reservationRepo.cancel(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(true);
+
+        ResultHandler<Boolean> result = _reservationServices.cancel(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN);
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertTrue(result.getData());
+        assertEquals("Reservation cancelled successfully", result.getMessage());
+
+        verify(_reservationRepo, times(1)).cancel(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+    }
+
+    @Test
+    void cancel_ShouldThrowException_WhenReservationNotFound() {
+        when(_reservationRepo.cancel(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        )).thenThrow(new ReservationNotFoundException("Reservation not found"));
+
+        assertThrows(ReservationNotFoundException.class, () ->
+                _reservationServices.cancel(
+                        TestConstants.FAKE_RESERVATION_TOKEN,
+                        TestConstants.FAKE_USER_TOKEN
+                ));
+
+        verify(_reservationRepo, times(1)).cancel(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
     }
 }
