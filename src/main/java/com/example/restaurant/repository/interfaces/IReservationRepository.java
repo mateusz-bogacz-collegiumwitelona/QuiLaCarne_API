@@ -13,4 +13,6 @@ public interface IReservationRepository {
     PagedResult<ClientReservationResponse> history(String userToken, String lang, ClientReservationRequest filter, PaggedRequest pagged);
 
     ReservationDetailsResponse details(String reservationToken, String userToken, String lang);
+
+    boolean cancel(String reservationToken, String userToken);
 }

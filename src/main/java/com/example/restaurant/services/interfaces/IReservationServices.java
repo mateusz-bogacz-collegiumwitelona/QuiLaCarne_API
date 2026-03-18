@@ -15,4 +15,6 @@ public interface IReservationServices {
     ResultHandler<PagedResult<ClientReservationResponse>> history(ClientReservationRequest request, PaggedRequest pagged, String userToken);
 
     ResultHandler<ReservationDetailsResponse> details(String reservationToken, String userToken);
+
+    ResultHandler<Boolean> cancel(String reservationToken, String userToken);
 }

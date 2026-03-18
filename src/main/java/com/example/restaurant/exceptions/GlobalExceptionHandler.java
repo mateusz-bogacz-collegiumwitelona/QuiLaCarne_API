@@ -103,4 +103,19 @@ public class GlobalExceptionHandler {
                 )
         );
     }
+
+    @ExceptionHandler(ReservationNotFoundException.class)
+    public ResponseEntity<ResultHandler<Object>> handleReservationNotFoundException(ReservationNotFoundException rnfex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ResultHandler.failure(rnfex.getMessage(), HttpStatus.NOT_FOUND.value()
+                )
+        );
+    }
+
+    @ExceptionHandler(ReservationStatusNotFoundException.class)
+    public ResponseEntity<ResultHandler<Object>> handleReservationStatusNotFoundException(ReservationStatusNotFoundException rsnte) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ResultHandler.failure(rsnte.getMessage(), HttpStatus.NOT_FOUND.value())
+        );
+    }
 }

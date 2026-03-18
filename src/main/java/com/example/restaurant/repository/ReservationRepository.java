@@ -5,6 +5,9 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
+import com.example.restaurant.exceptions.ReservationNotFoundException;
+import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
+import com.example.restaurant.exceptions.UserNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
@@ -28,6 +31,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -44,13 +48,13 @@ public class ReservationRepository implements IReservationRepository {
     @Transactional
     public String createReservation(ReservationRequest request, String userToken) {
         Users user = _jpaUserRepo.findByToken(userToken)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         RestaurantTables table = _jpaTableRepo.findByToken(request.getTableToken());
         if (table == null) throw new RuntimeException("Table not found");
 
         ReservationStatus activeStatus = _jpaReservationStatusRepo.findByToken("ACTIVE")
-                .orElseThrow(() -> new RuntimeException("ReservationStatus not found"));
+                .orElseThrow(() -> new ReservationStatusNotFoundException("ReservationStatus not found"));
 
         Reservations reservation = new Reservations();
         reservation.setUser(user);
@@ -98,8 +102,23 @@ public class ReservationRepository implements IReservationRepository {
     @Override
     public ReservationDetailsResponse details(String reservationToken, String userToken, String lang) {
         Reservations reservation = _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
 
         return _reservationMapper.toReservationDetailsResponse(reservation, lang);
+    }
+
+    @Override
+    @Transactional
+    public boolean cancel(String reservationToken, String userToken) {
+        return _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken).map(r -> {
+            ReservationStatus cancelledStatus = _jpaReservationStatusRepo.findByToken("CANCELLED")
+                    .orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
+
+            r.setReservationStatus(new HashSet<>(Set.of(cancelledStatus)));
+
+            _jpaReservationsRepo.saveAndFlush(r);
+
+            return true;
+        }).orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
     }
 }

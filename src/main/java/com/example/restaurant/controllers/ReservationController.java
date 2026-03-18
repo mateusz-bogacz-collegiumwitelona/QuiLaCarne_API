@@ -112,4 +112,20 @@ public class ReservationController {
                 .status(result.getStatusCode())
                 .body(result);
     }
+
+    @Operation(
+            summary = "Cancel a reservation",
+            description = "Cancels an active reservation by changing its status to CANCELLED."
+    )
+    @PatchMapping("/{token}/cancel")
+    public ResponseEntity<ResultHandler<Boolean>> cancel(
+            @Parameter(description = "Reservation token")
+            @PathVariable String token,
+            @AuthenticationPrincipal(expression = "token") String userToken
+    ) {
+        var result = _reservationServices.cancel(token, userToken);
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
 }

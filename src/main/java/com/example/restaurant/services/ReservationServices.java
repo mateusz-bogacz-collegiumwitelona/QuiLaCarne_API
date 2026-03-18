@@ -136,4 +136,15 @@ public class ReservationServices implements IReservationServices {
                 response
         );
     }
+
+    @Override
+    public ResultHandler<Boolean> cancel(String reservationToken, String userToken) {
+        var response = _reservationRepo.cancel(reservationToken, userToken);
+
+        return ResultHandler.success(
+                "Reservation cancelled successfully",
+                HttpStatus.OK.value(),
+                response
+        );
+    }
 }
