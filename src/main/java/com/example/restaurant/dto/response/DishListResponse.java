@@ -12,6 +12,7 @@ public class DishListResponse {
     private String name;
     private float price;
     private boolean isActive;
+    private String imageUrl;
     private String categoryName;
-    private List<IngredientListResponse>  ingredients;
+    private List<IngredientListResponse> ingredients;
 }

@@ -11,7 +11,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "dishes")
-@Getter @Setter
+@Getter
+@Setter
 public class Dishes extends BaseNamedEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
@@ -22,6 +23,9 @@ public class Dishes extends BaseNamedEntity {
 
     @Column(name = "unavailable_reason", columnDefinition = "TEXT")
     private String unavailableReason;
+
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

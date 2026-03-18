@@ -10,10 +10,12 @@ import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.*;
 import com.example.restaurant.repository.interfaces.jpa.*;
 import com.example.restaurant.repository.interfaces.jpa.base.IJpaTranslatedRepository;
+import com.example.restaurant.services.S3StorageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -40,6 +42,8 @@ public class DataSeeder implements CommandLineRunner {
     private final IJpaIngredientsRepository _jpaIngredientsRepo;
     private final PasswordEncoder _passwordEncoder;
     private final IJpaTableRepository _jpaTableRepo;
+    private final S3StorageService _s3StorageService;
+    private final ResourceLoader _resourceLoader;
 
     @Override
     @Transactional
@@ -182,6 +186,8 @@ public class DataSeeder implements CommandLineRunner {
         steak.setCategory(mainCat);
         steak.setAvailable(true);
         steak.setIngredients(Set.of(beef, oliveOil));
+        uploadImage("images/steak.jpg", "steak.jpg");
+        steak.setImageUrl("steak.jpg");
         _jpaDishRepo.save(steak);
 
         Dishes pastaDish = new Dishes();
@@ -190,6 +196,8 @@ public class DataSeeder implements CommandLineRunner {
         pastaDish.setCategory(mainCat);
         pastaDish.setAvailable(true);
         pastaDish.setIngredients(Set.of(pasta, beef, tomato, parmesan));
+        uploadImage("images/pasta.jpg", "pasta.jpg");
+        pastaDish.setImageUrl("pasta.jpg");
         _jpaDishRepo.save(pastaDish);
     }
 
@@ -222,5 +230,24 @@ public class DataSeeder implements CommandLineRunner {
 
         table.setTableStatus(Set.of(status));
         _jpaTableRepo.save(table);
+    }
+
+    private void uploadImage(String resourcePath, String fileName) {
+        try {
+            var resource = _resourceLoader.getResource("classpath:" + resourcePath);
+
+            if (resource.exists()) {
+                _s3StorageService.uploadFromStream(
+                        resource.getInputStream(),
+                        fileName,
+                        "image/jpeg",
+                        resource.contentLength()
+                );
+            } else {
+                log.warn("Resource not found: " + resourcePath);
+            }
+        } catch (Exception e) {
+            log.error("Error uploading image: " + fileName, e);
+        }
     }
 }

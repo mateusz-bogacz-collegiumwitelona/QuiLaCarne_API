@@ -134,6 +134,7 @@ CREATE TABLE dishes
     price              INTEGER            NOT NULL,
     is_available       BOOLEAN     DEFAULT TRUE,
     unavailable_reason TEXT,
+    image_url          VARCHAR(255),
     created_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
