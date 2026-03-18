@@ -6,6 +6,7 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
+import com.example.restaurant.dto.response.TodayReservationsResponse;
 import com.example.restaurant.exceptions.ReservationNotFoundException;
 import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
@@ -239,5 +240,35 @@ public class ReservationRepositoryTest {
 
         assertEquals("Reservation Status not found", exception.getMessage());
         verify(_jpaReservationStatusRepo, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void today_ShouldApplyDateFilterAndReturnPagedResult() {
+        PaggedRequest pagged = new PaggedRequest();
+        pagged.setPage(1);
+        pagged.setSize(10);
+
+        Reservations mockEntity = new Reservations();
+        mockEntity.setToken(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        Page<Reservations> entityPage = new PageImpl<>(List.of(mockEntity));
+
+        TodayReservationsResponse mockDto = TodayReservationsResponse.builder()
+                .token(TestConstants.FAKE_RESERVATION_TOKEN)
+                .build();
+
+        when(_jpaReservationsRepo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(entityPage);
+
+        when(_reservationMapper.toTodayReservationsResponse(mockEntity, PL))
+                .thenReturn(mockDto);
+
+        PagedResult<TodayReservationsResponse> result = _reservationRepo.today(PL, pagged);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+        assertEquals(TestConstants.FAKE_RESERVATION_TOKEN, result.getItems().get(0).getToken());
+
+        verify(_jpaReservationsRepo, times(1)).findAll(any(Specification.class), any(Pageable.class));
+        verify(_reservationMapper, times(1)).toTodayReservationsResponse(mockEntity, PL);
     }
 }

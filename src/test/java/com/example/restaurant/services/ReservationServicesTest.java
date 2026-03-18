@@ -4,6 +4,7 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
+import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
@@ -265,5 +266,47 @@ public class ReservationServicesTest {
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 TestConstants.FAKE_USER_TOKEN
         );
+    }
+
+    @Test
+    void today_ShouldReturnSuccess_AndFetchOrderDetails() {
+        LocaleContextHolder.setLocale(Locale.forLanguageTag("pl"));
+        PaggedRequest pagged = new PaggedRequest();
+
+        TodayReservationsResponse resDto = TodayReservationsResponse.builder()
+                .token(TestConstants.FAKE_RESERVATION_TOKEN)
+                .build();
+
+        Page<TodayReservationsResponse> page = new PageImpl<>(List.of(resDto));
+        PagedResult<TodayReservationsResponse> pagedResult = new PagedResult<>(page);
+
+        when(_reservationRepo.today("pl", pagged)).thenReturn(pagedResult);
+
+        TodayReservationDishResponse dishDto = new TodayReservationDishResponse();
+        dishDto.setDishName("Pizza");
+        dishDto.setPrice(40);
+        dishDto.setNote("Bez cebuli");
+        dishDto.setAllergens(List.of("Gluten"));
+
+        TodayOrderSummaryDomain orderSummary = new TodayOrderSummaryDomain(40, List.of(dishDto));
+
+        when(_orderRepo.todayOrderDetails(TestConstants.FAKE_RESERVATION_TOKEN, "pl")).thenReturn(orderSummary);
+
+        var result = _reservationServices.today(pagged);
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals(1, result.getData().getItems().size());
+
+        var fetchedRes = result.getData().getItems().get(0);
+        assertEquals(40, fetchedRes.getTotalPrice());
+        assertEquals(1, fetchedRes.getDishes().size());
+
+        var fetchedDish = fetchedRes.getDishes().get(0);
+        assertEquals("Pizza", fetchedDish.getDishName());
+        assertEquals("Bez cebuli", fetchedDish.getNote());
+        assertEquals("Gluten", fetchedDish.getAllergens().get(0));
+
+        LocaleContextHolder.resetLocaleContext();
     }
 }

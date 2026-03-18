@@ -3,8 +3,11 @@ package com.example.restaurant.repository;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
+import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
+import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.models.*;
+import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.jpa.*;
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,7 +69,7 @@ public class OrderRepositoryTest {
                 List.of(dishReq));
 
         assertNotNull(result);
-        assertEquals(100, result.totalPrice()); // 2x Pizza za 50
+        assertEquals(100, result.totalPrice());
         assertEquals(1, result.dishes().size());
         assertEquals("Pizza", result.dishes().get(0).dishName());
         assertEquals(50, result.dishes().get(0).price());
@@ -133,5 +137,79 @@ public class OrderRepositoryTest {
         assertEquals("Pizza", result.dishes().get(0).getDishName());
         assertEquals(50, result.dishes().get(0).getPrice());
         assertEquals(3, result.dishes().get(0).getQuantity());
+    }
+
+    @Test
+    void todayOrderDetails_ShouldReturnEmptyDomain_WhenOrderNotFound() {
+        when(_jpaOrderRepo.findByReservation_Token("fake-res-token"))
+                .thenReturn(Optional.empty());
+
+        TodayOrderSummaryDomain result = _orderRepo.todayOrderDetails("fake-res-token", "pl");
+
+        assertEquals(0, result.totalPrice());
+        assertTrue(result.dishes().isEmpty());
+
+        verify(_jpaOrderItemRepo, never()).findAllByOrder_Token(anyString());
+    }
+
+    @Test
+    void todayOrderDetails_ShouldReturnMappedData() {
+        Orders mockOrder = new Orders();
+        mockOrder.setToken("fake-order-token");
+        mockOrder.setTotalPrice(120);
+
+        Allergens gluten = new Allergens();
+        gluten.setNamePl("Gluten");
+        gluten.setNameEn("Gluten EN");
+
+        Allergens lactose = new Allergens();
+        lactose.setNamePl("Laktoza");
+        lactose.setNameEn("Lactose EN");
+
+        Ingredients pasta = new Ingredients();
+        pasta.setNamePl("Makaron");
+        pasta.setNameEn("Pasta");
+        pasta.setAllergens(Set.of(gluten, lactose));
+
+        Ingredients cheese = new Ingredients();
+        cheese.setNamePl("Ser");
+        cheese.setNameEn("Cheese");
+        cheese.setAllergens(Set.of(lactose));
+
+        Dishes mockDish = new Dishes();
+        mockDish.setToken("dish-token");
+        mockDish.setName("Spaghetti");
+        mockDish.setPrice(60);
+        mockDish.setIngredients(Set.of(pasta, cheese));
+
+        OrderItems mockItem = new OrderItems();
+        mockItem.setProduct(mockDish);
+        mockItem.setQuantity(2);
+        mockItem.setNote("Bez soli");
+
+        when(_jpaOrderRepo.findByReservation_Token("fake-res-token"))
+                .thenReturn(Optional.of(mockOrder));
+        when(_jpaOrderItemRepo.findAllByOrder_Token("fake-order-token"))
+                .thenReturn(List.of(mockItem));
+
+        TodayOrderSummaryDomain result = _orderRepo.todayOrderDetails("fake-res-token", "pl");
+
+        assertEquals(120, result.totalPrice());
+        assertEquals(1, result.dishes().size());
+
+        TodayReservationDishResponse dishRes = result.dishes().get(0);
+        assertEquals("dish-token", dishRes.getDishToken());
+        assertEquals("Spaghetti", dishRes.getDishName());
+        assertEquals(60, dishRes.getPrice());
+        assertEquals(2, dishRes.getQuantity());
+        assertEquals("Bez soli", dishRes.getNote());
+
+        assertEquals(2, dishRes.getIngredient().size());
+        assertTrue(dishRes.getIngredient().contains("Makaron"));
+        assertTrue(dishRes.getIngredient().contains("Ser"));
+
+        assertEquals(2, dishRes.getAllergens().size());
+        assertTrue(dishRes.getAllergens().contains("Gluten"));
+        assertTrue(dishRes.getAllergens().contains("Laktoza"));
     }
 }
