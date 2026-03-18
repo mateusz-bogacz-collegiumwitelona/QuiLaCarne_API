@@ -4,10 +4,7 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
-import com.example.restaurant.dto.response.ClientReservationResponse;
-import com.example.restaurant.dto.response.ReservationDetailsResponse;
-import com.example.restaurant.dto.response.ReservationDishResponse;
-import com.example.restaurant.dto.response.ReservationResponse;
+import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
@@ -143,6 +140,25 @@ public class ReservationServices implements IReservationServices {
 
         return ResultHandler.success(
                 "Reservation cancelled successfully",
+                HttpStatus.OK.value(),
+                response
+        );
+    }
+
+    @Override
+    public ResultHandler<PagedResult<TodayReservationsResponse>> today(PaggedRequest request) {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
+
+        var response = _reservationRepo.today(lang, request);
+
+        for (TodayReservationsResponse res : response.getItems()) {
+            var orderDetails = _orderRepo.todayOrderDetails(res.getToken(), lang);
+            res.setTotalPrice(orderDetails.totalPrice());
+            res.setDishes(orderDetails.dishes());
+        }
+
+        return ResultHandler.success(
+                "Today's reservations retrieved successfully",
                 HttpStatus.OK.value(),
                 response
         );

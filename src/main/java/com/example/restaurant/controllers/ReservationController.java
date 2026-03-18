@@ -6,6 +6,7 @@ import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
+import com.example.restaurant.dto.response.TodayReservationsResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IReservationServices;
@@ -124,6 +125,25 @@ public class ReservationController {
             @AuthenticationPrincipal(expression = "token") String userToken
     ) {
         var result = _reservationServices.cancel(token, userToken);
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
+
+    @Operation(
+            summary = "Get today's reservations (Waiter/Manager)",
+            description = "Retrieves a paginated list of all reservations scheduled for today. Includes basic table and user details."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Today's reservations retrieved successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/today")
+    public ResponseEntity<ResultHandler<PagedResult<TodayReservationsResponse>>> getTodayReservations(
+            @ParameterObject @Valid @ModelAttribute PaggedRequest pagged
+    ) {
+        var result = _reservationServices.today(pagged);
         return ResponseEntity
                 .status(result.getStatusCode())
                 .body(result);

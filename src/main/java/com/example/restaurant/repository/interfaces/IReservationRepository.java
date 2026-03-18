@@ -5,6 +5,7 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
+import com.example.restaurant.dto.response.TodayReservationsResponse;
 import com.example.restaurant.helpers.PagedResult;
 
 public interface IReservationRepository {
@@ -15,4 +16,6 @@ public interface IReservationRepository {
     ReservationDetailsResponse details(String reservationToken, String userToken, String lang);
 
     boolean cancel(String reservationToken, String userToken);
+
+    PagedResult<TodayReservationsResponse> today(String lang, PaggedRequest pagged);
 }

@@ -5,6 +5,7 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
+import com.example.restaurant.dto.response.TodayReservationsResponse;
 import com.example.restaurant.exceptions.ReservationNotFoundException;
 import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
 import com.example.restaurant.exceptions.UserNotFoundException;
@@ -30,6 +31,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -120,5 +123,24 @@ public class ReservationRepository implements IReservationRepository {
 
             return true;
         }).orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+    }
+
+    @Override
+    public PagedResult<TodayReservationsResponse> today(String lang, PaggedRequest pagged) {
+        Pageable pageable = PageRequest.of(pagged.getPage() - 1, pagged.getSize(), Sort.by(Sort.Direction.ASC, "startTime"));
+
+        OffsetDateTime startOfDay = OffsetDateTime.now().with(LocalTime.MIN);
+        OffsetDateTime endOfDay = OffsetDateTime.now().with(LocalTime.MAX);
+
+        Specification<Reservations> spec = (root, query, criteriaBuilder) ->
+                criteriaBuilder.between(root.get("startTime"), startOfDay, endOfDay);
+
+        Page<Reservations> reservationPage = _jpaReservationsRepo.findAll(spec, pageable);
+
+        Page<TodayReservationsResponse> dtoPage = reservationPage.map(
+                res -> _reservationMapper.toTodayReservationsResponse(res, lang)
+        );
+
+        return new PagedResult<>(dtoPage);
     }
 }

@@ -7,4 +7,5 @@ public class ReservationDishResponse {
     private String dishName;
     private int price;
     private int quantity;
+    private String status;
 }

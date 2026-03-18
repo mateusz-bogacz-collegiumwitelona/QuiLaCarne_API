@@ -3,8 +3,10 @@ package com.example.restaurant.repository;
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
+import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.ReservationDishResponse;
+import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
@@ -101,5 +103,45 @@ public class OrderRepository implements IOrderRepository {
         }).toList();
 
         return new OrderSummaryDomain(order.getTotalPrice(), dishes);
+    }
+
+    @Override
+    public TodayOrderSummaryDomain todayOrderDetails(String reservationToken, String lang) {
+        var orderOpt = _jpaOrderRepo.findByReservation_Token(reservationToken);
+
+        if (orderOpt.isEmpty()) return new TodayOrderSummaryDomain(0, List.of());
+
+        var order = orderOpt.get();
+
+        var items = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
+
+        List<TodayReservationDishResponse> dishResponses = items.stream().map(item -> {
+            var dish = item.getProduct();
+            TodayReservationDishResponse dto = new TodayReservationDishResponse();
+
+            dto.setDishToken(dish.getToken());
+            dto.setDishName(dish.getName());
+            dto.setPrice(dish.getPrice());
+            dto.setQuantity(item.getQuantity());
+            dto.setNote(item.getNote());
+            
+            List<String> ingredients = dish.getIngredients().stream()
+                    .map(ing -> "pl".equalsIgnoreCase(lang) ? ing.getNamePl() : ing.getNameEn())
+                    .toList();
+
+            dto.setIngredient(ingredients);
+
+            List<String> allergens = dish.getIngredients().stream()
+                    .flatMap(ing -> ing.getAllergens().stream())
+                    .map(al -> "pl".equalsIgnoreCase(lang) ? al.getNamePl() : al.getNameEn())
+                    .distinct()
+                    .toList();
+
+            dto.setAllergens(allergens);
+
+            return dto;
+        }).toList();
+
+        return new TodayOrderSummaryDomain(order.getTotalPrice(), dishResponses);
     }
 }
