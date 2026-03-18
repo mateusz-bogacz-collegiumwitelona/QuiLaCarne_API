@@ -44,7 +44,7 @@ public class DishRepository implements IDishRepository {
             DishListResponse dto = _dishMapper.toDishListResponse(dish, lang);
 
             if (dto.getImageUrl() != null && !dto.getImageUrl().startsWith("http")) {
-                String fullUrl = String.format("%s/%s/%s", s3Endpoint, s3BucketName, dto.getImageUrl());
+                String fullUrl = String.format("%s/%s/%s", s3Endpoint.trim(), s3BucketName, dto.getImageUrl());
                 dto.setImageUrl(fullUrl);
             }
 

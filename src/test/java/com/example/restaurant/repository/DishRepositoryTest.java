@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -102,5 +103,31 @@ public class DishRepositoryTest {
         verify(_jpaDishRepo, times(1)).findWithoutAllergens(List.of("GLUTEN"), expectedPageable);
         verify(_jpaDishRepo, never()).findAll(any(Pageable.class));
         verify(_dishMapper, times(1)).toDishListResponse(any(Dishes.class), eq("pl"));
+    }
+
+    @Test
+    void findAllDishes_ShouldAppendS3Url_WhenDishHasImageUrl() {
+        ReflectionTestUtils.setField(_dishRepo, "s3Endpoint", "http://localhost:9000 ");
+        ReflectionTestUtils.setField(_dishRepo, "s3BucketName", "restaurant-images");
+
+        Dishes dishes = new Dishes();
+
+        DishListResponse dishResponse = DishListResponse.builder()
+                .name("Steak")
+                .imageUrl("steak.jpg")
+                .build();
+
+        DishFilterRequest filterRequest = new DishFilterRequest();
+        PaggedRequest paggedRequest = new PaggedRequest();
+        Pageable expectedPageable = PageRequest.of(0, 10);
+        Page<Dishes> mockPage = new PageImpl<>(List.of(dishes), expectedPageable, 1);
+
+        when(_jpaDishRepo.findAll(expectedPageable)).thenReturn(mockPage);
+        when(_dishMapper.toDishListResponse(any(Dishes.class), eq("pl"))).thenReturn(dishResponse);
+
+        PagedResult<DishListResponse> result = _dishRepo.findAllDishes("pl", filterRequest, paggedRequest);
+
+        assertEquals(1, result.getItems().size());
+        assertEquals("http://localhost:9000/restaurant-images/steak.jpg", result.getItems().get(0).getImageUrl());
     }
 }
