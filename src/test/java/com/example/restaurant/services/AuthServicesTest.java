@@ -182,7 +182,7 @@ public class AuthServicesTest {
         when(_userRepository.activeUser("valid-user-token"))
                 .thenReturn(true);
 
-        ResultHandler<String> result = _authServices.registerConfirm("valid-token");
+        ResultHandler<Boolean> result = _authServices.registerConfirm("valid-token");
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
@@ -194,7 +194,7 @@ public class AuthServicesTest {
         when(_verificationTokenRepository.validateToken("invalid-token", TokenTypeEnum.ACTIVATION))
                 .thenReturn(Optional.empty()); // Mockujemy błędny token
 
-        ResultHandler<String> result = _authServices.registerConfirm("invalid-token");
+        ResultHandler<Boolean> result = _authServices.registerConfirm("invalid-token");
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
@@ -216,7 +216,7 @@ public class AuthServicesTest {
         when(_userRepository.changePassword("valid-user-token", "newPass123!"))
                 .thenReturn(true);
 
-        ResultHandler<String> result = _authServices.setNewPassword(request);
+        ResultHandler<Boolean> result = _authServices.setNewPassword(request);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
@@ -234,7 +234,7 @@ public class AuthServicesTest {
                 .thenReturn(Optional.empty());
 
 
-        ResultHandler<String> result = _authServices.setNewPassword(request);
+        ResultHandler<Boolean> result = _authServices.setNewPassword(request);
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());

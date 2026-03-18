@@ -82,7 +82,7 @@ public class AuthController {
             }
     )
     @PostMapping("/register")
-    public ResponseEntity<ResultHandler<String>> register(
+    public ResponseEntity<ResultHandler<Void>> register(
             @RequestBody
             @Valid
             RegisterRequest request) {
@@ -105,7 +105,7 @@ public class AuthController {
             }
     )
     @GetMapping("/register-confirm")
-    public ResponseEntity<ResultHandler<String>> registerConfirm(@RequestParam String token) {
+    public ResponseEntity<ResultHandler<Boolean>> registerConfirm(@RequestParam String token) {
         var result = _authServices.registerConfirm(token);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
@@ -118,7 +118,7 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Request processed")
     })
     @PostMapping("/reset-password")
-    public ResponseEntity<ResultHandler<String>> resetPassword(@RequestParam String email) {
+    public ResponseEntity<ResultHandler<Void>> resetPassword(@RequestParam String email) {
         var result = _authServices.resetPassword(email);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
@@ -132,7 +132,7 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid token or password mismatch")
     })
     @PostMapping("/set-password")
-    public ResponseEntity<ResultHandler<String>> setNewPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<ResultHandler<Boolean>> setNewPassword(@RequestBody ResetPasswordRequest request) {
         var result = _authServices.setNewPassword(request);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }

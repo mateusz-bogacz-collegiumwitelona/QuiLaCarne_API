@@ -4,7 +4,6 @@ import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
-import com.example.restaurant.repository.interfaces.jpa.IJpaTableStatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -16,7 +15,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TableRespository implements ITableRespository {
     private final IJpaTableRepository _jpaTableRepo;
-    private final IJpaTableStatusRepository _jpaTableStatusRepo;
 
     @Override
     public List<TableListResponse> findAllTables(String lang, OffsetDateTime startTime, OffsetDateTime endTime) {
@@ -45,7 +43,7 @@ public class TableRespository implements ITableRespository {
 
             TableListResponse response = TableListResponse.builder()
                     .token(table.getToken())
-                    .tableNumber(table.getTableNumber())                     .capacity(table.getCapacity())
+                    .tableNumber(table.getTableNumber()).capacity(table.getCapacity())
                     .status(statusName)
                     .updatedAt(table.getUpdatedAt())
                     .build();

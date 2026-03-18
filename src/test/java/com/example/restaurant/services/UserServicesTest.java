@@ -42,7 +42,7 @@ public class UserServicesTest {
         request.setPassword("newPass123!");
         request.setConfirmPassword("diffNewPass123!");
 
-        ResultHandler<String> result = _userServices.updatePassword(
+        ResultHandler<Boolean> result = _userServices.updatePassword(
                 TestConstants.FAKE_USER_TOKEN, request
         );
 
@@ -65,7 +65,7 @@ public class UserServicesTest {
                 "newPass123!"
         )).thenReturn(false);
 
-        ResultHandler<String> result = _userServices.updatePassword(
+        ResultHandler<Boolean> result = _userServices.updatePassword(
                 TestConstants.FAKE_USER_TOKEN, request
         );
 
@@ -87,7 +87,7 @@ public class UserServicesTest {
                 "newPass123!"
         )).thenReturn(true);
 
-        ResultHandler<String> result = _userServices.updatePassword(
+        ResultHandler<Boolean> result = _userServices.updatePassword(
                 TestConstants.FAKE_USER_TOKEN, request
         );
 
@@ -124,7 +124,7 @@ public class UserServicesTest {
         when(_userRepo.findMinimalByEmail(TestConstants.FAKE_EMAIL))
                 .thenReturn(Optional.of(otherUser));
 
-        ResultHandler<String> result = _userServices.updateEmail(
+        ResultHandler<Void> result = _userServices.updateEmail(
                 TestConstants.FAKE_USER_TOKEN,
                 TestConstants.FAKE_EMAIL
         );
@@ -142,7 +142,7 @@ public class UserServicesTest {
         when(_tokenRepo.createToken(eq(TestConstants.FAKE_USER_TOKEN), eq(TokenTypeEnum.EMAIL_UPDATE), anyInt()))
                 .thenReturn("mock-verification-token");
 
-        ResultHandler<String> result = _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, newEmail);
+        ResultHandler<Void> result = _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, newEmail);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
@@ -155,7 +155,7 @@ public class UserServicesTest {
         when(_tokenRepo.validateToken(TestConstants.FAKE_USER_TOKEN, "invalid-token", TokenTypeEnum.EMAIL_UPDATE))
                 .thenReturn(false);
 
-        ResultHandler<String> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "invalid-token");
+        ResultHandler<Boolean> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "invalid-token");
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
@@ -170,7 +170,7 @@ public class UserServicesTest {
 
         when(_userRepo.confirmEmailChange(TestConstants.FAKE_USER_TOKEN)).thenReturn(false);
 
-        ResultHandler<String> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
+        ResultHandler<Boolean> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
@@ -183,7 +183,7 @@ public class UserServicesTest {
                 .thenReturn(true);
         when(_userRepo.confirmEmailChange(TestConstants.FAKE_USER_TOKEN)).thenReturn(true);
 
-        ResultHandler<String> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
+        ResultHandler<Boolean> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
@@ -195,7 +195,7 @@ public class UserServicesTest {
         String newName = "existingUser";
         when(_userRepo.existsByUsername(newName)).thenReturn(true);
 
-        ResultHandler<String> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
+        ResultHandler<Boolean> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
@@ -208,7 +208,7 @@ public class UserServicesTest {
         when(_userRepo.existsByUsername(newName)).thenReturn(false);
         when(_userRepo.changeUserName(TestConstants.FAKE_USER_TOKEN, newName)).thenReturn(true);
 
-        ResultHandler<String> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
+        ResultHandler<Boolean> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
@@ -219,7 +219,7 @@ public class UserServicesTest {
     void deleteAccount_ShouldReturnSuccess_WhenUserExistsAndDeleted() {
         when(_userRepo.delete(TestConstants.FAKE_USER_TOKEN)).thenReturn(true);
 
-        ResultHandler<String> result = _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
+        ResultHandler<Boolean> result = _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());

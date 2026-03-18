@@ -21,7 +21,7 @@ public class UserServices implements IUserServices {
 
     @Override
     @Auditable(action = "UPDATE_PASSWORD")
-    public ResultHandler<String> updatePassword(String userToken, UpdatePasswordRequest request) {
+    public ResultHandler<Boolean> updatePassword(String userToken, UpdatePasswordRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword()))
             return ResultHandler.failure(
                     "Passwords do not match",
@@ -42,13 +42,14 @@ public class UserServices implements IUserServices {
 
         return ResultHandler.success(
                 "Password updated",
-                HttpStatus.OK.value()
+                HttpStatus.OK.value(),
+                isChanged
         );
     }
 
     @Override
     @Auditable(action = "UPDATE_EMAIL")
-    public ResultHandler<String> updateEmail(String userToken, String email) {
+    public ResultHandler<Void> updateEmail(String userToken, String email) {
         var isUserExist = _userRepo.findMinimalByEmail(email);
 
         if (isUserExist.isPresent() && !isUserExist.get().token().equals(userToken))
@@ -76,7 +77,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "CONFIRM_EMAIL_CHANGE")
-    public ResultHandler<String> confirmEmailChange(String userToken, String token) {
+    public ResultHandler<Boolean> confirmEmailChange(String userToken, String token) {
         boolean isValidToken = _tokenRepo.validateToken(userToken, token, TokenTypeEnum.EMAIL_UPDATE);
 
         if (!isValidToken)
@@ -92,16 +93,18 @@ public class UserServices implements IUserServices {
                     "No pending email update found",
                     HttpStatus.BAD_REQUEST.value()
             );
+
         return ResultHandler.success(
                 "Email updated successfully",
-                HttpStatus.OK.value()
+                HttpStatus.OK.value(),
+                isConfirmed
         );
     }
 
     @Override
     @Transactional
     @Auditable(action = "UPDATE_USERNAME")
-    public ResultHandler<String> updateUserName(String userName, String userToken) {
+    public ResultHandler<Boolean> updateUserName(String userName, String userToken) {
         if (_userRepo.existsByUsername(userName))
             return ResultHandler.failure(
                     "Username is already taken",
@@ -118,14 +121,15 @@ public class UserServices implements IUserServices {
 
         return ResultHandler.success(
                 "User name changed successfully",
-                HttpStatus.OK.value()
+                HttpStatus.OK.value(),
+                isChanged
         );
     }
 
     @Override
     @Transactional
     @Auditable(action = "DELETE_ACCOUNT")
-    public ResultHandler<String> deleteAccount(String userToken) {
+    public ResultHandler<Boolean> deleteAccount(String userToken) {
         boolean isDeleted = _userRepo.delete(userToken);
 
         if (!isDeleted)
@@ -136,7 +140,8 @@ public class UserServices implements IUserServices {
 
         return ResultHandler.success(
                 "User deleted successfully",
-                HttpStatus.OK.value()
+                HttpStatus.OK.value(),
+                isDeleted
         );
     }
 }

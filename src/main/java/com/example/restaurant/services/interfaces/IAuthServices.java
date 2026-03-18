@@ -10,13 +10,13 @@ import com.example.restaurant.helpers.ResultHandler;
 public interface IAuthServices {
     ResultHandler<AuthResponse> authenticate(LoginRequest request);
 
-    ResultHandler<String> register(RegisterRequest request);
+    ResultHandler<Void> register(RegisterRequest request);
 
-    ResultHandler<String> registerConfirm(String token);
+    ResultHandler<Boolean> registerConfirm(String token);
 
-    ResultHandler<String> resetPassword(String email);
+    ResultHandler<Void> resetPassword(String email);
 
-    ResultHandler<String> setNewPassword(ResetPasswordRequest request);
+    ResultHandler<Boolean> setNewPassword(ResetPasswordRequest request);
 
     ResultHandler<AuthResponse> authenticateWithGoogle(GoogleLoginRequest request);
 }

@@ -62,7 +62,7 @@ public class AuthServices implements IAuthServices {
 
     @Auditable(action = "USER_REGISTERED")
     @Transactional
-    public ResultHandler<String> register(RegisterRequest request) {
+    public ResultHandler<Void> register(RegisterRequest request) {
         if (_userRepository.existsByUsername(request.getUsername()))
             return ResultHandler.failure(
                     "Username already exists",
@@ -109,7 +109,7 @@ public class AuthServices implements IAuthServices {
 
     @Auditable(action = "REGISTER_CONFIRM")
     @Transactional
-    public ResultHandler<String> registerConfirm(String token) {
+    public ResultHandler<Boolean> registerConfirm(String token) {
         var userTokenOpt = _verificationTokenRepository.validateToken(token, TokenTypeEnum.ACTIVATION);
 
         if (userTokenOpt.isEmpty())
@@ -128,13 +128,14 @@ public class AuthServices implements IAuthServices {
 
         return ResultHandler.success(
                 "User activated successfully",
-                HttpStatus.OK.value()
+                HttpStatus.OK.value(),
+                isActivated
         );
     }
 
     @Auditable(action = "RESET_PASSWORD")
     @Transactional
-    public ResultHandler<String> resetPassword(String email) {
+    public ResultHandler<Void> resetPassword(String email) {
         var userOpt = _userRepository.findMinimalByEmail(email);
 
         if (userOpt.isPresent()) {
@@ -161,7 +162,7 @@ public class AuthServices implements IAuthServices {
 
     @Auditable(action = "SET_NEW_PASSWORD")
     @Transactional
-    public ResultHandler<String> setNewPassword(ResetPasswordRequest request) {
+    public ResultHandler<Boolean> setNewPassword(ResetPasswordRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword()))
             return ResultHandler.failure(
                     "Passwords do not match",
@@ -189,7 +190,8 @@ public class AuthServices implements IAuthServices {
 
         return ResultHandler.success(
                 "Reset password successfully",
-                HttpStatus.OK.value()
+                HttpStatus.OK.value(),
+                isSuccess
         );
     }
 

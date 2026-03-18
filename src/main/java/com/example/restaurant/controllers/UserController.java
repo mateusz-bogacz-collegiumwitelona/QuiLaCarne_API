@@ -1,6 +1,5 @@
 package com.example.restaurant.controllers;
 
-
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IUserServices;
@@ -34,7 +33,7 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PatchMapping("/password")
-    public ResponseEntity<ResultHandler<String>> updatePassword(
+    public ResponseEntity<ResultHandler<Boolean>> updatePassword(
             @RequestBody @Valid UpdatePasswordRequest request,
             @AuthenticationPrincipal(expression = "token") String userToken) {
         var result = _userServices.updatePassword(userToken, request);
@@ -56,7 +55,7 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PatchMapping("email/update")
-    public ResponseEntity<ResultHandler<String>> updateEmail(
+    public ResponseEntity<ResultHandler<Void>> updateEmail(
             @RequestParam
             @Parameter(description = "New email")
             @Email
@@ -82,7 +81,7 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PatchMapping("/email/confirm")
-    public ResponseEntity<ResultHandler<String>> confirmEmail(
+    public ResponseEntity<ResultHandler<Boolean>> confirmEmail(
             @RequestParam(name = "verificationToken")
             @NotBlank
             @Parameter(description = "New email confirm token")
@@ -103,7 +102,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PatchMapping("/username")
-    public ResponseEntity<ResultHandler<String>> updateUserName(
+    public ResponseEntity<ResultHandler<Boolean>> updateUserName(
             @RequestParam
             @NotBlank
             @Parameter(description = "New user name")
@@ -123,7 +122,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @DeleteMapping("/delete")
-    public ResponseEntity<ResultHandler<String>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
+    public ResponseEntity<ResultHandler<Boolean>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
         var result = _userServices.deleteAccount(userToken);
 
         return ResponseEntity

@@ -4,13 +4,13 @@ import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.helpers.ResultHandler;
 
 public interface IUserServices {
-    ResultHandler<String> updatePassword(String userToken, UpdatePasswordRequest request);
+    ResultHandler<Boolean> updatePassword(String userToken, UpdatePasswordRequest request);
 
-    ResultHandler<String> updateEmail(String userToken, String email);
+    ResultHandler<Void> updateEmail(String userToken, String email);
 
-    ResultHandler<String> confirmEmailChange(String userToken, String token);
+    ResultHandler<Boolean> confirmEmailChange(String userToken, String token);
 
-    ResultHandler<String> updateUserName(String userName, String userToken);
+    ResultHandler<Boolean> updateUserName(String userName, String userToken);
 
-    ResultHandler<String> deleteAccount(String userToken);
+    ResultHandler<Boolean> deleteAccount(String userToken);
 }
