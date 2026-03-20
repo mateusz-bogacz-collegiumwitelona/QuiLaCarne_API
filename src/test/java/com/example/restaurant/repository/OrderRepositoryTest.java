@@ -212,4 +212,92 @@ public class OrderRepositoryTest {
         assertTrue(dishRes.getAllergens().contains("Gluten"));
         assertTrue(dishRes.getAllergens().contains("Laktoza"));
     }
+
+    @Test
+    void removeItemFromReservation_ShouldDecreaseQuantity_WhenPartialRemoval() {
+        ReservationDishRequest request = new ReservationDishRequest();
+        request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
+        request.setQuantity(1);
+        request.setNote(null);
+
+        Orders mockOrder = new Orders();
+        mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
+        mockOrder.setTotalPrice(150);
+
+        Dishes mockDish = new Dishes();
+        mockDish.setToken(TestConstants.FAKE_DISH_TOKEN);
+
+        OrderItems mockItem = new OrderItems();
+        mockItem.setProduct(mockDish);
+        mockItem.setQuantity(3);
+        mockItem.setPriceAtTimeOfOrder(50);
+        mockItem.setNote(null);
+
+        when(_jpaReservationsRepo.findByTokenAndUser_Token(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(Optional.of(new Reservations()));
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockOrder));
+        when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
+                .thenReturn(List.of(mockItem));
+
+        boolean result = _orderRepo.removeItemFromReservation(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                request);
+
+        assertTrue(result);
+        assertEquals(2, mockItem.getQuantity());
+        assertEquals(100, mockOrder.getTotalPrice());
+
+        verify(_jpaOrderItemRepo, times(1)).save(mockItem);
+        verify(_jpaOrderItemRepo, never()).delete(any());
+        verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
+    }
+
+    @Test
+    void removeItemFromReservation_ShouldDeleteRow_WhenFullRemoval() {
+        String note = "Bez soli";
+
+        ReservationDishRequest request = new ReservationDishRequest();
+        request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
+        request.setQuantity(2);
+        request.setNote(note);
+
+        Orders mockOrder = new Orders();
+        mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
+        mockOrder.setTotalPrice(100);
+
+        Dishes mockDish = new Dishes();
+        mockDish.setToken(TestConstants.FAKE_DISH_TOKEN);
+
+        OrderItems mockItem = new OrderItems();
+        mockItem.setProduct(mockDish);
+        mockItem.setQuantity(2);
+        mockItem.setPriceAtTimeOfOrder(50);
+        mockItem.setNote(note);
+
+        when(_jpaReservationsRepo.findByTokenAndUser_Token(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(Optional.of(new Reservations()));
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockOrder));
+        when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
+                .thenReturn(List.of(mockItem));
+
+        boolean result = _orderRepo.removeItemFromReservation(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                request);
+
+        assertTrue(result);
+        assertEquals(2, mockItem.getQuantity());
+        assertEquals(0, mockOrder.getTotalPrice());
+
+        verify(_jpaOrderItemRepo, times(1)).delete(mockItem);
+        verify(_jpaOrderItemRepo, never()).save(any());
+        verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
+    }
 }

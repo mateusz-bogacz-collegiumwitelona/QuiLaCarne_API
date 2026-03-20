@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
+import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
@@ -161,6 +162,16 @@ public class ReservationServices implements IReservationServices {
                 "Today's reservations retrieved successfully",
                 HttpStatus.OK.value(),
                 response
+        );
+    }
+
+    public ResultHandler<Boolean> removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request) {
+        var isRemove = _orderRepo.removeItemFromReservation(userToken, reservationToken, request);
+
+        return ResultHandler.success(
+                "Order removed successfully",
+                HttpStatus.OK.value(),
+                isRemove
         );
     }
 }

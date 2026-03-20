@@ -309,4 +309,34 @@ public class ReservationServicesTest {
 
         LocaleContextHolder.resetLocaleContext();
     }
+
+    @Test
+    void removeItemFromReservation_ShouldReturnSuccess_WhenItemRemoved() {
+        ReservationDishRequest request = new ReservationDishRequest();
+        request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
+        request.setQuantity(1);
+
+        when(_orderRepo.removeItemFromReservation(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                request
+        )).thenReturn(true);
+
+        var result = _reservationServices.removeItemFromReservation(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                request
+        );
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertTrue(result.getData());
+        assertEquals("Order removed successfully", result.getMessage());
+
+        verify(_orderRepo, times(1)).removeItemFromReservation(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                request
+        );
+    }
 }

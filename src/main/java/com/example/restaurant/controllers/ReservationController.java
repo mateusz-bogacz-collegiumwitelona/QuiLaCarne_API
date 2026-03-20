@@ -2,6 +2,7 @@ package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
+import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
@@ -144,6 +145,29 @@ public class ReservationController {
             @ParameterObject @Valid @ModelAttribute PaggedRequest pagged
     ) {
         var result = _reservationServices.today(pagged);
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
+
+    @Operation(
+            summary = "Remove a dish from reservation",
+            description = "Decreases the quantity of a specific dish in the reservation's order. If the quantity to remove is equal to or greater than the current quantity, the dish is completely removed from the order."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Dish removed successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "404", description = "Reservation or dish not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @DeleteMapping("/item/remove")
+    public ResponseEntity<ResultHandler<Boolean>> removeItem(
+            @AuthenticationPrincipal(expression = "token") String userToken,
+            @RequestParam String reservationToken,
+            @Valid @RequestBody ReservationDishRequest request
+    ) {
+        var result = _reservationServices.removeItemFromReservation(userToken, reservationToken, request);
         return ResponseEntity
                 .status(result.getStatusCode())
                 .body(result);

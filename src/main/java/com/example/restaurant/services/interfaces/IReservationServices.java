@@ -2,6 +2,7 @@ package com.example.restaurant.services.interfaces;
 
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
+import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
@@ -20,4 +21,6 @@ public interface IReservationServices {
     ResultHandler<Boolean> cancel(String reservationToken, String userToken);
 
     ResultHandler<PagedResult<TodayReservationsResponse>> today(PaggedRequest request);
+
+    ResultHandler<Boolean> removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
 }
