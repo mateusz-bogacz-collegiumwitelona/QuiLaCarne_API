@@ -24,6 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(value = "/api/reservations", produces = "application/json")
 @RequiredArgsConstructor
@@ -168,6 +170,37 @@ public class ReservationController {
             @Valid @RequestBody ReservationDishRequest request
     ) {
         var result = _reservationServices.removeItemFromReservation(userToken, reservationToken, request);
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
+
+    @Operation(
+            summary = "Add multiple dishes to a reservation",
+            description = "Allows adding as many new dishes as you want to an existing reservation in a single request. " +
+                    "Pass a list of dishes in the request body. " +
+                    "If a requested dish (with the exact same note) already exists on the order, its quantity will be automatically increased. " +
+                    "If it is a new dish or has a different note, it will be added as a separate line item. " +
+                    "The total price of the order is automatically recalculated."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Items added successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid request data (e.g. missing dish tokens)"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "404", description = "Reservation or dish not found / access denied"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/item/add")
+    public ResponseEntity<ResultHandler<Boolean>> addItem(
+            @AuthenticationPrincipal(expression = "token") String userToken,
+            @RequestParam String reservationToken,
+            @Valid @RequestBody List<ReservationDishRequest> request
+    ) {
+        var result = _reservationServices.addItemFromReservation(userToken, reservationToken, request);
         return ResponseEntity
                 .status(result.getStatusCode())
                 .body(result);

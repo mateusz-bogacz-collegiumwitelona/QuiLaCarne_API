@@ -11,6 +11,8 @@ import com.example.restaurant.dto.response.TodayReservationsResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 
+import java.util.List;
+
 public interface IReservationServices {
     ResultHandler<ReservationResponse> create(ReservationRequest request, String userToken);
 
@@ -23,4 +25,6 @@ public interface IReservationServices {
     ResultHandler<PagedResult<TodayReservationsResponse>> today(PaggedRequest request);
 
     ResultHandler<Boolean> removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
+
+    ResultHandler<Boolean> addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request);
 }

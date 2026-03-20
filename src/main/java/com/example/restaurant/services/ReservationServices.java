@@ -169,9 +169,19 @@ public class ReservationServices implements IReservationServices {
         var isRemove = _orderRepo.removeItemFromReservation(userToken, reservationToken, request);
 
         return ResultHandler.success(
-                "Order removed successfully",
+                "Order item removed successfully",
                 HttpStatus.OK.value(),
                 isRemove
+        );
+    }
+
+    public ResultHandler<Boolean> addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request) {
+        var isAdd = _orderRepo.addItemFromReservation(userToken, reservationToken, request);
+
+        return ResultHandler.success(
+                "Order items add successfully",
+                HttpStatus.OK.value(),
+                isAdd
         );
     }
 }

@@ -15,4 +15,6 @@ public interface IOrderRepository {
     TodayOrderSummaryDomain todayOrderDetails(String reservationToken, String lang);
 
     boolean removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
+
+    boolean addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request);
 }

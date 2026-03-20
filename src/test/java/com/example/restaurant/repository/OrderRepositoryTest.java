@@ -12,6 +12,7 @@ import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.jpa.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -299,5 +300,70 @@ public class OrderRepositoryTest {
         verify(_jpaOrderItemRepo, times(1)).delete(mockItem);
         verify(_jpaOrderItemRepo, never()).save(any());
         verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
+    }
+
+    @Test
+    void addItemFromReservation_ShouldIncreaseQuantityAndAddNewItem_WithCorrectPrices() {
+        ReservationDishRequest existingDishRequest = new ReservationDishRequest();
+        existingDishRequest.setDishToken(TestConstants.FAKE_DISH_TOKEN);
+        existingDishRequest.setQuantity(2);
+        existingDishRequest.setNote("bez życia");
+
+        String newDishToken = TestConstants.FAKE_DISH_TOKEN + TestConstants.FAKE_DISH_TOKEN;
+        ReservationDishRequest newDishrequest = new ReservationDishRequest();
+        newDishrequest.setDishToken(newDishToken);
+        newDishrequest.setQuantity(1);
+        newDishrequest.setNote("bez życia i piwa");
+
+        List<ReservationDishRequest> requests = List.of(existingDishRequest, newDishrequest);
+
+        Orders mockOrder = new Orders();
+        mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
+        mockOrder.setTotalPrice(100);
+
+        Dishes existingDish = new Dishes();
+        existingDish.setToken(TestConstants.FAKE_DISH_TOKEN);
+        existingDish.setPrice(50);
+
+        Dishes newDish = new Dishes();
+        newDish.setToken(newDishToken);
+        newDish.setPrice(30);
+
+        OrderItems existingItem = new OrderItems();
+        existingItem.setProduct(existingDish);
+        existingItem.setQuantity(1);
+        existingItem.setPriceAtTimeOfOrder(40);
+        existingItem.setNote("bez życia");
+
+        when(_jpaReservationsRepo.findByTokenAndUser_Token(TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN))
+                .thenReturn(Optional.of(new Reservations()));
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockOrder));
+        when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
+                .thenReturn(List.of(existingItem));
+        when(_jpaDishRepo.findAllByTokenIn(anyList())).thenReturn(List.of(existingDish, newDish));
+
+        boolean result = _orderRepo.addItemFromReservation(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                requests
+        );
+
+        assertTrue(result);
+
+        assertEquals(3, existingItem.getQuantity());
+        verify(_jpaOrderItemRepo, times(1)).save(existingItem);
+
+        ArgumentCaptor<OrderItems> newItemCaptor = ArgumentCaptor.forClass(OrderItems.class);
+        verify(_jpaOrderItemRepo, times(2)).save(newItemCaptor.capture());
+
+        OrderItems capturedNewItem = newItemCaptor.getAllValues().get(1);
+        assertEquals(newDishToken, capturedNewItem.getProduct().getToken());
+        assertEquals(1, capturedNewItem.getQuantity());
+        assertEquals(30, capturedNewItem.getPriceAtTimeOfOrder());
+        assertEquals(210, mockOrder.getTotalPrice());
+        verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
+
     }
 }

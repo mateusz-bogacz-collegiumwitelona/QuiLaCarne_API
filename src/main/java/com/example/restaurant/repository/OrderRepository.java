@@ -179,6 +179,60 @@ public class OrderRepository implements IOrderRepository {
         return true;
     }
 
+    @Override
+    @Transactional
+    public boolean addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request) {
+        _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found or access denied"));
+
+        Orders order = _jpaOrderRepo.findByReservation_Token(reservationToken)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        List<OrderItems> existingItems = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
+        List<String> requestedDishTokens = request.stream().map(ReservationDishRequest::getDishToken).toList();
+        List<Dishes> allRequestedDishes = _jpaDishRepo.findAllByTokenIn(requestedDishTokens);
+
+        int addToPrice = 0;
+
+        for (ReservationDishRequest r : request) {
+            Dishes dish = allRequestedDishes.stream()
+                    .filter(d -> d.getToken().equals(r.getDishToken()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Dish not found: " + r.getDishToken()));
+
+            String reqNote = normalizeNote(r.getNote());
+
+            Optional<OrderItems> existingItemOpt = existingItems.stream()
+                    .filter(i -> i.getProduct().getToken().equals(dish.getToken()) &&
+                            java.util.Objects.equals(reqNote, normalizeNote(i.getNote())))
+                    .findFirst();
+
+            if (existingItemOpt.isPresent()) {
+                OrderItems item = existingItemOpt.get();
+                item.setQuantity(item.getQuantity() + r.getQuantity());
+                _jpaOrderItemRepo.save(item);
+
+                addToPrice += item.getPriceAtTimeOfOrder() * r.getQuantity();
+            } else {
+                OrderItems item = new OrderItems();
+                item.setOrder(order);
+                item.setProduct(dish);
+                item.setQuantity(r.getQuantity());
+                item.setPriceAtTimeOfOrder(dish.getPrice());
+                item.setNote(reqNote);
+
+                _jpaOrderItemRepo.save(item);
+
+                addToPrice += dish.getPrice() * r.getQuantity();
+            }
+        }
+
+        order.setTotalPrice(order.getTotalPrice() + addToPrice);
+        _jpaOrderRepo.saveAndFlush(order);
+
+        return true;
+    }
+
     private String normalizeNote(String note) {
         if (note == null || note.trim().isEmpty()) return note;
         return note.trim();

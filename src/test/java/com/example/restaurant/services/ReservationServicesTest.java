@@ -331,9 +331,40 @@ public class ReservationServicesTest {
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertTrue(result.getData());
-        assertEquals("Order removed successfully", result.getMessage());
+        assertEquals("Order item removed successfully", result.getMessage());
 
         verify(_orderRepo, times(1)).removeItemFromReservation(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                request
+        );
+    }
+
+    @Test
+    void addItemFromReservation_ShouldReturnSuccess_WhenItemRemoved() {
+        ReservationDishRequest request1 = new ReservationDishRequest();
+        request1.setDishToken(TestConstants.FAKE_DISH_TOKEN);
+        request1.setQuantity(1);
+        List<ReservationDishRequest> request = List.of(request1);
+
+        when(_orderRepo.addItemFromReservation(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                request
+        )).thenReturn(true);
+
+        var result = _reservationServices.addItemFromReservation(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                request
+        );
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertTrue(result.getData());
+        assertEquals("Order items add successfully", result.getMessage());
+
+        verify(_orderRepo, times(1)).addItemFromReservation(
                 TestConstants.FAKE_USER_TOKEN,
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 request
