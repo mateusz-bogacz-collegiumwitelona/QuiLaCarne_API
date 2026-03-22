@@ -11,15 +11,12 @@ import org.springframework.stereotype.Repository;
 public class RoleRepository implements IRoleRepository {
     private final IJpaRoleRepository _jpaRoleRepository;
 
-    public Roles setRole(String role)
-    {
+    public Roles setRole(String role) {
         return _jpaRoleRepository.findByName(role)
                 .orElseThrow(() -> new RuntimeException("Role not found: " + role));
     }
 
-    public boolean isRoleExists(String role)
-    {
+    public boolean isRoleExists(String role) {
         return _jpaRoleRepository.findByName(role).isPresent();
     }
-
 }

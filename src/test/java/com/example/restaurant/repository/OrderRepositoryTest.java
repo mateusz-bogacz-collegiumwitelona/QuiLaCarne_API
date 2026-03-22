@@ -8,6 +8,7 @@ import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.lookup.Allergens;
+import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.jpa.*;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -39,6 +41,10 @@ public class OrderRepositoryTest {
     private IJpaReservationsRepository _jpaReservationsRepo;
     @Mock
     private IJpaTableRepository _jpaTableRepo;
+    @Mock
+    private IJpaOrderItemStatusRepository _jpaOrderItemStatusRepo;
+    @Mock
+    private IJpaUserRepository _jpaUserRepo;
 
     @InjectMocks
     private OrderRepository _orderRepo;
@@ -364,6 +370,63 @@ public class OrderRepositoryTest {
         assertEquals(30, capturedNewItem.getPriceAtTimeOfOrder());
         assertEquals(210, mockOrder.getTotalPrice());
         verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
+    }
 
+    @Test
+    void assignWaiterToOrders_ShouldAssignWaiterAndOnlyChangePendingItems() {
+        String inProgressStatus = "IN_PROGRESS";
+
+        Orders mockOrder = new Orders();
+        mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
+
+        Users mockWaiter = new Users();
+        mockWaiter.setToken(TestConstants.FAKE_USER_TOKEN);
+
+        OrderStatus inProgressOrder = new OrderStatus();
+        inProgressOrder.setToken(inProgressStatus);
+
+        OrderItemsStatus inProgressItem = new OrderItemsStatus();
+        inProgressItem.setToken(inProgressStatus);
+
+        OrderItemsStatus pendingItemStatus = new OrderItemsStatus();
+        pendingItemStatus.setToken("PENDING");
+
+        OrderItemsStatus cancelledItemStatus = new OrderItemsStatus();
+        cancelledItemStatus.setToken("CANCELLED");
+
+        OrderItems pendingDish = new OrderItems();
+        pendingDish.setStatuses(new HashSet<>(Set.of(pendingItemStatus)));
+
+        OrderItems emptyStatusDish = new OrderItems();
+        emptyStatusDish.setStatuses(new HashSet<>());
+
+        OrderItems cancelledDish = new OrderItems();
+        cancelledDish.setStatuses(new HashSet<>(Set.of(cancelledItemStatus)));
+
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(Optional.of(mockOrder));
+        when(_jpaUserRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(Optional.of(mockWaiter));
+        when(_jpaOrderStatusRepo.findByToken(inProgressStatus)).thenReturn(Optional.of(inProgressOrder));
+        when(_jpaOrderItemStatusRepo.findByToken(inProgressStatus)).thenReturn(Optional.of(inProgressItem));
+
+        when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
+                .thenReturn(List.of(pendingDish, emptyStatusDish, cancelledDish));
+
+        boolean result = _orderRepo.assignWaiterToOrders(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertTrue(result);
+        assertEquals(mockWaiter, mockOrder.getWaiter());
+        assertTrue(mockOrder.getStatuses().contains(inProgressOrder));
+
+        assertTrue(pendingDish.getStatuses().contains(inProgressItem));
+        assertTrue(emptyStatusDish.getStatuses().contains(inProgressItem));
+
+        assertFalse(cancelledDish.getStatuses().contains(inProgressItem));
+        assertTrue(cancelledDish.getStatuses().contains(cancelledItemStatus));
+
+        verify(_jpaOrderItemRepo, times(1)).saveAll(anyList());
+        verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
     }
 }

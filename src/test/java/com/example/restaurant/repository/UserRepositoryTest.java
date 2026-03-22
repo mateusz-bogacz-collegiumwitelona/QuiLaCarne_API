@@ -6,6 +6,7 @@ import com.example.restaurant.exceptions.UserNotFoundException;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
+import com.example.restaurant.repository.interfaces.jpa.IJpaRoleRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -33,6 +35,9 @@ public class UserRepositoryTest {
 
     @Mock
     private PasswordEncoder _passwordEncoder;
+
+    @Mock
+    private IJpaRoleRepository _jpaRoleRepository;
 
     @Test
     void createUser_ShouldHashPasswordAndRetrunToken() {
@@ -299,5 +304,55 @@ public class UserRepositoryTest {
         assertThrows(UserNotFoundException.class, () ->
                 _userRepository.delete(TestConstants.FAKE_USER_TOKEN)
         );
+    }
+
+    @Test
+    void isInRole_ShouldReturnTrue_WhenUserHasThisRole() {
+        Roles targetRole = new Roles();
+        targetRole.setName(TestConstants.FAKE_ROLE);
+
+        Users mockUser = new Users();
+        mockUser.setToken(TestConstants.FAKE_USER_TOKEN);
+        mockUser.setRoles(Set.of(targetRole));
+
+        when(_jpaUserRepository.findByToken(
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(Optional.of(mockUser));
+        when(_jpaRoleRepository.findByName(
+                TestConstants.FAKE_ROLE
+        )).thenReturn(Optional.of(targetRole));
+
+        boolean result = _userRepository.isInRole(
+                TestConstants.FAKE_ROLE,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertTrue(result);
+    }
+
+    @Test
+    void isInRole_ShouldReturnFalse_WhenUserDoesNotHaveThisRole() {
+        Roles userRole = new Roles();
+        userRole.setName(TestConstants.FAKE_ROLE);
+
+        Roles searchedRole = new Roles();
+        searchedRole.setName(
+                TestConstants.FAKE_ROLE + TestConstants.FAKE_ROLE
+        );
+
+        Users mockUser = new Users();
+        mockUser.setToken(TestConstants.FAKE_USER_TOKEN);
+        mockUser.setRoles(Set.of(userRole));
+
+        when(_jpaUserRepository.findByToken(
+                TestConstants.FAKE_USER_TOKEN
+        )).thenReturn(Optional.of(mockUser));
+        when(_jpaRoleRepository.findByName(
+                TestConstants.FAKE_ROLE)
+        ).thenReturn(Optional.of(searchedRole));
+
+        boolean result = _userRepository.isInRole(TestConstants.FAKE_ROLE, TestConstants.FAKE_USER_TOKEN);
+
+        assertFalse(result);
     }
 }

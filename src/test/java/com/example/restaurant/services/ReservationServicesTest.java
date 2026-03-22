@@ -16,6 +16,7 @@ import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
+import com.example.restaurant.repository.interfaces.IUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,6 +45,9 @@ public class ReservationServicesTest {
     private IReservationRepository _reservationRepo;
     @Mock
     private IOrderRepository _orderRepo;
+
+    @Mock
+    private IUserRepository _userRepo;
 
     @InjectMocks
     private ReservationServices _reservationServices;
@@ -369,5 +373,41 @@ public class ReservationServicesTest {
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 request
         );
+    }
+
+    @Test
+    void assignWaiter_ShouldReturnSuccess_WhenUserHasProperRole() {
+        when(_userRepo.isInRole(anyString(), eq(TestConstants.FAKE_USER_TOKEN))).thenReturn(true);
+        when(_orderRepo.assignWaiterToOrders(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN)
+        ).thenReturn(true);
+
+        var result = _reservationServices.assignWaiter(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        verify(_orderRepo, times(1)).assignWaiterToOrders(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+    }
+
+    @Test
+    void assignWaiter_ShouldReturnFailure_WhenUserLacksRole() {
+        when(_userRepo.isInRole(anyString(), eq(TestConstants.FAKE_USER_TOKEN))).thenReturn(false);
+
+        var result = _reservationServices.assignWaiter(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.UNAUTHORIZED.value(), result.getStatusCode());
+
+        verify(_orderRepo, never()).assignWaiterToOrders(anyString(), anyString());
     }
 }
