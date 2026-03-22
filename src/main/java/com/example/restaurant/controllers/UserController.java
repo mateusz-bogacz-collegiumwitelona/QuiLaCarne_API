@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/password")
     public ResponseEntity<ResultHandler<Boolean>> updatePassword(
             @RequestBody @Valid UpdatePasswordRequest request,
@@ -54,6 +56,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("email/update")
     public ResponseEntity<ResultHandler<Void>> updateEmail(
             @RequestParam
@@ -80,6 +83,7 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/email/confirm")
     public ResponseEntity<ResultHandler<Boolean>> confirmEmail(
             @RequestParam(name = "verificationToken")
@@ -101,6 +105,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Username already taken or invalid"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
+    @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/username")
     public ResponseEntity<ResultHandler<Boolean>> updateUserName(
             @RequestParam
@@ -121,6 +126,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Can't delte user"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
+    @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @DeleteMapping("/delete")
     public ResponseEntity<ResultHandler<Boolean>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
         var result = _userServices.deleteAccount(userToken);

@@ -21,6 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,6 +50,7 @@ public class ReservationController {
             @ApiResponse(responseCode = "409", description = "Table is already reserved in the specified timeframe"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PostMapping
     public ResponseEntity<ResultHandler<ReservationResponse>> create(
             @RequestBody @Valid ReservationRequest request,
@@ -121,6 +123,7 @@ public class ReservationController {
             summary = "Cancel a reservation",
             description = "Cancels an active reservation by changing its status to CANCELLED."
     )
+    @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/{token}/cancel")
     public ResponseEntity<ResultHandler<Boolean>> cancel(
             @Parameter(description = "Reservation token")
@@ -142,6 +145,7 @@ public class ReservationController {
             @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
     @GetMapping("/today")
     public ResponseEntity<ResultHandler<PagedResult<TodayReservationsResponse>>> getTodayReservations(
             @ParameterObject @Valid @ModelAttribute PaggedRequest pagged
@@ -163,6 +167,7 @@ public class ReservationController {
             @ApiResponse(responseCode = "404", description = "Reservation or dish not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @DeleteMapping("/item/remove")
     public ResponseEntity<ResultHandler<Boolean>> removeItem(
             @AuthenticationPrincipal(expression = "token") String userToken,
@@ -194,6 +199,7 @@ public class ReservationController {
             @ApiResponse(responseCode = "404", description = "Reservation or dish not found / access denied"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @PostMapping("/item/add")
     public ResponseEntity<ResultHandler<Boolean>> addItem(
             @AuthenticationPrincipal(expression = "token") String userToken,
@@ -216,6 +222,7 @@ public class ReservationController {
             @ApiResponse(responseCode = "404", description = "Reservation or Waiter not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
+    @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @PatchMapping("/{token}/assign-waiter")
     public ResponseEntity<ResultHandler<Boolean>> assignWaiter(
             @Parameter(description = "Reservation token") @PathVariable String token,
