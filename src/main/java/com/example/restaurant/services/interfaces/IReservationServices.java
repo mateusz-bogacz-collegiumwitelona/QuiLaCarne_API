@@ -27,4 +27,6 @@ public interface IReservationServices {
     ResultHandler<Boolean> removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
 
     ResultHandler<Boolean> addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request);
+
+    ResultHandler<Boolean> assignWaiter(String reservationToken, String waiterToken);
 }

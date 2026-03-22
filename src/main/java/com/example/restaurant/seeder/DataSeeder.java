@@ -30,9 +30,9 @@ import java.util.function.Supplier;
 public class DataSeeder implements CommandLineRunner {
     private final IJpaRoleRepository _jpaRoleRepo;
     private final IJpaTableStatusRepository _jpaTableStatusRepo;
-    private final IJpaOrederStatusRepositry _jpaOrederStatusRepo;
+    private final IJpaOrederStatusRepositry _jpaOrderStatusRepo;
     private final IJpaReservationStatusRepository _jpaReservationStatusRepo;
-    private final IJpaOrderItemStatusRepository _jpaOrederItemStatusRepo;
+    private final IJpaOrderItemStatusRepository _jpaOrderItemStatusRepo;
     private final IJpaUserRepository _jpaUserRepos;
     private final IJpaBanStatusRepository _jpaBanStatusRepo;
     private final IJpaGuestReportStatusRepository _jpaGuestReportStatusRepo;
@@ -59,11 +59,13 @@ public class DataSeeder implements CommandLineRunner {
                 new TranslatedData("OUT_OF_SERVICE", "Wyłączony z użytku", "Out of service")
         ));
 
-        seedTranslatedEntity(_jpaOrederStatusRepo, OrderStatus::new, List.of(
+        seedTranslatedEntity(_jpaOrderItemStatusRepo, OrderItemsStatus::new, List.of(
                 new TranslatedData("PENDING", "Oczekujące", "Pending"),
-                new TranslatedData("IN_PROGRESS", "W realizacji", "In progress"),
-                new TranslatedData("SERVED", "Podano", "Served"),
-                new TranslatedData("CANCELLED", "Anulowano", "Cancelled")
+                new TranslatedData("IN_PROGRESS", "W przygotowaniu", "In progress"),
+                new TranslatedData("READY", "Gotowe do wydania", "Ready"),
+                new TranslatedData("SERVED", "Wydane", "Served"),
+                new TranslatedData("CANCELLED", "Anulowane", "Cancelled"),
+                new TranslatedData("RETURNED", "Zwrócone", "Returned")
         ));
 
         seedTranslatedEntity(_jpaDishesCategoryRepo, DishesCategories::new, List.of(
@@ -87,15 +89,17 @@ public class DataSeeder implements CommandLineRunner {
                 new TranslatedData("NO_SHOW", "Nieobecność", "No show")
         ));
 
-        seedTranslatedEntity(_jpaOrederStatusRepo, OrderStatus::new, List.of(
+        seedTranslatedEntity(_jpaOrderStatusRepo, OrderStatus::new, List.of(
                 new TranslatedData("ACTIVE", "Aktywna", "Active"),
                 new TranslatedData("COMPLETED", "Zakończona", "Completed"),
+                new TranslatedData("IN_PROGRESS", "W trakcie", "In progress"),
                 new TranslatedData("CANCELLED", "Anulowana", "Cancelled")
         ));
 
         seedTranslatedEntity(_jpaBanStatusRepo, BanStatus::new, List.of(
-                new TranslatedData("ACCEPTED", "Zaakceptowane", "Accepted"),
-                new TranslatedData("REJECTED", "Odrzucone", "Rejected")
+                new TranslatedData("ACTIVE", "Aktywny", "ACTIVE"),
+                new TranslatedData("EXPIRED", "Wygasły", "Expired"),
+                new TranslatedData("REVOKED", "Cofinęty", "Revoked")
         ));
 
         seedTranslatedEntity(_jpaGuestReportStatusRepo, GuestReportStatus::new, List.of(

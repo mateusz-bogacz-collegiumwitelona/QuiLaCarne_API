@@ -8,7 +8,9 @@ import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.exceptions.ReservationNotFoundException;
+import com.example.restaurant.exceptions.UserNotFoundException;
 import com.example.restaurant.models.*;
+import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.jpa.*;
@@ -27,6 +29,8 @@ public class OrderRepository implements IOrderRepository {
     private final IJpaOrederStatusRepositry _jpaOrderStatusRepo;
     private final IJpaReservationsRepository _jpaReservationsRepo;
     private final IJpaTableRepository _jpaTableRepo;
+    private final IJpaOrderItemStatusRepository _jpaOrderItemStatusRepo;
+    private final IJpaUserRepository _jpaUserRepo;
 
     @Override
     @Transactional
@@ -236,5 +240,38 @@ public class OrderRepository implements IOrderRepository {
     private String normalizeNote(String note) {
         if (note == null || note.trim().isEmpty()) return note;
         return note.trim();
+    }
+
+    @Transactional
+    @Override
+    public boolean assignWaiterToOrders(String reservationToken, String waiterToken) {
+        Orders order = _jpaOrderRepo.findByReservation_Token(reservationToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+
+        Users waiter = _jpaUserRepo.findByToken(waiterToken).orElseThrow(() -> new UserNotFoundException("Waiter not found"));
+
+        OrderStatus orderStatus = _jpaOrderStatusRepo.findByToken("IN_PROGRESS").orElseThrow(
+                () -> new RuntimeException("Order status not found"));
+
+        OrderItemsStatus orderItemsStatus = _jpaOrderItemStatusRepo.findByToken("IN_PROGRESS").orElseThrow(
+                () -> new RuntimeException("Order item status not found"));
+
+        order.setStatuses(Set.of(orderStatus));
+        order.setWaiter(waiter);
+
+        List<OrderItems> items = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
+
+        for (OrderItems item : items) {
+            boolean isPending = item.getStatuses()
+                    .stream()
+                    .anyMatch(s -> s.getToken().equals("PENDING"));
+
+            if (isPending || item.getStatuses().isEmpty()) item.setStatuses(Set.of(orderItemsStatus));
+        }
+
+        _jpaOrderItemRepo.saveAll(items);
+        _jpaOrderRepo.saveAndFlush(order);
+
+        return true;
     }
 }

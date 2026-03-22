@@ -25,4 +25,6 @@ public interface IUserRepository {
     boolean changeUserName(String userToken, String userName);
 
     boolean delete(String userToken);
+
+    boolean isInRole(String roleToken, String userToken);
 }

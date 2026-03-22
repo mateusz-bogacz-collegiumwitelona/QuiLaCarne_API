@@ -17,4 +17,6 @@ public interface IOrderRepository {
     boolean removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
 
     boolean addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request);
+
+    boolean assignWaiterToOrders(String reservationToken, String waiterToken);
 }

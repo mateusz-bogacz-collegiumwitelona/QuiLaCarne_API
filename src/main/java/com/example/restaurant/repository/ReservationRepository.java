@@ -15,6 +15,7 @@ import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.ReservationStatus;
+import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationsRepository;
@@ -46,6 +47,7 @@ public class ReservationRepository implements IReservationRepository {
     private final IJpaReservationStatusRepository _jpaReservationStatusRepo;
     private final IJpaReservationsRepository _jpaReservationsRepo;
     private final ReservationMapper _reservationMapper;
+    private final IOrderRepository _orderRepo;
 
     @Override
     @Transactional
@@ -143,5 +145,4 @@ public class ReservationRepository implements IReservationRepository {
 
         return new PagedResult<>(dtoPage);
     }
-
 }

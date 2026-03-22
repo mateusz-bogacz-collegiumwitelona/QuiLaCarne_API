@@ -11,6 +11,7 @@ import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
+import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IReservationServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class ReservationServices implements IReservationServices {
     private final ITableRespository _tableRepo;
     private final IReservationRepository _reservationRepo;
     private final IOrderRepository _orderRepo;
+    private final IUserRepository _userRepo;
 
     @Override
     @Transactional
@@ -182,6 +184,28 @@ public class ReservationServices implements IReservationServices {
                 "Order items add successfully",
                 HttpStatus.OK.value(),
                 isAdd
+        );
+    }
+
+    public ResultHandler<Boolean> assignWaiter(String reservationToken, String waiterToken) {
+        if (!_userRepo.isInRole("ROLE_WAITER", waiterToken))
+            return ResultHandler.failure(
+                    "Not waiter",
+                    HttpStatus.UNAUTHORIZED.value()
+            );
+
+        boolean isAssigned = _orderRepo.assignWaiterToOrders(reservationToken, waiterToken);
+
+        if (!isAssigned)
+            return ResultHandler.failure(
+                    "Can't assign waiter",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+
+        return ResultHandler.success(
+                "Waiters assigned successfully",
+                HttpStatus.OK.value(),
+                isAssigned
         );
     }
 }

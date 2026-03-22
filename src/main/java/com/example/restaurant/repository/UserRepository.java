@@ -7,6 +7,7 @@ import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.repository.interfaces.jpa.IJpaRoleRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class UserRepository implements IUserRepository {
     private final IRoleRepository _roleRepository;
     private final PasswordEncoder _passwordEncoder;
     private final IJpaUserRepository _jpaUserRepository;
+    private final IJpaRoleRepository _jpaRoleRepository;
 
     @Override
     @Transactional
@@ -150,5 +152,14 @@ public class UserRepository implements IUserRepository {
 
             return true;
         }).orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
+
+    @Override
+    public boolean isInRole(String roleName, String userToken) {
+        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        Roles role = _jpaRoleRepository.findByName(roleName).orElseThrow(() -> new RuntimeException("Role not found"));
+
+        return user.getRoles().contains(role);
     }
 }

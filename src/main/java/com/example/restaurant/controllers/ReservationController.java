@@ -205,4 +205,25 @@ public class ReservationController {
                 .status(result.getStatusCode())
                 .body(result);
     }
+
+    @Operation(
+            summary = "Assign waiter to a reservation",
+            description = "Assigns a specific waiter to a reservation and its associated order. Automatically changes the status of the order and pending dishes to IN_PROGRESS."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Waiter assigned successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(responseCode = "403", description = "User does not have waiter privileges"),
+            @ApiResponse(responseCode = "404", description = "Reservation or Waiter not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PatchMapping("/{token}/assign-waiter")
+    public ResponseEntity<ResultHandler<Boolean>> assignWaiter(
+            @Parameter(description = "Reservation token") @PathVariable String token,
+            @AuthenticationPrincipal(expression = "token") String waiterToken
+    ) {
+        var result = _reservationServices.assignWaiter(token, waiterToken);
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
 }
