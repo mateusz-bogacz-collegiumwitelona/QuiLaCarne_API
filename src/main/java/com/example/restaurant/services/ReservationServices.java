@@ -167,8 +167,8 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
-    public ResultHandler<Boolean> removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request) {
-        var isRemove = _orderRepo.removeItemFromReservation(userToken, reservationToken, request);
+    public ResultHandler<Boolean> removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
+        var isRemove = _orderRepo.removeItemFromReservation(waiterToken, reservationToken, request);
 
         return ResultHandler.success(
                 "Order item removed successfully",
@@ -177,8 +177,8 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
-    public ResultHandler<Boolean> addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request) {
-        var isAdd = _orderRepo.addItemFromReservation(userToken, reservationToken, request);
+    public ResultHandler<Boolean> addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
+        var isAdd = _orderRepo.addItemFromReservation(waiterToken, reservationToken, request);
 
         return ResultHandler.success(
                 "Order items add successfully",
@@ -205,7 +205,7 @@ public class ReservationServices implements IReservationServices {
         return ResultHandler.success(
                 "Waiters assigned successfully",
                 HttpStatus.OK.value(),
-                isAssigned
+                true
         );
     }
 }

@@ -170,11 +170,11 @@ public class ReservationController {
     @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @DeleteMapping("/item/remove")
     public ResponseEntity<ResultHandler<Boolean>> removeItem(
-            @AuthenticationPrincipal(expression = "token") String userToken,
+            @AuthenticationPrincipal(expression = "token") String waiterToken,
             @RequestParam String reservationToken,
             @Valid @RequestBody ReservationDishRequest request
     ) {
-        var result = _reservationServices.removeItemFromReservation(userToken, reservationToken, request);
+        var result = _reservationServices.removeItemFromReservation(waiterToken, reservationToken, request);
         return ResponseEntity
                 .status(result.getStatusCode())
                 .body(result);
@@ -202,11 +202,11 @@ public class ReservationController {
     @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @PostMapping("/item/add")
     public ResponseEntity<ResultHandler<Boolean>> addItem(
-            @AuthenticationPrincipal(expression = "token") String userToken,
+            @AuthenticationPrincipal(expression = "token") String waiterToken,
             @RequestParam String reservationToken,
             @Valid @RequestBody List<ReservationDishRequest> request
     ) {
-        var result = _reservationServices.addItemFromReservation(userToken, reservationToken, request);
+        var result = _reservationServices.addItemFromReservation(waiterToken, reservationToken, request);
         return ResponseEntity
                 .status(result.getStatusCode())
                 .body(result);

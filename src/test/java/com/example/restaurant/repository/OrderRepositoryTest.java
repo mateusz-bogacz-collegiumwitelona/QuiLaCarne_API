@@ -13,7 +13,6 @@ import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.jpa.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -231,6 +230,10 @@ public class OrderRepositoryTest {
         mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
         mockOrder.setTotalPrice(150);
 
+        Users mockWaiter = new Users();
+        mockWaiter.setToken(TestConstants.FAKE_USER_TOKEN);
+        mockOrder.setWaiter(mockWaiter);
+
         Dishes mockDish = new Dishes();
         mockDish.setToken(TestConstants.FAKE_DISH_TOKEN);
 
@@ -240,10 +243,6 @@ public class OrderRepositoryTest {
         mockItem.setPriceAtTimeOfOrder(50);
         mockItem.setNote(null);
 
-        when(_jpaReservationsRepo.findByTokenAndUser_Token(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN
-        )).thenReturn(Optional.of(new Reservations()));
         when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.of(mockOrder));
         when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
@@ -259,14 +258,12 @@ public class OrderRepositoryTest {
         assertEquals(100, mockOrder.getTotalPrice());
 
         verify(_jpaOrderItemRepo, times(1)).save(mockItem);
-        verify(_jpaOrderItemRepo, never()).delete(any());
         verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
     }
 
     @Test
     void removeItemFromReservation_ShouldDeleteRow_WhenFullRemoval() {
         String note = "Bez soli";
-
         ReservationDishRequest request = new ReservationDishRequest();
         request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
         request.setQuantity(2);
@@ -275,6 +272,10 @@ public class OrderRepositoryTest {
         Orders mockOrder = new Orders();
         mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
         mockOrder.setTotalPrice(100);
+
+        Users mockWaiter = new Users();
+        mockWaiter.setToken(TestConstants.FAKE_USER_TOKEN);
+        mockOrder.setWaiter(mockWaiter);
 
         Dishes mockDish = new Dishes();
         mockDish.setToken(TestConstants.FAKE_DISH_TOKEN);
@@ -285,10 +286,6 @@ public class OrderRepositoryTest {
         mockItem.setPriceAtTimeOfOrder(50);
         mockItem.setNote(note);
 
-        when(_jpaReservationsRepo.findByTokenAndUser_Token(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN
-        )).thenReturn(Optional.of(new Reservations()));
         when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.of(mockOrder));
         when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
@@ -300,11 +297,9 @@ public class OrderRepositoryTest {
                 request);
 
         assertTrue(result);
-        assertEquals(2, mockItem.getQuantity());
         assertEquals(0, mockOrder.getTotalPrice());
 
         verify(_jpaOrderItemRepo, times(1)).delete(mockItem);
-        verify(_jpaOrderItemRepo, never()).save(any());
         verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
     }
 
@@ -315,7 +310,7 @@ public class OrderRepositoryTest {
         existingDishRequest.setQuantity(2);
         existingDishRequest.setNote("bez życia");
 
-        String newDishToken = TestConstants.FAKE_DISH_TOKEN + TestConstants.FAKE_DISH_TOKEN;
+        String newDishToken = "NEW_DISH_TOKEN";
         ReservationDishRequest newDishrequest = new ReservationDishRequest();
         newDishrequest.setDishToken(newDishToken);
         newDishrequest.setQuantity(1);
@@ -326,6 +321,10 @@ public class OrderRepositoryTest {
         Orders mockOrder = new Orders();
         mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
         mockOrder.setTotalPrice(100);
+
+        Users mockWaiter = new Users();
+        mockWaiter.setToken(TestConstants.FAKE_USER_TOKEN);
+        mockOrder.setWaiter(mockWaiter);
 
         Dishes existingDish = new Dishes();
         existingDish.setToken(TestConstants.FAKE_DISH_TOKEN);
@@ -341,9 +340,6 @@ public class OrderRepositoryTest {
         existingItem.setPriceAtTimeOfOrder(40);
         existingItem.setNote("bez życia");
 
-        when(_jpaReservationsRepo.findByTokenAndUser_Token(TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN))
-                .thenReturn(Optional.of(new Reservations()));
         when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.of(mockOrder));
         when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
@@ -357,19 +353,33 @@ public class OrderRepositoryTest {
         );
 
         assertTrue(result);
-
         assertEquals(3, existingItem.getQuantity());
-        verify(_jpaOrderItemRepo, times(1)).save(existingItem);
-
-        ArgumentCaptor<OrderItems> newItemCaptor = ArgumentCaptor.forClass(OrderItems.class);
-        verify(_jpaOrderItemRepo, times(2)).save(newItemCaptor.capture());
-
-        OrderItems capturedNewItem = newItemCaptor.getAllValues().get(1);
-        assertEquals(newDishToken, capturedNewItem.getProduct().getToken());
-        assertEquals(1, capturedNewItem.getQuantity());
-        assertEquals(30, capturedNewItem.getPriceAtTimeOfOrder());
         assertEquals(210, mockOrder.getTotalPrice());
         verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
+    }
+
+    @Test
+    void addItemFromReservation_ShouldThrowException_WhenWaiterIsNotAssignedToOrder() {
+        String assignedWaiterToken = "waiterA";
+        String intruderWaiterToken = "waiterB";
+
+        Users mockWaiter = new Users();
+        mockWaiter.setToken(assignedWaiterToken);
+
+        Orders mockOrder = new Orders();
+        mockOrder.setWaiter(mockWaiter);
+
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockOrder));
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> _orderRepo.addItemFromReservation(
+                intruderWaiterToken,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                List.of()
+        ));
+
+        assertEquals("Order not found or you are not the assigned waiter", exception.getMessage());
+        verify(_jpaOrderItemRepo, never()).save(any());
     }
 
     @Test

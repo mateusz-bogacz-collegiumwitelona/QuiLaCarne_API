@@ -149,12 +149,10 @@ public class OrderRepository implements IOrderRepository {
 
     @Override
     @Transactional
-    public boolean removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request) {
-        _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found or access denied"));
-
+    public boolean removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
         Orders order = _jpaOrderRepo.findByReservation_Token(reservationToken)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
+                .orElseThrow(() -> new RuntimeException("Order not found or you are not the assigned waiter"));
 
         List<OrderItems> items = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
 
@@ -185,12 +183,10 @@ public class OrderRepository implements IOrderRepository {
 
     @Override
     @Transactional
-    public boolean addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request) {
-        _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found or access denied"));
-
+    public boolean addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
         Orders order = _jpaOrderRepo.findByReservation_Token(reservationToken)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
+                .orElseThrow(() -> new RuntimeException("Order not found or you are not the assigned waiter"));
 
         List<OrderItems> existingItems = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
         List<String> requestedDishTokens = request.stream().map(ReservationDishRequest::getDishToken).toList();
