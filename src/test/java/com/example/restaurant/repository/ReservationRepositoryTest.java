@@ -34,6 +34,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -270,5 +271,76 @@ public class ReservationRepositoryTest {
 
         verify(_jpaReservationsRepo, times(1)).findAll(any(Specification.class), any(Pageable.class));
         verify(_reservationMapper, times(1)).toTodayReservationsResponse(mockEntity, PL);
+    }
+
+    @Test
+    void active_ShouldSetStatusToInProgress_WhenReservationExists() {
+        Reservations mockReservation = new Reservations();
+        ReservationStatus inProgressStatus = new ReservationStatus();
+        inProgressStatus.setToken("IN_PROGRESS");
+
+        when(_jpaReservationsRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockReservation));
+        when(_jpaReservationStatusRepo.findByToken("IN_PROGRESS"))
+                .thenReturn(Optional.of(inProgressStatus));
+
+        boolean result = _reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertTrue(result);
+        assertTrue(mockReservation.getReservationStatus().contains(inProgressStatus));
+        verify(_jpaReservationsRepo, times(1)).saveAndFlush(mockReservation);
+    }
+
+    @Test
+    void active_ShouldThrowException_WhenReservationNotFound() {
+        when(_jpaReservationsRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ReservationNotFoundException.class, () ->
+                _reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN)
+        );
+    }
+
+    @Test
+    void isAbsent_ShouldChangeStatusToNoShow_WhenReservationIsActive() {
+        Reservations mockReservation = new Reservations();
+
+        ReservationStatus activeStatus = new ReservationStatus();
+        activeStatus.setToken("ACTIVE");
+        mockReservation.setReservationStatus(Set.of(activeStatus));
+        ReservationStatus noShowStatus = new ReservationStatus();
+        noShowStatus.setToken("NO_SHOW");
+
+        when(_jpaReservationsRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockReservation));
+        when(_jpaReservationStatusRepo.findByToken("NO_SHOW"))
+                .thenReturn(Optional.of(noShowStatus));
+
+        boolean result = _reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertTrue(result);
+        assertTrue(mockReservation.getReservationStatus().contains(noShowStatus));
+        verify(_jpaReservationsRepo, times(1)).saveAndFlush(mockReservation);
+    }
+
+    @Test
+    void isAbsent_ShouldThrowIllegalStateException_WhenReservationIsNotActive() {
+        Reservations mockReservation = new Reservations();
+
+        ReservationStatus inProgressStatus = new ReservationStatus();
+        inProgressStatus.setToken("IN_PROGRESS");
+        mockReservation.setReservationStatus(Set.of(inProgressStatus));
+
+        when(_jpaReservationsRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockReservation));
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
+                _reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)
+        );
+
+        assertEquals("The reservation is not in the ACTIVE state. It cannot be set to NO_SHOW.", exception.getMessage());
+
+        verify(_jpaReservationStatusRepo, never()).findByToken("NO_SHOW");
+        verify(_jpaReservationsRepo, never()).saveAndFlush(any());
     }
 }

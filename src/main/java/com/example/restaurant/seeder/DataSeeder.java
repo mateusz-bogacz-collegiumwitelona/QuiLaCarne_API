@@ -85,6 +85,7 @@ public class DataSeeder implements CommandLineRunner {
         seedTranslatedEntity(_jpaReservationStatusRepo, ReservationStatus::new, List.of(
                 new TranslatedData("ACTIVE", "Aktywna", "Active"),
                 new TranslatedData("COMPLETED", "Zakończona", "Completed"),
+                new TranslatedData("IN_PROGRESS", "W trakcie", "In progress"),
                 new TranslatedData("CANCELLED", "Anulowana", "Cancelled"),
                 new TranslatedData("NO_SHOW", "Nieobecność", "No show")
         ));

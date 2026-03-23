@@ -439,4 +439,65 @@ public class OrderRepositoryTest {
         verify(_jpaOrderItemRepo, times(1)).saveAll(anyList());
         verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
     }
+
+    @Test
+    void isAbsent_ShouldReturnTrue_WhenOrderDoesNotExist() {
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.empty());
+
+        boolean result = _orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertTrue(result);
+        verify(_jpaOrderStatusRepo, never()).findByToken(anyString());
+        verify(_jpaOrderRepo, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void isAbsent_ShouldCancelOrderAndItems_WhenOrderExists() {
+        Orders mockOrder = new Orders();
+        mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
+
+        OrderItems mockItem1 = new OrderItems();
+        OrderItems mockItem2 = new OrderItems();
+        List<OrderItems> orderItems = List.of(mockItem1, mockItem2);
+
+        OrderStatus cancelledStatus = new OrderStatus();
+        cancelledStatus.setToken("CANCELLED");
+
+        OrderItemsStatus cancelledItemStatus = new OrderItemsStatus();
+        cancelledItemStatus.setToken("CANCELLED");
+
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockOrder));
+        when(_jpaOrderStatusRepo.findByToken("CANCELLED"))
+                .thenReturn(Optional.of(cancelledStatus));
+        when(_jpaOrderItemStatusRepo.findByToken("CANCELLED"))
+                .thenReturn(Optional.of(cancelledItemStatus));
+        when(_jpaOrderItemRepo.findAllByOrder_Token(mockOrder.getToken()))
+                .thenReturn(orderItems);
+
+        boolean result = _orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertTrue(result);
+        assertTrue(mockOrder.getStatuses().contains(cancelledStatus));
+        assertTrue(mockItem1.getStatuses().contains(cancelledItemStatus));
+        assertTrue(mockItem2.getStatuses().contains(cancelledItemStatus));
+
+        verify(_jpaOrderItemRepo, times(1)).saveAll(orderItems);
+        verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
+    }
+
+    @Test
+    void isAbsent_ShouldThrowException_WhenOrderStatusNotFound() {
+        Orders mockOrder = new Orders();
+        when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockOrder));
+        when(_jpaOrderStatusRepo.findByToken("CANCELLED"))
+                .thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () ->
+                _orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)
+        );
+        assertEquals("Order status not found", exception.getMessage());
+    }
 }

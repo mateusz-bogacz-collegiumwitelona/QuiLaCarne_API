@@ -15,7 +15,6 @@ import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.ReservationStatus;
-import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationsRepository;
@@ -47,7 +46,6 @@ public class ReservationRepository implements IReservationRepository {
     private final IJpaReservationStatusRepository _jpaReservationStatusRepo;
     private final IJpaReservationsRepository _jpaReservationsRepo;
     private final ReservationMapper _reservationMapper;
-    private final IOrderRepository _orderRepo;
 
     @Override
     @Transactional
@@ -144,5 +142,40 @@ public class ReservationRepository implements IReservationRepository {
         );
 
         return new PagedResult<>(dtoPage);
+    }
+
+    @Override
+    public boolean active(String reservationToken) {
+        Reservations reservation = _jpaReservationsRepo.findByToken(reservationToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+
+        ReservationStatus inProgressStatus = _jpaReservationStatusRepo.findByToken("IN_PROGRESS")
+                .orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
+
+        reservation.setReservationStatus(Set.of(inProgressStatus));
+
+        _jpaReservationsRepo.saveAndFlush(reservation);
+        return true;
+    }
+
+    @Override
+    public boolean isAbsent(String reservationToken) {
+        Reservations reservation = _jpaReservationsRepo.findByToken(reservationToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+
+        boolean isActive = reservation.getReservationStatus().stream()
+                .anyMatch(status -> status.getToken().equals("ACTIVE"));
+
+        if (!isActive) throw new IllegalStateException(
+                "The reservation is not in the ACTIVE state. It cannot be set to NO_SHOW."
+        );
+
+        ReservationStatus notShowStatus = _jpaReservationStatusRepo.findByToken("NO_SHOW").
+                orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
+
+        reservation.setReservationStatus(Set.of(notShowStatus));
+
+        _jpaReservationsRepo.saveAndFlush(reservation);
+        return true;
     }
 }

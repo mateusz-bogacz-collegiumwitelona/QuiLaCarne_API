@@ -233,4 +233,25 @@ public class ReservationController {
                 .status(result.getStatusCode())
                 .body(result);
     }
+
+    @Operation(
+            summary = "Mark reservation as absent (No-show)",
+            description = "Changes the reservation status to NO_SHOW. If an order is attached to the reservation, its status (and the status of its items) is changed to CANCELLED. Requires the reservation to be in the ACTIVE state. Available only for waiters."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully marked the reservation and orders as absent"),
+            @ApiResponse(responseCode = "400", description = "Invalid state (e.g., reservation is not in the ACTIVE state)"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - valid JWT token required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - requires ROLE_WAITER role"),
+            @ApiResponse(responseCode = "404", description = "Reservation with the provided token not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error during status change")
+    })
+    @PreAuthorize("hasAnyRole('ROLE_WAITER')")
+    @PatchMapping("/{token}/absent")
+    public ResponseEntity<ResultHandler<Boolean>> absent(@Parameter(description = "Reservation token") @PathVariable String token) {
+        var result = _reservationServices.isAbsent(token);
+        return ResponseEntity
+                .status(result.getStatusCode())
+                .body(result);
+    }
 }

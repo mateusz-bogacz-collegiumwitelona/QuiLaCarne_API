@@ -19,4 +19,6 @@ public interface IOrderRepository {
     boolean addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request);
 
     boolean assignWaiterToOrders(String reservationToken, String waiterToken);
+
+    boolean isAbsent(String reservationToken);
 }

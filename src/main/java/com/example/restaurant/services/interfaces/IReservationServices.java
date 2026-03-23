@@ -29,4 +29,6 @@ public interface IReservationServices {
     ResultHandler<Boolean> addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request);
 
     ResultHandler<Boolean> assignWaiter(String reservationToken, String waiterToken);
+
+    ResultHandler<Boolean> isAbsent(String reservationToken);
 }

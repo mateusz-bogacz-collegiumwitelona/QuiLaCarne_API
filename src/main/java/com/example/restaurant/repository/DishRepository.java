@@ -53,9 +53,4 @@ public class DishRepository implements IDishRepository {
 
         return new PagedResult<>(dtoPage);
     }
-
-    @Override
-    public boolean isDishExist(String token) {
-        return _jpaDishRepo.findByToken(token).isPresent();
-    }
 }

@@ -167,6 +167,7 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
+    @Override
     public ResultHandler<Boolean> removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
         var isRemove = _orderRepo.removeItemFromReservation(waiterToken, reservationToken, request);
 
@@ -177,6 +178,7 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
+    @Override
     public ResultHandler<Boolean> addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
         var isAdd = _orderRepo.addItemFromReservation(waiterToken, reservationToken, request);
 
@@ -187,6 +189,7 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
+    @Override
     public ResultHandler<Boolean> assignWaiter(String reservationToken, String waiterToken) {
         if (!_userRepo.isInRole("ROLE_WAITER", waiterToken))
             return ResultHandler.failure(
@@ -194,6 +197,14 @@ public class ReservationServices implements IReservationServices {
                     HttpStatus.UNAUTHORIZED.value()
             );
 
+        boolean isActive = _reservationRepo.active(reservationToken);
+
+        if (!isActive)
+            return ResultHandler.failure(
+                    "Reservation is not active",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+        
         boolean isAssigned = _orderRepo.assignWaiterToOrders(reservationToken, waiterToken);
 
         if (!isAssigned)
@@ -204,6 +215,32 @@ public class ReservationServices implements IReservationServices {
 
         return ResultHandler.success(
                 "Waiters assigned successfully",
+                HttpStatus.OK.value(),
+                true
+        );
+    }
+
+    @Transactional
+    @Override
+    public ResultHandler<Boolean> isAbsent(String reservationToken) {
+        boolean isResevStatChange = _reservationRepo.isAbsent(reservationToken);
+
+        if (!isResevStatChange)
+            return ResultHandler.failure(
+                    "Can't change reservation status",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+
+        boolean isOrderStatChange = _orderRepo.isAbsent(reservationToken);
+
+        if (!isOrderStatChange)
+            return ResultHandler.failure(
+                    "Can't change order status",
+                    HttpStatus.INTERNAL_SERVER_ERROR.value()
+            );
+
+        return ResultHandler.success(
+                "Orders absent successfully",
                 HttpStatus.OK.value(),
                 true
         );

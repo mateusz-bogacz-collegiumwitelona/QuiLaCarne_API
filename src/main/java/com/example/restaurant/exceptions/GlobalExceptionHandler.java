@@ -118,4 +118,16 @@ public class GlobalExceptionHandler {
                 ResultHandler.failure(rsnte.getMessage(), HttpStatus.NOT_FOUND.value())
         );
     }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ResultHandler<Object>> handleIllegalStateException(IllegalStateException isex) {
+        log.warn("Business rule violation: {}", isex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ResultHandler.failure(
+                        isex.getMessage(),
+                        HttpStatus.BAD_REQUEST.value()
+                )
+        );
+    }
 }

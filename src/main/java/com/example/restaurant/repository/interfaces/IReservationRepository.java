@@ -18,4 +18,8 @@ public interface IReservationRepository {
     boolean cancel(String reservationToken, String userToken);
 
     PagedResult<TodayReservationsResponse> today(String lang, PaggedRequest pagged);
+
+    boolean isAbsent(String reservationToken);
+
+    boolean active(String reservationToken);
 }

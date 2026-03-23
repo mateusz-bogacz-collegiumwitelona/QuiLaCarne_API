@@ -378,6 +378,9 @@ public class ReservationServicesTest {
     @Test
     void assignWaiter_ShouldReturnSuccess_WhenUserHasProperRole() {
         when(_userRepo.isInRole(anyString(), eq(TestConstants.FAKE_USER_TOKEN))).thenReturn(true);
+
+        when(_reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
+
         when(_orderRepo.assignWaiterToOrders(
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 TestConstants.FAKE_USER_TOKEN)
@@ -390,6 +393,8 @@ public class ReservationServicesTest {
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+
+        verify(_reservationRepo, times(1)).active(TestConstants.FAKE_RESERVATION_TOKEN);
         verify(_orderRepo, times(1)).assignWaiterToOrders(
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 TestConstants.FAKE_USER_TOKEN
@@ -409,5 +414,86 @@ public class ReservationServicesTest {
         assertEquals(HttpStatus.UNAUTHORIZED.value(), result.getStatusCode());
 
         verify(_orderRepo, never()).assignWaiterToOrders(anyString(), anyString());
+    }
+
+    @Test
+    void assignWaiter_ShouldReturnFailure_WhenReservationIsNotAcive() {
+        when(_userRepo.isInRole(anyString(), eq(TestConstants.FAKE_USER_TOKEN))).thenReturn(true);
+        when(_reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(false);
+
+        var result = _reservationServices.assignWaiter(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
+        assertEquals("Reservation is not active", result.getMessage());
+
+        verify(_orderRepo, never()).assignWaiterToOrders(anyString(), anyString());
+    }
+
+    @Test
+    void assignWaiter_ShouldReturnFailure_WhenOrderAssignmentFails() {
+        when(_userRepo.isInRole(anyString(), eq(TestConstants.FAKE_USER_TOKEN))).thenReturn(true);
+        when(_reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
+
+        when(_orderRepo.assignWaiterToOrders(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN)
+        ).thenReturn(false);
+
+        var result = _reservationServices.assignWaiter(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
+        assertEquals("Can't assign waiter", result.getMessage());
+    }
+
+    @Test
+    void isAbsent_ShouldReturnSuccess_WhenBothReposSucceed() {
+        when(_reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
+        when(_orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
+
+        ResultHandler<Boolean> result = _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertTrue(result.getData());
+        assertEquals("Orders absent successfully", result.getMessage());
+
+        verify(_reservationRepo, times(1)).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+        verify(_orderRepo, times(1)).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+    }
+
+    @Test
+    void isAbsent_ShouldReturnFailure_WhenReservationRepoFails() {
+        when(_reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(false);
+
+        ResultHandler<Boolean> result = _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
+        assertEquals("Can't change reservation status", result.getMessage());
+
+        verify(_orderRepo, never()).isAbsent(anyString());
+    }
+
+    @Test
+    void isAbsent_ShouldReturnFailure_WhenOrderRepoFails() {
+        when(_reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
+        when(_orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(false);
+
+        ResultHandler<Boolean> result = _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
+        assertEquals("Can't change order status", result.getMessage());
+
+        verify(_reservationRepo, times(1)).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+        verify(_orderRepo, times(1)).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
     }
 }

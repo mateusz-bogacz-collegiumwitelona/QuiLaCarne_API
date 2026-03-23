@@ -270,4 +270,33 @@ public class OrderRepository implements IOrderRepository {
 
         return true;
     }
+
+    @Override
+    public boolean isAbsent(String reservationToken) {
+        Optional<Orders> orderOpt = _jpaOrderRepo.findByReservation_Token(reservationToken);
+
+        if (orderOpt.isEmpty()) {
+            return true;
+        }
+
+        Orders order = orderOpt.get();
+
+        OrderStatus orderStatus = _jpaOrderStatusRepo.findByToken("CANCELLED").orElseThrow(
+                () -> new RuntimeException("Order status not found"));
+
+        OrderItemsStatus orderItemsStatus = _jpaOrderItemStatusRepo.findByToken("CANCELLED").orElseThrow(
+                () -> new RuntimeException("Order item status not found"));
+
+        order.setStatuses(Set.of(orderStatus));
+
+        List<OrderItems> items = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
+        for (OrderItems item : items) {
+            item.setStatuses(Set.of(orderItemsStatus));
+        }
+
+        _jpaOrderItemRepo.saveAll(items);
+        _jpaOrderRepo.saveAndFlush(order);
+
+        return true;
+    }
 }
