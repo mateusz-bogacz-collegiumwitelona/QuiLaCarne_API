@@ -64,7 +64,7 @@ public class ReservationRepository implements IReservationRepository {
         reservation.setTableId(table);
         reservation.setStartTime(request.getStartTime());
         reservation.setEndTime(request.getEndTime());
-        reservation.setReservationStatus(Set.of(activeStatus));
+        reservation.setReservationStatus(new HashSet<>(Set.of(activeStatus)));
 
         _jpaReservationsRepo.saveAndFlush(reservation);
 
@@ -112,17 +112,16 @@ public class ReservationRepository implements IReservationRepository {
 
     @Override
     @Transactional
-    public boolean cancel(String reservationToken, String userToken) {
-        return _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken).map(r -> {
-            ReservationStatus cancelledStatus = _jpaReservationStatusRepo.findByToken("CANCELLED")
-                    .orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
+    public void cancel(String reservationToken, String userToken) {
+        Reservations reservation = _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
 
-            r.setReservationStatus(new HashSet<>(Set.of(cancelledStatus)));
+        ReservationStatus cancelledStatus = _jpaReservationStatusRepo.findByToken("CANCELLED")
+                .orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
 
-            _jpaReservationsRepo.saveAndFlush(r);
+        reservation.setReservationStatus(new HashSet<>(Set.of(cancelledStatus)));
 
-            return true;
-        }).orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+        _jpaReservationsRepo.saveAndFlush(reservation);
     }
 
     @Override
@@ -145,21 +144,20 @@ public class ReservationRepository implements IReservationRepository {
     }
 
     @Override
-    public boolean active(String reservationToken) {
+    public void active(String reservationToken) {
         Reservations reservation = _jpaReservationsRepo.findByToken(reservationToken)
                 .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
 
         ReservationStatus inProgressStatus = _jpaReservationStatusRepo.findByToken("IN_PROGRESS")
                 .orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
 
-        reservation.setReservationStatus(Set.of(inProgressStatus));
+        reservation.setReservationStatus(new HashSet<>(Set.of(inProgressStatus)));
 
         _jpaReservationsRepo.saveAndFlush(reservation);
-        return true;
     }
 
     @Override
-    public boolean isAbsent(String reservationToken) {
+    public void isAbsent(String reservationToken) {
         Reservations reservation = _jpaReservationsRepo.findByToken(reservationToken)
                 .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
 
@@ -173,9 +171,8 @@ public class ReservationRepository implements IReservationRepository {
         ReservationStatus notShowStatus = _jpaReservationStatusRepo.findByToken("NO_SHOW").
                 orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
 
-        reservation.setReservationStatus(Set.of(notShowStatus));
+        reservation.setReservationStatus(new HashSet<>(Set.of(notShowStatus)));
 
         _jpaReservationsRepo.saveAndFlush(reservation);
-        return true;
     }
 }

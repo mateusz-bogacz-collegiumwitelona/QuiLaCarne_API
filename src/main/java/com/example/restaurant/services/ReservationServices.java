@@ -138,13 +138,12 @@ public class ReservationServices implements IReservationServices {
     }
 
     @Override
-    public ResultHandler<Boolean> cancel(String reservationToken, String userToken) {
-        var response = _reservationRepo.cancel(reservationToken, userToken);
+    public ResultHandler<Void> cancel(String reservationToken, String userToken) {
+        _reservationRepo.cancel(reservationToken, userToken);
 
         return ResultHandler.success(
                 "Reservation cancelled successfully",
-                HttpStatus.OK.value(),
-                response
+                HttpStatus.OK.value()
         );
     }
 
@@ -168,81 +167,51 @@ public class ReservationServices implements IReservationServices {
     }
 
     @Override
-    public ResultHandler<Boolean> removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
-        var isRemove = _orderRepo.removeItemFromReservation(waiterToken, reservationToken, request);
+    public ResultHandler<Void> removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
+        _orderRepo.removeItemFromReservation(waiterToken, reservationToken, request);
 
         return ResultHandler.success(
                 "Order item removed successfully",
-                HttpStatus.OK.value(),
-                isRemove
+                HttpStatus.OK.value()
         );
     }
 
     @Override
-    public ResultHandler<Boolean> addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
-        var isAdd = _orderRepo.addItemFromReservation(waiterToken, reservationToken, request);
+    public ResultHandler<Void> addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
+        _orderRepo.addItemFromReservation(waiterToken, reservationToken, request);
 
         return ResultHandler.success(
                 "Order items add successfully",
-                HttpStatus.OK.value(),
-                isAdd
+                HttpStatus.OK.value()
         );
     }
 
     @Override
-    public ResultHandler<Boolean> assignWaiter(String reservationToken, String waiterToken) {
+    public ResultHandler<Void> assignWaiter(String reservationToken, String waiterToken) {
         if (!_userRepo.isInRole("ROLE_WAITER", waiterToken))
             return ResultHandler.failure(
                     "Not waiter",
                     HttpStatus.UNAUTHORIZED.value()
             );
 
-        boolean isActive = _reservationRepo.active(reservationToken);
-
-        if (!isActive)
-            return ResultHandler.failure(
-                    "Reservation is not active",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-        
-        boolean isAssigned = _orderRepo.assignWaiterToOrders(reservationToken, waiterToken);
-
-        if (!isAssigned)
-            return ResultHandler.failure(
-                    "Can't assign waiter",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
+        _reservationRepo.active(reservationToken);
+        _orderRepo.assignWaiterToOrders(reservationToken, waiterToken);
 
         return ResultHandler.success(
                 "Waiters assigned successfully",
-                HttpStatus.OK.value(),
-                true
+                HttpStatus.OK.value()
         );
     }
 
     @Transactional
     @Override
-    public ResultHandler<Boolean> isAbsent(String reservationToken) {
-        boolean isResevStatChange = _reservationRepo.isAbsent(reservationToken);
-
-        if (!isResevStatChange)
-            return ResultHandler.failure(
-                    "Can't change reservation status",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-
-        boolean isOrderStatChange = _orderRepo.isAbsent(reservationToken);
-
-        if (!isOrderStatChange)
-            return ResultHandler.failure(
-                    "Can't change order status",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
+    public ResultHandler<Void> isAbsent(String reservationToken) {
+        _reservationRepo.isAbsent(reservationToken);
+        _orderRepo.isAbsent(reservationToken);
 
         return ResultHandler.success(
                 "Orders absent successfully",
-                HttpStatus.OK.value(),
-                true
+                HttpStatus.OK.value()
         );
     }
 }

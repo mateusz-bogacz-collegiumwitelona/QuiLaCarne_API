@@ -10,21 +10,21 @@ public interface IUserRepository {
 
     boolean existsByUsername(String username);
 
-    boolean changePassword(String token, String newPassword);
+    void changePassword(String token, String newPassword);
 
     Optional<UserDomain> findMinimalByEmail(String email);
 
-    boolean updatePassword(String userToken, String oldPassword, String newPassword);
+    void updatePassword(String userToken, String oldPassword, String newPassword);
 
-    boolean updateEmail(String userToken, String email);
+    void updateEmail(String userToken, String email);
 
-    boolean confirmEmailChange(String userToken);
+    void confirmEmailChange(String userToken);
 
-    boolean activeUser(String userToken);
+    void activeUser(String userToken);
 
-    boolean changeUserName(String userToken, String userName);
+    void changeUserName(String userToken, String userName);
 
-    boolean delete(String userToken);
+    void delete(String userToken);
 
     boolean isInRole(String roleToken, String userToken);
 }

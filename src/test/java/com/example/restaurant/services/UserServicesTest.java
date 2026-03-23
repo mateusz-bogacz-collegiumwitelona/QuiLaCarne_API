@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import java.util.Optional;
 
@@ -42,9 +43,7 @@ public class UserServicesTest {
         request.setPassword("newPass123!");
         request.setConfirmPassword("diffNewPass123!");
 
-        ResultHandler<Boolean> result = _userServices.updatePassword(
-                TestConstants.FAKE_USER_TOKEN, request
-        );
+        var result = _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request);
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
@@ -53,25 +52,18 @@ public class UserServicesTest {
     }
 
     @Test
-    void updatePassword_ShouldReturnFailure_WhenOldPasswordIsInvalid() {
+    void updatePassword_ShouldThrowException_WhenOldPasswordIsInvalid() {
         UpdatePasswordRequest request = new UpdatePasswordRequest();
         request.setOldPassword("diffOldPass123!");
         request.setPassword("newPass123!");
         request.setConfirmPassword("newPass123!");
 
-        when(_userRepo.updatePassword(
-                TestConstants.FAKE_USER_TOKEN,
-                "diffOldPass123!",
-                "newPass123!"
-        )).thenReturn(false);
+        doThrow(new BadCredentialsException("Invalid old password"))
+                .when(_userRepo).updatePassword(TestConstants.FAKE_USER_TOKEN, "diffOldPass123!", "newPass123!");
 
-        ResultHandler<Boolean> result = _userServices.updatePassword(
-                TestConstants.FAKE_USER_TOKEN, request
+        assertThrows(BadCredentialsException.class, () ->
+                _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request)
         );
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
-        assertEquals("Invalid old Password", result.getMessage());
     }
 
     @Test
@@ -81,13 +73,8 @@ public class UserServicesTest {
         request.setPassword("newPass123!");
         request.setConfirmPassword("newPass123!");
 
-        when(_userRepo.updatePassword(
-                TestConstants.FAKE_USER_TOKEN,
-                "oldPass123!",
-                "newPass123!"
-        )).thenReturn(true);
 
-        ResultHandler<Boolean> result = _userServices.updatePassword(
+        var result = _userServices.updatePassword(
                 TestConstants.FAKE_USER_TOKEN, request
         );
 
@@ -103,8 +90,8 @@ public class UserServicesTest {
         request.setPassword("newPass123!");
         request.setConfirmPassword("newPass123!");
 
-        when(_userRepo.updatePassword(anyString(), anyString(), anyString()))
-                .thenThrow(new UserNotFoundException("User not found"));
+        doThrow(new UserNotFoundException("User not found"))
+                .when(_userRepo).updatePassword(anyString(), anyString(), anyString());
 
         assertThrows(UserNotFoundException.class, () ->
                 _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request)
@@ -138,7 +125,6 @@ public class UserServicesTest {
     void updateEmail_ShouldReturnSuccess_AndSendEmail_WhenValid() {
         String newEmail = "new@example.com";
         when(_userRepo.findMinimalByEmail(newEmail)).thenReturn(Optional.empty());
-        when(_userRepo.updateEmail(TestConstants.FAKE_USER_TOKEN, newEmail)).thenReturn(true);
         when(_tokenRepo.createToken(eq(TestConstants.FAKE_USER_TOKEN), eq(TokenTypeEnum.EMAIL_UPDATE), anyInt()))
                 .thenReturn("mock-verification-token");
 
@@ -155,7 +141,7 @@ public class UserServicesTest {
         when(_tokenRepo.validateToken(TestConstants.FAKE_USER_TOKEN, "invalid-token", TokenTypeEnum.EMAIL_UPDATE))
                 .thenReturn(false);
 
-        ResultHandler<Boolean> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "invalid-token");
+        var result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "invalid-token");
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
@@ -164,26 +150,24 @@ public class UserServicesTest {
     }
 
     @Test
-    void confirmEmailChange_ShouldReturnFailure_WhenNoPendingEmail() {
+    void confirmEmailChange_ShouldThrowException_WhenNoPendingEmail() {
         when(_tokenRepo.validateToken(TestConstants.FAKE_USER_TOKEN, "valid-token", TokenTypeEnum.EMAIL_UPDATE))
                 .thenReturn(true);
 
-        when(_userRepo.confirmEmailChange(TestConstants.FAKE_USER_TOKEN)).thenReturn(false);
+        doThrow(new IllegalStateException("No pending email to confirm"))
+                .when(_userRepo).confirmEmailChange(TestConstants.FAKE_USER_TOKEN);
 
-        ResultHandler<Boolean> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
-        assertEquals("No pending email update found", result.getMessage());
+        assertThrows(IllegalStateException.class, () ->
+                _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token")
+        );
     }
 
     @Test
     void confirmEmailChange_ShouldReturnSuccess_WhenEverythingIsValid() {
         when(_tokenRepo.validateToken(TestConstants.FAKE_USER_TOKEN, "valid-token", TokenTypeEnum.EMAIL_UPDATE))
                 .thenReturn(true);
-        when(_userRepo.confirmEmailChange(TestConstants.FAKE_USER_TOKEN)).thenReturn(true);
 
-        ResultHandler<Boolean> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
+        ResultHandler<Void> result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
@@ -195,7 +179,7 @@ public class UserServicesTest {
         String newName = "existingUser";
         when(_userRepo.existsByUsername(newName)).thenReturn(true);
 
-        ResultHandler<Boolean> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
+        ResultHandler<Void> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
@@ -206,9 +190,8 @@ public class UserServicesTest {
     void updateUserName_ShouldReturnSuccess_WhenEverythingIsValid() {
         String newName = "newName";
         when(_userRepo.existsByUsername(newName)).thenReturn(false);
-        when(_userRepo.changeUserName(TestConstants.FAKE_USER_TOKEN, newName)).thenReturn(true);
 
-        ResultHandler<Boolean> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
+        ResultHandler<Void> result = _userServices.updateUserName(newName, TestConstants.FAKE_USER_TOKEN);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
@@ -217,23 +200,11 @@ public class UserServicesTest {
 
     @Test
     void deleteAccount_ShouldReturnSuccess_WhenUserExistsAndDeleted() {
-        when(_userRepo.delete(TestConstants.FAKE_USER_TOKEN)).thenReturn(true);
-
-        ResultHandler<Boolean> result = _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
+        ResultHandler<Void> result = _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertEquals("User deleted successfully", result.getMessage());
         verify(_userRepo, times(1)).delete(TestConstants.FAKE_USER_TOKEN);
-    }
-
-    @Test
-    void deleteAccount_ShouldThrowUserNotFoundException() {
-        when(_userRepo.delete(TestConstants.FAKE_USER_TOKEN))
-                .thenThrow(new UserNotFoundException("User not found"));
-
-        assertThrows(UserNotFoundException.class, () ->
-                _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN)
-        );
     }
 }

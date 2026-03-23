@@ -2,7 +2,6 @@ package com.example.restaurant.repository;
 
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.models.VerificationToken;
-import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaVerificationTokenRepository;
@@ -19,7 +18,6 @@ import java.util.UUID;
 public class VerificationTokenRepository implements IVerificationTokenRepository {
     private final IJpaVerificationTokenRepository _jpaTokenRepo;
     private final IJpaUserRepository _jpaUserRepo;
-    private final IUserRepository _userRepo;
 
     @Override
     @Transactional

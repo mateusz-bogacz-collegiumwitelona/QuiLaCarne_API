@@ -49,7 +49,7 @@ public class OrderRepository implements IOrderRepository {
 
         OrderStatus pendingStatus = _jpaOrderStatusRepo.findByToken("PENDING")
                 .orElseThrow(() -> new RuntimeException("Order status not found"));
-        order.setStatuses(Set.of(pendingStatus));
+        order.setStatuses(new HashSet<>(Set.of(pendingStatus)));
 
         int totalPrices = 0;
         List<OrderItems> orderItems = new ArrayList<>();
@@ -149,7 +149,7 @@ public class OrderRepository implements IOrderRepository {
 
     @Override
     @Transactional
-    public boolean removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
+    public void removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
         Orders order = _jpaOrderRepo.findByReservation_Token(reservationToken)
                 .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
                 .orElseThrow(() -> new RuntimeException("Order not found or you are not the assigned waiter"));
@@ -177,13 +177,11 @@ public class OrderRepository implements IOrderRepository {
         }
 
         _jpaOrderRepo.saveAndFlush(order);
-
-        return true;
     }
 
     @Override
     @Transactional
-    public boolean addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
+    public void addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
         Orders order = _jpaOrderRepo.findByReservation_Token(reservationToken)
                 .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
                 .orElseThrow(() -> new RuntimeException("Order not found or you are not the assigned waiter"));
@@ -229,8 +227,6 @@ public class OrderRepository implements IOrderRepository {
 
         order.setTotalPrice(order.getTotalPrice() + addToPrice);
         _jpaOrderRepo.saveAndFlush(order);
-
-        return true;
     }
 
     private String normalizeNote(String note) {
@@ -240,7 +236,7 @@ public class OrderRepository implements IOrderRepository {
 
     @Transactional
     @Override
-    public boolean assignWaiterToOrders(String reservationToken, String waiterToken) {
+    public void assignWaiterToOrders(String reservationToken, String waiterToken) {
         Orders order = _jpaOrderRepo.findByReservation_Token(reservationToken)
                 .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
 
@@ -252,7 +248,7 @@ public class OrderRepository implements IOrderRepository {
         OrderItemsStatus orderItemsStatus = _jpaOrderItemStatusRepo.findByToken("IN_PROGRESS").orElseThrow(
                 () -> new RuntimeException("Order item status not found"));
 
-        order.setStatuses(Set.of(orderStatus));
+        order.setStatuses(new HashSet<>(Set.of(orderStatus)));
         order.setWaiter(waiter);
 
         List<OrderItems> items = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
@@ -262,41 +258,31 @@ public class OrderRepository implements IOrderRepository {
                     .stream()
                     .anyMatch(s -> s.getToken().equals("PENDING"));
 
-            if (isPending || item.getStatuses().isEmpty()) item.setStatuses(Set.of(orderItemsStatus));
+            if (isPending || item.getStatuses().isEmpty()) item.setStatuses(new HashSet<>(Set.of(orderItemsStatus)));
         }
 
         _jpaOrderItemRepo.saveAll(items);
         _jpaOrderRepo.saveAndFlush(order);
-
-        return true;
     }
 
     @Override
-    public boolean isAbsent(String reservationToken) {
-        Optional<Orders> orderOpt = _jpaOrderRepo.findByReservation_Token(reservationToken);
+    public void isAbsent(String reservationToken) {
+        _jpaOrderRepo.findByReservation_Token(reservationToken).ifPresent(order -> {
+            OrderStatus orderStatus = _jpaOrderStatusRepo.findByToken("CANCELLED")
+                    .orElseThrow(() -> new RuntimeException("Order status not found"));
 
-        if (orderOpt.isEmpty()) {
-            return true;
-        }
+            OrderItemsStatus orderItemsStatus = _jpaOrderItemStatusRepo.findByToken("CANCELLED")
+                    .orElseThrow(() -> new RuntimeException("Order item status not found"));
 
-        Orders order = orderOpt.get();
+            order.setStatuses(new HashSet<>(Set.of(orderStatus)));
 
-        OrderStatus orderStatus = _jpaOrderStatusRepo.findByToken("CANCELLED").orElseThrow(
-                () -> new RuntimeException("Order status not found"));
+            List<OrderItems> items = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
+            for (OrderItems item : items) {
+                item.setStatuses(new HashSet<>(Set.of(orderItemsStatus)));
+            }
 
-        OrderItemsStatus orderItemsStatus = _jpaOrderItemStatusRepo.findByToken("CANCELLED").orElseThrow(
-                () -> new RuntimeException("Order item status not found"));
-
-        order.setStatuses(Set.of(orderStatus));
-
-        List<OrderItems> items = _jpaOrderItemRepo.findAllByOrder_Token(order.getToken());
-        for (OrderItems item : items) {
-            item.setStatuses(Set.of(orderItemsStatus));
-        }
-
-        _jpaOrderItemRepo.saveAll(items);
-        _jpaOrderRepo.saveAndFlush(order);
-
-        return true;
+            _jpaOrderItemRepo.saveAll(items);
+            _jpaOrderRepo.saveAndFlush(order);
+        });
     }
 }

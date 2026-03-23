@@ -164,7 +164,7 @@ public class ReservationServicesTest {
     }
 
     @Test
-    void history_ShouldReturnFailure_WhenRepositoryThrowsException() {
+    void history_ShouldThrowException_WhenRepositoryThrowsException() {
         String userToken = TestConstants.FAKE_USER_TOKEN;
         ClientReservationRequest filter = new ClientReservationRequest();
         PaggedRequest pagged = new PaggedRequest();
@@ -214,7 +214,7 @@ public class ReservationServicesTest {
     }
 
     @Test
-    void details_ShouldReturnNotFound_WhenReservationDoesNotExist() {
+    void details_ShouldThrowException_WhenReservationDoesNotExist() {
         when(_reservationRepo.details(
                 eq(TestConstants.FAKE_RESERVATION_TOKEN),
                 eq(TestConstants.FAKE_USER_TOKEN),
@@ -233,18 +233,12 @@ public class ReservationServicesTest {
 
     @Test
     void cancel_ShouldReturnSuccess_WhenReservationCancelled() {
-        when(_reservationRepo.cancel(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN
-        )).thenReturn(true);
-
-        ResultHandler<Boolean> result = _reservationServices.cancel(
+        ResultHandler<Void> result = _reservationServices.cancel(
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 TestConstants.FAKE_USER_TOKEN);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertTrue(result.getData());
         assertEquals("Reservation cancelled successfully", result.getMessage());
 
         verify(_reservationRepo, times(1)).cancel(
@@ -255,16 +249,18 @@ public class ReservationServicesTest {
 
     @Test
     void cancel_ShouldThrowException_WhenReservationNotFound() {
-        when(_reservationRepo.cancel(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN
-        )).thenThrow(new ReservationNotFoundException("Reservation not found"));
+        doThrow(new ReservationNotFoundException("Reservation not found"))
+                .when(_reservationRepo).cancel(
+                        TestConstants.FAKE_RESERVATION_TOKEN,
+                        TestConstants.FAKE_USER_TOKEN
+                );
 
         assertThrows(ReservationNotFoundException.class, () ->
                 _reservationServices.cancel(
                         TestConstants.FAKE_RESERVATION_TOKEN,
                         TestConstants.FAKE_USER_TOKEN
-                ));
+                )
+        );
 
         verify(_reservationRepo, times(1)).cancel(
                 TestConstants.FAKE_RESERVATION_TOKEN,
@@ -320,12 +316,6 @@ public class ReservationServicesTest {
         request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
         request.setQuantity(1);
 
-        when(_orderRepo.removeItemFromReservation(
-                TestConstants.FAKE_USER_TOKEN,
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                request
-        )).thenReturn(true);
-
         var result = _reservationServices.removeItemFromReservation(
                 TestConstants.FAKE_USER_TOKEN,
                 TestConstants.FAKE_RESERVATION_TOKEN,
@@ -334,7 +324,6 @@ public class ReservationServicesTest {
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertTrue(result.getData());
         assertEquals("Order item removed successfully", result.getMessage());
 
         verify(_orderRepo, times(1)).removeItemFromReservation(
@@ -351,12 +340,6 @@ public class ReservationServicesTest {
         request1.setQuantity(1);
         List<ReservationDishRequest> request = List.of(request1);
 
-        when(_orderRepo.addItemFromReservation(
-                TestConstants.FAKE_USER_TOKEN,
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                request
-        )).thenReturn(true);
-
         var result = _reservationServices.addItemFromReservation(
                 TestConstants.FAKE_USER_TOKEN,
                 TestConstants.FAKE_RESERVATION_TOKEN,
@@ -365,7 +348,6 @@ public class ReservationServicesTest {
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertTrue(result.getData());
         assertEquals("Order items add successfully", result.getMessage());
 
         verify(_orderRepo, times(1)).addItemFromReservation(
@@ -379,12 +361,6 @@ public class ReservationServicesTest {
     void assignWaiter_ShouldReturnSuccess_WhenUserHasProperRole() {
         when(_userRepo.isInRole(anyString(), eq(TestConstants.FAKE_USER_TOKEN))).thenReturn(true);
 
-        when(_reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
-
-        when(_orderRepo.assignWaiterToOrders(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN)
-        ).thenReturn(true);
 
         var result = _reservationServices.assignWaiter(
                 TestConstants.FAKE_RESERVATION_TOKEN,
@@ -417,52 +393,42 @@ public class ReservationServicesTest {
     }
 
     @Test
-    void assignWaiter_ShouldReturnFailure_WhenReservationIsNotAcive() {
+    void assignWaiter_ShouldThrowException_WhenReservationIsNotAcive() {
         when(_userRepo.isInRole(anyString(), eq(TestConstants.FAKE_USER_TOKEN))).thenReturn(true);
-        when(_reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(false);
+        doThrow(new ReservationNotFoundException("Reservation not found"))
+                .when(_reservationRepo).active(TestConstants.FAKE_RESERVATION_TOKEN);
 
-        var result = _reservationServices.assignWaiter(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN
+        assertThrows(ReservationNotFoundException.class, () ->
+                _reservationServices.assignWaiter(TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_USER_TOKEN)
         );
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
-        assertEquals("Reservation is not active", result.getMessage());
 
         verify(_orderRepo, never()).assignWaiterToOrders(anyString(), anyString());
     }
 
     @Test
-    void assignWaiter_ShouldReturnFailure_WhenOrderAssignmentFails() {
+    void assignWaiter_ShouldThrowException_WhenOrderAssignmentFails() {
         when(_userRepo.isInRole(anyString(), eq(TestConstants.FAKE_USER_TOKEN))).thenReturn(true);
-        when(_reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
 
-        when(_orderRepo.assignWaiterToOrders(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN)
-        ).thenReturn(false);
+        doThrow(new RuntimeException("Order not found or you are not the assigned waiter"))
+                .when(_orderRepo).assignWaiterToOrders(
+                        TestConstants.FAKE_RESERVATION_TOKEN,
+                        TestConstants.FAKE_USER_TOKEN
+                );
 
-        var result = _reservationServices.assignWaiter(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN
+        assertThrows(RuntimeException.class, () ->
+                _reservationServices.assignWaiter(
+                        TestConstants.FAKE_RESERVATION_TOKEN,
+                        TestConstants.FAKE_USER_TOKEN
+                )
         );
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
-        assertEquals("Can't assign waiter", result.getMessage());
     }
 
     @Test
     void isAbsent_ShouldReturnSuccess_WhenBothReposSucceed() {
-        when(_reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
-        when(_orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
-
-        ResultHandler<Boolean> result = _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+        ResultHandler<Void> result = _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
 
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertTrue(result.getData());
         assertEquals("Orders absent successfully", result.getMessage());
 
         verify(_reservationRepo, times(1)).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
@@ -471,27 +437,24 @@ public class ReservationServicesTest {
 
     @Test
     void isAbsent_ShouldReturnFailure_WhenReservationRepoFails() {
-        when(_reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(false);
+        doThrow(new IllegalStateException("Guard clause exception"))
+                .when(_reservationRepo).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
 
-        ResultHandler<Boolean> result = _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
-        assertEquals("Can't change reservation status", result.getMessage());
+        assertThrows(IllegalStateException.class, () ->
+                _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)
+        );
 
         verify(_orderRepo, never()).isAbsent(anyString());
     }
 
     @Test
     void isAbsent_ShouldReturnFailure_WhenOrderRepoFails() {
-        when(_reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(true);
-        when(_orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(false);
+        doThrow(new RuntimeException("Order status not found"))
+                .when(_orderRepo).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
 
-        ResultHandler<Boolean> result = _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
-        assertEquals("Can't change order status", result.getMessage());
+        assertThrows(RuntimeException.class, () ->
+                _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)
+        );
 
         verify(_reservationRepo, times(1)).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
         verify(_orderRepo, times(1)).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);

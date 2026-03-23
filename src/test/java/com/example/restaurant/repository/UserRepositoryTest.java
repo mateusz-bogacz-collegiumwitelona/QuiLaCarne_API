@@ -101,13 +101,7 @@ public class UserRepositoryTest {
                 .encode(TestConstants.FAKE_PASSWORD)
         ).thenReturn(TestConstants.FAKE_HASH);
 
-        boolean result = _userRepository
-                .changePassword(
-                        TestConstants.FAKE_USER_TOKEN,
-                        TestConstants.FAKE_PASSWORD
-                );
-
-        assertTrue(result);
+        _userRepository.changePassword(TestConstants.FAKE_USER_TOKEN, TestConstants.FAKE_PASSWORD);
 
         assertEquals(
                 TestConstants.FAKE_HASH,
@@ -132,7 +126,7 @@ public class UserRepositoryTest {
     }
 
     @Test
-    void updatePassword_ShouldReturnFalse_WhenOldPasswordIsIncorrect() {
+    void updatePassword_ShouldThrowException_WhenOldPasswordIsIncorrect() {
         Users mockUser = new Users();
         mockUser.setPassword(TestConstants.FAKE_HASH);
 
@@ -142,18 +136,15 @@ public class UserRepositoryTest {
         when(_passwordEncoder.matches("wrongOldPass", TestConstants.FAKE_HASH))
                 .thenReturn(false);
 
-        boolean result = _userRepository.updatePassword(
-                TestConstants.FAKE_USER_TOKEN,
-                "wrongOldPass",
-                "newPass"
+        assertThrows(org.springframework.security.authentication.BadCredentialsException.class, () ->
+                _userRepository.updatePassword(TestConstants.FAKE_USER_TOKEN, "wrongOldPass", "newPass")
         );
 
-        assertFalse(result);
         verify(_jpaUserRepository, never()).saveAndFlush(mockUser);
     }
 
     @Test
-    void updatePassword_ShouldReturnTrueAndSave_WhenOldPasswordIsCorrect() {
+    void updatePassword_ShouldSave_WhenOldPasswordIsCorrect() {
         Users mockUser = new Users();
         mockUser.setPassword("hashedOldPass");
 
@@ -162,30 +153,28 @@ public class UserRepositoryTest {
         when(_passwordEncoder.matches("correctOldPass", "hashedOldPass")).thenReturn(true);
         when(_passwordEncoder.encode("newPass")).thenReturn("hashedNewPass");
 
-        boolean result = _userRepository.updatePassword(TestConstants.FAKE_USER_TOKEN, "correctOldPass", "newPass");
+        _userRepository.updatePassword(TestConstants.FAKE_USER_TOKEN, "correctOldPass", "newPass");
 
-        assertTrue(result);
         assertEquals("hashedNewPass", mockUser.getPassword());
         verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
     }
 
     @Test
-    void activeUser_ShouldReturnTrueAndSetActive_WhenUserExists() {
+    void activeUser_ShouldSetActive_WhenUserExists() {
         Users mockUser = new Users();
         mockUser.setIsActive(false);
 
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
                 .thenReturn(Optional.of(mockUser));
 
-        boolean result = _userRepository.activeUser(TestConstants.FAKE_USER_TOKEN);
+        _userRepository.activeUser(TestConstants.FAKE_USER_TOKEN);
 
-        assertTrue(result);
         assertTrue(mockUser.getIsActive());
         verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
     }
 
     @Test
-    void activeUser_ShouldReturnFalse_WhenUserNotFound() {
+    void activeUser_ShouldThrowException_WhenUserNotFound() {
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
                 .thenThrow(new UserNotFoundException("User not found"));
 
@@ -202,9 +191,8 @@ public class UserRepositoryTest {
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
                 .thenReturn(Optional.of(mockUser));
 
-        boolean result = _userRepository.updateEmail(TestConstants.FAKE_USER_TOKEN, "new@example.com");
+        _userRepository.updateEmail(TestConstants.FAKE_USER_TOKEN, "new@example.com");
 
-        assertTrue(result);
         assertEquals("new@example.com", mockUser.getPendingEmail());
         assertEquals("old@example.com", mockUser.getEmail());
         verify(_jpaUserRepository, times(1)).saveAndFlush(mockUser);
@@ -229,9 +217,8 @@ public class UserRepositoryTest {
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
                 .thenReturn(Optional.of(mockUser));
 
-        boolean result = _userRepository.confirmEmailChange(TestConstants.FAKE_USER_TOKEN);
+        _userRepository.confirmEmailChange(TestConstants.FAKE_USER_TOKEN);
 
-        assertTrue(result);
         assertEquals("new@example.com", mockUser.getEmail());
         assertEquals("NEW@EXAMPLE.COM", mockUser.getNormalizedEmail());
         assertNull(mockUser.getPendingEmail());
@@ -239,21 +226,22 @@ public class UserRepositoryTest {
     }
 
     @Test
-    void confirmEmailChange_ShouldReturnFalse_WhenPendingEmailIsNull() {
+    void confirmEmailChange_ShouldThrowException_WhenPendingEmailIsNull() {
         Users mockUser = new Users();
         mockUser.setPendingEmail(null);
 
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
                 .thenReturn(Optional.of(mockUser));
 
-        boolean result = _userRepository.confirmEmailChange(TestConstants.FAKE_USER_TOKEN);
+        assertThrows(IllegalStateException.class, () ->
+                _userRepository.confirmEmailChange(TestConstants.FAKE_USER_TOKEN)
+        );
 
-        assertFalse(result);
         verify(_jpaUserRepository, never()).saveAndFlush(any());
     }
 
     @Test
-    void changeUserName_ShouldReturnTrue_AndSave_WhenUserExists() {
+    void changeUserName_ShouldSave_WhenUserExists() {
         Users mockUser = new Users();
         mockUser.setUsername(TestConstants.FAKE_USERNAME);
         mockUser.setNormalizedUsername(TestConstants.FAKE_USERNAME.toLowerCase().trim());
@@ -263,9 +251,8 @@ public class UserRepositoryTest {
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN))
                 .thenReturn(Optional.of(mockUser));
 
-        boolean resutl = _userRepository.changeUserName(TestConstants.FAKE_USER_TOKEN, "user12");
+        _userRepository.changeUserName(TestConstants.FAKE_USER_TOKEN, "user12");
 
-        assertTrue(resutl);
         assertEquals("user12", mockUser.getUsername());
         assertEquals("USER12", mockUser.getNormalizedUsername());
 
@@ -280,20 +267,6 @@ public class UserRepositoryTest {
         assertThrows(UserNotFoundException.class, () ->
                 _userRepository.changeUserName(TestConstants.FAKE_USER_TOKEN, "user12")
         );
-    }
-
-    @Test
-    void deleteUser_ShouldReturnTrue_WhenUserExists() {
-        Users mockUser = new Users();
-        mockUser.setUsername(TestConstants.FAKE_USERNAME);
-        mockUser.setNormalizedUsername(TestConstants.FAKE_USERNAME.toLowerCase().trim());
-        mockUser.setToken(TestConstants.FAKE_USER_TOKEN);
-
-        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(Optional.of(mockUser));
-
-        boolean resutl = _userRepository.delete(TestConstants.FAKE_USER_TOKEN);
-
-        assertTrue(resutl);
     }
 
     @Test

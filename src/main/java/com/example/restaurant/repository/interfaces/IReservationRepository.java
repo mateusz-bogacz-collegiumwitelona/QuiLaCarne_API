@@ -15,11 +15,11 @@ public interface IReservationRepository {
 
     ReservationDetailsResponse details(String reservationToken, String userToken, String lang);
 
-    boolean cancel(String reservationToken, String userToken);
+    void cancel(String reservationToken, String userToken);
 
     PagedResult<TodayReservationsResponse> today(String lang, PaggedRequest pagged);
 
-    boolean isAbsent(String reservationToken);
+    void active(String reservationToken);
 
-    boolean active(String reservationToken);
+    void isAbsent(String reservationToken);
 }

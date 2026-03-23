@@ -187,7 +187,7 @@ public class ReservationRepositoryTest {
     }
 
     @Test
-    void cancel_ShouldReturnTrue_WhenReservationIsSuccessfullyCancelled() {
+    void cancel_WhenReservationIsSuccessfullyCancelled() {
         Reservations mockEntity = new Reservations();
         ReservationStatus mockStatus = new ReservationStatus();
         mockStatus.setToken("CANCELLED");
@@ -200,12 +200,8 @@ public class ReservationRepositoryTest {
         when(_jpaReservationStatusRepo.findByToken("CANCELLED"))
                 .thenReturn(Optional.of(mockStatus));
 
-        boolean result = _reservationRepo.cancel(
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                TestConstants.FAKE_USER_TOKEN
-        );
+        _reservationRepo.cancel(TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_USER_TOKEN);
 
-        assertTrue(result);
         assertTrue(mockEntity.getReservationStatus().contains(mockStatus));
         verify(_jpaReservationsRepo, times(1)).saveAndFlush(mockEntity);
     }
@@ -284,9 +280,8 @@ public class ReservationRepositoryTest {
         when(_jpaReservationStatusRepo.findByToken("IN_PROGRESS"))
                 .thenReturn(Optional.of(inProgressStatus));
 
-        boolean result = _reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN);
+        _reservationRepo.active(TestConstants.FAKE_RESERVATION_TOKEN);
 
-        assertTrue(result);
         assertTrue(mockReservation.getReservationStatus().contains(inProgressStatus));
         verify(_jpaReservationsRepo, times(1)).saveAndFlush(mockReservation);
     }
@@ -316,9 +311,8 @@ public class ReservationRepositoryTest {
         when(_jpaReservationStatusRepo.findByToken("NO_SHOW"))
                 .thenReturn(Optional.of(noShowStatus));
 
-        boolean result = _reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+        _reservationRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
 
-        assertTrue(result);
         assertTrue(mockReservation.getReservationStatus().contains(noShowStatus));
         verify(_jpaReservationsRepo, times(1)).saveAndFlush(mockReservation);
     }

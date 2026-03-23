@@ -20,15 +20,15 @@ public interface IReservationServices {
 
     ResultHandler<ReservationDetailsResponse> details(String reservationToken, String userToken);
 
-    ResultHandler<Boolean> cancel(String reservationToken, String userToken);
+    ResultHandler<Void> cancel(String reservationToken, String userToken);
 
     ResultHandler<PagedResult<TodayReservationsResponse>> today(PaggedRequest request);
 
-    ResultHandler<Boolean> removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
+    ResultHandler<Void> removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
 
-    ResultHandler<Boolean> addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request);
+    ResultHandler<Void> addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request);
 
-    ResultHandler<Boolean> assignWaiter(String reservationToken, String waiterToken);
+    ResultHandler<Void> assignWaiter(String reservationToken, String waiterToken);
 
-    ResultHandler<Boolean> isAbsent(String reservationToken);
+    ResultHandler<Void> isAbsent(String reservationToken);
 }

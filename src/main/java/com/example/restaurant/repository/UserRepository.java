@@ -11,6 +11,7 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaRoleRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
@@ -64,94 +65,99 @@ public class UserRepository implements IUserRepository {
                 );
     }
 
+
     @Override
     @Transactional
-    public boolean changePassword(String token, String newPassword) {
-        return _jpaUserRepository.findByToken(token).map(u -> {
-            u.setPassword(_passwordEncoder.encode(newPassword));
-            _jpaUserRepository.saveAndFlush(u);
-            return true;
-        }).orElseThrow(() -> new UserNotFoundException("User not found"));
+    public void changePassword(String token, String newPassword) {
+        Users user = _jpaUserRepository.findByToken(token).orElseThrow(
+                () -> new UserNotFoundException("User not found")
+        );
+
+        user.setPassword(_passwordEncoder.encode(newPassword));
+        _jpaUserRepository.saveAndFlush(user);
     }
 
     @Override
     @Transactional
-    public boolean updatePassword(String userToken, String oldPassword, String newPassword) {
-        return _jpaUserRepository.findByToken(userToken).map(u -> {
-            if (!_passwordEncoder.matches(oldPassword, u.getPassword()))
-                return false;
+    public void updatePassword(String userToken, String oldPassword, String newPassword) {
+        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(
+                () -> new UserNotFoundException("User not found")
+        );
 
-            u.setPassword(_passwordEncoder.encode(newPassword));
-            _jpaUserRepository.saveAndFlush(u);
+        if (!_passwordEncoder.matches(oldPassword, user.getPassword()))
+            throw new BadCredentialsException("Invalid old password");
 
-            return true;
-        }).orElseThrow(() -> new UserNotFoundException("User not found"));
+        user.setPassword(_passwordEncoder.encode(newPassword));
+        _jpaUserRepository.saveAndFlush(user);
+    }
+
+
+    @Override
+    @Transactional
+    public void updateEmail(String userToken, String email) {
+        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(
+                () -> new UserNotFoundException("User not found")
+        );
+        user.setPendingEmail(email);
+        _jpaUserRepository.saveAndFlush(user);
     }
 
     @Override
     @Transactional
-    public boolean updateEmail(String userToken, String email) {
-        return _jpaUserRepository.findByToken(userToken).map(u -> {
-            u.setPendingEmail(email);
-            _jpaUserRepository.saveAndFlush(u);
-            return true;
-        }).orElseThrow(() -> new UserNotFoundException("User not found"));
+    public void confirmEmailChange(String userToken) {
+        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(
+                () -> new UserNotFoundException("User not found")
+        );
+
+        if (user.getPendingEmail() == null)
+            throw new IllegalStateException("No pending email to confirm");
+
+        user.setEmail(user.getPendingEmail());
+        user.setNormalizedEmail(user.getPendingEmail().toUpperCase());
+        user.setPendingEmail(null);
+
+        _jpaUserRepository.saveAndFlush(user);
     }
 
     @Override
     @Transactional
-    public boolean confirmEmailChange(String userToken) {
-        return _jpaUserRepository.findByToken(userToken).map(u -> {
-            if (u.getPendingEmail() == null)
-                return false;
+    public void activeUser(String userToken) {
+        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(
+                () -> new UserNotFoundException("User not found")
+        );
 
-            u.setEmail(u.getPendingEmail());
-            u.setNormalizedEmail(u.getPendingEmail().toUpperCase());
-            u.setPendingEmail(null);
-
-            _jpaUserRepository.saveAndFlush(u);
-            return true;
-        }).orElseThrow(() -> new UserNotFoundException("User not found"));
+        user.setIsActive(true);
+        _jpaUserRepository.saveAndFlush(user);
     }
 
     @Override
     @Transactional
-    public boolean activeUser(String userToken) {
-        return _jpaUserRepository.findByToken(userToken).map(u -> {
-            u.setIsActive(true);
-            _jpaUserRepository.saveAndFlush(u);
-            return true;
-        }).orElseThrow(() -> new UserNotFoundException("User not found"));
+    public void changeUserName(String userToken, String userName) {
+        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(
+                () -> new UserNotFoundException("User not found")
+        );
+        user.setUsername(userName);
+        user.setNormalizedUsername(userName.toUpperCase());
+        _jpaUserRepository.saveAndFlush(user);
     }
 
     @Override
     @Transactional
-    public boolean changeUserName(String userToken, String userName) {
-        return _jpaUserRepository.findByToken(userToken).map(u -> {
-            u.setUsername(userName);
-            u.setNormalizedUsername(userName.toUpperCase());
-            _jpaUserRepository.saveAndFlush(u);
-            return true;
-        }).orElseThrow(() -> new UserNotFoundException("User not found"));
-    }
+    public void delete(String userToken) {
+        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(
+                () -> new UserNotFoundException("User not found")
+        );
 
-    @Override
-    @Transactional
-    public boolean delete(String userToken) {
-        return _jpaUserRepository.findByToken(userToken).map(u -> {
-            String timestamp = String.valueOf(System.currentTimeMillis());
+        String timestamp = String.valueOf(System.currentTimeMillis());
 
-            u.setNormalizedEmail("DELETED_" + timestamp + "_" + u.getNormalizedEmail());
-            u.setNormalizedUsername("DELETED_" + timestamp + "_" + u.getNormalizedUsername());
+        user.setNormalizedEmail("DELETED_" + timestamp + "_" + user.getNormalizedEmail());
+        user.setNormalizedUsername("DELETED_" + timestamp + "_" + user.getNormalizedUsername());
 
-            u.setEmail("deleted_" + timestamp + "_" + u.getEmail());
-            u.setUsername("deleted_" + timestamp + "_" + u.getUsername());
+        user.setEmail("deleted_" + timestamp + "_" + user.getEmail());
+        user.setUsername("deleted_" + timestamp + "_" + user.getUsername());
 
-            _jpaUserRepository.saveAndFlush(u);
-            _jpaUserRepository.delete(u);
-
-            return true;
-        }).orElseThrow(() -> new UserNotFoundException("User not found"));
+        _jpaUserRepository.saveAndFlush(user);
+        _jpaUserRepository.delete(user);
     }
 
     @Override

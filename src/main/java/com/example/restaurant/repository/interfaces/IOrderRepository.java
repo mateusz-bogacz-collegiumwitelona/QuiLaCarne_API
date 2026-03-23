@@ -14,11 +14,11 @@ public interface IOrderRepository {
 
     TodayOrderSummaryDomain todayOrderDetails(String reservationToken, String lang);
 
-    boolean removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request);
+    void removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request);
 
-    boolean addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request);
+    void addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request);
 
-    boolean assignWaiterToOrders(String reservationToken, String waiterToken);
+    void assignWaiterToOrders(String reservationToken, String waiterToken);
 
-    boolean isAbsent(String reservationToken);
+    void isAbsent(String reservationToken);
 }

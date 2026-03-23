@@ -248,12 +248,12 @@ public class OrderRepositoryTest {
         when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
                 .thenReturn(List.of(mockItem));
 
-        boolean result = _orderRepo.removeItemFromReservation(
+        _orderRepo.removeItemFromReservation(
                 TestConstants.FAKE_USER_TOKEN,
                 TestConstants.FAKE_RESERVATION_TOKEN,
-                request);
+                request
+        );
 
-        assertTrue(result);
         assertEquals(2, mockItem.getQuantity());
         assertEquals(100, mockOrder.getTotalPrice());
 
@@ -291,12 +291,12 @@ public class OrderRepositoryTest {
         when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
                 .thenReturn(List.of(mockItem));
 
-        boolean result = _orderRepo.removeItemFromReservation(
+        _orderRepo.removeItemFromReservation(
                 TestConstants.FAKE_USER_TOKEN,
                 TestConstants.FAKE_RESERVATION_TOKEN,
-                request);
+                request
+        );
 
-        assertTrue(result);
         assertEquals(0, mockOrder.getTotalPrice());
 
         verify(_jpaOrderItemRepo, times(1)).delete(mockItem);
@@ -346,13 +346,12 @@ public class OrderRepositoryTest {
                 .thenReturn(List.of(existingItem));
         when(_jpaDishRepo.findAllByTokenIn(anyList())).thenReturn(List.of(existingDish, newDish));
 
-        boolean result = _orderRepo.addItemFromReservation(
+        _orderRepo.addItemFromReservation(
                 TestConstants.FAKE_USER_TOKEN,
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 requests
         );
 
-        assertTrue(result);
         assertEquals(3, existingItem.getQuantity());
         assertEquals(210, mockOrder.getTotalPrice());
         verify(_jpaOrderRepo, times(1)).saveAndFlush(mockOrder);
@@ -421,12 +420,11 @@ public class OrderRepositoryTest {
         when(_jpaOrderItemRepo.findAllByOrder_Token(TestConstants.FAKE_ORDER_TOKEN))
                 .thenReturn(List.of(pendingDish, emptyStatusDish, cancelledDish));
 
-        boolean result = _orderRepo.assignWaiterToOrders(
+        _orderRepo.assignWaiterToOrders(
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 TestConstants.FAKE_USER_TOKEN
         );
 
-        assertTrue(result);
         assertEquals(mockWaiter, mockOrder.getWaiter());
         assertTrue(mockOrder.getStatuses().contains(inProgressOrder));
 
@@ -441,13 +439,12 @@ public class OrderRepositoryTest {
     }
 
     @Test
-    void isAbsent_ShouldReturnTrue_WhenOrderDoesNotExist() {
+    void isAbsent_ShouldDoNothing_WhenOrderDoesNotExist() {
         when(_jpaOrderRepo.findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.empty());
 
-        boolean result = _orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+        _orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
 
-        assertTrue(result);
         verify(_jpaOrderStatusRepo, never()).findByToken(anyString());
         verify(_jpaOrderRepo, never()).saveAndFlush(any());
     }
@@ -476,9 +473,8 @@ public class OrderRepositoryTest {
         when(_jpaOrderItemRepo.findAllByOrder_Token(mockOrder.getToken()))
                 .thenReturn(orderItems);
 
-        boolean result = _orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+        _orderRepo.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
 
-        assertTrue(result);
         assertTrue(mockOrder.getStatuses().contains(cancelledStatus));
         assertTrue(mockItem1.getStatuses().contains(cancelledItemStatus));
         assertTrue(mockItem2.getStatuses().contains(cancelledItemStatus));

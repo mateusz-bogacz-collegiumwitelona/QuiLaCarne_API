@@ -118,18 +118,12 @@ public class AuthServices implements IAuthServices {
                     HttpStatus.BAD_REQUEST.value()
             );
 
-        boolean isActivated = _userRepository.activeUser(userTokenOpt.get());
-
-        if (!isActivated)
-            return ResultHandler.failure(
-                    "User not found",
-                    HttpStatus.NOT_FOUND.value()
-            );
+        _userRepository.activeUser(userTokenOpt.get());
 
         return ResultHandler.success(
                 "User activated successfully",
                 HttpStatus.OK.value(),
-                isActivated
+                true
         );
     }
 
@@ -177,21 +171,15 @@ public class AuthServices implements IAuthServices {
                     HttpStatus.BAD_REQUEST.value()
             );
 
-        boolean isSuccess = _userRepository.changePassword(
+        _userRepository.changePassword(
                 userTokenOpt.get(),
                 request.getConfirmPassword()
         );
 
-        if (!isSuccess)
-            return ResultHandler.failure(
-                    "Failed to update password",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-
         return ResultHandler.success(
                 "Reset password successfully",
                 HttpStatus.OK.value(),
-                isSuccess
+                true
         );
     }
 

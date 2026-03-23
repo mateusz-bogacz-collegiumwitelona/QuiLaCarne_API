@@ -83,7 +83,7 @@ public class AuthServicesTest {
     }
 
     @Test
-    void authenticate_ShouldReturnFailure_WhenCredentialsAreInvalid() {
+    void authenticate_ShouldThrowException_WhenCredentialsAreInvalid() {
         when(_authManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
@@ -179,9 +179,6 @@ public class AuthServicesTest {
         when(_verificationTokenRepository.validateToken("valid-token", TokenTypeEnum.ACTIVATION))
                 .thenReturn(Optional.of("valid-user-token"));
 
-        when(_userRepository.activeUser("valid-user-token"))
-                .thenReturn(true);
-
         ResultHandler<Boolean> result = _authServices.registerConfirm("valid-token");
 
         assertTrue(result.isSuccess());
@@ -212,9 +209,6 @@ public class AuthServicesTest {
 
         when(_verificationTokenRepository.validateToken("valid-token", TokenTypeEnum.PASSWORD_RESET))
                 .thenReturn(Optional.of("valid-user-token"));
-
-        when(_userRepository.changePassword("valid-user-token", "newPass123!"))
-                .thenReturn(true);
 
         ResultHandler<Boolean> result = _authServices.setNewPassword(request);
 

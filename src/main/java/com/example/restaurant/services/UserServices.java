@@ -21,29 +21,23 @@ public class UserServices implements IUserServices {
 
     @Override
     @Auditable(action = "UPDATE_PASSWORD")
-    public ResultHandler<Boolean> updatePassword(String userToken, UpdatePasswordRequest request) {
+    public ResultHandler<Void> updatePassword(String userToken, UpdatePasswordRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword()))
             return ResultHandler.failure(
                     "Passwords do not match",
                     HttpStatus.BAD_REQUEST.value()
             );
 
-        boolean isChanged = _userRepo.updatePassword(
+        _userRepo.updatePassword(
                 userToken,
                 request.getOldPassword(),
                 request.getPassword()
         );
 
-        if (!isChanged)
-            return ResultHandler.failure(
-                    "Invalid old Password",
-                    HttpStatus.BAD_REQUEST.value()
-            );
 
         return ResultHandler.success(
                 "Password updated",
-                HttpStatus.OK.value(),
-                isChanged
+                HttpStatus.OK.value()
         );
     }
 
@@ -77,7 +71,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "CONFIRM_EMAIL_CHANGE")
-    public ResultHandler<Boolean> confirmEmailChange(String userToken, String token) {
+    public ResultHandler<Void> confirmEmailChange(String userToken, String token) {
         boolean isValidToken = _tokenRepo.validateToken(userToken, token, TokenTypeEnum.EMAIL_UPDATE);
 
         if (!isValidToken)
@@ -86,62 +80,41 @@ public class UserServices implements IUserServices {
                     HttpStatus.BAD_REQUEST.value()
             );
 
-        boolean isConfirmed = _userRepo.confirmEmailChange(userToken);
-
-        if (!isConfirmed)
-            return ResultHandler.failure(
-                    "No pending email update found",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+        _userRepo.confirmEmailChange(userToken);
 
         return ResultHandler.success(
                 "Email updated successfully",
-                HttpStatus.OK.value(),
-                isConfirmed
+                HttpStatus.OK.value()
         );
     }
 
     @Override
     @Transactional
     @Auditable(action = "UPDATE_USERNAME")
-    public ResultHandler<Boolean> updateUserName(String userName, String userToken) {
+    public ResultHandler<Void> updateUserName(String userName, String userToken) {
         if (_userRepo.existsByUsername(userName))
             return ResultHandler.failure(
                     "Username is already taken",
                     HttpStatus.BAD_REQUEST.value()
             );
 
-        boolean isChanged = _userRepo.changeUserName(userToken, userName);
-
-        if (!isChanged)
-            return ResultHandler.failure(
-                    "Can't change user name",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+        _userRepo.changeUserName(userToken, userName);
 
         return ResultHandler.success(
                 "User name changed successfully",
-                HttpStatus.OK.value(),
-                isChanged
+                HttpStatus.OK.value()
         );
     }
 
     @Override
     @Transactional
     @Auditable(action = "DELETE_ACCOUNT")
-    public ResultHandler<Boolean> deleteAccount(String userToken) {
-        boolean isDeleted = _userRepo.delete(userToken);
-
-        if (!isDeleted)
-            return ResultHandler.failure(
-                    "Can't delte user",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+    public ResultHandler<Void> deleteAccount(String userToken) {
+        _userRepo.delete(userToken);
 
         return ResultHandler.success(
                 "User deleted successfully",
-                HttpStatus.OK.value(),
-                isDeleted
+                HttpStatus.OK.value()
         );
     }
 }

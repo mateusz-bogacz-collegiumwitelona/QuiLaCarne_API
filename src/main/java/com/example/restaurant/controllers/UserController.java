@@ -35,7 +35,7 @@ public class UserController {
     })
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/password")
-    public ResponseEntity<ResultHandler<Boolean>> updatePassword(
+    public ResponseEntity<ResultHandler<Void>> updatePassword(
             @RequestBody @Valid UpdatePasswordRequest request,
             @AuthenticationPrincipal(expression = "token") String userToken) {
         var result = _userServices.updatePassword(userToken, request);
@@ -85,7 +85,7 @@ public class UserController {
     })
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/email/confirm")
-    public ResponseEntity<ResultHandler<Boolean>> confirmEmail(
+    public ResponseEntity<ResultHandler<Void>> confirmEmail(
             @RequestParam(name = "verificationToken")
             @NotBlank
             @Parameter(description = "New email confirm token")
@@ -107,7 +107,7 @@ public class UserController {
     })
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/username")
-    public ResponseEntity<ResultHandler<Boolean>> updateUserName(
+    public ResponseEntity<ResultHandler<Void>> updateUserName(
             @RequestParam
             @NotBlank
             @Parameter(description = "New user name")
@@ -128,7 +128,7 @@ public class UserController {
     })
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @DeleteMapping("/delete")
-    public ResponseEntity<ResultHandler<Boolean>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
+    public ResponseEntity<ResultHandler<Void>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
         var result = _userServices.deleteAccount(userToken);
 
         return ResponseEntity

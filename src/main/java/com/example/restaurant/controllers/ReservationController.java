@@ -125,7 +125,7 @@ public class ReservationController {
     )
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/{token}/cancel")
-    public ResponseEntity<ResultHandler<Boolean>> cancel(
+    public ResponseEntity<ResultHandler<Void>> cancel(
             @Parameter(description = "Reservation token")
             @PathVariable String token,
             @AuthenticationPrincipal(expression = "token") String userToken
@@ -169,7 +169,7 @@ public class ReservationController {
     })
     @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @DeleteMapping("/item/remove")
-    public ResponseEntity<ResultHandler<Boolean>> removeItem(
+    public ResponseEntity<ResultHandler<Void>> removeItem(
             @AuthenticationPrincipal(expression = "token") String waiterToken,
             @RequestParam String reservationToken,
             @Valid @RequestBody ReservationDishRequest request
@@ -201,7 +201,7 @@ public class ReservationController {
     })
     @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @PostMapping("/item/add")
-    public ResponseEntity<ResultHandler<Boolean>> addItem(
+    public ResponseEntity<ResultHandler<Void>> addItem(
             @AuthenticationPrincipal(expression = "token") String waiterToken,
             @RequestParam String reservationToken,
             @Valid @RequestBody List<ReservationDishRequest> request
@@ -224,7 +224,7 @@ public class ReservationController {
     })
     @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @PatchMapping("/{token}/assign-waiter")
-    public ResponseEntity<ResultHandler<Boolean>> assignWaiter(
+    public ResponseEntity<ResultHandler<Void>> assignWaiter(
             @Parameter(description = "Reservation token") @PathVariable String token,
             @AuthenticationPrincipal(expression = "token") String waiterToken
     ) {
@@ -248,7 +248,7 @@ public class ReservationController {
     })
     @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @PatchMapping("/{token}/absent")
-    public ResponseEntity<ResultHandler<Boolean>> absent(@Parameter(description = "Reservation token") @PathVariable String token) {
+    public ResponseEntity<ResultHandler<Void>> absent(@Parameter(description = "Reservation token") @PathVariable String token) {
         var result = _reservationServices.isAbsent(token);
         return ResponseEntity
                 .status(result.getStatusCode())
