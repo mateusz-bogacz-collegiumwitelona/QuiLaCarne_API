@@ -1,20 +1,27 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.exceptions.TableNotFoundException;
+import com.example.restaurant.exceptions.TableStatusNotFoundException;
 import com.example.restaurant.models.RestaurantTables;
+import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
+import com.example.restaurant.repository.interfaces.jpa.IJpaTableStatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
 public class TableRespository implements ITableRespository {
     private final IJpaTableRepository _jpaTableRepo;
+    private final IJpaTableStatusRepository _jpaTableStatusRepo;
 
     @Override
     public List<TableListResponse> findAllTables(String lang, OffsetDateTime startTime, OffsetDateTime endTime) {
@@ -65,13 +72,17 @@ public class TableRespository implements ITableRespository {
     }
 
     @Override
-    public boolean isTableAvalaible(String token) {
+    public void changeStatus(String token, String statusToken) {
         RestaurantTables table = _jpaTableRepo.findByToken(token);
 
-        if (table == null || table.getTableStatus() == null || table.getTableStatus().isEmpty())
-            return false;
+        if (table == null)
+            throw new TableNotFoundException("Table not found");
 
-        return table.getTableStatus().stream()
-                .anyMatch(status -> "AVAILABLE".equals(status.getToken()));
+        TableStatus cleanStatus = _jpaTableStatusRepo.findByToken(statusToken)
+                .orElseThrow(() -> new TableStatusNotFoundException("Table status not found"));
+
+        table.setTableStatus(new HashSet<>(Set.of(cleanStatus)));
+        
+        _jpaTableRepo.save(table);
     }
 }

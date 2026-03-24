@@ -5,6 +5,7 @@ import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.services.interfaces.ITableServices;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,19 @@ public class TableServices implements ITableServices {
                 "Tables retrived",
                 HttpStatus.OK.value(),
                 result
+        );
+    }
+
+    @Override
+    @Transactional
+    public ResultHandler<Void> changeStatusToClean(String tableToken) {
+        String clearStatusToken = "CLEANING";
+
+        _tableRepo.changeStatus(tableToken, clearStatusToken);
+
+        return ResultHandler.success(
+                "Status change successfully",
+                HttpStatus.OK.value()
         );
     }
 }

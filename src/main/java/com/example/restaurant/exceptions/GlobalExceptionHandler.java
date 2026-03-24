@@ -47,13 +47,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ResultHandler<Object>> handleUserNotFoundException(UserNotFoundException unfex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                ResultHandler.failure(unfex.getMessage(), HttpStatus.NOT_FOUND.value()
-                )
-        );
-    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResultHandler<Object>> handleGenericException(Exception ex) {
@@ -104,20 +97,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(ReservationNotFoundException.class)
-    public ResponseEntity<ResultHandler<Object>> handleReservationNotFoundException(ReservationNotFoundException rnfex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                ResultHandler.failure(rnfex.getMessage(), HttpStatus.NOT_FOUND.value()
-                )
-        );
-    }
-
-    @ExceptionHandler(ReservationStatusNotFoundException.class)
-    public ResponseEntity<ResultHandler<Object>> handleReservationStatusNotFoundException(ReservationStatusNotFoundException rsnte) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                ResultHandler.failure(rsnte.getMessage(), HttpStatus.NOT_FOUND.value())
-        );
-    }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ResultHandler<Object>> handleIllegalStateException(IllegalStateException isex) {
@@ -128,6 +107,21 @@ public class GlobalExceptionHandler {
                         isex.getMessage(),
                         HttpStatus.BAD_REQUEST.value()
                 )
+        );
+    }
+
+    @ExceptionHandler({
+            UserNotFoundException.class,
+            ReservationNotFoundException.class,
+            ReservationStatusNotFoundException.class,
+            TableStatusNotFoundException.class,
+            TableNotFoundException.class
+    })
+    public ResponseEntity<ResultHandler<Object>> handleResourceNotFoundException(RuntimeException rex) {
+        log.warn("Resource not found: {}", rex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                ResultHandler.failure("Resource not found", HttpStatus.NOT_FOUND.value())
         );
     }
 }

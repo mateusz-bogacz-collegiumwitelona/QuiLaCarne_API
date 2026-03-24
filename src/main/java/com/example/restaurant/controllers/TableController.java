@@ -14,9 +14,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -49,6 +48,24 @@ public class TableController {
     @GetMapping
     public ResponseEntity<ResultHandler<List<TableListResponse>>> getTables(@Valid TableFilterRequest request) {
         var result = _tableServices.getTables(request);
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
+
+    @Operation(
+            summary = "Change table status to cleaning",
+            description = "Updates the status of a specific table to CLEANING. This is typically used by waiters to indicate that a table needs to be prepared for the next guests."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Table status changed successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_WAITER role"),
+            @ApiResponse(responseCode = "404", description = "Table or table status not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PreAuthorize("hasAnyRole('ROLE_WAITER')")
+    @PatchMapping("/{token}/clear")
+    public ResponseEntity<ResultHandler<Void>> clearTables(@Parameter(description = "Table token") @PathVariable String token) {
+        var result = _tableServices.changeStatusToClean(token);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 }

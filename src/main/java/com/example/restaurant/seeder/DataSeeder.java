@@ -56,7 +56,8 @@ public class DataSeeder implements CommandLineRunner {
                 new TranslatedData("AVAILABLE", "Wolny", "Available"),
                 new TranslatedData("RESERVED", "Zarezerwowany", "Reserved"),
                 new TranslatedData("OCCUPIED", "Zajęty", "Occupied"),
-                new TranslatedData("OUT_OF_SERVICE", "Wyłączony z użytku", "Out of service")
+                new TranslatedData("OUT_OF_SERVICE", "Wyłączony z użytku", "Out of service"),
+                new TranslatedData("CLEANING", "Do sprzątnięcia", "Cleaning")
         ));
 
         seedTranslatedEntity(_jpaOrderItemStatusRepo, OrderItemsStatus::new, List.of(

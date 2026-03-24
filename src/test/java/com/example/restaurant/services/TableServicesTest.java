@@ -3,6 +3,8 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.exceptions.TableNotFoundException;
+import com.example.restaurant.exceptions.TableStatusNotFoundException;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import org.junit.jupiter.api.AfterEach;
@@ -18,8 +20,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -85,5 +86,36 @@ public class TableServicesTest {
         assertTrue(result.isSuccess());
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         verify(_tableRepo).findAllTables("pl", request.getStartTime(), request.getEndTime());
+    }
+
+    @Test
+    void changeStatusToClean_ShouldReturnSuccess_WhenRepoSucceeds() {
+        ResultHandler<Void> result = _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN);
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("Status change successfully", result.getMessage());
+
+        verify(_tableRepo, times(1)).changeStatus(TestConstants.FAKE_TABLE_TOKEN, "CLEANING");
+    }
+
+    @Test
+    void changeStatusToClean_ShouldThrowException_WhenTableNotFound() {
+        doThrow(new TableNotFoundException("Table not found"))
+                .when(_tableRepo).changeStatus(TestConstants.FAKE_TABLE_TOKEN, "CLEANING");
+
+        assertThrows(TableNotFoundException.class,
+                () -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN)
+        );
+    }
+
+    @Test
+    void changeStatusToClean_ShouldThrowException_WhenStatusNotFound() {
+        doThrow(new TableStatusNotFoundException("Table status not found"))
+                .when(_tableRepo).changeStatus(TestConstants.FAKE_TABLE_TOKEN, "CLEANING");
+
+        assertThrows(TableStatusNotFoundException.class, () ->
+                _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN)
+        );
     }
 }

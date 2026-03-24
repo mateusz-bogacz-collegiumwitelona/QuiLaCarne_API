@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface ITableServices {
     ResultHandler<List<TableListResponse>> getTables(TableFilterRequest request);
+
+    ResultHandler<Void> changeStatusToClean(String tableToken);
 }
