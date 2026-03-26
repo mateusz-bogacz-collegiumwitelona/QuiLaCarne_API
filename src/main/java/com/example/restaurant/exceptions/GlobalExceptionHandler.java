@@ -24,11 +24,14 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
     private final IAuditLogRepository _auditLogRepo;
 
-    @ExceptionHandler(InvalidDateException.class)
-    public ResponseEntity<ResultHandler<Object>> handleInvalidDateException(InvalidDateException ide) {
+    @ExceptionHandler({
+            InvalidDateException.class,
+            EntityAlreadyExistsException.class,
+    })
+    public ResponseEntity<ResultHandler<Object>> handleInvalidDateException(RuntimeException rex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ResultHandler.failure(
-                                ide.getMessage(),
+                                rex.getMessage(),
                                 HttpStatus.BAD_REQUEST.value()
                         )
                 );
