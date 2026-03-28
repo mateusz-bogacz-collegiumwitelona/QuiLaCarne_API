@@ -5,6 +5,8 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.mappers.DishMapper;
+import com.example.restaurant.models.Dishes;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Locale;
@@ -30,30 +33,41 @@ public class DishServicesTest {
     @Mock
     private IDishRepository _dishRepo;
 
+    @Mock
+    private DishMapper _dishMapper;
+    
     @InjectMocks
     private DishServices _dishServices;
 
     @Test
-    void getMenu_ShouldUseCurrnetLocale_AndReturnSuccess() {
+    void getMenu_ShouldUseCurrentLocale_MapDishes_AndAppendS3Url() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
+
+        ReflectionTestUtils.setField(_dishServices, "s3Endpoint", "http://localhost:9000 ");
+        ReflectionTestUtils.setField(_dishServices, "s3BucketName", "restaurant-images");
 
         DishFilterRequest request = new DishFilterRequest();
         PaggedRequest pagged = new PaggedRequest();
+        pagged.setPage(1);
+        pagged.setSize(10);
+
+        Dishes mockDish = new Dishes();
+        mockDish.setName("Steak");
+
+        Page<Dishes> mockPage = new PageImpl<>(
+                List.of(mockDish),
+                PageRequest.of(0, 10),
+                1
+        );
 
         DishListResponse dishResponse = DishListResponse
                 .builder()
                 .name("Steak")
+                .imageUrl("steak.jpg")
                 .build();
 
-        Page<DishListResponse> mockPage = new PageImpl<>(
-                List.of(dishResponse),
-                PageRequest.of(0, 1),
-                1
-        );
-
-        PagedResult<DishListResponse> mockPageResult = new PagedResult<>(mockPage);
-
-        when(_dishRepo.findAllDishes("en", request, pagged)).thenReturn(mockPageResult);
+        when(_dishRepo.findAllDishes(request, pagged)).thenReturn(mockPage);
+        when(_dishMapper.toDishListResponse(mockDish, "en")).thenReturn(dishResponse);
 
         ResultHandler<PagedResult<DishListResponse>> result = _dishServices.getMenu(request, pagged);
 
@@ -62,9 +76,13 @@ public class DishServicesTest {
 
         assertEquals(1, result.getData().getItems().size());
         assertEquals("Steak", result.getData().getItems().get(0).getName());
+
+        assertEquals("http://localhost:9000/restaurant-images/steak.jpg", result.getData().getItems().get(0).getImageUrl());
         assertEquals(1, result.getData().getTotalPages());
 
-        verify(_dishRepo).findAllDishes("en", request, pagged);
-        LocaleContextHolder.setLocale(Locale.ENGLISH);
+        verify(_dishRepo).findAllDishes(request, pagged);
+        verify(_dishMapper).toDishListResponse(mockDish, "en");
+
+        LocaleContextHolder.resetLocaleContext();
     }
 }
