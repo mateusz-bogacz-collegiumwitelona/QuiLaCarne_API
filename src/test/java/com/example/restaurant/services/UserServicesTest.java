@@ -50,9 +50,16 @@ public class UserServicesTest {
         when(_roleRepository.setRole(anyString())).thenReturn(new Roles());
         when(_passwordEncoder.encode("password")).thenReturn("hashedPass");
 
+        doAnswer(invocation -> {
+            Users savedUser = invocation.getArgument(0);
+            savedUser.setToken("generated-mock-token");
+            return null;
+        }).when(_userRepo).save(any(Users.class));
+
         String token = _userServices.create(request, "ROLE_CLIENT", true);
 
         assertNotNull(token);
+        assertEquals("generated-mock-token", token);
         verify(_userRepo, times(1)).save(any(Users.class));
     }
 

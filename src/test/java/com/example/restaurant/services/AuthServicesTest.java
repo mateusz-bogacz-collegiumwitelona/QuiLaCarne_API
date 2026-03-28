@@ -85,7 +85,7 @@ public class AuthServicesTest {
         request.setPassword("Pass123!");
         request.setConfirmPassword("Pass123!");
 
-        when(_userRepository.existsByUsername("testuser2")).thenReturn(false);
+        when(_userRepository.existsByUsername(anyString())).thenReturn(false);
         when(_roleRepository.isRoleExists("ROLE_CLIENT")).thenReturn(true);
 
         when(_userServices.create(any(RegisterRequest.class), eq("ROLE_CLIENT"), eq(false)))
@@ -131,7 +131,7 @@ public class AuthServicesTest {
         ResultHandler<Boolean> result = _authServices.registerConfirm("valid-token");
 
         assertTrue(result.isSuccess());
-        verify(_userServices, times(1)).activeUser("valid-user-token"); // Weryfikacja serwisu
+        verify(_userServices, times(1)).activeUser("valid-user-token");
     }
 
     @Test
