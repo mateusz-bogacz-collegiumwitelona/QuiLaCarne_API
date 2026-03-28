@@ -10,8 +10,8 @@ import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
-import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import com.example.restaurant.services.interfaces.IUserServices;
+import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,9 +27,9 @@ import java.util.Set;
 public class UserServices implements IUserServices {
     private final IUserRepository _userRepo;
     private final EmailServices _emailServices;
-    private final IVerificationTokenRepository _tokenRepo;
     private final IRoleRepository _roleRepository;
     private final PasswordEncoder _passwordEncoder;
+    private final IVerificationTokenServices _tokenServices;
 
     @Override
     @Transactional
@@ -119,7 +119,7 @@ public class UserServices implements IUserServices {
 
         _userRepo.save(user);
 
-        String token = _tokenRepo.createToken(
+        String token = _tokenServices.createToken(
                 userToken,
                 TokenTypeEnum.EMAIL_UPDATE,
                 60
@@ -137,7 +137,7 @@ public class UserServices implements IUserServices {
     @Transactional
     @Auditable(action = "CONFIRM_EMAIL_CHANGE")
     public ResultHandler<Void> confirmEmailChange(String userToken, String token) {
-        boolean isValidToken = _tokenRepo.validateToken(userToken, token, TokenTypeEnum.EMAIL_UPDATE);
+        boolean isValidToken = _tokenServices.validateToken(userToken, token, TokenTypeEnum.EMAIL_UPDATE);
 
         if (!isValidToken)
             return ResultHandler.failure(

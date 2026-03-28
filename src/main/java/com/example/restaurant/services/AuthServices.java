@@ -11,9 +11,9 @@ import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
-import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
 import com.example.restaurant.services.interfaces.IUserServices;
+import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -41,9 +41,9 @@ public class AuthServices implements IAuthServices {
     private final IUserRepository _userRepository;
     private final IRoleRepository _roleRepository;
     private final EmailServices _emailServices;
-    private final IVerificationTokenRepository _verificationTokenRepository;
     private final UserDetailsService _userDetailsService;
     private final IUserServices _userServices;
+    private final IVerificationTokenServices _tokenServices;
 
     @Value("${application.security.google.client-id}")
     private String googleClientId;
@@ -93,7 +93,7 @@ public class AuthServices implements IAuthServices {
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
             );
 
-        String activationToken = _verificationTokenRepository.createToken(result, TokenTypeEnum.ACTIVATION, 24 * 60);
+        String activationToken = _tokenServices.createToken(result, TokenTypeEnum.ACTIVATION, 24 * 60);
 
         if (activationToken == null)
             return ResultHandler.failure(
@@ -112,7 +112,7 @@ public class AuthServices implements IAuthServices {
     @Auditable(action = "REGISTER_CONFIRM")
     @Transactional
     public ResultHandler<Boolean> registerConfirm(String token) {
-        var userTokenOpt = _verificationTokenRepository.validateToken(token, TokenTypeEnum.ACTIVATION);
+        var userTokenOpt = _tokenServices.validateToken(token, TokenTypeEnum.ACTIVATION);
 
         if (userTokenOpt.isEmpty())
             return ResultHandler.failure(
@@ -137,7 +137,7 @@ public class AuthServices implements IAuthServices {
         if (userOpt.isPresent()) {
             UserDomain userMiniml = userOpt.get();
 
-            String resetToken = _verificationTokenRepository.createToken(
+            String resetToken = _tokenServices.createToken(
                     userMiniml.token(),
                     TokenTypeEnum.PASSWORD_RESET,
                     15
@@ -165,7 +165,7 @@ public class AuthServices implements IAuthServices {
                     HttpStatus.BAD_REQUEST.value()
             );
 
-        var userTokenOpt = _verificationTokenRepository.validateToken(request.getToken(), TokenTypeEnum.PASSWORD_RESET);
+        var userTokenOpt = _tokenServices.validateToken(request.getToken(), TokenTypeEnum.PASSWORD_RESET);
 
         if (userTokenOpt.isEmpty())
             return ResultHandler.failure(

@@ -10,8 +10,8 @@ import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
-import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import com.example.restaurant.services.interfaces.IUserServices;
+import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,7 +52,7 @@ public class AuthServicesTest {
     @Mock
     private EmailServices _emailServices;
     @Mock
-    private IVerificationTokenRepository _verificationTokenRepository;
+    private IVerificationTokenServices _tokenServices;
 
     private LoginRequest _loginRequest;
 
@@ -91,7 +91,7 @@ public class AuthServicesTest {
         when(_userServices.create(any(RegisterRequest.class), eq("ROLE_CLIENT"), eq(false)))
                 .thenReturn("fake-user-token");
 
-        when(_verificationTokenRepository.createToken(eq("fake-user-token"), eq(TokenTypeEnum.ACTIVATION), anyInt()))
+        when(_tokenServices.createToken(eq("fake-user-token"), eq(TokenTypeEnum.ACTIVATION), anyInt()))
                 .thenReturn("fake-activation-token");
 
         var result = _authServices.register(request);
@@ -115,7 +115,7 @@ public class AuthServicesTest {
         );
 
         when(_userServices.findMinimalByEmail(TestConstants.FAKE_EMAIL)).thenReturn(Optional.of(userDto));
-        when(_verificationTokenRepository.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt()))
+        when(_tokenServices.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt()))
                 .thenReturn("res-token");
 
         _authServices.resetPassword(TestConstants.FAKE_EMAIL);
@@ -125,7 +125,7 @@ public class AuthServicesTest {
 
     @Test
     void registerConfirm_ShouldReturnSuccess_WhenTokenValidAndUserActivated() {
-        when(_verificationTokenRepository.validateToken("valid-token", TokenTypeEnum.ACTIVATION))
+        when(_tokenServices.validateToken("valid-token", TokenTypeEnum.ACTIVATION))
                 .thenReturn(Optional.of("valid-user-token"));
 
         ResultHandler<Boolean> result = _authServices.registerConfirm("valid-token");
@@ -141,7 +141,7 @@ public class AuthServicesTest {
         request.setPassword("newPass123!");
         request.setConfirmPassword("newPass123!");
 
-        when(_verificationTokenRepository.validateToken("valid-token", TokenTypeEnum.PASSWORD_RESET))
+        when(_tokenServices.validateToken("valid-token", TokenTypeEnum.PASSWORD_RESET))
                 .thenReturn(Optional.of("valid-user-token"));
 
         ResultHandler<Boolean> result = _authServices.setNewPassword(request);

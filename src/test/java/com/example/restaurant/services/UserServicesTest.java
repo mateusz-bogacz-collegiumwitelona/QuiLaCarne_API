@@ -9,7 +9,7 @@ import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
-import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
+import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +31,7 @@ public class UserServicesTest {
     @Mock
     private EmailServices _emailServices;
     @Mock
-    private IVerificationTokenRepository _tokenRepo;
+    private IVerificationTokenServices _tokenServices;
     @Mock
     private IRoleRepository _roleRepository;
     @Mock
@@ -134,7 +134,7 @@ public class UserServicesTest {
         Users currentUser = new Users();
 
         when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(currentUser);
-        when(_tokenRepo.createToken(anyString(), eq(TokenTypeEnum.EMAIL_UPDATE), anyInt()))
+        when(_tokenServices.createToken(anyString(), eq(TokenTypeEnum.EMAIL_UPDATE), anyInt()))
                 .thenReturn("mock-token");
 
         var result = _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, "new@test.pl");
@@ -147,7 +147,7 @@ public class UserServicesTest {
 
     @Test
     void confirmEmailChange_ShouldReturnSuccess_WhenEverythingIsValid() {
-        when(_tokenRepo.validateToken(anyString(), anyString(), eq(TokenTypeEnum.EMAIL_UPDATE))).thenReturn(true);
+        when(_tokenServices.validateToken(anyString(), anyString(), eq(TokenTypeEnum.EMAIL_UPDATE))).thenReturn(true);
 
         Users mockUser = new Users();
         mockUser.setPendingEmail("new@test.pl");
