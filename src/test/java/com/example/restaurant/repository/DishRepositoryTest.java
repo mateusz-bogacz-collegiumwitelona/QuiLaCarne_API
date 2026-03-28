@@ -130,4 +130,17 @@ public class DishRepositoryTest {
         assertEquals(1, result.getItems().size());
         assertEquals("http://localhost:9000/restaurant-images/steak.jpg", result.getItems().get(0).getImageUrl());
     }
+
+    @Test
+    void listForOrder_ShouldReturnListOfDishes() {
+        List<String> tokens = List.of("TOKEN1", "TOKEN2");
+        List<Dishes> expectedDishes = List.of(new Dishes(), new Dishes());
+
+        when(_jpaDishRepo.findAllByTokenIn(tokens)).thenReturn(expectedDishes);
+
+        List<Dishes> result = _dishRepo.listForOrder(tokens);
+
+        assertEquals(2, result.size());
+        verify(_jpaDishRepo, times(1)).findAllByTokenIn(tokens);
+    }
 }

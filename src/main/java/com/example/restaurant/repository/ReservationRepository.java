@@ -8,6 +8,7 @@ import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.TodayReservationsResponse;
 import com.example.restaurant.exceptions.ReservationNotFoundException;
 import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
+import com.example.restaurant.exceptions.TableNotFoundException;
 import com.example.restaurant.exceptions.UserNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.ReservationMapper;
@@ -53,8 +54,8 @@ public class ReservationRepository implements IReservationRepository {
         Users user = _jpaUserRepo.findByToken(userToken)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        RestaurantTables table = _jpaTableRepo.findByToken(request.getTableToken());
-        if (table == null) throw new RuntimeException("Table not found");
+        RestaurantTables table = _jpaTableRepo.findByToken(request.getTableToken())
+                .orElseThrow(() -> new TableNotFoundException("Table not found"));
 
         ReservationStatus activeStatus = _jpaReservationStatusRepo.findByToken("ACTIVE")
                 .orElseThrow(() -> new ReservationStatusNotFoundException("ReservationStatus not found"));
@@ -174,5 +175,11 @@ public class ReservationRepository implements IReservationRepository {
         reservation.setReservationStatus(new HashSet<>(Set.of(notShowStatus)));
 
         _jpaReservationsRepo.saveAndFlush(reservation);
+    }
+
+    @Override
+    public Reservations findByToken(String token) {
+        return _jpaReservationsRepo.findByToken(token)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
     }
 }

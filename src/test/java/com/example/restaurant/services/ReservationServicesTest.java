@@ -17,6 +17,7 @@ import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.interfaces.IOrderServices;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,16 +39,20 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ReservationServicesTest {
-
     @Mock
     private ITableRespository _tableRepo;
+
     @Mock
     private IReservationRepository _reservationRepo;
+
     @Mock
     private IOrderRepository _orderRepo;
 
     @Mock
     private IUserRepository _userRepo;
+
+    @Mock
+    private IOrderServices _orderServices;
 
     @InjectMocks
     private ReservationServices _reservationServices;
@@ -108,7 +113,8 @@ public class ReservationServicesTest {
                 .thenReturn(List.of(TableListResponse.builder().token(TestConstants.FAKE_TABLE_TOKEN).build()));
 
         when(_reservationRepo.createReservation(request, TestConstants.FAKE_USER_TOKEN)).thenReturn(TestConstants.FAKE_RESERVATION_TOKEN);
-        when(_orderRepo.createOrderForReservation(TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_TABLE_TOKEN, request.getDishes()))
+
+        when(_orderServices.createOrderForReservation(TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_TABLE_TOKEN, request.getDishes()))
                 .thenReturn(domainResponse);
 
         ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_USER_TOKEN);

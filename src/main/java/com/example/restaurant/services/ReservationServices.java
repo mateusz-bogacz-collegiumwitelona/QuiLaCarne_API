@@ -12,6 +12,7 @@ import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.interfaces.IOrderServices;
 import com.example.restaurant.services.interfaces.IReservationServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ReservationServices implements IReservationServices {
     private final IReservationRepository _reservationRepo;
     private final IOrderRepository _orderRepo;
     private final IUserRepository _userRepo;
+    private final IOrderServices _orderServices;
 
     @Override
     @Transactional
@@ -72,7 +74,7 @@ public class ReservationServices implements IReservationServices {
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
             );
 
-        var orderCreate = _orderRepo.createOrderForReservation(
+        var orderCreate = _orderServices.createOrderForReservation(
                 newReservationToken,
                 request.getTableToken(),
                 request.getDishes());

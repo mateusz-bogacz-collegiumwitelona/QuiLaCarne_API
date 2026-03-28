@@ -63,26 +63,25 @@ public class TableRespository implements ITableRespository {
 
     @Override
     public boolean isTableExist(String token) {
-        RestaurantTables table = _jpaTableRepo.findByToken(token);
-
-        if (table == null)
-            return false;
-
-        return true;
+        return _jpaTableRepo.findByToken(token).isPresent();
     }
 
     @Override
     public void changeStatus(String token, String statusToken) {
-        RestaurantTables table = _jpaTableRepo.findByToken(token);
-
-        if (table == null)
-            throw new TableNotFoundException("Table not found");
+        RestaurantTables table = _jpaTableRepo.findByToken(token)
+                .orElseThrow(() -> new TableNotFoundException("Table not found"));
 
         TableStatus cleanStatus = _jpaTableStatusRepo.findByToken(statusToken)
                 .orElseThrow(() -> new TableStatusNotFoundException("Table status not found"));
 
         table.setTableStatus(new HashSet<>(Set.of(cleanStatus)));
-        
+
         _jpaTableRepo.save(table);
+    }
+
+    @Override
+    public RestaurantTables findByToken(String token) {
+        return _jpaTableRepo.findByToken(token)
+                .orElseThrow(() -> new TableNotFoundException("Table not found"));
     }
 }

@@ -98,7 +98,7 @@ public class TableRepositoryTest {
         TableStatus mockStatus = new TableStatus();
         mockStatus.setToken("CLEANING");
 
-        when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(mockTable);
+        when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(Optional.of(mockTable));
         when(_jpaTableStatusRepo.findByToken("CLEANING")).thenReturn(Optional.of(mockStatus));
 
         _tableRepo.changeStatus(TestConstants.FAKE_TABLE_TOKEN, "CLEANING");
@@ -110,7 +110,7 @@ public class TableRepositoryTest {
 
     @Test
     void changeStatus_ShouldThrowTableNotFoundException_WhenTableDoesNotExist() {
-        when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(null);
+        when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(Optional.empty());
 
         TableNotFoundException exception = assertThrows(TableNotFoundException.class, () ->
                 _tableRepo.changeStatus(TestConstants.FAKE_TABLE_TOKEN, "CLEANING")
@@ -125,7 +125,7 @@ public class TableRepositoryTest {
     void changeStatus_ShouldThrowTableStatusNotFoundException_WhenStatusDoesNotExist() {
         RestaurantTables mockTable = new RestaurantTables();
 
-        when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(mockTable);
+        when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(Optional.of(mockTable));
         when(_jpaTableStatusRepo.findByToken("CLEANING")).thenReturn(Optional.empty());
 
         TableStatusNotFoundException exception = assertThrows(TableStatusNotFoundException.class, () ->
@@ -134,5 +134,29 @@ public class TableRepositoryTest {
 
         assertEquals("Table status not found", exception.getMessage());
         verify(_jpaTableRepo, never()).save(any());
+    }
+
+    @Test
+    void findByToken_ShouldReturnTable_WhenFound() {
+        RestaurantTables mockTable = new RestaurantTables();
+        when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
+                .thenReturn(Optional.of(mockTable));
+
+        RestaurantTables result = _tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN);
+
+        assertNotNull(result);
+        verify(_jpaTableRepo, times(1)).findByToken(TestConstants.FAKE_TABLE_TOKEN);
+    }
+
+    @Test
+    void findByToken_ShouldThrowException_WhenTableNotFound() {
+        when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
+                .thenReturn(Optional.empty());
+
+        TableNotFoundException exception = assertThrows(TableNotFoundException.class, () ->
+                _tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)
+        );
+
+        assertEquals("Table not found", exception.getMessage());
     }
 }

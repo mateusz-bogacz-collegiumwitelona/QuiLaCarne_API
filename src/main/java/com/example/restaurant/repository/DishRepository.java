@@ -15,6 +15,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class DishRepository implements IDishRepository {
@@ -52,5 +54,18 @@ public class DishRepository implements IDishRepository {
         });
 
         return new PagedResult<>(dtoPage);
+    }
+
+    @Override
+    public List<Dishes> listForOrder(List<String> tokens) {
+        return _jpaDishRepo.findAllByTokenIn(tokens);
+    }
+
+    @Override
+    public Dishes get(List<Dishes> dishes, String token) {
+        return dishes.stream()
+                .filter(d -> d.getToken().equals(token))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Dish not found"));
     }
 }

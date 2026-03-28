@@ -7,6 +7,7 @@ import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.TodayReservationsResponse;
 import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.models.Reservations;
 
 public interface IReservationRepository {
     String createReservation(ReservationRequest request, String userToken);
@@ -22,4 +23,6 @@ public interface IReservationRepository {
     void active(String reservationToken);
 
     void isAbsent(String reservationToken);
+
+    Reservations findByToken(String token);
 }

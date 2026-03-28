@@ -1,6 +1,7 @@
 package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.models.RestaurantTables;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -11,4 +12,6 @@ public interface ITableRespository {
     boolean isTableExist(String token);
 
     void changeStatus(String token, String statusToken);
+
+    RestaurantTables findByToken(String token);
 }

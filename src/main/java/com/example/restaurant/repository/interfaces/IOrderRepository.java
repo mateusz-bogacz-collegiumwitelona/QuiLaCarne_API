@@ -1,15 +1,15 @@
 package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
-import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
+import com.example.restaurant.models.OrderItems;
+import com.example.restaurant.models.Orders;
+import com.example.restaurant.models.lookup.OrderStatus;
 
 import java.util.List;
 
 public interface IOrderRepository {
-    ReservationDomain createOrderForReservation(String reservationToken, String tableToken, List<ReservationDishRequest> dishesRequest);
-
     OrderSummaryDomain getOrderSummaryForReservation(String reservationToken);
 
     TodayOrderSummaryDomain todayOrderDetails(String reservationToken, String lang);
@@ -21,4 +21,8 @@ public interface IOrderRepository {
     void assignWaiterToOrders(String reservationToken, String waiterToken);
 
     void isAbsent(String reservationToken);
+
+    OrderStatus findStatusByToken(String token);
+
+    void saveOrderWithItems(Orders order, List<OrderItems> items);
 }

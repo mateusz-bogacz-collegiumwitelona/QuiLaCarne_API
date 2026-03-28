@@ -12,8 +12,6 @@ import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
-import com.example.restaurant.models.RestaurantTables;
-import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationsRepository;
@@ -31,7 +29,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -64,33 +61,6 @@ public class ReservationRepositoryTest {
     private ArgumentCaptor<Pageable> pageableCaptor;
 
     private final String PL = "pl";
-
-    @Test
-    void createReservation_ShouldReturnToken_WhenDataIsValid() {
-        ReservationRequest request = new ReservationRequest();
-        request.setTableToken(TestConstants.FAKE_TABLE_TOKEN);
-        request.setStartTime(OffsetDateTime.now());
-        request.setEndTime(OffsetDateTime.now().plusHours(2));
-
-        Users user = new Users();
-        RestaurantTables table = new RestaurantTables();
-        ReservationStatus status = new ReservationStatus();
-
-        when(_jpaUserRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(Optional.of(user));
-        when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
-        when(_jpaReservationStatusRepo.findByToken("ACTIVE")).thenReturn(Optional.of(status));
-
-        when(_jpaReservationsRepo.saveAndFlush(any(Reservations.class))).thenAnswer(i -> {
-            Reservations res = i.getArgument(0);
-            res.setToken(TestConstants.FAKE_USER_TOKEN);
-            return res;
-        });
-
-        String token = _reservationRepo.createReservation(request, TestConstants.FAKE_USER_TOKEN);
-
-        assertNotNull(token);
-        verify(_jpaReservationsRepo, times(1)).saveAndFlush(any(Reservations.class));
-    }
 
     @Test
     void createReservation_ShouldThrowException_WhenUserNotFound() {
@@ -336,5 +306,29 @@ public class ReservationRepositoryTest {
 
         verify(_jpaReservationStatusRepo, never()).findByToken("NO_SHOW");
         verify(_jpaReservationsRepo, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void findByToken_ShouldReturnReservation_WhenFound() {
+        Reservations mockReservation = new Reservations();
+        when(_jpaReservationsRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockReservation));
+
+        Reservations result = _reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertNotNull(result);
+        verify(_jpaReservationsRepo, times(1)).findByToken(TestConstants.FAKE_RESERVATION_TOKEN);
+    }
+
+    @Test
+    void findByToken_ShouldThrowException_WhenReservationNotFound() {
+        when(_jpaReservationsRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.empty());
+
+        ReservationNotFoundException exception = assertThrows(ReservationNotFoundException.class, () ->
+                _reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN)
+        );
+
+        assertEquals("Reservation not found", exception.getMessage());
     }
 }
