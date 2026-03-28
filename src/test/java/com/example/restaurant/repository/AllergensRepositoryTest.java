@@ -45,4 +45,12 @@ public class AllergensRepositoryTest {
         assertTrue(result.isEmpty());
         verify(_jpaAllergensRepo, never()).findByTokenIn(anyList());
     }
+
+    @Test
+    void findAllergens_ShouldReturnEmptyList_WhenTokensListIsNull() {
+        List<Allergens> result = _allergensRepo.findAllergens(null);
+
+        assertTrue(result.isEmpty());
+        verify(_jpaAllergensRepo, never()).findByTokenIn(any());
+    }
 }

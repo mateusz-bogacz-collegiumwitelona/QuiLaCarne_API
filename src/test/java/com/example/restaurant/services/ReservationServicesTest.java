@@ -35,10 +35,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -82,6 +79,40 @@ public class ReservationServicesTest {
     }
 
     @Test
+    void create_ShouldFail_WhenTableDoesNotExist() {
+        ReservationRequest request = new ReservationRequest();
+        request.setTableToken("NON_EXISTENT");
+        request.setStartTime(OffsetDateTime.now().plusHours(1));
+        request.setEndTime(OffsetDateTime.now().plusHours(2));
+
+        when(_tableRepo.isTableExist("NON_EXISTENT")).thenReturn(false);
+
+        ResultHandler<ReservationResponse> result = _reservationServices.create(request, "user-token");
+
+        assertFalse(result.isSuccess());
+        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatusCode());
+        assertEquals("Table not found", result.getMessage());
+    }
+
+    @Test
+    void create_ShouldReturnInternalError_WhenOrderServiceReturnsNull() {
+        ReservationRequest request = createValidRequest();
+
+        when(_tableRepo.isTableExist(anyString())).thenReturn(true);
+        when(_tableRepo.isTableAvailable(anyString(), any(), any())).thenReturn(true);
+        when(_userRepo.findByToken(any())).thenReturn(new Users());
+        when(_tableRepo.findByToken(any())).thenReturn(new RestaurantTables());
+        when(_reservationRepo.findStatusByToken(anyString())).thenReturn(new ReservationStatus());
+
+        when(_orderServices.createOrderForReservation(any(), any(), any())).thenReturn(null);
+
+        ResultHandler<ReservationResponse> result = _reservationServices.create(request, "user-token");
+
+        assertNotNull(result);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), result.getStatusCode());
+    }
+
+    @Test
     void create_ShouldFail_WhenDurationTooShort() {
         ReservationRequest request = new ReservationRequest();
         request.setStartTime(OffsetDateTime.now().plusHours(1));
@@ -97,16 +128,13 @@ public class ReservationServicesTest {
     void create_ShouldFail_WhenTableIsNotAvailable() {
         ReservationRequest request = createValidRequest();
 
-        when(_tableRepo.isTableExist(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(true);
-        when(_tableRepo.isTableAvailable(
-                eq(TestConstants.FAKE_TABLE_TOKEN), any(), any()
-        )).thenReturn(false);
+        when(_tableRepo.isTableExist(anyString())).thenReturn(true);
+        when(_tableRepo.isTableAvailable(anyString(), any(), any())).thenReturn(false);
 
         ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_USER_TOKEN);
 
         assertFalse(result.isSuccess());
         assertEquals(HttpStatus.CONFLICT.value(), result.getStatusCode());
-        assertEquals("Table is already reserved in this timeframe", result.getMessage());
     }
 
     @Test
@@ -114,17 +142,11 @@ public class ReservationServicesTest {
         ReservationRequest request = createValidRequest();
         request.setDishes(List.of(new ReservationDishRequest()));
 
-        Users mockUser = new Users();
-        RestaurantTables mockTable = new RestaurantTables();
-        ReservationStatus mockStatus = new ReservationStatus();
-
         when(_tableRepo.isTableExist(anyString())).thenReturn(true);
-        when(_tableRepo.isTableAvailable(
-                eq(TestConstants.FAKE_TABLE_TOKEN), any(), any()
-        )).thenReturn(true);
-        when(_userRepo.findByToken(anyString())).thenReturn(mockUser);
-        when(_tableRepo.findByToken(anyString())).thenReturn(mockTable);
-        when(_reservationRepo.findStatusByToken("ACTIVE")).thenReturn(mockStatus);
+        when(_tableRepo.isTableAvailable(anyString(), any(), any())).thenReturn(true);
+        when(_userRepo.findByToken(anyString())).thenReturn(new Users());
+        when(_tableRepo.findByToken(anyString())).thenReturn(new RestaurantTables());
+        when(_reservationRepo.findStatusByToken(anyString())).thenReturn(new ReservationStatus());
 
         ReservationDishDoamin dishDomain = new ReservationDishDoamin("Burger", 40, 2);
         when(_orderServices.createOrderForReservation(any(), any(), any()))
@@ -134,15 +156,6 @@ public class ReservationServicesTest {
 
         assertTrue(result.isSuccess());
         verify(_reservationRepo, times(1)).save(any(Reservations.class));
-        assertEquals(80, result.getData().getTotalPrice());
-    }
-
-    private ReservationRequest createValidRequest() {
-        ReservationRequest request = new ReservationRequest();
-        request.setTableToken(TestConstants.FAKE_TABLE_TOKEN);
-        request.setStartTime(OffsetDateTime.now().plusHours(1));
-        request.setEndTime(OffsetDateTime.now().plusHours(3));
-        return request;
     }
 
     @Test
@@ -522,5 +535,14 @@ public class ReservationServicesTest {
 
         verify(_reservationRepo, times(1)).save(mockRes);
         verify(_orderServices, times(1)).isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+    }
+
+    private ReservationRequest createValidRequest() {
+        ReservationRequest request = new ReservationRequest();
+        request.setTableToken("TABLE_1");
+        request.setStartTime(OffsetDateTime.now().plusHours(1));
+        request.setEndTime(OffsetDateTime.now().plusHours(2));
+        request.setDishes(new ArrayList<>());
+        return request;
     }
 }

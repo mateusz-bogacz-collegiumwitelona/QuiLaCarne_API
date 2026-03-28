@@ -106,4 +106,23 @@ public class IngredientsServicesTest {
         assertEquals("One or more allergens not found", exception.getMessage());
         verify(_ingredientsRepo, never()).save(any());
     }
+
+    @Test
+    void add_ShouldCreateIngredientWithoutAllergens_WhenTokensAreNullOrEmpty() {
+        AddEntityRequest entityReq = new AddEntityRequest();
+        entityReq.setNamePl("Woda");
+        entityReq.setNameEn("Water");
+
+        AddIngredientRequest request = new AddIngredientRequest();
+        request.setEntity(entityReq);
+        request.setAllergenTokens(null);
+
+        when(_ingredientsRepo.isNameTaken(anyString(), anyString())).thenReturn(false);
+        when(_allergensRepo.findAllergens(any())).thenReturn(new java.util.ArrayList<>());
+
+        ResultHandler<Void> result = _ingredientsServices.add(request);
+
+        assertTrue(result.isSuccess());
+        verify(_ingredientsRepo).save(argThat(i -> i.getAllergens().isEmpty()));
+    }
 }

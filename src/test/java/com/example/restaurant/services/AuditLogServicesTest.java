@@ -74,4 +74,27 @@ public class AuditLogServicesTest {
 
         assertDoesNotThrow(() -> _auditLogServices.log(logDomain));
     }
+
+    @Test
+    void log_ShouldSaveLogWithoutUser_WhenUsernameNotFoundInDb() {
+        LogDomain logDomain = new LogDomain("missingUser", "ACTION", "1.1.1.1", Map.of());
+        when(_userRepo.findByNormalizedUsername("MISSINGUSER")).thenReturn(Optional.empty());
+
+        _auditLogServices.log(logDomain);
+
+        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(_auditRepo).save(captor.capture());
+
+        assertNull(captor.getValue().getUser());
+        assertEquals("ACTION", captor.getValue().getAction());
+    }
+
+    @Test
+    void log_ShouldNormalizeUsername_BeforeCheckingDb() {
+        LogDomain logDomain = new LogDomain("uSeR", "ACTION", "1.1.1.1", Map.of());
+
+        _auditLogServices.log(logDomain);
+
+        verify(_userRepo).findByNormalizedUsername("USER");
+    }
 }

@@ -148,6 +148,22 @@ public class TableServicesTest {
     }
 
     @Test
+    void getTables_ShouldReturnStatusInEnglish_WhenLanguageIsGerman() {
+        LocaleContextHolder.setLocale(Locale.GERMAN);
+
+        TableStatus mockStatus = new TableStatus();
+        mockStatus.setNameEn("Occupied");
+        RestaurantTables table = new RestaurantTables();
+        table.setTableStatus(Set.of(mockStatus));
+
+        when(_tableRepo.findAllTables(null, null)).thenReturn(List.of(table));
+
+        var result = _tableServices.getTables(new TableFilterRequest());
+
+        assertEquals("Occupied", result.getData().get(0).getStatus());
+    }
+
+    @Test
     void changeStatusToClean_ShouldReturnSuccess_WhenRepoSucceeds() {
         RestaurantTables mockTable = new RestaurantTables();
         TableStatus mockStatus = new TableStatus();

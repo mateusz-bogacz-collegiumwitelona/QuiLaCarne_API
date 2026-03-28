@@ -59,4 +59,14 @@ public class IngredientsRepositoryTest {
 
         assertFalse(result);
     }
+
+    @Test
+    void isNameTaken_ShouldNotCheckEnglishName_IfPolishNameIsAlreadyTaken() {
+        when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.of(new Ingredients()));
+
+        _ingredientsRepository.isNameTaken("Cebula", "Onion");
+
+        verify(_jpaIngredientsRepo, times(1)).findByNamePl("Cebula");
+        verify(_jpaIngredientsRepo, never()).findByNameEn(anyString()); // Sprawdzenie short-circuit
+    }
 }

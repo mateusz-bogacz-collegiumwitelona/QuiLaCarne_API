@@ -23,8 +23,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,7 +36,7 @@ public class DishServicesTest {
 
     @Mock
     private DishMapper _dishMapper;
-    
+
     @InjectMocks
     private DishServices _dishServices;
 
@@ -84,5 +85,37 @@ public class DishServicesTest {
         verify(_dishMapper).toDishListResponse(mockDish, "en");
 
         LocaleContextHolder.resetLocaleContext();
+    }
+
+    @Test
+    void getMenu_ShouldNotModifyUrl_WhenItAlreadyStartsHttp() {
+        ReflectionTestUtils.setField(_dishServices, "s3Endpoint", "http://localhost:9000");
+        ReflectionTestUtils.setField(_dishServices, "s3BucketName", "bucket");
+
+        Dishes mockDish = new Dishes();
+        Page<Dishes> mockPage = new PageImpl<>(List.of(mockDish));
+
+        DishListResponse dishResponse = DishListResponse.builder()
+                .imageUrl("https://external-storage.com/image.jpg")
+                .build();
+
+        when(_dishRepo.findAllDishes(any(), any())).thenReturn(mockPage);
+        when(_dishMapper.toDishListResponse(any(), anyString())).thenReturn(dishResponse);
+
+        ResultHandler<PagedResult<DishListResponse>> result = _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
+
+        assertEquals("https://external-storage.com/image.jpg", result.getData().getItems().get(0).getImageUrl());
+    }
+
+    @Test
+    void getMenu_ShouldHandleEmptyPage() {
+        when(_dishRepo.findAllDishes(any(), any())).thenReturn(Page.empty());
+
+        ResultHandler<PagedResult<DishListResponse>> result = _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
+
+        assertNotNull(result.getData());
+        assertNotNull(result.getData().getItems());
+        assertTrue(result.getData().getItems().isEmpty());
+        assertEquals(1, result.getData().getTotalPages());
     }
 }

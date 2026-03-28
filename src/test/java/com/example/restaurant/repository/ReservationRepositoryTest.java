@@ -1,8 +1,10 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
+import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationsRepository;
 import org.junit.jupiter.api.Test;
@@ -18,8 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -29,6 +30,8 @@ public class ReservationRepositoryTest {
     private IJpaReservationStatusRepository _jpaReservationStatusRepo;
     @Mock
     private IJpaReservationsRepository _jpaReservationsRepo;
+    @Mock
+    private IOrderRepository _orderRepo;
 
     @InjectMocks
     private ReservationRepository _reservationRepo;
@@ -71,5 +74,20 @@ public class ReservationRepositoryTest {
 
         assertTrue(result.isPresent());
         verify(_jpaReservationsRepo).findByToken(TestConstants.FAKE_RESERVATION_TOKEN);
+    }
+
+    @Test
+    void findStatusByToken_ShouldThrowException_WhenNotFound() {
+        when(_jpaReservationStatusRepo.findByToken("ANY")).thenReturn(Optional.empty());
+
+        assertThrows(ReservationStatusNotFoundException.class, () ->
+                _reservationRepo.findStatusByToken("ANY")
+        );
+    }
+
+    @Test
+    void findByTokenAndUserToken_ShouldCallJpa() {
+        _reservationRepo.findByTokenAndUserToken("RES_1", "USER_1");
+        verify(_jpaReservationsRepo).findByTokenAndUser_Token("RES_1", "USER_1");
     }
 }

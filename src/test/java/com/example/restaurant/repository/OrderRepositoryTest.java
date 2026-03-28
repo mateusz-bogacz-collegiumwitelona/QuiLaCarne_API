@@ -3,6 +3,7 @@ package com.example.restaurant.repository;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
 import com.example.restaurant.models.lookup.OrderStatus;
+import com.example.restaurant.repository.interfaces.jpa.IJpaOrderItemStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrderItemsRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrderRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrederStatusRepositry;
@@ -29,6 +30,9 @@ public class OrderRepositoryTest {
 
     @Mock
     private IJpaOrederStatusRepositry _jpaOrderStatusRepo;
+
+    @Mock
+    private IJpaOrderItemStatusRepository _jpaOrderItemStatusRepo;
 
     @InjectMocks
     private OrderRepository _orderRepo;
@@ -74,5 +78,18 @@ public class OrderRepositoryTest {
         List<OrderItems> items = List.of(new OrderItems(), new OrderItems());
         _orderRepo.saveAllItems(items);
         verify(_jpaOrderItemRepo, times(1)).saveAll(items);
+    }
+
+    @Test
+    void findItemStatusByToken_ShouldThrowException_WhenNotFound() {
+        when(_jpaOrderItemStatusRepo.findByToken("INVALID")).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> _orderRepo.findItemStatusByToken("INVALID"));
+    }
+
+    @Test
+    void findByReservationToken_ShouldCallJpa() {
+        _orderRepo.findByReservationToken("RES_123");
+        verify(_jpaOrderRepo).findByReservation_Token("RES_123");
     }
 }

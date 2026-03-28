@@ -8,8 +8,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuditLogRepositoryTest {
@@ -25,5 +25,13 @@ public class AuditLogRepositoryTest {
         _auditLogRepo.save(log);
 
         verify(_jpaAuditRepo, times(1)).saveAndFlush(log);
+    }
+
+    @Test
+    void save_ShouldThrowException_WhenJpaFails() {
+        AuditLog log = new AuditLog();
+        doThrow(new RuntimeException("DB Error")).when(_jpaAuditRepo).saveAndFlush(log);
+
+        assertThrows(RuntimeException.class, () -> _auditLogRepo.save(log));
     }
 }

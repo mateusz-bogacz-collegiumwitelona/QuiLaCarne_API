@@ -128,4 +128,18 @@ public class TableRepositoryTest {
         _tableRepo.save(table);
         verify(_jpaTableRepo).save(table);
     }
+
+    @Test
+    void isTableAvailable_ShouldReturnTrue_WhenTableIsInAvailableList() {
+        RestaurantTables table = new RestaurantTables();
+        table.setToken("T1");
+        OffsetDateTime now = OffsetDateTime.now();
+
+        when(_jpaTableRepo.findAvailableTablesInTimeframe(now, now.plusHours(1)))
+                .thenReturn(List.of(table));
+
+        boolean result = _tableRepo.isTableAvailable("T1", now, now.plusHours(1));
+
+        assertTrue(result);
+    }
 }

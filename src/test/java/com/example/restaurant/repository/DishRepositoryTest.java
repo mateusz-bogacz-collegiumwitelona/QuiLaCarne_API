@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -88,5 +89,22 @@ public class DishRepositoryTest {
 
         assertEquals(2, result.size());
         verify(_jpaDishRepo, times(1)).findAllByTokenIn(tokens);
+    }
+
+    @Test
+    void get_ShouldReturnDish_WhenTokenExists() {
+        Dishes d1 = new Dishes();
+        d1.setToken("T1");
+        Dishes d2 = new Dishes();
+        d2.setToken("T2");
+
+        Dishes result = _dishRepo.get(List.of(d1, d2), "T2");
+
+        assertEquals("T2", result.getToken());
+    }
+
+    @Test
+    void get_ShouldThrowException_WhenTokenDoesNotExist() {
+        assertThrows(RuntimeException.class, () -> _dishRepo.get(List.of(), "MISSING"));
     }
 }

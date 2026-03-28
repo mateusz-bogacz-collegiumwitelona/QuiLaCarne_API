@@ -89,4 +89,29 @@ public class VerificationTokenServicesTest {
         assertFalse(result);
         verify(_tokenRepo, never()).delete(any());
     }
+
+    @Test
+    void validateToken_ShouldReturnFalse_WhenUserTokenDoesNotMatch() {
+        Users differentUser = new Users();
+        differentUser.setToken("wrong-user");
+        VerificationToken vt = new VerificationToken();
+        vt.setUser(differentUser);
+        vt.setExpiryDate(OffsetDateTime.now().plusMinutes(15));
+
+        when(_tokenRepo.findByTokenAndType("token", TokenTypeEnum.ACTIVATION)).thenReturn(Optional.of(vt));
+
+        boolean result = _tokenServices.validateToken("correct-user", "token", TokenTypeEnum.ACTIVATION);
+
+        assertFalse(result);
+        verify(_tokenRepo, never()).delete(any());
+    }
+
+    @Test
+    void validateToken_ShouldReturnEmpty_WhenTokenNotFoundInDb() {
+        when(_tokenRepo.findByTokenAndType("missing", TokenTypeEnum.ACTIVATION)).thenReturn(Optional.empty());
+
+        Optional<String> result = _tokenServices.validateToken("missing", TokenTypeEnum.ACTIVATION);
+
+        assertTrue(result.isEmpty());
+    }
 }

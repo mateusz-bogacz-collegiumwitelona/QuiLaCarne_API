@@ -229,6 +229,44 @@ public class OrderServicesTest {
     }
 
     @Test
+    void todayOrderDetails_ShouldReturnEmptyLists_WhenDishHasNoIngredients() {
+        Orders mockOrder = new Orders();
+        mockOrder.setToken("fake-order-token");
+
+        Dishes mockDish = new Dishes();
+        mockDish.setIngredients(null);
+
+        OrderItems mockItem = new OrderItems();
+        mockItem.setProduct(mockDish);
+        mockItem.setQuantity(1);
+        mockItem.setPriceAtTimeOfOrder(50);
+
+        when(_orderRepo.findByReservationToken(anyString())).thenReturn(Optional.of(mockOrder));
+        when(_orderRepo.findItemsByOrderToken(anyString())).thenReturn(List.of(mockItem));
+
+        TodayOrderSummaryDomain result = _orderServices.todayOrderDetails("res-token", "pl");
+
+        assertTrue(result.dishes().get(0).getIngredient().isEmpty());
+        assertTrue(result.dishes().get(0).getAllergens().isEmpty());
+    }
+
+    @Test
+    void removeItemFromReservation_ShouldThrowException_WhenDishNotFoundInOrder() {
+        Orders mockOrder = new Orders();
+        Users waiter = new Users();
+        waiter.setToken("waiter-token");
+        mockOrder.setWaiter(waiter);
+
+        when(_orderRepo.findByReservationToken(anyString())).thenReturn(Optional.of(mockOrder));
+        when(_orderRepo.findItemsByOrderToken(any())).thenReturn(List.of());
+        ReservationDishRequest req = new ReservationDishRequest();
+        req.setDishToken("MISSING_DISH");
+
+        assertThrows(RuntimeException.class, () ->
+                _orderServices.removeItemFromReservation("waiter-token", "res-token", req));
+    }
+
+    @Test
     void removeItemFromReservation_ShouldDecreaseQuantityAndCreateCancelled_WhenPartialRemoval() {
         ReservationDishRequest request = new ReservationDishRequest();
         request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
@@ -272,13 +310,12 @@ public class OrderServicesTest {
         assertEquals(2, mockItem.getQuantity());
         assertEquals(100, mockOrder.getTotalPrice());
 
-        verify(_orderRepo, times(2)).saveItem(any(OrderItems.class)); // Zapis oryginalnego i nowego(anulowanego) rekordu
+        verify(_orderRepo, times(2)).saveItem(any(OrderItems.class));
         verify(_orderRepo, times(1)).save(mockOrder);
     }
 
     @Test
     void removeItemFromReservation_ShouldSetStatusToCancelled_WhenFullRemoval() {
-        // Arrange
         String note = "Bez soli";
         ReservationDishRequest request = new ReservationDishRequest();
         request.setDishToken(TestConstants.FAKE_DISH_TOKEN);

@@ -29,9 +29,11 @@ public class IngredientsServices implements IIngredientsServices {
         if (_ingredientsRepo.isNameTaken(request.getEntity().getNamePl(), request.getEntity().getNameEn()))
             throw new EntityAlreadyExistsException("Ingredient already exists");
 
-        var allergens = _allergensRepo.findAllergens(new ArrayList<>(request.getAllergenTokens()));
+        var allergenTokens = request.getAllergenTokens() != null ? new ArrayList<>(request.getAllergenTokens()) : new ArrayList<String>();
+        var allergens = _allergensRepo.findAllergens(allergenTokens);
 
-        if (allergens.size() != request.getAllergenTokens().size())
+        int requestedSize = request.getAllergenTokens() != null ? request.getAllergenTokens().size() : 0;
+        if (allergens.size() != requestedSize)
             throw new RuntimeException("One or more allergens not found");
 
         Ingredients ingredients = new Ingredients();

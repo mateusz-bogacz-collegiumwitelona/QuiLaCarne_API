@@ -163,6 +163,18 @@ public class UserServicesTest {
     }
 
     @Test
+    void confirmEmailChange_ShouldThrowException_WhenNoPendingEmail() {
+        when(_tokenServices.validateToken(anyString(), anyString(), any())).thenReturn(true);
+        Users mockUser = new Users();
+        mockUser.setPendingEmail(null);
+
+        when(_userRepo.findByToken(anyString())).thenReturn(mockUser);
+
+        assertThrows(IllegalStateException.class, () ->
+                _userServices.confirmEmailChange("user-token", "valid-token"));
+    }
+
+    @Test
     void deleteAccount_ShouldReturnSuccess_AndAnonymizeData() {
         Users mockUser = new Users();
         mockUser.setNormalizedEmail("TEST@TEST.PL");
@@ -179,5 +191,15 @@ public class UserServicesTest {
         assertFalse(mockUser.getIsActive());
         assertTrue(mockUser.getNormalizedEmail().startsWith("DELETED_"));
         verify(_userRepo, times(1)).save(mockUser);
+    }
+
+    @Test
+    void updateUserName_ShouldReturnFailure_WhenNameTaken() {
+        when(_userRepo.existsByUsername(anyString())).thenReturn(true);
+
+        var result = _userServices.updateUserName("TakenName", "user-token");
+
+        assertFalse(result.isSuccess());
+        assertEquals("Username is already taken", result.getMessage());
     }
 }

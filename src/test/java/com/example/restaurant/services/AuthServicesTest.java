@@ -24,8 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -75,6 +74,31 @@ public class AuthServicesTest {
 
         assertTrue(result.isSuccess());
         assertEquals("token", result.getData().getToken());
+    }
+
+    @Test
+    void authenticate_ShouldReturnFailure_WhenUserIsDisabled() {
+        when(_authManager.authenticate(any())).thenReturn(_auth);
+        when(_auth.getPrincipal()).thenReturn(_userDetails);
+        when(_userDetails.isEnabled()).thenReturn(false);
+
+        ResultHandler<AuthResponse> result = _authServices.authenticate(_loginRequest);
+
+        assertFalse(result.isSuccess());
+        assertEquals("User not enabled", result.getMessage());
+    }
+
+    @Test
+    void register_ShouldReturnFailure_WhenUsernameAlreadyExists() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("existingUser");
+
+        when(_userRepository.existsByUsername(anyString())).thenReturn(true);
+
+        var result = _authServices.register(request);
+
+        assertFalse(result.isSuccess());
+        verify(_userServices, never()).create(any(), anyString(), anyBoolean());
     }
 
     @Test
@@ -132,6 +156,33 @@ public class AuthServicesTest {
 
         assertTrue(result.isSuccess());
         verify(_userServices, times(1)).activeUser("valid-user-token");
+    }
+
+    @Test
+    void registerConfirm_ShouldReturnFailure_WhenTokenIsInvalid() {
+        when(_tokenServices.validateToken("invalid-token", TokenTypeEnum.ACTIVATION))
+                .thenReturn(Optional.empty());
+
+        ResultHandler<Boolean> result = _authServices.registerConfirm("invalid-token");
+
+        assertFalse(result.isSuccess());
+        verify(_userServices, never()).activeUser(anyString());
+    }
+
+    @Test
+    void setNewPassword_ShouldReturnFailure_WhenTokenIsExpiredOrInvalid() {
+        ResetPasswordRequest request = new ResetPasswordRequest();
+        request.setToken("expired-token");
+        request.setPassword("NewPass123!");
+        request.setConfirmPassword("NewPass123!");
+
+        when(_tokenServices.validateToken("expired-token", TokenTypeEnum.PASSWORD_RESET))
+                .thenReturn(Optional.empty());
+
+        ResultHandler<Boolean> result = _authServices.setNewPassword(request);
+
+        assertFalse(result.isSuccess());
+        verify(_userServices, never()).changePassword(anyString(), anyString());
     }
 
     @Test

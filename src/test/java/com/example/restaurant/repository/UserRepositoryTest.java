@@ -87,4 +87,27 @@ public class UserRepositoryTest {
         when(_jpaUserRepository.findByNormalizedEmail(anyString())).thenReturn(Optional.of(new Users()));
         assertTrue(_userRepository.findByNormalizedEmail("TEST@TEST.PL").isPresent());
     }
+
+    @Test
+    void isInRole_ShouldThrowUserNotFound_WhenUserTokenIsInvalid() {
+        when(_jpaUserRepository.findByToken("INVALID")).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () ->
+                _userRepository.isInRole(TestConstants.FAKE_ROLE, "INVALID"));
+    }
+
+    @Test
+    void isInRole_ShouldReturnFalse_WhenUserDoesNotHaveTheRole() {
+        Roles userRole = new Roles();
+        userRole.setName("USER");
+        Roles searchRole = new Roles();
+        searchRole.setName("ADMIN");
+        Users mockUser = new Users();
+        mockUser.setRoles(Set.of(userRole));
+
+        when(_jpaUserRepository.findByToken("T1")).thenReturn(Optional.of(mockUser));
+        when(_jpaRoleRepository.findByName("ADMIN")).thenReturn(Optional.of(searchRole));
+
+        assertFalse(_userRepository.isInRole("ADMIN", "T1"));
+    }
 }

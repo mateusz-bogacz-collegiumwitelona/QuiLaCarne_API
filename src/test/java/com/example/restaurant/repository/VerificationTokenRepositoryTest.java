@@ -44,4 +44,14 @@ public class VerificationTokenRepositoryTest {
         assertTrue(_tokenRepo.findByTokenAndType("token", TokenTypeEnum.ACTIVATION).isPresent());
         verify(_jpaTokenRepo, times(1)).findByTokenAndType("token", TokenTypeEnum.ACTIVATION);
     }
+
+    @Test
+    void findByTokenAndType_ShouldReturnEmpty_WhenNotFound() {
+        when(_jpaTokenRepo.findByTokenAndType("MISSING", TokenTypeEnum.ACTIVATION))
+                .thenReturn(Optional.empty());
+
+        Optional<VerificationToken> result = _tokenRepo.findByTokenAndType("MISSING", TokenTypeEnum.ACTIVATION);
+
+        assertTrue(result.isEmpty());
+    }
 }
