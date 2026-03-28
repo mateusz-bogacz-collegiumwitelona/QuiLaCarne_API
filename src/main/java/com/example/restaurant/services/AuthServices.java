@@ -13,6 +13,7 @@ import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
+import com.example.restaurant.services.interfaces.IUserServices;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -42,6 +43,7 @@ public class AuthServices implements IAuthServices {
     private final EmailServices _emailServices;
     private final IVerificationTokenRepository _verificationTokenRepository;
     private final UserDetailsService _userDetailsService;
+    private final IUserServices _userServices;
 
     @Value("${application.security.google.client-id}")
     private String googleClientId;
@@ -63,7 +65,7 @@ public class AuthServices implements IAuthServices {
     @Auditable(action = "USER_REGISTERED")
     @Transactional
     public ResultHandler<Void> register(RegisterRequest request) {
-        if (_userRepository.existsByUsername(request.getUsername()))
+        if (_userRepository.existsByUsername(request.getUsername().toUpperCase().trim()))
             return ResultHandler.failure(
                     "Username already exists",
                     HttpStatus.BAD_REQUEST.value()
@@ -83,7 +85,7 @@ public class AuthServices implements IAuthServices {
                     HttpStatus.INTERNAL_SERVER_ERROR.value()
             );
 
-        String result = _userRepository.createUser(request, role, false);
+        String result = _userServices.create(request, role, false);
 
         if (result == null)
             return ResultHandler.failure(
@@ -118,7 +120,7 @@ public class AuthServices implements IAuthServices {
                     HttpStatus.BAD_REQUEST.value()
             );
 
-        _userRepository.activeUser(userTokenOpt.get());
+        _userServices.activeUser(userTokenOpt.get());
 
         return ResultHandler.success(
                 "User activated successfully",
@@ -130,7 +132,7 @@ public class AuthServices implements IAuthServices {
     @Auditable(action = "RESET_PASSWORD")
     @Transactional
     public ResultHandler<Void> resetPassword(String email) {
-        var userOpt = _userRepository.findMinimalByEmail(email);
+        var userOpt = _userServices.findMinimalByEmail(email);
 
         if (userOpt.isPresent()) {
             UserDomain userMiniml = userOpt.get();
@@ -171,7 +173,7 @@ public class AuthServices implements IAuthServices {
                     HttpStatus.BAD_REQUEST.value()
             );
 
-        _userRepository.changePassword(
+        _userServices.changePassword(
                 userTokenOpt.get(),
                 request.getConfirmPassword()
         );
@@ -197,7 +199,7 @@ public class AuthServices implements IAuthServices {
                 );
 
             String email = payload.getEmail();
-            var userOpt = _userRepository.findMinimalByEmail(email);
+            var userOpt = _userServices.findMinimalByEmail(email);
 
             String usernameToLogin;
 
@@ -259,7 +261,7 @@ public class AuthServices implements IAuthServices {
         String baseUserName = email.split("@")[0];
         int counter = 1;
 
-        while (_userRepository.existsByUsername(baseUserName)) {
+        while (_userRepository.existsByUsername(baseUserName.toUpperCase().trim())) {
             baseUserName = baseUserName + counter;
             counter++;
         }
@@ -272,7 +274,7 @@ public class AuthServices implements IAuthServices {
         register.setUsername(baseUserName);
         register.setConfirmPassword(randomPassword);
 
-        _userRepository.createUser(register, "ROLE_CLIENT", true);
+        _userServices.create(register, "ROLE_CLIENT", true);
 
         return baseUserName;
     }

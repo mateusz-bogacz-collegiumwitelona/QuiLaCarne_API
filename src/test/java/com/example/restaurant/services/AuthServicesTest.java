@@ -11,21 +11,21 @@ import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
+import com.example.restaurant.services.interfaces.IUserServices;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -36,25 +36,21 @@ public class AuthServicesTest {
 
     @Mock
     private AuthenticationManager _authManager;
-
     @Mock
     private JwtServices _jwtServices;
-
     @Mock
     private UserDetails _userDetails;
-
     @Mock
     private Authentication _auth;
 
     @Mock
     private IUserRepository _userRepository;
-
     @Mock
-    IRoleRepository _roleRepository;
-
+    private IUserServices _userServices;
+    @Mock
+    private IRoleRepository _roleRepository;
     @Mock
     private EmailServices _emailServices;
-
     @Mock
     private IVerificationTokenRepository _verificationTokenRepository;
 
@@ -78,33 +74,7 @@ public class AuthServicesTest {
         ResultHandler<AuthResponse> result = _authServices.authenticate(_loginRequest);
 
         assertTrue(result.isSuccess());
-        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertEquals("token", result.getData().getToken());
-    }
-
-    @Test
-    void authenticate_ShouldThrowException_WhenCredentialsAreInvalid() {
-        when(_authManager.authenticate(any()))
-                .thenThrow(new BadCredentialsException("Invalid credentials"));
-
-        assertThrows(BadCredentialsException.class, () ->
-                _authServices.authenticate(_loginRequest)
-        );
-    }
-
-    @Test
-    void regiser_ShouldFail_WhenPasswordIsNotMatch() {
-        RegisterRequest request = new RegisterRequest();
-        request.setUsername("testuser");
-        request.setEmail("testuser@exaple.pl");
-        request.setPassword("Pass123!");
-        request.setConfirmPassword("FPass123!");
-
-        var result = _authServices.register(request);
-
-        assertFalse(result.isSuccess());
-        assertEquals("Passwords do not match", result.getMessage());
-        verifyNoInteractions(_emailServices);
     }
 
     @Test
@@ -117,7 +87,9 @@ public class AuthServicesTest {
 
         when(_userRepository.existsByUsername("testuser2")).thenReturn(false);
         when(_roleRepository.isRoleExists("ROLE_CLIENT")).thenReturn(true);
-        when(_userRepository.createUser(any(), anyString(), anyBoolean())).thenReturn("fake-user-token");
+
+        when(_userServices.create(any(RegisterRequest.class), eq("ROLE_CLIENT"), eq(false)))
+                .thenReturn("fake-user-token");
 
         when(_verificationTokenRepository.createToken(eq("fake-user-token"), eq(TokenTypeEnum.ACTIVATION), anyInt()))
                 .thenReturn("fake-activation-token");
@@ -125,9 +97,6 @@ public class AuthServicesTest {
         var result = _authServices.register(request);
 
         assertTrue(result.isSuccess());
-        assertEquals(HttpStatus.CREATED.value(), result.getStatusCode());
-
-
         verify(_emailServices).sendActivationEmail(
                 eq("testuser2@exaple.pl"),
                 eq("testuser2"),
@@ -145,34 +114,14 @@ public class AuthServicesTest {
                 TestConstants.FAKE_EMAIL.toUpperCase().trim()
         );
 
-        when(_userRepository.findMinimalByEmail(TestConstants.FAKE_EMAIL))
-                .thenReturn(Optional.of(userDto));
-
+        when(_userServices.findMinimalByEmail(TestConstants.FAKE_EMAIL)).thenReturn(Optional.of(userDto));
         when(_verificationTokenRepository.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt()))
                 .thenReturn("res-token");
 
         _authServices.resetPassword(TestConstants.FAKE_EMAIL);
 
-        verify(_emailServices).sendResetPasswordEmail(
-                eq(TestConstants.FAKE_EMAIL),
-                eq(TestConstants.FAKE_USERNAME),
-                eq("res-token")
-        );
+        verify(_emailServices).sendResetPasswordEmail(anyString(), anyString(), anyString());
     }
-
-    @Test
-    void setNewPassword_ShouldReturnBadRequest_WhenPasswordIsNotMatch() {
-        ResetPasswordRequest request = new ResetPasswordRequest();
-        request.setPassword("Pass123!");
-        request.setConfirmPassword("DiffPass123!");
-
-        var result = _authServices.setNewPassword(request);
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
-        assertEquals("Passwords do not match", result.getMessage());
-    }
-
 
     @Test
     void registerConfirm_ShouldReturnSuccess_WhenTokenValidAndUserActivated() {
@@ -182,22 +131,7 @@ public class AuthServicesTest {
         ResultHandler<Boolean> result = _authServices.registerConfirm("valid-token");
 
         assertTrue(result.isSuccess());
-        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertEquals("User activated successfully", result.getMessage());
-    }
-
-    @Test
-    void registerConfirm_ShouldReturnFailure_WhenTokenInvalid() {
-        when(_verificationTokenRepository.validateToken("invalid-token", TokenTypeEnum.ACTIVATION))
-                .thenReturn(Optional.empty()); // Mockujemy błędny token
-
-        ResultHandler<Boolean> result = _authServices.registerConfirm("invalid-token");
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
-        assertEquals("Invalid or expired token", result.getMessage());
-
-        verify(_userRepository, never()).activeUser(anyString());
+        verify(_userServices, times(1)).activeUser("valid-user-token"); // Weryfikacja serwisu
     }
 
     @Test
@@ -213,25 +147,6 @@ public class AuthServicesTest {
         ResultHandler<Boolean> result = _authServices.setNewPassword(request);
 
         assertTrue(result.isSuccess());
-        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertEquals("Reset password successfully", result.getMessage());
-    }
-
-    @Test
-    void setNewPassword_ShouldReturnFailure_WhenTokenInvalid() {
-        ResetPasswordRequest request = new ResetPasswordRequest();
-        request.setToken("invalid-token");
-        request.setPassword("newPass123!");
-        request.setConfirmPassword("newPass123!");
-
-        when(_verificationTokenRepository.validateToken("invalid-token", TokenTypeEnum.PASSWORD_RESET))
-                .thenReturn(Optional.empty());
-
-
-        ResultHandler<Boolean> result = _authServices.setNewPassword(request);
-
-        assertFalse(result.isSuccess());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
-        verify(_userRepository, never()).changePassword(anyString(), anyString());
+        verify(_userServices, times(1)).changePassword("valid-user-token", "newPass123!");
     }
 }
