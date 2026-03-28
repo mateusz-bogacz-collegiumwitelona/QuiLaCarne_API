@@ -197,7 +197,7 @@ public class ReservationServices implements IReservationServices {
             );
 
         _reservationRepo.active(reservationToken);
-        _orderRepo.assignWaiterToOrders(reservationToken, waiterToken);
+        _orderServices.assignWaiterToOrders(reservationToken, waiterToken);
 
         return ResultHandler.success(
                 "Waiters assigned successfully",
@@ -209,7 +209,7 @@ public class ReservationServices implements IReservationServices {
     @Override
     public ResultHandler<Void> isAbsent(String reservationToken) {
         _reservationRepo.isAbsent(reservationToken);
-        _orderRepo.isAbsent(reservationToken);
+        _orderServices.isAbsent(reservationToken);
 
         return ResultHandler.success(
                 "Orders absent successfully",

@@ -10,10 +10,6 @@ import java.util.Optional;
 
 public interface IOrderRepository {
 
-    void assignWaiterToOrders(String reservationToken, String waiterToken);
-
-    void isAbsent(String reservationToken);
-
     OrderStatus findStatusByToken(String token);
 
     void saveOrderWithItems(Orders order, List<OrderItems> items);
@@ -27,4 +23,6 @@ public interface IOrderRepository {
     void saveItem(OrderItems item);
 
     OrderItemsStatus findItemStatusByToken(String token);
+
+    void saveAllItems(List<OrderItems> items);
 }

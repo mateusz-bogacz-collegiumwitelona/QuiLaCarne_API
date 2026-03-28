@@ -2,6 +2,7 @@ package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.RegisterRequest;
+import com.example.restaurant.models.Users;
 
 import java.util.Optional;
 
@@ -27,4 +28,6 @@ public interface IUserRepository {
     void delete(String userToken);
 
     boolean isInRole(String roleToken, String userToken);
+
+    Users findByToken(String token);
 }

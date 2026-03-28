@@ -7,13 +7,11 @@ import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
+import com.example.restaurant.exceptions.ReservationNotFoundException;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
-import com.example.restaurant.repository.interfaces.IDishRepository;
-import com.example.restaurant.repository.interfaces.IOrderRepository;
-import com.example.restaurant.repository.interfaces.IReservationRepository;
-import com.example.restaurant.repository.interfaces.ITableRespository;
+import com.example.restaurant.repository.interfaces.*;
 import com.example.restaurant.services.interfaces.IOrderServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +27,7 @@ public class OrderServices implements IOrderServices {
     private final IDishRepository _dishRepo;
     private final IReservationRepository _reservationRepo;
     private final ITableRespository _tableRepo;
+    private final IUserRepository _userRepo;
 
     @Override
     @Transactional
@@ -258,6 +257,55 @@ public class OrderServices implements IOrderServices {
 
         order.setTotalPrice(order.getTotalPrice() + addToPrice);
         _orderRepo.save(order);
+    }
+
+    @Transactional
+    @Override
+    public void assignWaiterToOrders(String reservationToken, String waiterToken) {
+        var order = _orderRepo.findByReservationToken(reservationToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+
+        var waiter = _userRepo.findByToken(waiterToken);
+
+        var orderStatus = _orderRepo.findStatusByToken("IN_PROGRESS");
+        var orderItemsStatus = _orderRepo.findItemStatusByToken("IN_PROGRESS");
+
+        order.setStatuses(new HashSet<>(Set.of(orderStatus)));
+        order.setWaiter(waiter);
+
+        List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
+
+        for (OrderItems item : items) {
+            boolean isPending = item.getStatuses()
+                    .stream()
+                    .anyMatch(s -> s.getToken().equals("PENDING"));
+
+            if (isPending || item.getStatuses().isEmpty()) item.setStatuses(new HashSet<>(Set.of(orderItemsStatus)));
+        }
+
+        _orderRepo.saveAllItems(items);
+        _orderRepo.save(order);
+    }
+
+    @Override
+    public void isAbsent(String reservationToken) {
+        var orderOpt = _orderRepo.findByReservationToken(reservationToken);
+
+        if (orderOpt.isPresent()) {
+            var order = orderOpt.get();
+            var orderStatus = _orderRepo.findStatusByToken("CANCELLED");
+            var orderItemsStatus = _orderRepo.findItemStatusByToken("CANCELLED");
+
+            order.setStatuses(new HashSet<>(Set.of(orderStatus)));
+
+            List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
+            for (OrderItems item : items) {
+                item.setStatuses(new HashSet<>(Set.of(orderItemsStatus)));
+            }
+
+            _orderRepo.saveAllItems(items);
+            _orderRepo.save(order);
+        }
     }
 
     private String normalizeNote(String note) {

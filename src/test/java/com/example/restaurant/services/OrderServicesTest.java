@@ -7,11 +7,9 @@ import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.models.*;
+import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
-import com.example.restaurant.repository.interfaces.IDishRepository;
-import com.example.restaurant.repository.interfaces.IOrderRepository;
-import com.example.restaurant.repository.interfaces.IReservationRepository;
-import com.example.restaurant.repository.interfaces.ITableRespository;
+import com.example.restaurant.repository.interfaces.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -42,6 +40,8 @@ public class OrderServicesTest {
     @Mock
     private ITableRespository _tableRepo;
 
+    @Mock
+    private IUserRepository _userRepo;
 
     @InjectMocks
     private OrderServices _orderServices;
@@ -405,5 +405,111 @@ public class OrderServicesTest {
 
         assertEquals("Order not found or you are not the assigned waiter", exception.getMessage());
         verify(_orderRepo, never()).save(any());
+    }
+
+    @Test
+    void assignWaiterToOrders_ShouldAssignWaiterAndOnlyChangePendingItems() {
+        String inProgressStatus = "IN_PROGRESS";
+
+        Orders mockOrder = new Orders();
+        mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
+
+        Users mockWaiter = new Users();
+        mockWaiter.setToken(TestConstants.FAKE_USER_TOKEN);
+
+        OrderStatus inProgressOrder = new OrderStatus();
+        inProgressOrder.setToken(inProgressStatus);
+
+        OrderItemsStatus inProgressItem = new OrderItemsStatus();
+        inProgressItem.setToken(inProgressStatus);
+
+        OrderItemsStatus pendingItemStatus = new OrderItemsStatus();
+        pendingItemStatus.setToken("PENDING");
+
+        OrderItemsStatus cancelledItemStatus = new OrderItemsStatus();
+        cancelledItemStatus.setToken("CANCELLED");
+
+        OrderItems pendingDish = new OrderItems();
+        pendingDish.setStatuses(new HashSet<>(Set.of(pendingItemStatus)));
+
+        OrderItems emptyStatusDish = new OrderItems();
+        emptyStatusDish.setStatuses(new HashSet<>());
+
+        OrderItems cancelledDish = new OrderItems();
+        cancelledDish.setStatuses(new HashSet<>(Set.of(cancelledItemStatus)));
+
+        when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(Optional.of(mockOrder));
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(mockWaiter);
+
+        when(_orderRepo.findStatusByToken(inProgressStatus)).thenReturn(inProgressOrder);
+        when(_orderRepo.findItemStatusByToken(inProgressStatus)).thenReturn(inProgressItem);
+
+        when(_orderRepo.findItemsByOrderToken(mockOrder.getToken()))
+                .thenReturn(List.of(pendingDish, emptyStatusDish, cancelledDish));
+
+        _orderServices.assignWaiterToOrders(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+
+        assertEquals(mockWaiter, mockOrder.getWaiter());
+        assertTrue(mockOrder.getStatuses().contains(inProgressOrder));
+
+        assertTrue(pendingDish.getStatuses().contains(inProgressItem));
+        assertTrue(emptyStatusDish.getStatuses().contains(inProgressItem));
+
+        assertFalse(cancelledDish.getStatuses().contains(inProgressItem));
+        assertTrue(cancelledDish.getStatuses().contains(cancelledItemStatus));
+
+        verify(_orderRepo, times(1)).saveAllItems(anyList());
+        verify(_orderRepo, times(1)).save(mockOrder);
+    }
+
+    @Test
+    void isAbsent_ShouldDoNothing_WhenOrderDoesNotExist() {
+        when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.empty());
+
+        _orderServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        verify(_orderRepo, never()).findStatusByToken(anyString());
+        verify(_orderRepo, never()).save(any());
+    }
+
+    @Test
+    void isAbsent_ShouldCancelOrderAndItems_WhenOrderExists() {
+        Orders mockOrder = new Orders();
+        mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
+
+        OrderItems mockItem1 = new OrderItems();
+        mockItem1.setStatuses(new HashSet<>());
+        OrderItems mockItem2 = new OrderItems();
+        mockItem2.setStatuses(new HashSet<>());
+        List<OrderItems> orderItems = List.of(mockItem1, mockItem2);
+
+        OrderStatus cancelledStatus = new OrderStatus();
+        cancelledStatus.setToken("CANCELLED");
+
+        OrderItemsStatus cancelledItemStatus = new OrderItemsStatus();
+        cancelledItemStatus.setToken("CANCELLED");
+
+        when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockOrder));
+
+        when(_orderRepo.findStatusByToken("CANCELLED"))
+                .thenReturn(cancelledStatus);
+        when(_orderRepo.findItemStatusByToken("CANCELLED"))
+                .thenReturn(cancelledItemStatus);
+        when(_orderRepo.findItemsByOrderToken(mockOrder.getToken()))
+                .thenReturn(orderItems);
+
+        _orderServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+
+        assertTrue(mockOrder.getStatuses().contains(cancelledStatus));
+        assertTrue(mockItem1.getStatuses().contains(cancelledItemStatus));
+        assertTrue(mockItem2.getStatuses().contains(cancelledItemStatus));
+
+        verify(_orderRepo, times(1)).saveAllItems(orderItems);
+        verify(_orderRepo, times(1)).save(mockOrder);
     }
 }

@@ -91,6 +91,13 @@ public class UserRepository implements IUserRepository {
         _jpaUserRepository.saveAndFlush(user);
     }
 
+    @Override
+    public Users findByToken(String token) {
+        return _jpaUserRepository.findByToken(token).orElseThrow(
+                () -> new UserNotFoundException("User not found")
+        );
+    }
+
 
     @Override
     @Transactional

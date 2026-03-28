@@ -21,4 +21,8 @@ public interface IOrderServices {
     void removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request);
 
     void addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request);
+
+    void assignWaiterToOrders(String reservationToken, String waiterToken);
+
+    void isAbsent(String reservationToken);
 }
