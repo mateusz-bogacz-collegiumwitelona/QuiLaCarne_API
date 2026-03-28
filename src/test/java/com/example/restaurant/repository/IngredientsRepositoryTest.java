@@ -1,9 +1,6 @@
 package com.example.restaurant.repository;
 
-import com.example.restaurant.dto.request.AddEntityRequest;
-import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.models.Ingredients;
-import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.jpa.IJpaIngredientsRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,13 +8,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,58 +24,39 @@ public class IngredientsRepositoryTest {
     private IngredientsRepository _ingredientsRepository;
 
     @Test
-    void add_ShouldSaveIngredientWithGeneratedTokenAndAllergens_WhenNameIsUnique() {
-        AddEntityRequest request = new AddEntityRequest();
-        request.setNamePl("Czerwona Cebula");
-        request.setNameEn("Red Onion");
+    void save_ShouldCallJpaSave() {
+        Ingredients ingredient = new Ingredients();
+        _ingredientsRepository.save(ingredient);
 
-        Allergens allergen = new Allergens();
-        allergen.setToken("GLUTEN");
-
-        when(_jpaIngredientsRepo.findByNamePl(request.getNamePl())).thenReturn(Optional.empty());
-        when(_jpaIngredientsRepo.findByNameEn(request.getNameEn())).thenReturn(Optional.empty());
-
-        _ingredientsRepository.add(request, List.of(allergen));
-
-        verify(_jpaIngredientsRepo, times(1)).saveAndFlush(argThat(ingredient ->
-                ingredient.getNamePl().equals("Czerwona Cebula") &&
-                        ingredient.getNameEn().equals("Red Onion") &&
-                        ingredient.getToken().equals("RED_ONION") &&
-                        ingredient.getAllergens().contains(allergen)
-        ));
+        verify(_jpaIngredientsRepo, times(1)).save(ingredient);
     }
 
     @Test
-    void add_ShouldThrowException_WhenPolishNameExists() {
-        AddEntityRequest request = new AddEntityRequest();
-        request.setNamePl("Cebula");
-        request.setNameEn("Onion");
+    void isNameTaken_ShouldReturnTrue_WhenPlNameExists() {
+        when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.of(new Ingredients()));
 
-        when(_jpaIngredientsRepo.findByNamePl(request.getNamePl())).thenReturn(Optional.of(new Ingredients()));
+        boolean result = _ingredientsRepository.isNameTaken("Cebula", "Onion");
 
-        // Act & Assert - Zmiana na EntityAlreadyExistsException
-        EntityAlreadyExistsException exception = assertThrows(EntityAlreadyExistsException.class, () ->
-                _ingredientsRepository.add(request, List.of())
-        );
-
-        assertEquals("Name already exists", exception.getMessage());
-        verify(_jpaIngredientsRepo, never()).saveAndFlush(any());
+        assertTrue(result);
     }
 
     @Test
-    void add_ShouldThrowException_WhenEnglishNameExists() {
-        AddEntityRequest request = new AddEntityRequest();
-        request.setNamePl("Cebula");
-        request.setNameEn("Onion");
+    void isNameTaken_ShouldReturnTrue_WhenEnNameExists() {
+        when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.empty());
+        when(_jpaIngredientsRepo.findByNameEn("Onion")).thenReturn(Optional.of(new Ingredients()));
 
-        when(_jpaIngredientsRepo.findByNamePl(request.getNamePl())).thenReturn(Optional.empty());
-        when(_jpaIngredientsRepo.findByNameEn(request.getNameEn())).thenReturn(Optional.of(new Ingredients()));
+        boolean result = _ingredientsRepository.isNameTaken("Cebula", "Onion");
 
-        EntityAlreadyExistsException exception = assertThrows(EntityAlreadyExistsException.class, () ->
-                _ingredientsRepository.add(request, List.of())
-        );
+        assertTrue(result);
+    }
 
-        assertEquals("Name already exists", exception.getMessage());
-        verify(_jpaIngredientsRepo, never()).saveAndFlush(any());
+    @Test
+    void isNameTaken_ShouldReturnFalse_WhenNamesAreFree() {
+        when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.empty());
+        when(_jpaIngredientsRepo.findByNameEn("Onion")).thenReturn(Optional.empty());
+
+        boolean result = _ingredientsRepository.isNameTaken("Cebula", "Onion");
+
+        assertFalse(result);
     }
 }

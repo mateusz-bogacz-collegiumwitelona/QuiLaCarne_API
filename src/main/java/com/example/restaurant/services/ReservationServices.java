@@ -168,6 +168,7 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
+    @Auditable(action = "REMOVE_ITEM_FROM_RESERVATION")
     @Override
     public ResultHandler<Void> removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
         _orderServices.removeItemFromReservation(waiterToken, reservationToken, request);
@@ -178,6 +179,7 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
+    @Auditable(action = "ADD_ITEM_TO_RESERVATION")
     @Override
     public ResultHandler<Void> addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
         _orderServices.addItemFromReservation(waiterToken, reservationToken, request);
@@ -188,6 +190,7 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
+    @Auditable(action = "ASIGN_WAITER_TO_RESERVATION")
     @Override
     public ResultHandler<Void> assignWaiter(String reservationToken, String waiterToken) {
         if (!_userRepo.isInRole("ROLE_WAITER", waiterToken))

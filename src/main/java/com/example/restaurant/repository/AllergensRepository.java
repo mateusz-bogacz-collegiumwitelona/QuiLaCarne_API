@@ -12,18 +12,12 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor
 public class AllergensRepository implements IAllergensRepository {
-    private IJpaAllergensRepository _jpaAllergensRepo;
+    private final IJpaAllergensRepository _jpaAllergensRepo;
 
     @Override
     public List<Allergens> findAllergens(List<String> allergenTokens) {
         if (allergenTokens == null || allergenTokens.isEmpty()) return new ArrayList<>();
 
-        List<Allergens> allergens = _jpaAllergensRepo.findByTokenIn(allergenTokens);
-
-        if (allergens.size() != allergenTokens.size()) {
-            throw new RuntimeException("One or more allergens not found");
-        }
-
-        return allergens;
+        return _jpaAllergensRepo.findByTokenIn(allergenTokens);
     }
 }
