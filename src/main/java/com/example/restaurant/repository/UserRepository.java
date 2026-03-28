@@ -65,7 +65,6 @@ public class UserRepository implements IUserRepository {
                 );
     }
 
-
     @Override
     @Transactional
     public void changePassword(String token, String newPassword) {
@@ -174,5 +173,10 @@ public class UserRepository implements IUserRepository {
         Roles role = _jpaRoleRepository.findByName(roleName).orElseThrow(() -> new RuntimeException("Role not found"));
 
         return user.getRoles().contains(role);
+    }
+
+    @Override
+    public Optional<Users> findByNormalizedUsername(String username) {
+        return _jpaUserRepository.findByNormalizedUsername(username);
     }
 }

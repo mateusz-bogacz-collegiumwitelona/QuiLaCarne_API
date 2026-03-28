@@ -2,7 +2,7 @@ package com.example.restaurant.aspects;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.LogDomain;
-import com.example.restaurant.repository.interfaces.IAuditLogRepository;
+import com.example.restaurant.services.interfaces.IAuditLogServices;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
@@ -21,7 +21,7 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class AuditAspect {
-    private final IAuditLogRepository _auditLogRepo;
+    private final IAuditLogServices _auditLogServices;
 
     @AfterReturning(value = "@annotation(auditable)")
     public void logAuditActivity(JoinPoint joinPoint, Auditable auditable) {
@@ -35,7 +35,7 @@ public class AuditAspect {
                 details
         );
 
-        _auditLogRepo.log(logDomain);
+        _auditLogServices.log(logDomain);
     }
 
     private String getUsername() {

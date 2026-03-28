@@ -30,4 +30,6 @@ public interface IUserRepository {
     boolean isInRole(String roleToken, String userToken);
 
     Users findByToken(String token);
+
+    Optional<Users> findByNormalizedUsername(String username);
 }

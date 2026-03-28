@@ -2,7 +2,7 @@ package com.example.restaurant.exceptions;
 
 import com.example.restaurant.dto.domain.LogDomain;
 import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.repository.interfaces.IAuditLogRepository;
+import com.example.restaurant.services.interfaces.IAuditLogServices;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class GlobalExceptionHandler {
-    private final IAuditLogRepository _auditLogRepo;
+    private final IAuditLogServices _auditLogServices;
 
     @ExceptionHandler({
             InvalidDateException.class,
@@ -87,7 +87,7 @@ public class GlobalExceptionHandler {
                 details
         );
 
-        _auditLogRepo.log(logDomain);
+        _auditLogServices.log(logDomain);
 
         log.warn("Failed login attempt from IP: {}. Reason: {}", ipAddress, aex.getMessage());
 

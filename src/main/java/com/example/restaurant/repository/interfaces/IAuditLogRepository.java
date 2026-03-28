@@ -1,7 +1,7 @@
 package com.example.restaurant.repository.interfaces;
 
-import com.example.restaurant.dto.domain.LogDomain;
+import com.example.restaurant.models.AuditLog;
 
 public interface IAuditLogRepository {
-    void log(LogDomain logDomain);
+    void save(AuditLog auditLog);
 }
