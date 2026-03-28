@@ -1,17 +1,21 @@
 package com.example.restaurant.repository.interfaces;
 
-import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.models.RestaurantTables;
+import com.example.restaurant.models.lookup.TableStatus;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 
 public interface ITableRespository {
-    List<TableListResponse> findAllTables(String lang, OffsetDateTime startTime, OffsetDateTime endTime);
-
     boolean isTableExist(String token);
 
-    void changeStatus(String token, String statusToken);
-
     RestaurantTables findByToken(String token);
+
+    List<RestaurantTables> findAllTables(OffsetDateTime startTime, OffsetDateTime endTime);
+
+    TableStatus findStatusByToken(String token);
+
+    void save(RestaurantTables table);
+
+    boolean isTableAvailable(String tableToken, OffsetDateTime startTime, OffsetDateTime endTime);
 }

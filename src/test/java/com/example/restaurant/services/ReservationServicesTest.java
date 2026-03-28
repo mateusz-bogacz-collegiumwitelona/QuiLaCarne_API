@@ -98,8 +98,9 @@ public class ReservationServicesTest {
         ReservationRequest request = createValidRequest();
 
         when(_tableRepo.isTableExist(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(true);
-        when(_tableRepo.findAllTables(eq("pl"), any(OffsetDateTime.class), any(OffsetDateTime.class)))
-                .thenReturn(List.of());
+        when(_tableRepo.isTableAvailable(
+                eq(TestConstants.FAKE_TABLE_TOKEN), any(), any()
+        )).thenReturn(false);
 
         ResultHandler<ReservationResponse> result = _reservationServices.create(request, TestConstants.FAKE_USER_TOKEN);
 
@@ -118,8 +119,9 @@ public class ReservationServicesTest {
         ReservationStatus mockStatus = new ReservationStatus();
 
         when(_tableRepo.isTableExist(anyString())).thenReturn(true);
-        when(_tableRepo.findAllTables(eq("pl"), any(), any()))
-                .thenReturn(List.of(TableListResponse.builder().token(TestConstants.FAKE_TABLE_TOKEN).build()));
+        when(_tableRepo.isTableAvailable(
+                eq(TestConstants.FAKE_TABLE_TOKEN), any(), any()
+        )).thenReturn(true);
         when(_userRepo.findByToken(anyString())).thenReturn(mockUser);
         when(_tableRepo.findByToken(anyString())).thenReturn(mockTable);
         when(_reservationRepo.findStatusByToken("ACTIVE")).thenReturn(mockStatus);

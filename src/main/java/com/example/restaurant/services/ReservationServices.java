@@ -73,15 +73,12 @@ public class ReservationServices implements IReservationServices {
                     HttpStatus.NOT_FOUND.value()
             );
 
-        boolean isFreeInTimeframe = _tableRepo.findAllTables("pl", request.getStartTime(), request.getEndTime())
-                .stream()
-                .anyMatch(table -> table.getToken().equals(request.getTableToken()));
-
-        if (!isFreeInTimeframe)
+        if (!_tableRepo.isTableAvailable(request.getTableToken(), request.getStartTime(), request.getEndTime()))
             return ResultHandler.failure(
                     "Table is already reserved in this timeframe",
                     HttpStatus.CONFLICT.value()
             );
+        
 
         var user = _userRepo.findByToken(userToken);
         var table = _tableRepo.findByToken(request.getTableToken());
