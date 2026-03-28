@@ -6,22 +6,38 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.*;
+import com.example.restaurant.exceptions.ReservationNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.mappers.ReservationMapper;
+import com.example.restaurant.models.Reservations;
+import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IOrderServices;
 import com.example.restaurant.services.interfaces.IReservationServices;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +47,7 @@ public class ReservationServices implements IReservationServices {
     private final IOrderRepository _orderRepo;
     private final IUserRepository _userRepo;
     private final IOrderServices _orderServices;
+    private final ReservationMapper _reservationMapper;
 
     @Override
     @Transactional
@@ -66,16 +83,21 @@ public class ReservationServices implements IReservationServices {
                     HttpStatus.CONFLICT.value()
             );
 
-        String newReservationToken = _reservationRepo.createReservation(request, userToken);
+        var user = _userRepo.findByToken(userToken);
+        var table = _tableRepo.findByToken(request.getTableToken());
+        var activeStatus = _reservationRepo.findStatusByToken("ACTIVE");
 
-        if (newReservationToken == null)
-            return ResultHandler.failure(
-                    "Failed to create reservation",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
+        Reservations reservation = new Reservations();
+        reservation.setUser(user);
+        reservation.setTableId(table);
+        reservation.setStartTime(request.getStartTime());
+        reservation.setEndTime(request.getEndTime());
+        reservation.setReservationStatus(new HashSet<>(Set.of(activeStatus)));
+
+        _reservationRepo.save(reservation);
 
         var orderCreate = _orderServices.createOrderForReservation(
-                newReservationToken,
+                reservation.getToken(),
                 request.getTableToken(),
                 request.getDishes());
 
@@ -111,8 +133,32 @@ public class ReservationServices implements IReservationServices {
     @Override
     public ResultHandler<PagedResult<ClientReservationResponse>> history(ClientReservationRequest request, PaggedRequest pagged, String userToken) {
         String lang = LocaleContextHolder.getLocale().getLanguage();
+        Pageable pageable = PageRequest.of(pagged.getPage() - 1, pagged.getSize(), Sort.by(Sort.Direction.ASC, "startTime"));
 
-        var response = _reservationRepo.history(userToken, lang, request, pagged);
+        Specification<Reservations> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            predicates.add(criteriaBuilder.equal(root.get("user").get("token"), userToken));
+
+            if (request.getFromDate() != null)
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("startTime"), request.getFromDate()));
+
+            if (request.getToDate() != null)
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("startTime"), request.getToDate()));
+
+            if (request.getStatusToken() != null && !request.getStatusToken().isEmpty()) {
+                Join<Reservations, ReservationStatus> statusJoin = root.join("reservationStatus");
+                predicates.add(criteriaBuilder.equal(statusJoin.get("token"), request.getStatusToken()));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Reservations> page = _reservationRepo.findAll(spec, pageable);
+
+        var response = new PagedResult<>(page.map(r ->
+                _reservationMapper.toClientReservationResponse(r, lang)
+        ));
 
         return ResultHandler.success(
                 "User reservations retrieved successfully",
@@ -125,7 +171,11 @@ public class ReservationServices implements IReservationServices {
     public ResultHandler<ReservationDetailsResponse> details(String reservationToken, String userToken) {
         String lang = LocaleContextHolder.getLocale().getLanguage();
 
-        ReservationDetailsResponse response = _reservationRepo.details(reservationToken, userToken, lang);
+
+        Reservations reservations = _reservationRepo.findByTokenAndUserToken(reservationToken, userToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+
+        ReservationDetailsResponse response = _reservationMapper.toReservationDetailsResponse(reservations, lang);
 
         var orderSummary = _orderServices.getOrderSummaryForReservation(reservationToken);
 
@@ -139,23 +189,43 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
+    @Transactional
     @Override
     public ResultHandler<Void> cancel(String reservationToken, String userToken) {
-        _reservationRepo.cancel(reservationToken, userToken);
+        Reservations reservation = _reservationRepo.findByTokenAndUserToken(reservationToken, userToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
 
-        return ResultHandler.success(
-                "Reservation cancelled successfully",
-                HttpStatus.OK.value()
-        );
+        ReservationStatus cancelledStatus = _reservationRepo.findStatusByToken("CANCELLED");
+        reservation.setReservationStatus(new HashSet<>(Set.of(cancelledStatus)));
+
+        _reservationRepo.save(reservation);
+
+        return ResultHandler.success("Reservation cancelled successfully", HttpStatus.OK.value());
     }
 
     @Override
     public ResultHandler<PagedResult<TodayReservationsResponse>> today(PaggedRequest request) {
         String lang = LocaleContextHolder.getLocale().getLanguage();
+        Pageable pageable = PageRequest.of(
+                request.getPage() - 1,
+                request.getSize(),
+                Sort.by(Sort.Direction.ASC, "startTime")
+        );
 
-        var response = _reservationRepo.today(lang, request);
+        OffsetDateTime startOfDay = OffsetDateTime.now().with(LocalTime.MIN);
+        OffsetDateTime endOfDay = OffsetDateTime.now().with(LocalTime.MAX);
+        Specification<Reservations> spec = (root, query, criteriaBuilder) ->
+                criteriaBuilder.between(root.get("startTime"), startOfDay, endOfDay);
 
-        for (TodayReservationsResponse res : response.getItems()) {
+        Page<Reservations> reservationPage = _reservationRepo.findAll(spec, pageable);
+
+        Page<TodayReservationsResponse> dtoPage = reservationPage.map(
+                res -> _reservationMapper.toTodayReservationsResponse(res, lang)
+        );
+
+        PagedResult<TodayReservationsResponse> pagedResult = new PagedResult<>(dtoPage);
+
+        for (TodayReservationsResponse res : pagedResult.getItems()) {
             var orderDetails = _orderServices.todayOrderDetails(res.getToken(), lang);
             res.setTotalPrice(orderDetails.totalPrice());
             res.setDishes(orderDetails.dishes());
@@ -164,7 +234,7 @@ public class ReservationServices implements IReservationServices {
         return ResultHandler.success(
                 "Today's reservations retrieved successfully",
                 HttpStatus.OK.value(),
-                response
+                pagedResult
         );
     }
 
@@ -190,33 +260,40 @@ public class ReservationServices implements IReservationServices {
         );
     }
 
+    @Transactional
     @Auditable(action = "ASIGN_WAITER_TO_RESERVATION")
     @Override
     public ResultHandler<Void> assignWaiter(String reservationToken, String waiterToken) {
         if (!_userRepo.isInRole("ROLE_WAITER", waiterToken))
-            return ResultHandler.failure(
-                    "Not waiter",
-                    HttpStatus.UNAUTHORIZED.value()
-            );
+            return ResultHandler.failure("Not waiter", HttpStatus.UNAUTHORIZED.value());
 
-        _reservationRepo.active(reservationToken);
+        Reservations reservation = _reservationRepo.findByToken(reservationToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+
+        ReservationStatus inProgressStatus = _reservationRepo.findStatusByToken("IN_PROGRESS");
+        reservation.setReservationStatus(new HashSet<>(Set.of(inProgressStatus)));
+        _reservationRepo.save(reservation);
+
         _orderServices.assignWaiterToOrders(reservationToken, waiterToken);
 
-        return ResultHandler.success(
-                "Waiters assigned successfully",
-                HttpStatus.OK.value()
-        );
+        return ResultHandler.success("Waiters assigned successfully", HttpStatus.OK.value());
     }
 
     @Transactional
     @Override
     public ResultHandler<Void> isAbsent(String reservationToken) {
-        _reservationRepo.isAbsent(reservationToken);
+        Reservations reservation = _reservationRepo.findByToken(reservationToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+
+        boolean isActive = reservation.getReservationStatus().stream()
+                .anyMatch(status -> status.getToken().equals("ACTIVE"));
+
+        if (!isActive) throw new IllegalStateException("Only ACTIVE reservations can be set to NO_SHOW");
+
+        reservation.setReservationStatus(Set.of(_reservationRepo.findStatusByToken("NO_SHOW")));
+        _reservationRepo.save(reservation);
         _orderServices.isAbsent(reservationToken);
 
-        return ResultHandler.success(
-                "Orders absent successfully",
-                HttpStatus.OK.value()
-        );
+        return ResultHandler.success("Absent success", 200);
     }
 }

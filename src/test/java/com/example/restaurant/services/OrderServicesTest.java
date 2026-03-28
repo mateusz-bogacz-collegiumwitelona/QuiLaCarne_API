@@ -64,7 +64,7 @@ public class OrderServicesTest {
         dishEntity.setPrice(50);
 
         when(_dishRepo.listForOrder(List.of(TestConstants.FAKE_DISH_TOKEN))).thenReturn(List.of(dishEntity));
-        when(_reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(reservation);
+        when(_reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(Optional.of(reservation));
         when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
         when(_orderRepo.findStatusByToken("PENDING")).thenReturn(status);
 
@@ -102,7 +102,7 @@ public class OrderServicesTest {
         dishReq.setDishToken(TestConstants.FAKE_DISH_TOKEN);
         dishReq.setQuantity(2);
 
-        when(_reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(new Reservations());
+        when(_reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(Optional.of(new Reservations()));
         when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(new RestaurantTables());
         when(_orderRepo.findStatusByToken("PENDING")).thenReturn(new OrderStatus());
 

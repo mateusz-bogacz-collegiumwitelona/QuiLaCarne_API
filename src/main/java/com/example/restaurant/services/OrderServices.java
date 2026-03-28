@@ -46,7 +46,8 @@ public class OrderServices implements IOrderServices {
         Map<String, Dishes> dishesMap = _dishRepo.listForOrder(dishTokens).stream()
                 .collect(Collectors.toMap(Dishes::getToken, dish -> dish));
 
-        var reservation = _reservationRepo.findByToken(reservationToken);
+        var reservation = _reservationRepo.findByToken(reservationToken)
+                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
 
         var table = _tableRepo.findByToken(tableToken);
 

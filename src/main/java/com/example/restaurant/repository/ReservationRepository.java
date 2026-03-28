@@ -1,185 +1,48 @@
 package com.example.restaurant.repository;
 
-import com.example.restaurant.dto.request.ClientReservationRequest;
-import com.example.restaurant.dto.request.PaggedRequest;
-import com.example.restaurant.dto.request.ReservationRequest;
-import com.example.restaurant.dto.response.ClientReservationResponse;
-import com.example.restaurant.dto.response.ReservationDetailsResponse;
-import com.example.restaurant.dto.response.TodayReservationsResponse;
-import com.example.restaurant.exceptions.ReservationNotFoundException;
 import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
-import com.example.restaurant.exceptions.TableNotFoundException;
-import com.example.restaurant.exceptions.UserNotFoundException;
-import com.example.restaurant.helpers.PagedResult;
-import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
-import com.example.restaurant.models.RestaurantTables;
-import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationsRepository;
-import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
-import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class ReservationRepository implements IReservationRepository {
-    private final IJpaUserRepository _jpaUserRepo;
-    private final IJpaTableRepository _jpaTableRepo;
     private final IJpaReservationStatusRepository _jpaReservationStatusRepo;
     private final IJpaReservationsRepository _jpaReservationsRepo;
-    private final ReservationMapper _reservationMapper;
 
     @Override
-    @Transactional
-    public String createReservation(ReservationRequest request, String userToken) {
-        Users user = _jpaUserRepo.findByToken(userToken)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        RestaurantTables table = _jpaTableRepo.findByToken(request.getTableToken())
-                .orElseThrow(() -> new TableNotFoundException("Table not found"));
-
-        ReservationStatus activeStatus = _jpaReservationStatusRepo.findByToken("ACTIVE")
-                .orElseThrow(() -> new ReservationStatusNotFoundException("ReservationStatus not found"));
-
-        Reservations reservation = new Reservations();
-        reservation.setUser(user);
-        reservation.setTableId(table);
-        reservation.setStartTime(request.getStartTime());
-        reservation.setEndTime(request.getEndTime());
-        reservation.setReservationStatus(new HashSet<>(Set.of(activeStatus)));
-
-        _jpaReservationsRepo.saveAndFlush(reservation);
-
-        return reservation.getToken();
+    public ReservationStatus findStatusByToken(String token) {
+        return _jpaReservationStatusRepo.findByToken(token)
+                .orElseThrow(() -> new ReservationStatusNotFoundException("Reservation not found"));
     }
 
     @Override
-    public PagedResult<ClientReservationResponse> history(String userToken, String lang, ClientReservationRequest filter, PaggedRequest pagged) {
-        Pageable pageable = PageRequest.of(pagged.getPage() - 1, pagged.getSize(), Sort.by(Sort.Direction.ASC, "startTime"));
-
-        Specification<Reservations> spec = (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-
-            predicates.add(criteriaBuilder.equal(root.get("user").get("token"), userToken));
-
-            if (filter.getFromDate() != null)
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("startTime"), filter.getFromDate()));
-
-            if (filter.getToDate() != null)
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("startTime"), filter.getToDate()));
-
-            if (filter.getStatusToken() != null && !filter.getStatusToken().isEmpty()) {
-                Join<Reservations, ReservationStatus> statusJoin = root.join("reservationStatus");
-                predicates.add(criteriaBuilder.equal(statusJoin.get("token"), filter.getStatusToken()));
-            }
-
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
-
-        Page<Reservations> reservationPage = _jpaReservationsRepo.findAll(spec, pageable);
-
-        Page<ClientReservationResponse> dtoPage = reservationPage
-                .map(res -> _reservationMapper.toClientReservationResponse(res, lang));
-
-        return new PagedResult<>(dtoPage);
-    }
-
-    @Override
-    public ReservationDetailsResponse details(String reservationToken, String userToken, String lang) {
-        Reservations reservation = _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
-
-        return _reservationMapper.toReservationDetailsResponse(reservation, lang);
-    }
-
-    @Override
-    @Transactional
-    public void cancel(String reservationToken, String userToken) {
-        Reservations reservation = _jpaReservationsRepo.findByTokenAndUser_Token(reservationToken, userToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
-
-        ReservationStatus cancelledStatus = _jpaReservationStatusRepo.findByToken("CANCELLED")
-                .orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
-
-        reservation.setReservationStatus(new HashSet<>(Set.of(cancelledStatus)));
-
+    public void save(Reservations reservation) {
         _jpaReservationsRepo.saveAndFlush(reservation);
     }
 
     @Override
-    public PagedResult<TodayReservationsResponse> today(String lang, PaggedRequest pagged) {
-        Pageable pageable = PageRequest.of(pagged.getPage() - 1, pagged.getSize(), Sort.by(Sort.Direction.ASC, "startTime"));
-
-        OffsetDateTime startOfDay = OffsetDateTime.now().with(LocalTime.MIN);
-        OffsetDateTime endOfDay = OffsetDateTime.now().with(LocalTime.MAX);
-
-        Specification<Reservations> spec = (root, query, criteriaBuilder) ->
-                criteriaBuilder.between(root.get("startTime"), startOfDay, endOfDay);
-
-        Page<Reservations> reservationPage = _jpaReservationsRepo.findAll(spec, pageable);
-
-        Page<TodayReservationsResponse> dtoPage = reservationPage.map(
-                res -> _reservationMapper.toTodayReservationsResponse(res, lang)
-        );
-
-        return new PagedResult<>(dtoPage);
+    public Page<Reservations> findAll(Specification<Reservations> spec, Pageable pageable) {
+        return _jpaReservationsRepo.findAll(spec, pageable);
     }
 
     @Override
-    public void active(String reservationToken) {
-        Reservations reservation = _jpaReservationsRepo.findByToken(reservationToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
-
-        ReservationStatus inProgressStatus = _jpaReservationStatusRepo.findByToken("IN_PROGRESS")
-                .orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
-
-        reservation.setReservationStatus(new HashSet<>(Set.of(inProgressStatus)));
-
-        _jpaReservationsRepo.saveAndFlush(reservation);
+    public Optional<Reservations> findByToken(String token) {
+        return _jpaReservationsRepo.findByToken(token);
     }
 
     @Override
-    public void isAbsent(String reservationToken) {
-        Reservations reservation = _jpaReservationsRepo.findByToken(reservationToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
-
-        boolean isActive = reservation.getReservationStatus().stream()
-                .anyMatch(status -> status.getToken().equals("ACTIVE"));
-
-        if (!isActive) throw new IllegalStateException(
-                "The reservation is not in the ACTIVE state. It cannot be set to NO_SHOW."
-        );
-
-        ReservationStatus notShowStatus = _jpaReservationStatusRepo.findByToken("NO_SHOW").
-                orElseThrow(() -> new ReservationStatusNotFoundException("Reservation Status not found"));
-
-        reservation.setReservationStatus(new HashSet<>(Set.of(notShowStatus)));
-
-        _jpaReservationsRepo.saveAndFlush(reservation);
-    }
-
-    @Override
-    public Reservations findByToken(String token) {
-        return _jpaReservationsRepo.findByToken(token)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+    public Optional<Reservations> findByTokenAndUserToken(String resToken, String userToken) {
+        return _jpaReservationsRepo.findByTokenAndUser_Token(resToken, userToken);
     }
 }
