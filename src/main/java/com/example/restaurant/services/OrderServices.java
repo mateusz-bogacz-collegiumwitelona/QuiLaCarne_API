@@ -1,8 +1,12 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
+import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
+import com.example.restaurant.dto.response.ReservationDishResponse;
+import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
@@ -15,10 +19,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +29,6 @@ public class OrderServices implements IOrderServices {
     private final IDishRepository _dishRepo;
     private final IReservationRepository _reservationRepo;
     private final ITableRespository _tableRepo;
-
 
     @Override
     @Transactional
@@ -92,5 +92,176 @@ public class OrderServices implements IOrderServices {
 
         _orderRepo.saveOrderWithItems(order, orderItems);
         return new ReservationDomain(reservationDishes, totalPrice);
+    }
+
+
+    @Override
+    public OrderSummaryDomain getOrderSummaryForReservation(String reservationToken) {
+        var orderOpt = _orderRepo.findByReservationToken(reservationToken);
+        if (orderOpt.isEmpty()) {
+            return new OrderSummaryDomain(0, new ArrayList<>());
+        }
+
+        Orders order = orderOpt.get();
+        List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
+
+        List<ReservationDishResponse> dishResponses = items.stream().map(item -> {
+            ReservationDishResponse response = new ReservationDishResponse();
+            response.setDishName(item.getProduct().getName());
+            response.setQuantity(item.getQuantity());
+            response.setPrice(item.getPriceAtTimeOfOrder());
+            return response;
+        }).collect(Collectors.toList());
+
+        int totalPrice = items.stream().mapToInt(item -> item.getPriceAtTimeOfOrder() * item.getQuantity()).sum();
+
+        return new OrderSummaryDomain(totalPrice, dishResponses);
+    }
+
+    @Override
+    public TodayOrderSummaryDomain todayOrderDetails(String reservationToken, String lang) {
+        var orderOpt = _orderRepo.findByReservationToken(reservationToken);
+
+        if (orderOpt.isEmpty())
+            return new TodayOrderSummaryDomain(0, new ArrayList<>());
+
+
+        Orders order = orderOpt.get();
+        List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
+
+        List<TodayReservationDishResponse> dishResponses = items.stream().map(item -> {
+            TodayReservationDishResponse response = new TodayReservationDishResponse();
+            response.setDishName(item.getProduct().getName());
+            response.setQuantity(item.getQuantity());
+            response.setPrice(item.getPriceAtTimeOfOrder());
+            response.setNote(item.getNote() != null ? item.getNote() : "");
+
+            if (item.getProduct().getIngredients() != null) {
+                List<String> ingredients = item.getProduct().getIngredients().stream()
+                        .map(i -> i.translate(lang))
+                        .toList();
+
+                List<String> allergens = item.getProduct().getIngredients().stream()
+                        .flatMap(i -> i.getAllergens().stream())
+                        .map(a -> a.translate(lang))
+                        .distinct()
+                        .toList();
+
+                response.setIngredient(ingredients);
+                response.setAllergens(allergens);
+            } else {
+                response.setIngredient(new ArrayList<>());
+                response.setAllergens(new ArrayList<>());
+            }
+
+            return response;
+        }).collect(Collectors.toList());
+
+        int totalPrice = items.stream().mapToInt(item -> item.getPriceAtTimeOfOrder() * item.getQuantity()).sum();
+
+        return new TodayOrderSummaryDomain(totalPrice, dishResponses);
+    }
+
+    @Override
+    @Transactional
+    public void removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
+        Orders order = _orderRepo.findByReservationToken(reservationToken)
+                .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
+                .orElseThrow(() -> new RuntimeException("Order not found or you are not the assigned waiter"));
+
+        List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
+
+        String reqNote = normalizeNote(request.getNote());
+
+        OrderItems itemToMod = items.stream()
+                .filter(i -> i.getProduct().getToken().equals(request.getDishToken()) && Objects.equals(reqNote, normalizeNote(i.getNote())))
+                .filter(i -> i.getStatuses().stream().noneMatch(s -> "CANCELLED".equals(s.getToken())))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Active dish with specified note not found in the order"));
+
+        int currentQuantity = itemToMod.getQuantity();
+        int quantityToRemove = request.getQuantity();
+        int pricePerItem = itemToMod.getPriceAtTimeOfOrder();
+
+        var cancelledStatus = _orderRepo.findItemStatusByToken("CANCELLED");
+
+        if (quantityToRemove >= currentQuantity) {
+            order.setTotalPrice(order.getTotalPrice() - (pricePerItem * currentQuantity));
+
+            itemToMod.setStatuses(new HashSet<>(Set.of(cancelledStatus)));
+            _orderRepo.saveItem(itemToMod);
+        } else {
+            itemToMod.setQuantity(currentQuantity - quantityToRemove);
+            order.setTotalPrice(order.getTotalPrice() - (pricePerItem * quantityToRemove));
+            _orderRepo.saveItem(itemToMod);
+
+            OrderItems cancelledItem = new OrderItems();
+            cancelledItem.setOrder(order);
+            cancelledItem.setProduct(itemToMod.getProduct());
+            cancelledItem.setQuantity(quantityToRemove);
+            cancelledItem.setPriceAtTimeOfOrder(pricePerItem);
+            cancelledItem.setNote(itemToMod.getNote());
+            cancelledItem.setStatuses(new HashSet<>(Set.of(cancelledStatus)));
+
+            _orderRepo.saveItem(cancelledItem);
+        }
+
+        _orderRepo.save(order);
+    }
+
+    @Override
+    @Transactional
+    public void addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
+        Orders order = _orderRepo.findByReservationToken(reservationToken)
+                .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
+                .orElseThrow(() -> new RuntimeException("Order not found or you are not the assigned waiter"));
+
+        List<OrderItems> existingItems = _orderRepo.findItemsByOrderToken(order.getToken());
+        List<String> requestedDishTokens = request.stream().map(ReservationDishRequest::getDishToken).toList();
+        List<Dishes> allRequestedDishes = _dishRepo.listForOrder(requestedDishTokens);
+
+        int addToPrice = 0;
+
+        for (ReservationDishRequest r : request) {
+            Dishes dish = allRequestedDishes.stream()
+                    .filter(d -> d.getToken().equals(r.getDishToken()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Dish not found: " + r.getDishToken()));
+
+            String reqNote = normalizeNote(r.getNote());
+
+            Optional<OrderItems> existingItemOpt = existingItems.stream()
+                    .filter(i -> i.getProduct().getToken().equals(dish.getToken()) &&
+                            java.util.Objects.equals(reqNote, normalizeNote(i.getNote())))
+                    .filter(i -> i.getStatuses().stream().noneMatch(s -> "CANCELLED".equals(s.getToken())))
+                    .findFirst();
+
+            if (existingItemOpt.isPresent()) {
+                OrderItems item = existingItemOpt.get();
+                item.setQuantity(item.getQuantity() + r.getQuantity());
+                _orderRepo.saveItem(item);
+
+                addToPrice += item.getPriceAtTimeOfOrder() * r.getQuantity();
+            } else {
+                OrderItems item = new OrderItems();
+                item.setOrder(order);
+                item.setProduct(dish);
+                item.setQuantity(r.getQuantity());
+                item.setPriceAtTimeOfOrder(dish.getPrice());
+                item.setNote(reqNote);
+
+                _orderRepo.saveItem(item);
+
+                addToPrice += dish.getPrice() * r.getQuantity();
+            }
+        }
+
+        order.setTotalPrice(order.getTotalPrice() + addToPrice);
+        _orderRepo.save(order);
+    }
+
+    private String normalizeNote(String note) {
+        if (note == null || note.trim().isEmpty()) return note;
+        return note.trim();
     }
 }

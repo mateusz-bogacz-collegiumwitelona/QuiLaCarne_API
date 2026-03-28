@@ -1,22 +1,14 @@
 package com.example.restaurant.repository.interfaces;
 
-import com.example.restaurant.dto.domain.OrderSummaryDomain;
-import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
-import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
+import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IOrderRepository {
-    OrderSummaryDomain getOrderSummaryForReservation(String reservationToken);
-
-    TodayOrderSummaryDomain todayOrderDetails(String reservationToken, String lang);
-
-    void removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request);
-
-    void addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request);
 
     void assignWaiterToOrders(String reservationToken, String waiterToken);
 
@@ -25,4 +17,14 @@ public interface IOrderRepository {
     OrderStatus findStatusByToken(String token);
 
     void saveOrderWithItems(Orders order, List<OrderItems> items);
+
+    Optional<Orders> findByReservationToken(String reservationToken);
+
+    List<OrderItems> findItemsByOrderToken(String orderToken);
+
+    void save(Orders order);
+
+    void saveItem(OrderItems item);
+
+    OrderItemsStatus findItemStatusByToken(String token);
 }

@@ -127,7 +127,7 @@ public class ReservationServices implements IReservationServices {
 
         ReservationDetailsResponse response = _reservationRepo.details(reservationToken, userToken, lang);
 
-        var orderSummary = _orderRepo.getOrderSummaryForReservation(reservationToken);
+        var orderSummary = _orderServices.getOrderSummaryForReservation(reservationToken);
 
         response.setTotalPrice(orderSummary.totalPrice());
         response.setDishes(orderSummary.dishes());
@@ -156,7 +156,7 @@ public class ReservationServices implements IReservationServices {
         var response = _reservationRepo.today(lang, request);
 
         for (TodayReservationsResponse res : response.getItems()) {
-            var orderDetails = _orderRepo.todayOrderDetails(res.getToken(), lang);
+            var orderDetails = _orderServices.todayOrderDetails(res.getToken(), lang);
             res.setTotalPrice(orderDetails.totalPrice());
             res.setDishes(orderDetails.dishes());
         }
@@ -170,7 +170,7 @@ public class ReservationServices implements IReservationServices {
 
     @Override
     public ResultHandler<Void> removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
-        _orderRepo.removeItemFromReservation(waiterToken, reservationToken, request);
+        _orderServices.removeItemFromReservation(waiterToken, reservationToken, request);
 
         return ResultHandler.success(
                 "Order item removed successfully",
@@ -180,7 +180,7 @@ public class ReservationServices implements IReservationServices {
 
     @Override
     public ResultHandler<Void> addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
-        _orderRepo.addItemFromReservation(waiterToken, reservationToken, request);
+        _orderServices.addItemFromReservation(waiterToken, reservationToken, request);
 
         return ResultHandler.success(
                 "Order items add successfully",

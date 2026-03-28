@@ -202,7 +202,7 @@ public class ReservationServicesTest {
                 "pl"
         )).thenReturn(mockDetails);
 
-        when(_orderRepo.getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(mockSummary);
+        when(_orderServices.getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(mockSummary);
 
         ResultHandler<ReservationDetailsResponse> result = _reservationServices.details(
                 TestConstants.FAKE_RESERVATION_TOKEN,
@@ -234,7 +234,7 @@ public class ReservationServicesTest {
                 )
         );
 
-        verify(_orderRepo, never()).getOrderSummaryForReservation(anyString());
+        verify(_orderServices, never()).getOrderSummaryForReservation(anyString());
     }
 
     @Test
@@ -296,7 +296,7 @@ public class ReservationServicesTest {
 
         TodayOrderSummaryDomain orderSummary = new TodayOrderSummaryDomain(40, List.of(dishDto));
 
-        when(_orderRepo.todayOrderDetails(TestConstants.FAKE_RESERVATION_TOKEN, "pl")).thenReturn(orderSummary);
+        when(_orderServices.todayOrderDetails(TestConstants.FAKE_RESERVATION_TOKEN, "pl")).thenReturn(orderSummary);
 
         var result = _reservationServices.today(pagged);
 
@@ -332,7 +332,7 @@ public class ReservationServicesTest {
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertEquals("Order item removed successfully", result.getMessage());
 
-        verify(_orderRepo, times(1)).removeItemFromReservation(
+        verify(_orderServices, times(1)).removeItemFromReservation(
                 TestConstants.FAKE_USER_TOKEN,
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 request
@@ -356,7 +356,7 @@ public class ReservationServicesTest {
         assertEquals(HttpStatus.OK.value(), result.getStatusCode());
         assertEquals("Order items add successfully", result.getMessage());
 
-        verify(_orderRepo, times(1)).addItemFromReservation(
+        verify(_orderServices, times(1)).addItemFromReservation(
                 TestConstants.FAKE_USER_TOKEN,
                 TestConstants.FAKE_RESERVATION_TOKEN,
                 request
