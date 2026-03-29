@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -42,5 +43,15 @@ public class DishRepository implements IDishRepository {
                 .filter(d -> d.getToken().equals(token))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Dish not found"));
+    }
+
+    @Override
+    public List<Dishes> findByIngredientsId(UUID id) {
+        return _jpaDishRepo.findByIngredientsId(id);
+    }
+
+    @Override
+    public void save(Dishes dish) {
+        _jpaDishRepo.save(dish);
     }
 }

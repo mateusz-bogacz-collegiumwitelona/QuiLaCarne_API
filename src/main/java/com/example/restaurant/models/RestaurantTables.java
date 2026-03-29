@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,6 +20,9 @@ public class RestaurantTables extends BaseEntity {
 
     @Column(name = "capacity")
     private int capacity;
+
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

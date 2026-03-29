@@ -10,8 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,6 +66,27 @@ public class IngredientsRepositoryTest {
         _ingredientsRepository.isNameTaken("Cebula", "Onion");
 
         verify(_jpaIngredientsRepo, times(1)).findByNamePl("Cebula");
-        verify(_jpaIngredientsRepo, never()).findByNameEn(anyString()); // Sprawdzenie short-circuit
+        verify(_jpaIngredientsRepo, never()).findByNameEn(anyString());
+    }
+
+    @Test
+    void findByToken_ShouldReturnIngredient_WhenExists() {
+        Ingredients ingredient = new Ingredients();
+        when(_jpaIngredientsRepo.findByToken("TOMATO")).thenReturn(Optional.of(ingredient));
+
+        Ingredients result = _ingredientsRepository.findByToken("TOMATO");
+
+        assertNotNull(result);
+        assertEquals(ingredient, result);
+    }
+
+    @Test
+    void findByToken_ShouldThrowException_WhenNotFound() {
+        when(_jpaIngredientsRepo.findByToken("UNKNOWN")).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            _ingredientsRepository.findByToken("UNKNOWN");
+        });
+        assertEquals("Ingredient not found", exception.getMessage());
     }
 }

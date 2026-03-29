@@ -4,8 +4,11 @@ import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.models.Dishes;
+import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
+import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +19,7 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -27,6 +31,9 @@ public class IngredientsServicesTest {
 
     @Mock
     private IAllergensRepository _allergensRepo;
+
+    @Mock
+    private IDishRepository _dishRepo;
 
     @InjectMocks
     private IngredientsServices _ingredientsServices;
@@ -124,5 +131,38 @@ public class IngredientsServicesTest {
 
         assertTrue(result.isSuccess());
         verify(_ingredientsRepo).save(argThat(i -> i.getAllergens().isEmpty()));
+    }
+
+    @Test
+    void remove_ShouldSoftDeleteIngredient_AndDeactivateDishes() {
+        String token = "TOMATO";
+        UUID ingredientId = UUID.randomUUID();
+
+        Ingredients ingredient = new Ingredients();
+        ingredient.setId(ingredientId);
+        ingredient.setToken(token);
+        ingredient.setNameEn("Tomato");
+        ingredient.setNamePl("Pomidor");
+
+        Dishes dish = new Dishes();
+        dish.setAvailable(true);
+
+        when(_ingredientsRepo.findByToken(token)).thenReturn(ingredient);
+        when(_dishRepo.findByIngredientsId(ingredientId)).thenReturn(List.of(dish));
+
+        var result = _ingredientsServices.remove(token);
+
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("Ingredient remove successfuly", result.getMessage());
+
+        assertTrue(ingredient.getToken().startsWith("DELETED_"));
+        assertTrue(ingredient.getNameEn().startsWith("DELETED_"));
+        assertTrue(ingredient.getNamePl().startsWith("DELETED_"));
+        assertNotNull(ingredient.getDeletedAt());
+        verify(_ingredientsRepo).save(ingredient);
+
+        assertFalse(dish.isAvailable());
+        assertEquals("Tomato is deleted", dish.getUnavailableReason());
+        verify(_dishRepo).save(dish);
     }
 }

@@ -4,16 +4,23 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.OffsetDateTime;
 
 @MappedSuperclass
 @Getter
 @Setter
-public abstract class BaseTranslatedEntity extends BaseEntity{
+@SQLRestriction("deleted_at IS NULL")
+public abstract class BaseTranslatedEntity extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String namePl;
 
     @Column(nullable = false, unique = true)
     private String nameEn;
+
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
     public String translate(String lang) {
         return "en".equalsIgnoreCase(lang) ? nameEn : namePl;

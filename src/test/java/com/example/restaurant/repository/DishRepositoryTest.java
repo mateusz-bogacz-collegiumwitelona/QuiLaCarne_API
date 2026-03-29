@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -106,5 +107,17 @@ public class DishRepositoryTest {
     @Test
     void get_ShouldThrowException_WhenTokenDoesNotExist() {
         assertThrows(RuntimeException.class, () -> _dishRepo.get(List.of(), "MISSING"));
+    }
+
+    @Test
+    void findByIngredientsId_ShouldReturnListOfDishes() {
+        UUID id = UUID.randomUUID();
+        List<Dishes> expectedDishes = List.of(new Dishes(), new Dishes());
+        when(_jpaDishRepo.findByIngredientsId(id)).thenReturn(expectedDishes);
+
+        List<Dishes> result = _dishRepo.findByIngredientsId(id);
+
+        assertEquals(2, result.size());
+        verify(_jpaDishRepo).findByIngredientsId(id);
     }
 }

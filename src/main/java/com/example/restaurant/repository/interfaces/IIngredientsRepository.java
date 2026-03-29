@@ -6,4 +6,6 @@ public interface IIngredientsRepository {
     void save(Ingredients ingredients);
 
     boolean isNameTaken(String pl, String en);
+
+    Ingredients findByToken(String token);
 }

@@ -19,6 +19,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
 
@@ -198,6 +200,7 @@ public class UserServices implements IUserServices {
         user.setEmail("deleted_" + timestamp + "_" + user.getEmail());
         user.setUsername("deleted_" + timestamp + "_" + user.getUsername());
         user.setIsActive(false);
+        user.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
         _userRepo.save(user);
 
         return ResultHandler.success(

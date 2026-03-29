@@ -5,4 +5,6 @@ import com.example.restaurant.helpers.ResultHandler;
 
 public interface IIngredientsServices {
     ResultHandler<Void> add(AddIngredientRequest request);
+
+    ResultHandler<Void> remove(String token);
 }

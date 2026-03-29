@@ -21,4 +21,12 @@ public class IngredientsRepository implements IIngredientsRepository {
         return _jpaIngredientsRepo.findByNamePl(pl).isPresent() ||
                 _jpaIngredientsRepo.findByNameEn(en).isPresent();
     }
+
+    @Override
+    public Ingredients findByToken(String token) {
+        return _jpaIngredientsRepo.findByToken(token)
+                .orElseThrow(
+                        () -> new RuntimeException("Ingredient not found")
+                );
+    }
 }

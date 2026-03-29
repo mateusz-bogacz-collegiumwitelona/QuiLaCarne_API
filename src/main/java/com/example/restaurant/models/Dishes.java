@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +27,9 @@ public class Dishes extends BaseNamedEntity {
 
     @Column(name = "image_url")
     private String imageUrl;
+
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
