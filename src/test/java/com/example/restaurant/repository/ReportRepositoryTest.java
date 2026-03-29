@@ -9,7 +9,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -56,5 +61,21 @@ public class ReportRepositoryTest {
         _reportRepo.save(report);
 
         verify(_jpaReportRepo, times(1)).save(report);
+    }
+
+    @Test
+    void findAll_ShouldReturnPageFromJpaRepository() {
+        Specification<GuestReports> mockSpec = mock(Specification.class);
+        Pageable mockPageable = mock(Pageable.class);
+        Page<GuestReports> expectedPage = new PageImpl<>(Collections.emptyList());
+
+        when(_jpaReportRepo.findAll(mockSpec, mockPageable)).thenReturn(expectedPage);
+
+        Page<GuestReports> result = _reportRepo.findAll(mockSpec, mockPageable);
+
+        assertNotNull(result);
+        assertEquals(expectedPage, result);
+
+        verify(_jpaReportRepo, times(1)).findAll(mockSpec, mockPageable);
     }
 }

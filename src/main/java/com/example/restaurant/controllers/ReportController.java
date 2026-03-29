@@ -1,22 +1,24 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.AddReportRequest;
+import com.example.restaurant.dto.request.ReportFilterRequest;
+import com.example.restaurant.dto.response.ReportListResponse;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IReportServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(value = "/api/report", produces = "application/json")
@@ -47,6 +49,37 @@ public class ReportController {
             @AuthenticationPrincipal(expression = "token") String userToken
     ) {
         var result = _reportServices.add(userToken, request);
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
+
+
+    @Operation(
+            summary = "List guest reports",
+            description = "Retrieves a paginated and filtered list of guest reports. Supports filtering by date range, status, and sorting by creation date. Requires MANAGER role."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Reports retrieved successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Success Response",
+                                    value = "{\n  \"isSuccess\": true,\n  \"message\": \"Reports retrieved successfully\",\n  \"statusCode\": 200,\n  \"data\": {\n    \"items\": [\n      {\n        \"token\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"guestUsername\": \"john_doe\",\n        \"guestToken\": \"330e8400-e29b-41d4-a716-116655440000\",\n        \"reporterUsername\": \"waiter_anna\",\n        \"reporterToken\": \"110e8400-e29b-41d4-a716-226655440000\",\n        \"reason\": \"Guest was extremely rude and broke a glass.\",\n        \"createdAt\": \"2024-03-29T18:30:00Z\",\n        \"status\": \"In progress\"\n      }\n    ],\n    \"pageNumber\": 1,\n    \"pageSize\": 10,\n    \"totalPages\": 1,\n    \"totalElements\": 1,\n    \"isFirst\": true,\n    \"isLast\": true\n  }\n}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid filter parameters (e.g., wrong date format)", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<ReportListResponse>>> list(
+            @ParameterObject @ModelAttribute @Valid ReportFilterRequest request
+    ) {
+        var result = _reportServices.list(request);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
 }

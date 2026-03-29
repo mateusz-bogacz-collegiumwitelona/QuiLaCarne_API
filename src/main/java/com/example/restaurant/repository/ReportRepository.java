@@ -6,6 +6,9 @@ import com.example.restaurant.repository.interfaces.IReportRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaGuestReportRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaGuestReportStatusRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -25,5 +28,10 @@ public class ReportRepository implements IReportRepository {
     @Override
     public void save(GuestReports report) {
         _jpaRepostRepo.save(report);
+    }
+
+    @Override
+    public Page<GuestReports> findAll(Specification<GuestReports> spec, Pageable pageable) {
+        return _jpaRepostRepo.findAll(spec, pageable);
     }
 }
