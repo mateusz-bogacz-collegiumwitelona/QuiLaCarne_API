@@ -6,6 +6,7 @@ import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.helpers.SoftDeleteHelpers;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
@@ -191,14 +192,12 @@ public class UserServices implements IUserServices {
     @Auditable(action = "DELETE_ACCOUNT")
     public ResultHandler<Void> deleteAccount(String userToken) {
         Users user = _userRepo.findByToken(userToken);
+        
+        user.setNormalizedEmail(SoftDeleteHelpers.markAsDelete(user.getNormalizedEmail()));
+        user.setNormalizedUsername(SoftDeleteHelpers.markAsDelete(user.getNormalizedUsername()));
 
-        String timestamp = String.valueOf(System.currentTimeMillis());
-
-        user.setNormalizedEmail("DELETED_" + timestamp + "_" + user.getNormalizedEmail());
-        user.setNormalizedUsername("DELETED_" + timestamp + "_" + user.getNormalizedUsername());
-
-        user.setEmail("deleted_" + timestamp + "_" + user.getEmail());
-        user.setUsername("deleted_" + timestamp + "_" + user.getUsername());
+        user.setEmail(SoftDeleteHelpers.markAsDelete(user.getEmail()));
+        user.setUsername(SoftDeleteHelpers.markAsDelete(user.getUsername()));
         user.setIsActive(false);
         user.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
         _userRepo.save(user);

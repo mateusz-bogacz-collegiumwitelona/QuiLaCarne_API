@@ -4,6 +4,7 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.helpers.SoftDeleteHelpers;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -61,12 +62,11 @@ public class IngredientsServices implements IIngredientsServices {
     public ResultHandler<Void> remove(String token) {
         var ingredient = _ingredientsRepo.findByToken(token);
 
-        String timestamp = String.valueOf(System.currentTimeMillis());
         String orginaNameEn = ingredient.getNameEn();
 
-        ingredient.setToken("DELETED_" + timestamp + "_" + ingredient.getToken());
-        ingredient.setNameEn("DELETED_" + timestamp + "_" + ingredient.getNameEn());
-        ingredient.setNamePl("DELETED_" + timestamp + "_" + ingredient.getNamePl());
+        ingredient.setToken(SoftDeleteHelpers.markAsDelete(ingredient.getToken()));
+        ingredient.setNameEn(SoftDeleteHelpers.markAsDelete(ingredient.getNameEn()));
+        ingredient.setNamePl(SoftDeleteHelpers.markAsDelete(ingredient.getNamePl()));
         ingredient.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
 
         _ingredientsRepo.save(ingredient);
