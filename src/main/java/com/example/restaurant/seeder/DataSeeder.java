@@ -105,6 +105,7 @@ public class DataSeeder implements CommandLineRunner {
         ));
 
         seedTranslatedEntity(_jpaGuestReportStatusRepo, GuestReportStatus::new, List.of(
+                new TranslatedData("IN_PROGRESS", "W trakcie", "In progress"),
                 new TranslatedData("ACCEPTED", "Zaakceptowane", "Accepted"),
                 new TranslatedData("REJECTED", "Odrzucone", "Rejected")
         ));

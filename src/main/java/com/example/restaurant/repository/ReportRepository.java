@@ -1,0 +1,29 @@
+package com.example.restaurant.repository;
+
+import com.example.restaurant.models.GuestReports;
+import com.example.restaurant.models.lookup.GuestReportStatus;
+import com.example.restaurant.repository.interfaces.IReportRepository;
+import com.example.restaurant.repository.interfaces.jpa.IJpaGuestReportRepository;
+import com.example.restaurant.repository.interfaces.jpa.IJpaGuestReportStatusRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+
+@Repository
+@RequiredArgsConstructor
+public class ReportRepository implements IReportRepository {
+    private final IJpaGuestReportRepository _jpaRepostRepo;
+    private final IJpaGuestReportStatusRepository _jpaReportStatusRepo;
+
+    @Override
+    public GuestReportStatus findStatusByToken(String token) {
+        return _jpaReportStatusRepo.findByToken(token)
+                .orElseThrow(
+                        () -> new RuntimeException("Report Status not found")
+                );
+    }
+
+    @Override
+    public void save(GuestReports report) {
+        _jpaRepostRepo.save(report);
+    }
+}
