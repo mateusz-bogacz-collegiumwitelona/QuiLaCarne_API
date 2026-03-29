@@ -1,6 +1,6 @@
 package com.example.restaurant.repository;
 
-import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
+import com.example.restaurant.exceptions.StatusNotFoundException;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
@@ -23,7 +23,7 @@ public class ReservationRepository implements IReservationRepository {
     @Override
     public ReservationStatus findStatusByToken(String token) {
         return _jpaReservationStatusRepo.findByToken(token)
-                .orElseThrow(() -> new ReservationStatusNotFoundException("Reservation not found"));
+                .orElseThrow(() -> new StatusNotFoundException("Reservation not found"));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.AddReportRequest;
+import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.PagedResult;
@@ -82,4 +83,31 @@ public class ReportController {
         var result = _reportServices.list(request);
         return ResponseEntity.status(result.getStatusCode()).body(result);
     }
+
+    @Operation(
+            summary = "Change report status and process bans",
+            description = "Allows a manager to accept or reject an existing guest report. If the report is accepted (`isAccepted: true`), the system automatically issues a ban for the reported guest until the specified `expiresAt` date and sends an email notification. Requires MANAGER role."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Report status changed successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Validation error (e.g., missing token or invalid date format)", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Report or required internal statuses not found", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error (e.g., email sending failure)", content = @Content)
+    })
+    @PutMapping("/change-status")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> changeStatus(
+            @AuthenticationPrincipal(expression = "token") String adminToken,
+            @RequestBody @Valid ChangeReportStatusRequest request
+    ) {
+        var result = _reportServices.changeStatus(adminToken, request);
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
+
 }

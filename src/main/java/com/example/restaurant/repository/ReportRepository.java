@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.exceptions.StatusNotFoundException;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.IReportRepository;
@@ -21,7 +22,7 @@ public class ReportRepository implements IReportRepository {
     public GuestReportStatus findStatusByToken(String token) {
         return _jpaReportStatusRepo.findByToken(token)
                 .orElseThrow(
-                        () -> new RuntimeException("Report Status not found")
+                        () -> new StatusNotFoundException("Report Status not found")
                 );
     }
 
@@ -33,5 +34,10 @@ public class ReportRepository implements IReportRepository {
     @Override
     public Page<GuestReports> findAll(Specification<GuestReports> spec, Pageable pageable) {
         return _jpaRepostRepo.findAll(spec, pageable);
+    }
+
+    @Override
+    public GuestReports findByToken(String token) {
+        return _jpaRepostRepo.findByToken(token);
     }
 }

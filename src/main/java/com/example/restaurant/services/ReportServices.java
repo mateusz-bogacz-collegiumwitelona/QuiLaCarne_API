@@ -1,6 +1,8 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.AddReportRequest;
+import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.PagedResult;
@@ -9,6 +11,7 @@ import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.IReportRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.interfaces.IBanServices;
 import com.example.restaurant.services.interfaces.IReportServices;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
@@ -33,6 +36,7 @@ import java.util.Set;
 public class ReportServices implements IReportServices {
     private final IReportRepository _reportRepo;
     private final IUserRepository _userRepo;
+    private final IBanServices _banServices;
 
     @Override
     @Transactional
@@ -122,6 +126,39 @@ public class ReportServices implements IReportServices {
                 "Reports retrieved successfully",
                 HttpStatus.OK.value(),
                 response
+        );
+    }
+
+    @Override
+    @Transactional
+    public ResultHandler<Void> changeStatus(String adminToken, ChangeReportStatusRequest request) {
+        var report = _reportRepo.findByToken(request.getReportToken());
+
+        var admin = _userRepo.findByToken(adminToken);
+
+        if (request.isAccepted()) {
+            CreateBanDomain banDomain = new CreateBanDomain(
+                    report.getGuest(),
+                    admin,
+                    report.getReason(),
+                    request.getExpiresAt()
+            );
+
+            _banServices.create(banDomain);
+
+            var status = _reportRepo.findStatusByToken("ACCEPTED");
+            report.setStatuses(Set.of(status));
+
+        } else {
+            var status = _reportRepo.findStatusByToken("REJECTED");
+            report.setStatuses(Set.of(status));
+        }
+
+        _reportRepo.save(report);
+
+        return ResultHandler.success(
+                "Report status changed successfuly",
+                HttpStatus.OK.value()
         );
     }
 }

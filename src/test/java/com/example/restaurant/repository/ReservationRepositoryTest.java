@@ -1,7 +1,7 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.exceptions.ReservationStatusNotFoundException;
+import com.example.restaurant.exceptions.StatusNotFoundException;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IOrderRepository;
@@ -80,7 +80,7 @@ public class ReservationRepositoryTest {
     void findStatusByToken_ShouldThrowException_WhenNotFound() {
         when(_jpaReservationStatusRepo.findByToken("ANY")).thenReturn(Optional.empty());
 
-        assertThrows(ReservationStatusNotFoundException.class, () ->
+        assertThrows(StatusNotFoundException.class, () ->
                 _reservationRepo.findStatusByToken("ANY")
         );
     }

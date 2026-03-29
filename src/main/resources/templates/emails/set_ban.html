@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Account Suspension Notice</title>
+</head>
+<body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f7; padding: 20px; margin: 0; color: #333333;">
+<table style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-collapse: collapse;">
+    <tr>
+        <td style="background-color: #8b0000; padding: 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 26px; letter-spacing: 1.5px; text-transform: uppercase;">
+                Qui la Carne</h1>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 40px 30px;">
+            <h2 style="color: #d9534f; margin-top: 0; font-size: 22px;">Account Suspension Notice</h2>
+            <p style="font-size: 16px; line-height: 1.6;">Hi <strong th:text="${username}"
+                                                                     style="color: #8b0000;">User</strong>,</p>
+            <p style="font-size: 16px; line-height: 1.6;">
+                Please be informed that your account access has been suspended due to a violation of our restaurant's
+                terms of service.
+            </p>
+
+            <div style="background-color: #fdf2f2; border-left: 5px solid #d9534f; padding: 20px; margin: 30px 0; border-radius: 0 4px 4px 0;">
+                <p style="margin: 0; font-size: 13px; color: #a94442; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 8px;">
+                    Reason for suspension:
+                </p>
+                <p style="margin: 0; font-size: 16px; font-style: italic; color: #333333;" th:text="${reason}">
+                    The reason provided by the administrator will appear here.
+                </p>
+            </div>
+
+            <p style="font-size: 16px; line-height: 1.6;">
+                If you believe this decision was made in error, please contact our restaurant staff for clarification.
+            </p>
+        </td>
+    </tr>
+    <tr>
+        <td style="background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 13px; color: #888888; border-top: 1px solid #eeeeee;">
+            <p style="margin: 0;">&copy; 2026 Qui la Carne. All rights reserved.</p>
+            <p style="margin: 5px 0 0 0;">This is an automated message, please do not reply directly to this email.</p>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

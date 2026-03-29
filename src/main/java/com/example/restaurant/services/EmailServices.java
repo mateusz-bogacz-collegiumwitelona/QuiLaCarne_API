@@ -83,4 +83,25 @@ public class EmailServices {
             log.error(ex.getMessage(), ex);
         }
     }
+
+    @Async
+    void sendEmailSetBan(String to, String userName, String reason) {
+        try {
+            Context context = new Context();
+            context.setVariable("username", userName);
+            context.setVariable("reason", reason);
+            String html = _templateEngine.process("emails/set_ban", context);
+
+            MimeMessage message = _mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(to);
+            helper.setSubject("Qui la Carne - Confirm your new email address");
+            helper.setText(html, true);
+
+            _mailSender.send(message);
+            log.info("Create Ban Email sent to {}" + to);
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+        }
+    }
 }

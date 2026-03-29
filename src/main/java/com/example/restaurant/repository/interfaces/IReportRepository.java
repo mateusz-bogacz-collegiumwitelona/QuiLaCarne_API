@@ -12,4 +12,6 @@ public interface IReportRepository {
     void save(GuestReports report);
 
     Page<GuestReports> findAll(Specification<GuestReports> spec, Pageable pageable);
+
+    GuestReports findByToken(String token);
 }

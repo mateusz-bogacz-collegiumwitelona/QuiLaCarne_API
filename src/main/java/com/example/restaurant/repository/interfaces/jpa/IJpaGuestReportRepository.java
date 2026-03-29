@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface IJpaGuestReportRepository extends
         JpaRepository<GuestReports, UUID>,
         JpaSpecificationExecutor<GuestReports> {
+    GuestReports findByToken(String token);
 }

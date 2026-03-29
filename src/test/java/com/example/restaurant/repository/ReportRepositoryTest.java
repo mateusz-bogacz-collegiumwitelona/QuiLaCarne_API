@@ -78,4 +78,20 @@ public class ReportRepositoryTest {
 
         verify(_jpaReportRepo, times(1)).findAll(mockSpec, mockPageable);
     }
+
+    @Test
+    void findByToken_ShouldReturnReport_WhenCalled() {
+        String token = "report-token-123";
+        GuestReports mockReport = new GuestReports();
+        mockReport.setToken(token);
+
+        when(_jpaReportRepo.findByToken(token)).thenReturn(mockReport);
+
+        GuestReports result = _reportRepo.findByToken(token);
+
+        assertNotNull(result);
+        assertEquals(token, result.getToken());
+
+        verify(_jpaReportRepo, times(1)).findByToken(token);
+    }
 }

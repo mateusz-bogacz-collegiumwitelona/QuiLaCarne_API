@@ -116,9 +116,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             UserNotFoundException.class,
             ReservationNotFoundException.class,
-            ReservationStatusNotFoundException.class,
-            TableStatusNotFoundException.class,
-            TableNotFoundException.class
+            StatusNotFoundException.class,
     })
     public ResponseEntity<ResultHandler<Object>> handleResourceNotFoundException(RuntimeException rex) {
         log.warn("Resource not found: {}", rex.getMessage());

@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.dto.request.AddReportRequest;
+import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
 import com.example.restaurant.dto.response.ReportListResponse;
@@ -11,6 +12,7 @@ import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.IReportRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.interfaces.IBanServices;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +42,9 @@ public class ReportServicesTest {
 
     @Mock
     private IUserRepository _userRepo;
+
+    @Mock
+    private IBanServices _banServices;
 
     @InjectMocks
     private ReportServices _reportServices;
@@ -154,5 +159,76 @@ public class ReportServicesTest {
         assertEquals("Test reason", mappedResponse.getReason());
 
         assertEquals("In progress", mappedResponse.getStatus());
+    }
+
+    @Test
+    void changeStatus_ShouldAcceptReport_AndCreateBan_WhenIsAcceptedIsTrue() {
+        String adminToken = "ADMIN_TOKEN";
+        String reportToken = "REPORT_TOKEN";
+
+        ChangeReportStatusRequest request = new ChangeReportStatusRequest();
+        request.setReportToken(reportToken);
+        request.setAccepted(true);
+        request.setExpiresAt(OffsetDateTime.now().plusDays(7));
+
+        Users admin = new Users();
+        admin.setToken(adminToken);
+
+        Users guest = new Users();
+        guest.setUsername("BadGuest");
+
+        GuestReports report = new GuestReports();
+        report.setToken(reportToken);
+        report.setGuest(guest);
+        report.setReason("Rude behavior");
+
+        GuestReportStatus acceptedStatus = new GuestReportStatus();
+        acceptedStatus.setToken("ACCEPTED");
+
+        when(_reportRepo.findByToken(reportToken)).thenReturn(report);
+        when(_userRepo.findByToken(adminToken)).thenReturn(admin);
+        when(_reportRepo.findStatusByToken("ACCEPTED")).thenReturn(acceptedStatus);
+
+        var result = _reportServices.changeStatus(adminToken, request);
+
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("Report status changed successfuly", result.getMessage());
+
+        assertTrue(report.getStatuses().contains(acceptedStatus));
+        verify(_reportRepo, times(1)).save(report);
+
+        verify(_banServices, times(1)).create(any());
+    }
+
+    @Test
+    void changeStatus_ShouldRejectReport_WhenIsAcceptedIsFalse() {
+        String adminToken = "ADMIN_TOKEN";
+        String reportToken = "REPORT_TOKEN";
+
+        ChangeReportStatusRequest request = new ChangeReportStatusRequest();
+        request.setReportToken(reportToken);
+        request.setAccepted(false);
+
+        Users admin = new Users();
+        admin.setToken(adminToken);
+
+        GuestReports report = new GuestReports();
+        report.setToken(reportToken);
+
+        GuestReportStatus rejectedStatus = new GuestReportStatus();
+        rejectedStatus.setToken("REJECTED");
+
+        when(_reportRepo.findByToken(reportToken)).thenReturn(report);
+        when(_userRepo.findByToken(adminToken)).thenReturn(admin);
+        when(_reportRepo.findStatusByToken("REJECTED")).thenReturn(rejectedStatus);
+
+        var result = _reportServices.changeStatus(adminToken, request);
+
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+
+        assertTrue(report.getStatuses().contains(rejectedStatus));
+        verify(_reportRepo, times(1)).save(report);
+
+        verify(_banServices, never()).create(any());
     }
 }
