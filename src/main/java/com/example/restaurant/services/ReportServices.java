@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
@@ -40,6 +41,7 @@ public class ReportServices implements IReportServices {
 
     @Override
     @Transactional
+    @Auditable(action = "ADD_REPORT")
     public ResultHandler<Void> add(String waiterToken, AddReportRequest request) {
         var client = _userRepo.findByToken(request.getClientToken());
 
@@ -131,6 +133,7 @@ public class ReportServices implements IReportServices {
 
     @Override
     @Transactional
+    @Auditable(action = "CHANGE_REPORT_STATUS")
     public ResultHandler<Void> changeStatus(String adminToken, ChangeReportStatusRequest request) {
         var report = _reportRepo.findByToken(request.getReportToken());
 

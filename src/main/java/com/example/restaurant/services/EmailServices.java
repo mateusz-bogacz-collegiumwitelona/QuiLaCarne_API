@@ -23,85 +23,82 @@ public class EmailServices {
 
     @Async
     public void sendActivationEmail(String to, String username, String token) {
-        try {
-            Context context = new Context();
-            context.setVariable("username", username);
-            context.setVariable("activationUrl", token);
+        Context context = new Context();
+        context.setVariable("username", username);
+        context.setVariable("activationUrl", token);
 
-            String html = _templateEngine.process("emails/activation", context);
-
-            MimeMessage message = _mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject("Qui la Carne - Confirm your account");
-            helper.setText(html, true);
-
-            _mailSender.send(message);
-            log.info("Confirmation email sent to {}" + to);
-        } catch (Exception ex) {
-            log.error(ex.getMessage(), ex);
-        }
+        sendHtmlEmail(
+                to,
+                "Qui la Carne - Confirm your account",
+                "emails/activation",
+                context,
+                "Confirmation"
+        );
     }
 
     @Async
     public void sendResetPasswordEmail(String to, String username, String token) {
-        try {
-            Context context = new Context();
-            context.setVariable("username", username);
-            context.setVariable("resetUrl", token);
-            String html = _templateEngine.process("emails/reset-password", context);
+        Context context = new Context();
+        context.setVariable("username", username);
+        context.setVariable("resetUrl", token);
 
-            MimeMessage message = _mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject("Qui la Carne - Reset your password");
-            helper.setText(html, true);
-
-            _mailSender.send(message);
-            log.info("Reset password email sent to {}" + to);
-        } catch (Exception ex) {
-            log.error(ex.getMessage(), ex);
-        }
+        sendHtmlEmail(
+                to,
+                "Qui la Carne - Reset your password",
+                "emails/reset-password",
+                context,
+                "Reset password");
     }
 
     @Async
     public void sendEmailChangeVerification(String to, String token) {
-        try {
-            Context context = new Context();
-            context.setVariable("validationUrl", token);
-            String html = _templateEngine.process("emails/email-update", context);
+        Context context = new Context();
+        context.setVariable("validationUrl", token);
 
-            MimeMessage message = _mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject("Qui la Carne - Confirm your new email address");
-            helper.setText(html, true);
-
-            _mailSender.send(message);
-            log.info("Email change verification email sent to {}" + to);
-        } catch (Exception ex) {
-            log.error(ex.getMessage(), ex);
-        }
+        sendHtmlEmail(
+                to,
+                "Qui la Carne - Confirm your new email address",
+                "emails/email-update",
+                context,
+                "Email change verification"
+        );
     }
 
     @Async
-    void sendEmailSetBan(String to, String userName, String reason) {
+    public void sendEmailSetBan(String to, String userName, String reason) {
+        Context context = new Context();
+        context.setVariable("username", userName);
+        context.setVariable("reason", reason);
+
+        sendHtmlEmail(
+                to,
+                "Qui la Carne - Account Suspension Notice",
+                "emails/set_ban",
+                context,
+                "Create Ban"
+        );
+    }
+
+    private void sendHtmlEmail(
+            String to,
+            String subject,
+            String templateName,
+            Context context,
+            String actionName
+    ) {
         try {
-            Context context = new Context();
-            context.setVariable("username", userName);
-            context.setVariable("reason", reason);
-            String html = _templateEngine.process("emails/set_ban", context);
+            String html = _templateEngine.process(templateName, context);
 
             MimeMessage message = _mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(to);
-            helper.setSubject("Qui la Carne - Confirm your new email address");
+            helper.setSubject(subject);
             helper.setText(html, true);
 
             _mailSender.send(message);
-            log.info("Create Ban Email sent to {}" + to);
+            log.info("{} email sent to {}", actionName, to);
         } catch (Exception ex) {
-            log.error(ex.getMessage(), ex);
+            log.error("Failed to send {} email to {}: {}", actionName, to, ex.getMessage(), ex);
         }
     }
 }
