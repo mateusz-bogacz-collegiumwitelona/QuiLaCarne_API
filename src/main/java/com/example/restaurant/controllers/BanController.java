@@ -1,0 +1,52 @@
+package com.example.restaurant.controllers;
+
+import com.example.restaurant.dto.request.CreateBanRequest;
+import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.services.interfaces.IBanServices;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(value = "/api/ban", produces = "application/json")
+@RequiredArgsConstructor
+public class BanController {
+    private final IBanServices _banServices;
+
+    @Operation(
+            summary = "Ban a user manually",
+            description = "Allows a manager to manually ban a client without needing a prior report. The targeted user must have the ROLE_CLIENT. Automatically deactivates the user and sends an email notification. Requires MANAGER role."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Ban created successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Validation failed (e.g., missing fields) or the targeted user is not a client", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Targeted client or internal status not found", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error (e.g., email sending failure)", content = @Content)
+    })
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> create(
+            @AuthenticationPrincipal(expression = "token") String adminToken,
+            @Valid @RequestBody CreateBanRequest request
+    ) {
+        var result = _banServices.create(adminToken, request);
+        return ResponseEntity.status(result.getStatusCode()).body(result);
+    }
+}

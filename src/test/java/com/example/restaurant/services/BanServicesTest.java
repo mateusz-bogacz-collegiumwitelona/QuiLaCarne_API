@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.dto.domain.CreateBanDomain;
+import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.BanStatus;
@@ -12,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 import java.time.OffsetDateTime;
 
@@ -30,6 +32,48 @@ class BanServicesTest {
 
     @InjectMocks
     private BanServices _banServices;
+
+    @Test
+    void create_ShouldProcessRequestAndReturnSuccess() {
+        String adminToken = "ADMIN_TOKEN";
+        String clientToken = "CLIENT_TOKEN";
+
+        CreateBanRequest request = new CreateBanRequest();
+        request.setClientToken(clientToken);
+        request.setReason("Rude behavior");
+        request.setExpiresAt(OffsetDateTime.now().plusDays(10));
+
+        Users admin = new Users();
+        admin.setToken(adminToken);
+        admin.setUsername("adminUser");
+
+        Users client = new Users();
+        client.setToken(clientToken);
+        client.setUsername("badClient");
+        client.setEmail("client@example.com");
+
+        BanStatus activeStatus = new BanStatus();
+        
+        when(_userRepo.isInRole("ROLE_CLIENT", clientToken)).thenReturn(true);
+        when(_userRepo.findByToken(adminToken)).thenReturn(admin);
+        when(_userRepo.findByToken(clientToken)).thenReturn(client);
+        when(_banRepo.findStatusByToken("ACTIVE")).thenReturn(activeStatus);
+
+        var result = _banServices.create(adminToken, request);
+
+        assertTrue(result.isSuccess());
+        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
+        assertEquals("Ban created successfully", result.getMessage());
+
+        assertFalse(client.getIsActive());
+        verify(_userRepo, times(1)).save(client);
+
+        verify(_emailServices, times(1)).sendEmailSetBan(
+                "client@example.com",
+                "badClient",
+                "Rude behavior"
+        );
+    }
 
     @Test
     void create_ShouldCreateBan_DeactivateUser_AndSendEmail() {
