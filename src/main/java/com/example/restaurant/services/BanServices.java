@@ -3,7 +3,6 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.CreateBanRequest;
-import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IBanRepository;
@@ -12,7 +11,6 @@ import com.example.restaurant.services.interfaces.IBanServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -32,7 +30,7 @@ public class BanServices implements IBanServices {
     @Override
     @Transactional
     @Auditable(action = "BAN_USER")
-    public ResultHandler<Void> create(String adminToken, CreateBanRequest request) {
+    public void create(String adminToken, CreateBanRequest request) {
         if (adminToken.equals(request.getClientToken()))
             throw new IllegalStateException("You cannot ban yourself");
 
@@ -40,7 +38,7 @@ public class BanServices implements IBanServices {
         var admin = _userRepo.findByToken(adminToken);
         var client = _userRepo.findByToken(request.getClientToken());
 
-        validatePerrmisions(admin, client);
+        validatePermissions(admin, client);
 
         if (!client.getIsActive())
             throw new IllegalStateException("User is already inactive or banned");
@@ -53,11 +51,6 @@ public class BanServices implements IBanServices {
         );
 
         create(banDomain);
-
-        return ResultHandler.success(
-                "Ban created successfully",
-                HttpStatus.OK.value()
-        );
     }
 
     @Override
@@ -85,7 +78,7 @@ public class BanServices implements IBanServices {
         );
     }
 
-    private void validatePerrmisions(Users admin, Users client) {
+    private void validatePermissions(Users admin, Users client) {
         boolean isAdminManager = admin.getRoles().stream()
                 .anyMatch(r -> r.getName().equals(ROLE_MANAGER));
 

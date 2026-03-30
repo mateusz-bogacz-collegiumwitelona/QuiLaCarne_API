@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,7 +47,10 @@ public class BanController {
             @AuthenticationPrincipal(expression = "token") String adminToken,
             @Valid @RequestBody CreateBanRequest request
     ) {
-        var result = _banServices.create(adminToken, request);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        _banServices.create(adminToken, request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Ban created successfully",
+                HttpStatus.OK.value()
+        ));
     }
 }

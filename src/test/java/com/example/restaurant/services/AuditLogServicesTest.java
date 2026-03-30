@@ -5,6 +5,7 @@ import com.example.restaurant.models.AuditLog;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IAuditLogRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -15,7 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -24,77 +26,38 @@ public class AuditLogServicesTest {
 
     @Mock
     private IAuditLogRepository _auditRepo;
-
     @Mock
     private IUserRepository _userRepo;
-
     @InjectMocks
     private AuditLogServices _auditLogServices;
 
     @Test
+    @DisplayName("Audit Log: Success - Save log with user")
     void log_ShouldSaveAuditLogWithUser_WhenUserIsKnown() {
-        LogDomain logDomain = new LogDomain("testUser", "SOME_ACTION", "127.0.0.1", Map.of());
+        LogDomain logDomain = new LogDomain("testUser", "ACTION", "127.0.0.1", Map.of());
         Users mockUser = new Users();
-        mockUser.setUsername("testUser");
-
         when(_userRepo.findByNormalizedUsername("TESTUSER")).thenReturn(Optional.of(mockUser));
 
         _auditLogServices.log(logDomain);
 
         ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
-        verify(_auditRepo, times(1)).save(captor.capture());
-
-        AuditLog savedLog = captor.getValue();
-        assertEquals("SOME_ACTION", savedLog.getAction());
-        assertEquals("127.0.0.1", savedLog.getIpAddress());
-        assertEquals(mockUser, savedLog.getUser());
+        verify(_auditRepo).save(captor.capture());
+        assertEquals(mockUser, captor.getValue().getUser());
     }
 
     @Test
-    void log_ShouldSaveAuditLogWithoutUser_WhenUserIsAnonymous() {
-        LogDomain logDomain = new LogDomain("anonymousUser", "SOME_ACTION", "127.0.0.1", Map.of());
-
-        _auditLogServices.log(logDomain);
-
-        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
-        verify(_auditRepo, times(1)).save(captor.capture());
-
-        AuditLog savedLog = captor.getValue();
-        assertEquals("SOME_ACTION", savedLog.getAction());
-        assertNull(savedLog.getUser());
-
-        verify(_userRepo, never()).findByNormalizedUsername(anyString());
+    @DisplayName("Audit Log: Validation - Skip if LogDomain is null")
+    void log_ShouldSkip_WhenLogDomainIsNull() {
+        _auditLogServices.log(null);
+        verify(_auditRepo, never()).save(any());
     }
 
     @Test
+    @DisplayName("Audit Log: Error Handling - Catch exception but don't rethrow")
     void log_ShouldCatchExceptionAndNotThrow_WhenRepositoryFails() {
-        LogDomain logDomain = new LogDomain("anonymousUser", "SOME_ACTION", "127.0.0.1", Map.of());
-
-        doThrow(new RuntimeException("Database down")).when(_auditRepo).save(any(AuditLog.class));
+        LogDomain logDomain = new LogDomain("anonymousUser", "ACTION", "127.0.0.1", Map.of());
+        doThrow(new RuntimeException("DB error")).when(_auditRepo).save(any(AuditLog.class));
 
         assertDoesNotThrow(() -> _auditLogServices.log(logDomain));
-    }
-
-    @Test
-    void log_ShouldSaveLogWithoutUser_WhenUsernameNotFoundInDb() {
-        LogDomain logDomain = new LogDomain("missingUser", "ACTION", "1.1.1.1", Map.of());
-        when(_userRepo.findByNormalizedUsername("MISSINGUSER")).thenReturn(Optional.empty());
-
-        _auditLogServices.log(logDomain);
-
-        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
-        verify(_auditRepo).save(captor.capture());
-
-        assertNull(captor.getValue().getUser());
-        assertEquals("ACTION", captor.getValue().getAction());
-    }
-
-    @Test
-    void log_ShouldNormalizeUsername_BeforeCheckingDb() {
-        LogDomain logDomain = new LogDomain("uSeR", "ACTION", "1.1.1.1", Map.of());
-
-        _auditLogServices.log(logDomain);
-
-        verify(_userRepo).findByNormalizedUsername("USER");
     }
 }

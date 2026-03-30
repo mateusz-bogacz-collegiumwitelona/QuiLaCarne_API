@@ -23,6 +23,11 @@ public class AuditLogServices implements IAuditLogServices {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     public void log(LogDomain logDomain) {
+        if (logDomain == null || logDomain.action() == null) {
+            log.warn("Attempted to save an empty audit log. Skipping.");
+            return;
+        }
+
         try {
             AuditLog auditLog = new AuditLog();
             auditLog.setAction(logDomain.action());
@@ -36,7 +41,7 @@ public class AuditLogServices implements IAuditLogServices {
             _auditRepo.save(auditLog);
             log.info("Audit log saved async for action: {}", logDomain.action());
         } catch (Exception ex) {
-            log.error("Failed to save audit log: {}", ex.getMessage(), ex);
+            log.error("Failed to save audit log for action {}: {}", logDomain.action(), ex.getMessage());
         }
     }
 
