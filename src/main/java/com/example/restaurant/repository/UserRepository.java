@@ -23,6 +23,11 @@ public class UserRepository implements IUserRepository {
     }
 
     @Override
+    public boolean existByEmail(String email) {
+        return _jpaUserRepository.findByNormalizedEmail(email).isPresent();
+    }
+
+    @Override
     public Users findByToken(String token) {
         return _jpaUserRepository.findByToken(token).orElseThrow(
                 () -> new UserNotFoundException("User not found")

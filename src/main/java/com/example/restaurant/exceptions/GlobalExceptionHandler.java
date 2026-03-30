@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -122,9 +123,15 @@ public class GlobalExceptionHandler {
         log.warn("Resource not found: {}", rex.getMessage());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                ResultHandler.failure("Resource not found", HttpStatus.NOT_FOUND.value())
+                ResultHandler.failure(rex.getMessage(), HttpStatus.NOT_FOUND.value())
         );
     }
 
-    
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ResultHandler<Object>> handleBadCredentials(BadCredentialsException bex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                ResultHandler.failure("Invalid credentials", HttpStatus.UNAUTHORIZED.value())
+        );
+    }
+
 }

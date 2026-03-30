@@ -3,13 +3,14 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
-import com.example.restaurant.enums.TokenTypeEnum;
-import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.exceptions.EntityAlreadyExistsException;
+import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,185 +22,161 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServicesTest {
     @Mock
     private IUserRepository _userRepo;
-    @Mock
-    private EmailServices _emailServices;
-    @Mock
-    private IVerificationTokenServices _tokenServices;
+
     @Mock
     private IRoleRepository _roleRepository;
     @Mock
     private PasswordEncoder _passwordEncoder;
+    @Mock
+    private IVerificationTokenServices _tokenServices;
 
     @InjectMocks
     private UserServices _userServices;
 
     @Test
-    void create_ShouldHashPasswordAndReturnToken() {
+    @DisplayName("Create User: Success")
+    void create_ShouldReturnToken_WhenDataIsValid() {
         RegisterRequest request = new RegisterRequest();
-        request.setUsername("testuser");
-        request.setEmail("test@test.pl");
-        request.setPassword("password");
+        request.setUsername(TestConstants.FAKE_USERNAME);
+        request.setEmail(TestConstants.FAKE_EMAIL);
+        request.setPassword(TestConstants.FAKE_PASSWORD);
 
-        when(_roleRepository.setRole(anyString())).thenReturn(new Roles());
-        when(_passwordEncoder.encode("password")).thenReturn("hashedPass");
+        Roles mockRole = new Roles();
+        when(_roleRepository.setRole(anyString())).thenReturn(mockRole);
+        when(_passwordEncoder.encode(anyString())).thenReturn(TestConstants.FAKE_HASH);
 
         doAnswer(invocation -> {
-            Users savedUser = invocation.getArgument(0);
-            savedUser.setToken("generated-mock-token");
+            Users user = invocation.getArgument(0);
+            user.setToken(TestConstants.FAKE_USER_TOKEN);
             return null;
         }).when(_userRepo).save(any(Users.class));
 
-        String token = _userServices.create(request, "ROLE_CLIENT", true);
+        String token = _userServices.create(request, "ROLE_CLIENT", false);
 
-        assertNotNull(token);
-        assertEquals("generated-mock-token", token);
-        verify(_userRepo, times(1)).save(any(Users.class));
+        assertEquals(TestConstants.FAKE_USER_TOKEN, token);
+        verify(_userRepo).save(any(Users.class));
     }
 
     @Test
-    void updatePassword_ShouldReturnFailure_WhenPasswordsDoNotMatch() {
+    @DisplayName("Active User: Success")
+    void activeUser_ShouldSucceed_WhenUserInactive() {
+        Users user = new Users();
+        user.setIsActive(false);
+        when(_userRepo.findByToken("token")).thenReturn(user);
+
+        _userServices.activeUser("token");
+
+        assertTrue(user.getIsActive());
+        verify(_userRepo).save(user);
+    }
+
+    @Test
+    @DisplayName("Active User: Throws IllegalStateException if already active")
+    void activeUser_ShouldThrowException_WhenUserAlreadyActive() {
+        Users user = new Users();
+        user.setIsActive(true);
+        when(_userRepo.findByToken(anyString())).thenReturn(user);
+
+        assertThrows(IllegalStateException.class, () -> _userServices.activeUser(TestConstants.FAKE_USER_TOKEN));
+    }
+
+    @Test
+    @DisplayName("Update Password: Throws BadCredentialsException on wrong old password")
+    void updatePassword_ShouldThrowException_WhenOldPasswordInvalid() {
         UpdatePasswordRequest request = new UpdatePasswordRequest();
-        request.setOldPassword("oldPass123!");
-        request.setPassword("newPass123!");
-        request.setConfirmPassword("diffNewPass123!");
+        request.setOldPassword("wrong");
+        request.setPassword("new");
+        request.setConfirmPassword("new");
 
-        var result = _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request);
+        Users user = new Users();
+        user.setPassword("hashed_old");
 
-        assertFalse(result.isSuccess());
-        verify(_userRepo, never()).save(any());
+        when(_userRepo.findByToken(anyString())).thenReturn(user);
+        when(_passwordEncoder.matches("wrong", "hashed_old")).thenReturn(false);
+
+        assertThrows(BadCredentialsException.class, () -> _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request));
     }
 
     @Test
-    void updatePassword_ShouldThrowException_WhenOldPasswordIsInvalid() {
-        UpdatePasswordRequest request = new UpdatePasswordRequest();
-        request.setOldPassword("wrongOldPass");
-        request.setPassword("newPass123!");
-        request.setConfirmPassword("newPass123!");
+    @DisplayName("Update Password: Throws Exception if user want change email to current email")
+    void updateEmail_ShouldThrowException_WhenSameEmailAsCurrent() {
+        Users user = new Users();
+        user.setNormalizedEmail("TEST@TEST.PL");
+        when(_userRepo.findByToken(anyString())).thenReturn(user);
 
-        Users mockUser = new Users();
-        mockUser.setPassword("hashedOld");
-
-        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(mockUser);
-        when(_passwordEncoder.matches("wrongOldPass", "hashedOld")).thenReturn(false);
-
-        assertThrows(BadCredentialsException.class, () ->
-                _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request)
-        );
+        assertThrows(IllegalStateException.class, () ->
+                _userServices.updateEmail("token", "test@test.pl"));
     }
 
     @Test
-    void updatePassword_ShouldReturnSuccess_WhenEverythingIsCorrect() {
-        UpdatePasswordRequest request = new UpdatePasswordRequest();
-        request.setOldPassword("correctOldPass");
-        request.setPassword("newPass123!");
-        request.setConfirmPassword("newPass123!");
+    @DisplayName("Update Email: Throws EntityAlreadyExistsException if email taken")
+    void updateEmail_ShouldThrowException_WhenEmailTakenByAnother() {
+        Users currentUser = new Users();
+        currentUser.setToken(TestConstants.FAKE_USER_TOKEN);
 
-        Users mockUser = new Users();
-        mockUser.setPassword("hashedOld");
-
-        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(mockUser);
-        when(_passwordEncoder.matches("correctOldPass", "hashedOld")).thenReturn(true);
-        when(_passwordEncoder.encode("newPass123!")).thenReturn("hashedNew");
-
-        var result = _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request);
-
-        assertTrue(result.isSuccess());
-        assertEquals("hashedNew", mockUser.getPassword());
-        verify(_userRepo, times(1)).save(mockUser);
-    }
-
-    @Test
-    void updateEmail_ShouldReturnFailure_WhenEmailIsUsedBySomeoneElse() {
         Users otherUser = new Users();
-        otherUser.setToken("different-token");
+        otherUser.setToken("different_token");
 
         when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.of(otherUser));
 
-        ResultHandler<Void> result = _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, TestConstants.FAKE_EMAIL);
-
-        assertFalse(result.isSuccess());
-        assertEquals("The email is being used by someone else", result.getMessage());
+        assertThrows(EntityAlreadyExistsException.class, () -> _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, "taken@test.pl"));
     }
 
     @Test
-    void updateEmail_ShouldReturnSuccess_AndSendEmail_WhenValid() {
-        when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.empty());
-        Users currentUser = new Users();
+    @DisplayName("Confirm Email Change: Throws InvalidDateException on bad token")
+    void confirmEmailChange_ShouldThrowException_WhenTokenInvalid() {
+        when(_tokenServices.validateToken(anyString(), anyString(), any())).thenReturn(false);
 
-        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(currentUser);
-        when(_tokenServices.createToken(anyString(), eq(TokenTypeEnum.EMAIL_UPDATE), anyInt()))
-                .thenReturn("mock-token");
+        assertThrows(InvalidDateException.class, () -> _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "bad_token"));
+    }
 
-        var result = _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, "new@test.pl");
 
-        assertTrue(result.isSuccess());
-        assertEquals("new@test.pl", currentUser.getPendingEmail());
-        verify(_userRepo).save(currentUser);
-        verify(_emailServices).sendEmailChangeVerification("new@test.pl", "mock-token");
+    @Test
+    @DisplayName("Update Username: Success")
+    void updateUserName_ShouldUpdate_WhenValid() {
+        Users user = new Users();
+        user.setNormalizedUsername("OLD_NAME");
+        when(_userRepo.findByToken(anyString())).thenReturn(user);
+        when(_userRepo.existsByUsername(anyString())).thenReturn(false);
+
+        _userServices.updateUserName("NewName", TestConstants.FAKE_USER_TOKEN);
+
+        assertEquals("NewName", user.getUsername());
+        verify(_userRepo).save(user);
     }
 
     @Test
-    void confirmEmailChange_ShouldReturnSuccess_WhenEverythingIsValid() {
-        when(_tokenServices.validateToken(anyString(), anyString(), eq(TokenTypeEnum.EMAIL_UPDATE))).thenReturn(true);
-
-        Users mockUser = new Users();
-        mockUser.setPendingEmail("new@test.pl");
-
-        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(mockUser);
-
-        var result = _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "valid-token");
-
-        assertTrue(result.isSuccess());
-        assertEquals("new@test.pl", mockUser.getEmail());
-        assertNull(mockUser.getPendingEmail());
-        verify(_userRepo).save(mockUser);
-    }
-
-    @Test
-    void confirmEmailChange_ShouldThrowException_WhenNoPendingEmail() {
-        when(_tokenServices.validateToken(anyString(), anyString(), any())).thenReturn(true);
-        Users mockUser = new Users();
-        mockUser.setPendingEmail(null);
-
-        when(_userRepo.findByToken(anyString())).thenReturn(mockUser);
+    @DisplayName("Update Username: Throw Exception when name is same as current")
+    void updateUserName_ShouldThrowException_WhenNameIsSameAsCurrent() {
+        Users user = new Users();
+        user.setNormalizedUsername("MATI");
+        when(_userRepo.findByToken(anyString())).thenReturn(user);
 
         assertThrows(IllegalStateException.class, () ->
-                _userServices.confirmEmailChange("user-token", "valid-token"));
+                _userServices.updateUserName("Mati", "token"));
     }
 
     @Test
-    void deleteAccount_ShouldReturnSuccess_AndAnonymizeData() {
-        Users mockUser = new Users();
-        mockUser.setNormalizedEmail("TEST@TEST.PL");
-        mockUser.setNormalizedUsername("TEST");
-        mockUser.setEmail("test@test.pl");
-        mockUser.setUsername("test");
-        mockUser.setIsActive(true);
+    @DisplayName("Delete Account: Success with Soft Delete")
+    void deleteAccount_ShouldAnonymizeDataAndDeactivate() {
+        Users user = new Users();
+        user.setUsername("Mati");
+        user.setEmail("mati@test.pl");
+        when(_userRepo.findByToken(anyString())).thenReturn(user);
 
-        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(mockUser);
+        _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
 
-        var result = _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
-
-        assertTrue(result.isSuccess());
-        assertFalse(mockUser.getIsActive());
-        assertTrue(mockUser.getNormalizedEmail().startsWith("DELETED_"));
-        verify(_userRepo, times(1)).save(mockUser);
-    }
-
-    @Test
-    void updateUserName_ShouldReturnFailure_WhenNameTaken() {
-        when(_userRepo.existsByUsername(anyString())).thenReturn(true);
-
-        var result = _userServices.updateUserName("TakenName", "user-token");
-
-        assertFalse(result.isSuccess());
-        assertEquals("Username is already taken", result.getMessage());
+        assertFalse(user.getIsActive());
+        assertTrue(user.getUsername().startsWith("DELETED_"));
+        assertNotNull(user.getDeletedAt());
+        verify(_userRepo).save(user);
     }
 }

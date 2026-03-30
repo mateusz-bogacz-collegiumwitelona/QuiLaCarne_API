@@ -5,18 +5,17 @@ import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
-import com.example.restaurant.helpers.ResultHandler;
 
 public interface IAuthServices {
-    ResultHandler<AuthResponse> authenticate(LoginRequest request);
+    AuthResponse authenticate(LoginRequest request);
 
-    ResultHandler<Void> register(RegisterRequest request);
+    void register(RegisterRequest request);
 
-    ResultHandler<Boolean> registerConfirm(String token);
+    Boolean registerConfirm(String token);
 
-    ResultHandler<Void> resetPassword(String email);
+    void resetPassword(String email);
 
-    ResultHandler<Boolean> setNewPassword(ResetPasswordRequest request);
+    Boolean setNewPassword(ResetPasswordRequest request);
 
-    ResultHandler<AuthResponse> authenticateWithGoogle(GoogleLoginRequest request);
+    AuthResponse authenticateWithGoogle(GoogleLoginRequest request);
 }

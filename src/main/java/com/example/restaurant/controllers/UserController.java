@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,11 +39,12 @@ public class UserController {
     public ResponseEntity<ResultHandler<Void>> updatePassword(
             @RequestBody @Valid UpdatePasswordRequest request,
             @AuthenticationPrincipal(expression = "token") String userToken) {
-        var result = _userServices.updatePassword(userToken, request);
+        _userServices.updatePassword(userToken, request);
 
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Password updated",
+                HttpStatus.OK.value()
+        ));
     }
 
     @Operation(
@@ -67,10 +69,11 @@ public class UserController {
             @AuthenticationPrincipal(expression = "token") String userToken
 
     ) {
-        var result = _userServices.updateEmail(userToken, email);
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        _userServices.updateEmail(userToken, email);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Verification link sent to the new email",
+                HttpStatus.OK.value()
+        ));
     }
 
     @Operation(
@@ -92,11 +95,11 @@ public class UserController {
             String verificationToken,
             @AuthenticationPrincipal(expression = "token") String userToken
     ) {
-        var result = _userServices.confirmEmailChange(userToken, verificationToken);
-
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        _userServices.confirmEmailChange(userToken, verificationToken);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Email updated successfully",
+                HttpStatus.OK.value()
+        ));
     }
 
     @Operation(summary = "Update username", description = "Allows the authenticated user to change their display name.")
@@ -114,10 +117,11 @@ public class UserController {
             String userName,
             @AuthenticationPrincipal(expression = "token") String userToken
     ) {
-        var result = _userServices.updateUserName(userName, userToken);
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        _userServices.updateUserName(userName, userToken);
+        return ResponseEntity.ok(ResultHandler.success(
+                "User name changed successfully",
+                HttpStatus.OK.value()
+        ));
     }
 
     @Operation(summary = "Delete user", description = "Allows the authenticated user to delete account.")
@@ -129,10 +133,11 @@ public class UserController {
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @DeleteMapping("/delete")
     public ResponseEntity<ResultHandler<Void>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
-        var result = _userServices.deleteAccount(userToken);
+        _userServices.deleteAccount(userToken);
 
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        return ResponseEntity.ok(ResultHandler.success(
+                "User deleted successfully",
+                HttpStatus.OK.value())
+        );
     }
 }

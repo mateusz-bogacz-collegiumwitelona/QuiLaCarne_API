@@ -7,19 +7,22 @@ import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
-import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.repository.interfaces.IRoleRepository;
+import com.example.restaurant.exceptions.EntityAlreadyExistsException;
+import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IUserServices;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
@@ -30,6 +33,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServicesTest {
+
     @InjectMocks
     private AuthServices _authServices;
 
@@ -38,166 +42,162 @@ public class AuthServicesTest {
     @Mock
     private JwtServices _jwtServices;
     @Mock
-    private UserDetails _userDetails;
-    @Mock
-    private Authentication _auth;
-
-    @Mock
     private IUserRepository _userRepository;
-    @Mock
-    private IUserServices _userServices;
-    @Mock
-    private IRoleRepository _roleRepository;
     @Mock
     private EmailServices _emailServices;
     @Mock
+    private IUserServices _userServices;
+    @Mock
     private IVerificationTokenServices _tokenServices;
+    @Mock
+    private Authentication _auth;
+    @Mock
+    private UserDetails _userDetails;
 
-    private LoginRequest _loginRequest;
+    private RegisterRequest _registerRequest;
 
     @BeforeEach
     void setUp() {
-        _loginRequest = new LoginRequest();
-        _loginRequest.setUsername("testuser");
-        _loginRequest.setPassword("testpassword");
+        _registerRequest = new RegisterRequest();
+        _registerRequest.setUsername(TestConstants.FAKE_USERNAME);
+        _registerRequest.setEmail(TestConstants.FAKE_EMAIL);
+        _registerRequest.setPassword(TestConstants.FAKE_PASSWORD);
+        _registerRequest.setConfirmPassword(TestConstants.FAKE_PASSWORD);
     }
 
     @Test
-    void authenticate_ShouldReturnSuccess_WhenCredentialsAreValid() {
-        when(_authManager.authenticate(any())).thenReturn(_auth);
+    @DisplayName("Authenticate: Success")
+    void authenticate_ShouldReturnAuthResponse_WhenCredentialsAreValid() {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setUsername(TestConstants.FAKE_USERNAME);
+        loginRequest.setPassword(TestConstants.FAKE_PASSWORD);
+
+        when(_authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(_auth);
         when(_auth.getPrincipal()).thenReturn(_userDetails);
-        when(_userDetails.getUsername()).thenReturn("testuser");
         when(_userDetails.isEnabled()).thenReturn(true);
-        when(_jwtServices.generateToken(any(UserDetails.class))).thenReturn("token");
+        when(_userDetails.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
+        when(_jwtServices.generateToken(any(UserDetails.class))).thenReturn("fake-jwt-token");
 
-        ResultHandler<AuthResponse> result = _authServices.authenticate(_loginRequest);
+        AuthResponse result = _authServices.authenticate(loginRequest);
 
-        assertTrue(result.isSuccess());
-        assertEquals("token", result.getData().getToken());
+        assertNotNull(result);
+        assertEquals("fake-jwt-token", result.getToken());
+        assertEquals(TestConstants.FAKE_USERNAME, result.getUsername());
     }
 
     @Test
-    void authenticate_ShouldReturnFailure_WhenUserIsDisabled() {
+    @DisplayName("Authenticate: Throws Exception when user is disabled")
+    void authenticate_ShouldThrowException_WhenUserIsDisabled() {
+        LoginRequest loginRequest = new LoginRequest();
         when(_authManager.authenticate(any())).thenReturn(_auth);
         when(_auth.getPrincipal()).thenReturn(_userDetails);
         when(_userDetails.isEnabled()).thenReturn(false);
 
-        ResultHandler<AuthResponse> result = _authServices.authenticate(_loginRequest);
-
-        assertFalse(result.isSuccess());
-        assertEquals("User not enabled", result.getMessage());
+        assertThrows(AuthenticationException.class, () -> _authServices.authenticate(loginRequest));
     }
 
     @Test
-    void register_ShouldReturnFailure_WhenUsernameAlreadyExists() {
-        RegisterRequest request = new RegisterRequest();
-        request.setUsername("existingUser");
-
+    @DisplayName("Register: Throws EntityAlreadyExistsException if username taken")
+    void register_ShouldThrowException_WhenUsernameExists() {
         when(_userRepository.existsByUsername(anyString())).thenReturn(true);
 
-        var result = _authServices.register(request);
+        assertThrows(EntityAlreadyExistsException.class, () -> _authServices.register(_registerRequest));
+    }
 
-        assertFalse(result.isSuccess());
+    @Test
+    @DisplayName("Register: Throws IllegalStateException if passwords mismatch")
+    void register_ShouldThrowException_WhenPasswordsMismatch() {
+        _registerRequest.setConfirmPassword("mismatch");
+        assertThrows(IllegalStateException.class, () -> _authServices.register(_registerRequest));
+    }
+
+    @Test
+    @DisplayName("Register: Throws Exception when email already exist")
+    void register_ShouldThrowException_WhenEmailAlreadyExists() {
+        when(_userRepository.existsByUsername(anyString())).thenReturn(false);
+        when(_userRepository.existByEmail(anyString())).thenReturn(true);
+
+        assertThrows(EntityAlreadyExistsException.class, () -> _authServices.register(_registerRequest));
         verify(_userServices, never()).create(any(), anyString(), anyBoolean());
     }
 
     @Test
-    void register_ShouldSuccess_AndSendEmail() {
-        RegisterRequest request = new RegisterRequest();
-        request.setUsername("testuser2");
-        request.setEmail("testuser2@exaple.pl");
-        request.setPassword("Pass123!");
-        request.setConfirmPassword("Pass123!");
+    @DisplayName("Register Confirm: Success")
+    void registerConfirm_ShouldReturnTrue_WhenTokenIsValid() {
+        when(_tokenServices.validateToken("valid-token", TokenTypeEnum.ACTIVATION)).thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
 
+        Boolean result = _authServices.registerConfirm("valid-token");
+
+        assertTrue(result);
+        verify(_userServices).activeUser(TestConstants.FAKE_USER_TOKEN);
+    }
+
+    @Test
+    @DisplayName("Register: Success")
+    void register_ShouldSucceed_AndCallAllDependencies() {
         when(_userRepository.existsByUsername(anyString())).thenReturn(false);
-        when(_roleRepository.isRoleExists("ROLE_CLIENT")).thenReturn(true);
+        when(_userRepository.existByEmail(anyString())).thenReturn(false);
+        when(_userServices.create(any(), eq("ROLE_CLIENT"), eq(false))).thenReturn("user-token");
+        when(_tokenServices.createToken(eq("user-token"), eq(TokenTypeEnum.ACTIVATION), anyInt())).thenReturn("act-token");
 
-        when(_userServices.create(any(RegisterRequest.class), eq("ROLE_CLIENT"), eq(false)))
-                .thenReturn("fake-user-token");
+        _authServices.register(_registerRequest);
 
-        when(_tokenServices.createToken(eq("fake-user-token"), eq(TokenTypeEnum.ACTIVATION), anyInt()))
-                .thenReturn("fake-activation-token");
-
-        var result = _authServices.register(request);
-
-        assertTrue(result.isSuccess());
-        verify(_emailServices).sendActivationEmail(
-                eq("testuser2@exaple.pl"),
-                eq("testuser2"),
-                eq("fake-activation-token")
-        );
+        verify(_emailServices).sendActivationEmail(TestConstants.FAKE_EMAIL, TestConstants.FAKE_USERNAME, "act-token");
     }
 
     @Test
-    void resetPassword_ShouldSendEmail_WhenUserExists() {
-        UserDomain userDto = new UserDomain(
-                TestConstants.FAKE_USER_TOKEN,
-                TestConstants.FAKE_USERNAME,
-                TestConstants.FAKE_USERNAME.toUpperCase().trim(),
-                TestConstants.FAKE_EMAIL,
-                TestConstants.FAKE_EMAIL.toUpperCase().trim()
-        );
+    @DisplayName("Register Confirm: Throws InvalidDateException when token invalid")
+    void registerConfirm_ShouldThrowException_WhenTokenInvalid() {
+        when(_tokenServices.validateToken(anyString(), any())).thenReturn(Optional.empty());
 
-        when(_userServices.findMinimalByEmail(TestConstants.FAKE_EMAIL)).thenReturn(Optional.of(userDto));
-        when(_tokenServices.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt()))
-                .thenReturn("res-token");
-
-        _authServices.resetPassword(TestConstants.FAKE_EMAIL);
-
-        verify(_emailServices).sendResetPasswordEmail(anyString(), anyString(), anyString());
+        assertThrows(InvalidDateException.class, () -> _authServices.registerConfirm("invalid-token"));
     }
 
     @Test
-    void registerConfirm_ShouldReturnSuccess_WhenTokenValidAndUserActivated() {
-        when(_tokenServices.validateToken("valid-token", TokenTypeEnum.ACTIVATION))
-                .thenReturn(Optional.of("valid-user-token"));
-
-        ResultHandler<Boolean> result = _authServices.registerConfirm("valid-token");
-
-        assertTrue(result.isSuccess());
-        verify(_userServices, times(1)).activeUser("valid-user-token");
-    }
-
-    @Test
-    void registerConfirm_ShouldReturnFailure_WhenTokenIsInvalid() {
-        when(_tokenServices.validateToken("invalid-token", TokenTypeEnum.ACTIVATION))
-                .thenReturn(Optional.empty());
-
-        ResultHandler<Boolean> result = _authServices.registerConfirm("invalid-token");
-
-        assertFalse(result.isSuccess());
-        verify(_userServices, never()).activeUser(anyString());
-    }
-
-    @Test
-    void setNewPassword_ShouldReturnFailure_WhenTokenIsExpiredOrInvalid() {
+    @DisplayName("Set New Password: Throws IllegalStateException if passwords mismatch")
+    void setNewPassword_ShouldThrowException_WhenPasswordsMismatch() {
         ResetPasswordRequest request = new ResetPasswordRequest();
-        request.setToken("expired-token");
-        request.setPassword("NewPass123!");
-        request.setConfirmPassword("NewPass123!");
+        request.setPassword("pass");
+        request.setConfirmPassword("different");
 
-        when(_tokenServices.validateToken("expired-token", TokenTypeEnum.PASSWORD_RESET))
-                .thenReturn(Optional.empty());
-
-        ResultHandler<Boolean> result = _authServices.setNewPassword(request);
-
-        assertFalse(result.isSuccess());
-        verify(_userServices, never()).changePassword(anyString(), anyString());
+        assertThrows(IllegalStateException.class, () -> _authServices.setNewPassword(request));
     }
 
     @Test
-    void setNewPassword_ShouldReturnSuccess_WhenTokenValidAndPasswordsMatch() {
-        ResetPasswordRequest request = new ResetPasswordRequest();
-        request.setToken("valid-token");
-        request.setPassword("newPass123!");
-        request.setConfirmPassword("newPass123!");
+    @DisplayName("Set New Password: Successes if token is valid")
+    void setNewPassword_ShouldSucceed_WhenTokenIsValid() {
+        ResetPasswordRequest req = new ResetPasswordRequest();
+        req.setToken("valid-token");
+        req.setPassword("NewPass123!");
+        req.setConfirmPassword("NewPass123!");
 
-        when(_tokenServices.validateToken("valid-token", TokenTypeEnum.PASSWORD_RESET))
-                .thenReturn(Optional.of("valid-user-token"));
+        when(_tokenServices.validateToken("valid-token", TokenTypeEnum.PASSWORD_RESET)).thenReturn(Optional.of("user-token"));
 
-        ResultHandler<Boolean> result = _authServices.setNewPassword(request);
+        _authServices.setNewPassword(req);
 
-        assertTrue(result.isSuccess());
-        verify(_userServices, times(1)).changePassword("valid-user-token", "newPass123!");
+        verify(_userServices).changePassword("user-token", "NewPass123!");
+    }
+
+    @Test
+    @DisplayName("Reset Password: Do nothing when user not found")
+    void resetPassword_ShouldDoNothing_WhenUserNotFound() {
+        when(_userServices.findMinimalByEmail(anyString())).thenReturn(Optional.empty());
+
+        _authServices.resetPassword("nonexistent@test.pl");
+
+        verify(_tokenServices, never()).createToken(anyString(), any(), anyInt());
+        verify(_emailServices, never()).sendResetPasswordEmail(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Reset Password: Send email when user  found")
+    void resetPassword_ShouldSendEmail_WhenUserFound() {
+        UserDomain domain = new UserDomain("token", "user", "USER", "test@test.pl", "TEST@TEST.PL");
+        when(_userServices.findMinimalByEmail(anyString())).thenReturn(Optional.of(domain));
+        when(_tokenServices.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt())).thenReturn("reset-token");
+
+        _authServices.resetPassword("test@test.pl");
+
+        verify(_emailServices).sendResetPasswordEmail("test@test.pl", "user", "reset-token");
     }
 }

@@ -8,8 +8,8 @@ import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
-import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.repository.interfaces.IRoleRepository;
+import com.example.restaurant.exceptions.EntityAlreadyExistsException;
+import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
 import com.example.restaurant.services.interfaces.IUserServices;
@@ -22,9 +22,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,6 @@ public class AuthServices implements IAuthServices {
     private final AuthenticationManager _authManager;
     private final JwtServices _jwtServices;
     private final IUserRepository _userRepository;
-    private final IRoleRepository _roleRepository;
     private final EmailServices _emailServices;
     private final UserDetailsService _userDetailsService;
     private final IUserServices _userServices;
@@ -49,7 +48,7 @@ public class AuthServices implements IAuthServices {
     private String googleClientId;
 
     @Auditable(action = "USER_LOGIN")
-    public ResultHandler<AuthResponse> authenticate(LoginRequest request) {
+    public AuthResponse authenticate(LoginRequest request) {
         var auth = _authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
@@ -64,74 +63,41 @@ public class AuthServices implements IAuthServices {
 
     @Auditable(action = "USER_REGISTERED")
     @Transactional
-    public ResultHandler<Void> register(RegisterRequest request) {
+    public void register(RegisterRequest request) {
         if (_userRepository.existsByUsername(request.getUsername().toUpperCase().trim()))
-            return ResultHandler.failure(
-                    "Username already exists",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+            throw new EntityAlreadyExistsException("Username already exists");
+
+        if (_userRepository.existByEmail(request.getEmail().toUpperCase().trim()))
+            throw new EntityAlreadyExistsException("Email already exists");
 
         if (!request.getPassword().equals(request.getConfirmPassword()))
-            return ResultHandler.failure(
-                    "Passwords do not match",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+            throw new IllegalStateException("Passwords do not match");
 
-        String role = "ROLE_CLIENT";
+        String ROLE_CLIENT = "ROLE_CLIENT";
+        String userToken = _userServices.create(request, ROLE_CLIENT, false);
 
-        if (!_roleRepository.isRoleExists(role))
-            return ResultHandler.failure(
-                    "Role does not exist",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-
-        String result = _userServices.create(request, role, false);
-
-        if (result == null)
-            return ResultHandler.failure(
-                    "User already exists",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-
-        String activationToken = _tokenServices.createToken(result, TokenTypeEnum.ACTIVATION, 24 * 60);
-
-        if (activationToken == null)
-            return ResultHandler.failure(
-                    "Activate token not Create",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
-
+        String activationToken = _tokenServices.createToken(userToken, TokenTypeEnum.ACTIVATION, 24 * 60);
 
         _emailServices.sendActivationEmail(request.getEmail(), request.getUsername(), activationToken);
 
-        return ResultHandler.success(
-                "User registered successfully",
-                HttpStatus.CREATED.value());
     }
 
     @Auditable(action = "REGISTER_CONFIRM")
     @Transactional
-    public ResultHandler<Boolean> registerConfirm(String token) {
+    public Boolean registerConfirm(String token) {
         var userTokenOpt = _tokenServices.validateToken(token, TokenTypeEnum.ACTIVATION);
 
         if (userTokenOpt.isEmpty())
-            return ResultHandler.failure(
-                    "Invalid or expired token",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+            throw new InvalidDateException("Invalid or expired token");
 
         _userServices.activeUser(userTokenOpt.get());
 
-        return ResultHandler.success(
-                "User activated successfully",
-                HttpStatus.OK.value(),
-                true
-        );
+        return true;
     }
 
     @Auditable(action = "RESET_PASSWORD")
     @Transactional
-    public ResultHandler<Void> resetPassword(String email) {
+    public void resetPassword(String email) {
         var userOpt = _userServices.findMinimalByEmail(email);
 
         if (userOpt.isPresent()) {
@@ -149,54 +115,41 @@ public class AuthServices implements IAuthServices {
                     resetToken
             );
         }
-
-        return ResultHandler.success(
-                "If account exists, a link was sent.",
-                HttpStatus.OK.value()
-        );
     }
 
     @Auditable(action = "SET_NEW_PASSWORD")
     @Transactional
-    public ResultHandler<Boolean> setNewPassword(ResetPasswordRequest request) {
+    public Boolean setNewPassword(ResetPasswordRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword()))
-            return ResultHandler.failure(
-                    "Passwords do not match",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+            throw new IllegalStateException("Passwords do not match");
 
         var userTokenOpt = _tokenServices.validateToken(request.getToken(), TokenTypeEnum.PASSWORD_RESET);
 
         if (userTokenOpt.isEmpty())
-            return ResultHandler.failure(
-                    "Invalid or expired token",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+            throw new IllegalStateException("Invalid or expired token");
 
         _userServices.changePassword(
                 userTokenOpt.get(),
                 request.getConfirmPassword()
         );
 
-        return ResultHandler.success(
-                "Reset password successfully",
-                HttpStatus.OK.value(),
-                true
-        );
+        return true;
     }
 
     @Auditable(action = "USER_GOOGLE_LOGIN")
     @Transactional
     @Override
-    public ResultHandler<AuthResponse> authenticateWithGoogle(GoogleLoginRequest request) {
+    public AuthResponse authenticateWithGoogle(GoogleLoginRequest request) {
         try {
             GoogleIdToken.Payload payload = verifyGoogleToken(request.getToken());
 
             if (payload == null)
-                return ResultHandler.failure(
-                        "Invalid ID token",
-                        HttpStatus.UNAUTHORIZED.value()
-                );
+                throw new AuthenticationException("Invalid ID token") {
+                    @Override
+                    public String getMessage() {
+                        return super.getMessage();
+                    }
+                };
 
             String email = payload.getEmail();
             var userOpt = _userServices.findMinimalByEmail(email);
@@ -214,35 +167,31 @@ public class AuthServices implements IAuthServices {
 
         } catch (Exception ex) {
             log.error("Google authentication error", ex);
-            return ResultHandler.failure("Authentication failed", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            throw new RuntimeException("Authentication failed");
         }
     }
 
-    private ResultHandler<AuthResponse> buildSuccessAuthResponse(UserDetails userDetails, String message) {
+    private AuthResponse buildSuccessAuthResponse(UserDetails userDetails, String message) {
         if (!userDetails.isEnabled())
-            return ResultHandler.failure(
-                    "User not enabled",
-                    HttpStatus.UNAUTHORIZED.value()
-            );
+            throw new AuthenticationException("User not enabled") {
+                @Override
+                public String getMessage() {
+                    return super.getMessage();
+                }
+            };
+
 
         String jwtToken = _jwtServices.generateToken(userDetails);
 
         if (jwtToken == null)
-            return ResultHandler.failure(
-                    "Jwt Token not generated",
-                    HttpStatus.INTERNAL_SERVER_ERROR.value()
-            );
+            throw new RuntimeException("Jwt Token not generated");
 
         AuthResponse response = AuthResponse.builder()
                 .token(jwtToken)
                 .username(userDetails.getUsername())
                 .build();
 
-        return ResultHandler.success(
-                message,
-                HttpStatus.OK.value(),
-                response
-        );
+        return response;
     }
 
     private GoogleIdToken.Payload verifyGoogleToken(String token) throws Exception {

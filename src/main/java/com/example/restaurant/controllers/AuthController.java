@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -66,9 +67,12 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<ResultHandler<AuthResponse>> login(@RequestBody LoginRequest request) {
-        var result = _authServices.authenticate(request);
-
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        var response = _authServices.authenticate(request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Login successful",
+                HttpStatus.OK.value(),
+                response
+        ));
     }
 
     @Operation(
@@ -82,13 +86,12 @@ public class AuthController {
             }
     )
     @PostMapping("/register")
-    public ResponseEntity<ResultHandler<Void>> register(
-            @RequestBody
-            @Valid
-            RegisterRequest request) {
-        var result = _authServices.register(request);
-
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+    public ResponseEntity<ResultHandler<Void>> register(@RequestBody @Valid RegisterRequest request) {
+        _authServices.register(request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "User registered successfully",
+                HttpStatus.CREATED.value()
+        ));
     }
 
     @Operation(
@@ -106,8 +109,12 @@ public class AuthController {
     )
     @GetMapping("/register-confirm")
     public ResponseEntity<ResultHandler<Boolean>> registerConfirm(@RequestParam String token) {
-        var result = _authServices.registerConfirm(token);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        boolean response = _authServices.registerConfirm(token);
+        return ResponseEntity.ok(ResultHandler.success(
+                "User activated successfully",
+                HttpStatus.OK.value(),
+                response
+        ));
     }
 
     @Operation(
@@ -119,8 +126,11 @@ public class AuthController {
     })
     @PostMapping("/reset-password")
     public ResponseEntity<ResultHandler<Void>> resetPassword(@RequestParam String email) {
-        var result = _authServices.resetPassword(email);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        _authServices.resetPassword(email);
+        return ResponseEntity.ok(ResultHandler.success(
+                "If account exists, a link was sent.",
+                HttpStatus.OK.value()
+        ));
     }
 
     @Operation(
@@ -134,7 +144,11 @@ public class AuthController {
     @PostMapping("/set-password")
     public ResponseEntity<ResultHandler<Boolean>> setNewPassword(@RequestBody ResetPasswordRequest request) {
         var result = _authServices.setNewPassword(request);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Reset password successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
     }
 
     @Operation(
@@ -153,7 +167,11 @@ public class AuthController {
     })
     @PostMapping("/google")
     public ResponseEntity<ResultHandler<AuthResponse>> googleAuth(@Valid @RequestBody GoogleLoginRequest request) {
-        var result = _authServices.authenticateWithGoogle(request);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        var response = _authServices.authenticateWithGoogle(request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Login successful",
+                HttpStatus.OK.value(),
+                response
+        ));
     }
 }

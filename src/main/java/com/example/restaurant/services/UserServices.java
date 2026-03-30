@@ -5,7 +5,8 @@ import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
-import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.exceptions.EntityAlreadyExistsException;
+import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.helpers.SoftDeleteHelpers;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
@@ -15,7 +16,6 @@ import com.example.restaurant.services.interfaces.IUserServices;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -57,6 +57,9 @@ public class UserServices implements IUserServices {
     public void activeUser(String userToken) {
         Users user = _userRepo.findByToken(userToken);
 
+        if (user.getIsActive())
+            throw new IllegalStateException("User is already active");
+
         user.setIsActive(true);
         _userRepo.save(user);
     }
@@ -74,12 +77,9 @@ public class UserServices implements IUserServices {
     @Override
     @Auditable(action = "UPDATE_PASSWORD")
     @Transactional
-    public ResultHandler<Void> updatePassword(String userToken, UpdatePasswordRequest request) {
+    public void updatePassword(String userToken, UpdatePasswordRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword()))
-            return ResultHandler.failure(
-                    "Passwords do not match",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+            throw new IllegalStateException("Passwords do not match");
 
         Users user = _userRepo.findByToken(userToken);
 
@@ -90,10 +90,6 @@ public class UserServices implements IUserServices {
 
         _userRepo.save(user);
 
-        return ResultHandler.success(
-                "Password updated",
-                HttpStatus.OK.value()
-        );
     }
 
     @Override
@@ -107,46 +103,34 @@ public class UserServices implements IUserServices {
     @Override
     @Auditable(action = "UPDATE_EMAIL")
     @Transactional
-    public ResultHandler<Void> updateEmail(String userToken, String email) {
-        var isUserExist = findMinimalByEmail(email);
+    public void updateEmail(String userToken, String email) {
+        String normalizedEmail = email.toUpperCase().trim();
 
-        if (isUserExist.isPresent() && !isUserExist.get().token().equals(userToken))
-            return ResultHandler.failure(
-                    "The email is being used by someone else",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+        var existingUser = findMinimalByEmail(email);
+        if (existingUser.isPresent() && !existingUser.get().token().equals(userToken))
+            throw new EntityAlreadyExistsException("The email is being used by someone else");
 
         Users user = _userRepo.findByToken(userToken);
 
-        user.setPendingEmail(email);
+        if (normalizedEmail.equals(user.getNormalizedEmail()))
+            throw new IllegalStateException("You are already using this email address");
 
+
+        user.setPendingEmail(email);
         _userRepo.save(user);
 
-        String token = _tokenServices.createToken(
-                userToken,
-                TokenTypeEnum.EMAIL_UPDATE,
-                60
-        );
-
+        String token = _tokenServices.createToken(userToken, TokenTypeEnum.EMAIL_UPDATE, 60);
         _emailServices.sendEmailChangeVerification(email, token);
-
-        return ResultHandler.success(
-                "Verification link sent to the new email",
-                HttpStatus.OK.value()
-        );
     }
 
     @Override
     @Transactional
     @Auditable(action = "CONFIRM_EMAIL_CHANGE")
-    public ResultHandler<Void> confirmEmailChange(String userToken, String token) {
+    public void confirmEmailChange(String userToken, String token) {
         boolean isValidToken = _tokenServices.validateToken(userToken, token, TokenTypeEnum.EMAIL_UPDATE);
 
         if (!isValidToken)
-            return ResultHandler.failure(
-                    "Invalid or expired token",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+            throw new InvalidDateException("Invalid or expired token");
 
         Users user = _userRepo.findByToken(userToken);
 
@@ -154,45 +138,37 @@ public class UserServices implements IUserServices {
             throw new IllegalStateException("No pending email to confirm");
 
         user.setEmail(user.getPendingEmail());
-        user.setNormalizedEmail(user.getPendingEmail().toUpperCase());
+        user.setNormalizedEmail(user.getPendingEmail().toUpperCase().trim());
         user.setPendingEmail(null);
 
         _userRepo.save(user);
-
-        return ResultHandler.success(
-                "Email updated successfully",
-                HttpStatus.OK.value()
-        );
     }
 
     @Override
     @Transactional
     @Auditable(action = "UPDATE_USERNAME")
-    public ResultHandler<Void> updateUserName(String userName, String userToken) {
-        if (_userRepo.existsByUsername(userName.toUpperCase().trim()))
-            return ResultHandler.failure(
-                    "Username is already taken",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+    public void updateUserName(String userName, String userToken) {
+        String normalizedNewName = userName.toUpperCase().trim();
 
         Users user = _userRepo.findByToken(userToken);
+
+        if (normalizedNewName.equals(user.getNormalizedUsername()))
+            throw new IllegalStateException("New username must be different from the current one");
+
+        if (_userRepo.existsByUsername(normalizedNewName))
+            throw new EntityAlreadyExistsException("Username is already taken");
+
         user.setUsername(userName);
-        user.setNormalizedUsername(userName.toUpperCase());
-
+        user.setNormalizedUsername(normalizedNewName);
         _userRepo.save(user);
-
-        return ResultHandler.success(
-                "User name changed successfully",
-                HttpStatus.OK.value()
-        );
     }
 
     @Override
     @Transactional
     @Auditable(action = "DELETE_ACCOUNT")
-    public ResultHandler<Void> deleteAccount(String userToken) {
+    public void deleteAccount(String userToken) {
         Users user = _userRepo.findByToken(userToken);
-        
+
         user.setNormalizedEmail(SoftDeleteHelpers.markAsDelete(user.getNormalizedEmail()));
         user.setNormalizedUsername(SoftDeleteHelpers.markAsDelete(user.getNormalizedUsername()));
 
@@ -201,10 +177,5 @@ public class UserServices implements IUserServices {
         user.setIsActive(false);
         user.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
         _userRepo.save(user);
-
-        return ResultHandler.success(
-                "User deleted successfully",
-                HttpStatus.OK.value()
-        );
     }
 }

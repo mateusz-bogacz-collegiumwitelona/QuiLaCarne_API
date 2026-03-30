@@ -7,6 +7,8 @@ import java.util.Optional;
 public interface IUserRepository {
     boolean existsByUsername(String username);
 
+    boolean existByEmail(String email);
+
     boolean isInRole(String roleToken, String userToken);
 
     Users findByToken(String token);

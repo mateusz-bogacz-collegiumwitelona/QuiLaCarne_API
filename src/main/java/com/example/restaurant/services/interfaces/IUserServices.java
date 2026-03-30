@@ -3,7 +3,6 @@ package com.example.restaurant.services.interfaces;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
-import com.example.restaurant.helpers.ResultHandler;
 
 import java.util.Optional;
 
@@ -16,13 +15,13 @@ public interface IUserServices {
 
     void changePassword(String token, String newPassword);
 
-    ResultHandler<Void> updatePassword(String userToken, UpdatePasswordRequest request);
+    void updatePassword(String userToken, UpdatePasswordRequest request);
 
-    ResultHandler<Void> updateEmail(String userToken, String email);
+    void updateEmail(String userToken, String email);
 
-    ResultHandler<Void> confirmEmailChange(String userToken, String token);
+    void confirmEmailChange(String userToken, String token);
 
-    ResultHandler<Void> updateUserName(String userName, String userToken);
+    void updateUserName(String userName, String userToken);
 
-    ResultHandler<Void> deleteAccount(String userToken);
+    void deleteAccount(String userToken);
 }

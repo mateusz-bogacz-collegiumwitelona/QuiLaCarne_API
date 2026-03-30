@@ -1,21 +1,18 @@
 package com.example.restaurant.helpers;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class ResultHandler<T> {
-    public  boolean isSuccess;
-    public  T data;
+    public boolean isSuccess;
+    public T data;
     public String message;
-    public  int statusCode;
+    public int statusCode;
     public List<String> errorMessages;
 
-
-    public boolean isSuccess() { return isSuccess; }
-    public T getData() { return data; }
-    public String getMessage() { return message; }
-    public int getStatusCode() { return statusCode; }
-    public List<String> getErrorMessages() { return errorMessages; }
 
     // z data
     public static <T> ResultHandler<T> success(String message, int statusCode, T data) {
@@ -33,7 +30,7 @@ public class ResultHandler<T> {
     }
 
     // z data
-    public static  <T> ResultHandler<T> failure(String message, int statusCode, List<String> errors) {
+    public static <T> ResultHandler<T> failure(String message, int statusCode, List<String> errors) {
         ResultHandler<T> result = new ResultHandler<>();
         result.isSuccess = false;
         result.message = message;
