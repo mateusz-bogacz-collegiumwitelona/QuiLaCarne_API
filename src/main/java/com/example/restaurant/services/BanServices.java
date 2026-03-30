@@ -5,6 +5,7 @@ import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.models.Bans;
+import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IBanRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IBanServices;
@@ -24,19 +25,25 @@ public class BanServices implements IBanServices {
     private final EmailServices _emailServices;
     private final IUserRepository _userRepo;
 
+    private static final String ROLE_CLIENT = "ROLE_CLIENT";
+    private static final String ROLE_MANAGER = "ROLE_MANAGER";
+    private static final String STATUS_ACTIVE = "ACTIVE";
+
     @Override
     @Transactional
     @Auditable(action = "BAN_USER")
     public ResultHandler<Void> create(String adminToken, CreateBanRequest request) {
-        if (!_userRepo.isInRole("ROLE_CLIENT", request.getClientToken())) {
-            return ResultHandler.failure(
-                    "You can only ban users with the client role",
-                    HttpStatus.BAD_REQUEST.value()
-            );
-        }
-        
+        if (adminToken.equals(request.getClientToken()))
+            throw new IllegalStateException("You cannot ban yourself");
+
+
         var admin = _userRepo.findByToken(adminToken);
         var client = _userRepo.findByToken(request.getClientToken());
+
+        validatePerrmisions(admin, client);
+
+        if (!client.getIsActive())
+            throw new IllegalStateException("User is already inactive or banned");
 
         CreateBanDomain banDomain = new CreateBanDomain(
                 client,
@@ -56,7 +63,7 @@ public class BanServices implements IBanServices {
     @Override
     @Transactional
     public void create(CreateBanDomain domain) {
-        var status = _banRepo.findStatusByToken("ACTIVE");
+        var status = _banRepo.findStatusByToken(STATUS_ACTIVE);
 
         Bans ban = new Bans();
         ban.setUser(domain.client());
@@ -76,5 +83,21 @@ public class BanServices implements IBanServices {
                 domain.client().getUsername(),
                 domain.reason()
         );
+    }
+
+    private void validatePerrmisions(Users admin, Users client) {
+        boolean isAdminManager = admin.getRoles().stream()
+                .anyMatch(r -> r.getName().equals(ROLE_MANAGER));
+
+        if (!isAdminManager) {
+            throw new IllegalStateException("Only managers can issue bans");
+        }
+
+        boolean isTargetClient = client.getRoles().stream()
+                .anyMatch(r -> r.getName().equals(ROLE_CLIENT));
+
+        if (!isTargetClient) {
+            throw new IllegalStateException("Targeted user must be a client");
+        }
     }
 }

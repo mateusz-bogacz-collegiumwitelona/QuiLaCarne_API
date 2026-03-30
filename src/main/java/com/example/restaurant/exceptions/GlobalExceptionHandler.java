@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
         List<String> errors = manvex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(err -> err.getDefaultMessage())
+                .map(err -> String.format("%s: %s", err.getField(), err.getDefaultMessage()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ResultHandler.failure(
-                        "Internal server error: " + ex.getMessage(),
+                        "An unexpected error occurred. Please contact support.",
                         HttpStatus.INTERNAL_SERVER_ERROR.value()
                 )
         );
@@ -125,4 +125,6 @@ public class GlobalExceptionHandler {
                 ResultHandler.failure("Resource not found", HttpStatus.NOT_FOUND.value())
         );
     }
+
+    
 }
