@@ -21,7 +21,8 @@ public class DishRepository implements IDishRepository {
 
     @Override
     public Page<Dishes> findAllDishes(DishFilterRequest request, PaggedRequest pagged) {
-        Pageable pageable = PageRequest.of(pagged.getPage() - 1, pagged.getSize());
+        int pageIndex = Math.max(0, pagged.getPage() - 1);
+        Pageable pageable = PageRequest.of(pageIndex, pagged.getSize());
 
         var excludedAllergens = request.getExcludedAllergens();
 

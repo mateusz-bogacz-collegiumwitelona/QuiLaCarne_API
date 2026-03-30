@@ -4,20 +4,20 @@ import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
-import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.services.interfaces.IDishServices;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DishServices implements IDishServices {
     private final IDishRepository _dishRepo;
     private final DishMapper _dishMapper;
@@ -29,7 +29,7 @@ public class DishServices implements IDishServices {
     private String s3BucketName;
 
     @Override
-    public ResultHandler<PagedResult<DishListResponse>> getMenu(DishFilterRequest request, PaggedRequest pagged) {
+    public PagedResult<DishListResponse> getMenu(DishFilterRequest request, PaggedRequest pagged) {
         String lang = LocaleContextHolder.getLocale().getLanguage();
 
         var dishPage = _dishRepo.findAllDishes(request, pagged);
@@ -38,16 +38,17 @@ public class DishServices implements IDishServices {
             DishListResponse dto = _dishMapper.toDishListResponse(d, lang);
 
             if (dto.getImageUrl() != null && !dto.getImageUrl().startsWith("http")) {
-                String fullUrl = String.format("%s/%s/%s", s3Endpoint.trim(), s3BucketName, dto.getImageUrl());
-                dto.setImageUrl(fullUrl);
+                if (s3Endpoint == null || s3Endpoint.isBlank() || s3BucketName == null) {
+                    log.error("S3 storage is not properly configured. Returning relative image path.");
+                } else {
+                    String fullUrl = String.format("%s/%s/%s", s3Endpoint.trim(), s3BucketName, dto.getImageUrl());
+                    dto.setImageUrl(fullUrl);
+                }
             }
 
             return dto;
         });
 
-        return ResultHandler.success(
-                "Menu retrived",
-                HttpStatus.OK.value(),
-                new PagedResult<>(result));
+        return new PagedResult<>(result);
     }
 }

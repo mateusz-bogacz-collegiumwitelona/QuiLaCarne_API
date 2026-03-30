@@ -23,6 +23,8 @@ public class EmailServices {
 
     @Async
     public void sendActivationEmail(String to, String username, String token) {
+        validateInputs(to, username, token);
+
         Context context = new Context();
         context.setVariable("username", username);
         context.setVariable("activationUrl", token);
@@ -66,6 +68,8 @@ public class EmailServices {
 
     @Async
     public void sendEmailSetBan(String to, String userName, String reason) {
+        validateInputs(to, userName, reason);
+
         Context context = new Context();
         context.setVariable("username", userName);
         context.setVariable("reason", reason);
@@ -99,6 +103,17 @@ public class EmailServices {
             log.info("{} email sent to {}", actionName, to);
         } catch (Exception ex) {
             log.error("Failed to send {} email to {}: {}", actionName, to, ex.getMessage(), ex);
+        }
+    }
+
+    private void validateInputs(String to, String... params) {
+        if (to == null || to.isBlank() || !to.contains("@")) {
+            throw new IllegalArgumentException("A valid destination email is required");
+        }
+        for (String param : params) {
+            if (param == null || param.isBlank()) {
+                throw new IllegalArgumentException("Required email context variable is missing or blank");
+            }
         }
     }
 }

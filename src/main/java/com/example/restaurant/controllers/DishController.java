@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -52,9 +53,11 @@ public class DishController {
     public ResponseEntity<ResultHandler<PagedResult<DishListResponse>>> getMenu(
             @ParameterObject @Valid @ModelAttribute PaggedRequest pagged,
             @ParameterObject @ModelAttribute DishFilterRequest request
-    )
-    {
+    ) {
         var result = _dishServices.getMenu(request, pagged);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Menu retrived",
+                HttpStatus.OK.value(),
+                result));
     }
 }
