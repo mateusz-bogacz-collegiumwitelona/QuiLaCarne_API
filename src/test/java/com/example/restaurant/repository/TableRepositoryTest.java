@@ -1,8 +1,7 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.exceptions.StatusNotFoundException;
-import com.example.restaurant.exceptions.TableNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
@@ -75,7 +74,7 @@ public class TableRepositoryTest {
         when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
                 .thenReturn(Optional.empty());
 
-        TableNotFoundException ex = assertThrows(TableNotFoundException.class, () ->
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () ->
                 _tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)
         );
 
@@ -115,7 +114,7 @@ public class TableRepositoryTest {
         when(_jpaTableStatusRepo.findByToken("CLEANING"))
                 .thenReturn(Optional.empty());
 
-        StatusNotFoundException ex = assertThrows(StatusNotFoundException.class, () ->
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () ->
                 _tableRepo.findStatusByToken("CLEANING")
         );
 

@@ -6,13 +6,12 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.*;
-import com.example.restaurant.exceptions.ReservationNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
-import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
@@ -44,7 +43,6 @@ import java.util.Set;
 public class ReservationServices implements IReservationServices {
     private final ITableRespository _tableRepo;
     private final IReservationRepository _reservationRepo;
-    private final IOrderRepository _orderRepo;
     private final IUserRepository _userRepo;
     private final IOrderServices _orderServices;
     private final ReservationMapper _reservationMapper;
@@ -78,7 +76,7 @@ public class ReservationServices implements IReservationServices {
                     "Table is already reserved in this timeframe",
                     HttpStatus.CONFLICT.value()
             );
-        
+
 
         var user = _userRepo.findByToken(userToken);
         var table = _tableRepo.findByToken(request.getTableToken());
@@ -170,7 +168,7 @@ public class ReservationServices implements IReservationServices {
 
 
         Reservations reservations = _reservationRepo.findByTokenAndUserToken(reservationToken, userToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
         ReservationDetailsResponse response = _reservationMapper.toReservationDetailsResponse(reservations, lang);
 
@@ -190,7 +188,7 @@ public class ReservationServices implements IReservationServices {
     @Override
     public ResultHandler<Void> cancel(String reservationToken, String userToken) {
         Reservations reservation = _reservationRepo.findByTokenAndUserToken(reservationToken, userToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
         ReservationStatus cancelledStatus = _reservationRepo.findStatusByToken("CANCELLED");
         reservation.setReservationStatus(new HashSet<>(Set.of(cancelledStatus)));
@@ -265,7 +263,7 @@ public class ReservationServices implements IReservationServices {
             return ResultHandler.failure("Not waiter", HttpStatus.UNAUTHORIZED.value());
 
         Reservations reservation = _reservationRepo.findByToken(reservationToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
         ReservationStatus inProgressStatus = _reservationRepo.findStatusByToken("IN_PROGRESS");
         reservation.setReservationStatus(new HashSet<>(Set.of(inProgressStatus)));
@@ -280,7 +278,7 @@ public class ReservationServices implements IReservationServices {
     @Override
     public ResultHandler<Void> isAbsent(String reservationToken) {
         Reservations reservation = _reservationRepo.findByToken(reservationToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
         boolean isActive = reservation.getReservationStatus().stream()
                 .anyMatch(status -> status.getToken().equals("ACTIVE"));

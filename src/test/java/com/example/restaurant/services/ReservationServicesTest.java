@@ -10,7 +10,7 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.*;
-import com.example.restaurant.exceptions.ReservationNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
@@ -239,7 +239,7 @@ public class ReservationServicesTest {
                 eq(TestConstants.FAKE_USER_TOKEN)
         )).thenReturn(Optional.empty());
 
-        assertThrows(ReservationNotFoundException.class, () ->
+        assertThrows(EntityNotFoundException.class, () ->
                 _reservationServices.details(
                         TestConstants.FAKE_RESERVATION_TOKEN,
                         TestConstants.FAKE_USER_TOKEN
@@ -281,7 +281,7 @@ public class ReservationServicesTest {
                 TestConstants.FAKE_USER_TOKEN
         )).thenReturn(Optional.empty());
 
-        assertThrows(ReservationNotFoundException.class, () ->
+        assertThrows(EntityNotFoundException.class, () ->
                 _reservationServices.cancel(
                         TestConstants.FAKE_RESERVATION_TOKEN,
                         TestConstants.FAKE_USER_TOKEN
@@ -434,7 +434,7 @@ public class ReservationServicesTest {
         when(_reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.empty());
 
-        assertThrows(ReservationNotFoundException.class, () ->
+        assertThrows(EntityNotFoundException.class, () ->
                 _reservationServices.assignWaiter(TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_USER_TOKEN)
         );
 
@@ -491,7 +491,7 @@ public class ReservationServicesTest {
         when(_reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.empty());
 
-        assertThrows(ReservationNotFoundException.class, () ->
+        assertThrows(EntityNotFoundException.class, () ->
                 _reservationServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN)
         );
 

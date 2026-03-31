@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaIngredientsRepository;
@@ -26,7 +27,7 @@ public class IngredientsRepository implements IIngredientsRepository {
     public Ingredients findByToken(String token) {
         return _jpaIngredientsRepo.findByToken(token)
                 .orElseThrow(
-                        () -> new RuntimeException("Ingredient not found")
+                        () -> new EntityNotFoundException("Ingredient not found")
                 );
     }
 }

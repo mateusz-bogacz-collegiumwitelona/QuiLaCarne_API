@@ -1,6 +1,6 @@
 package com.example.restaurant.repository;
 
-import com.example.restaurant.exceptions.UserNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IUserRepository;
@@ -30,13 +30,13 @@ public class UserRepository implements IUserRepository {
     @Override
     public Users findByToken(String token) {
         return _jpaUserRepository.findByToken(token).orElseThrow(
-                () -> new UserNotFoundException("User not found")
+                () -> new EntityNotFoundException("User not found")
         );
     }
 
     @Override
     public boolean isInRole(String roleName, String userToken) {
-        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(() -> new UserNotFoundException("User not found"));
+        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         Roles role = _jpaRoleRepository.findByName(roleName).orElseThrow(() -> new RuntimeException("Role not found"));
 

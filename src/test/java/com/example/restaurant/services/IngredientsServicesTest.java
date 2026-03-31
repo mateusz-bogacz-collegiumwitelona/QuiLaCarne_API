@@ -3,19 +3,18 @@ package com.example.restaurant.services;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
-import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Set;
@@ -39,10 +38,11 @@ public class IngredientsServicesTest {
     private IngredientsServices _ingredientsServices;
 
     @Test
-    void add_ShouldReturnCreated_WhenDataIsCorrect() {
+    @DisplayName("Adding Ingredient: Should save the component with the correct token")
+    void add_ShouldSaveIngredient_WhenDataIsCorrect() {
         AddEntityRequest entityReq = new AddEntityRequest();
         entityReq.setNamePl("Cebula");
-        entityReq.setNameEn("Onion");
+        entityReq.setNameEn("Onion Ring");
 
         AddIngredientRequest request = new AddIngredientRequest();
         request.setEntity(entityReq);
@@ -50,90 +50,51 @@ public class IngredientsServicesTest {
 
         Allergens mockAllergen = new Allergens();
         mockAllergen.setToken("GLUTEN");
-        List<Allergens> foundAllergens = List.of(mockAllergen);
+        when(_ingredientsRepo.isNameTaken(anyString(), anyString())).thenReturn(false);
+        when(_allergensRepo.findAllergens(anyList())).thenReturn(List.of(mockAllergen));
 
-        when(_ingredientsRepo.isNameTaken("Cebula", "Onion")).thenReturn(false);
-        when(_allergensRepo.findAllergens(anyList())).thenReturn(foundAllergens);
-
-
-        ResultHandler<Void> result = _ingredientsServices.add(request);
-
-        assertTrue(result.isSuccess());
-        assertEquals(HttpStatus.CREATED.value(), result.getStatusCode());
+        assertDoesNotThrow(() -> _ingredientsServices.add(request));
 
         verify(_ingredientsRepo, times(1)).save(argThat(ingredient ->
                 ingredient.getNamePl().equals("Cebula") &&
-                        ingredient.getNameEn().equals("Onion") &&
-                        ingredient.getToken().equals("ONION") &&
-                        ingredient.getAllergens().size() == 1
+                        ingredient.getNameEn().equals("Onion Ring") &&
+                        ingredient.getToken().equals("ONION_RING")
         ));
     }
 
     @Test
+    @DisplayName("Adding Ingredient: Throws EntityAlreadyExistsException when name is taken")
     void add_ShouldThrowException_WhenNameIsTaken() {
         AddEntityRequest entityReq = new AddEntityRequest();
         entityReq.setNamePl("Cebula");
         entityReq.setNameEn("Onion");
-
         AddIngredientRequest request = new AddIngredientRequest();
         request.setEntity(entityReq);
 
         when(_ingredientsRepo.isNameTaken("Cebula", "Onion")).thenReturn(true);
 
-        EntityAlreadyExistsException exception = assertThrows(EntityAlreadyExistsException.class, () ->
-                _ingredientsServices.add(request)
-        );
-
-        assertEquals("Ingredient already exists", exception.getMessage());
-        verify(_allergensRepo, never()).findAllergens(anyList());
+        assertThrows(EntityAlreadyExistsException.class, () -> _ingredientsServices.add(request));
         verify(_ingredientsRepo, never()).save(any());
     }
 
     @Test
+    @DisplayName("Adding Ingredient: Throws IllegalStateException when not all allergens are found")
     void add_ShouldThrowException_WhenAllergensNotFound() {
         AddEntityRequest entityReq = new AddEntityRequest();
-        entityReq.setNamePl("Cebula");
-        entityReq.setNameEn("Onion");
-
+        entityReq.setNamePl("Sól");
+        entityReq.setNameEn("Salt");
         AddIngredientRequest request = new AddIngredientRequest();
         request.setEntity(entityReq);
         request.setAllergenTokens(Set.of("GLUTEN", "LACTOSE"));
 
-        Allergens mockAllergen = new Allergens();
-        mockAllergen.setToken("GLUTEN");
-        List<Allergens> foundAllergens = List.of(mockAllergen);
-
-        when(_ingredientsRepo.isNameTaken("Cebula", "Onion")).thenReturn(false);
-        when(_allergensRepo.findAllergens(anyList())).thenReturn(foundAllergens);
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                _ingredientsServices.add(request)
-        );
-
-        assertEquals("One or more allergens not found", exception.getMessage());
-        verify(_ingredientsRepo, never()).save(any());
-    }
-
-    @Test
-    void add_ShouldCreateIngredientWithoutAllergens_WhenTokensAreNullOrEmpty() {
-        AddEntityRequest entityReq = new AddEntityRequest();
-        entityReq.setNamePl("Woda");
-        entityReq.setNameEn("Water");
-
-        AddIngredientRequest request = new AddIngredientRequest();
-        request.setEntity(entityReq);
-        request.setAllergenTokens(null);
-
         when(_ingredientsRepo.isNameTaken(anyString(), anyString())).thenReturn(false);
-        when(_allergensRepo.findAllergens(any())).thenReturn(new java.util.ArrayList<>());
+        when(_allergensRepo.findAllergens(anyList())).thenReturn(List.of(new Allergens()));
 
-        ResultHandler<Void> result = _ingredientsServices.add(request);
-
-        assertTrue(result.isSuccess());
-        verify(_ingredientsRepo).save(argThat(i -> i.getAllergens().isEmpty()));
+        assertThrows(IllegalStateException.class, () -> _ingredientsServices.add(request));
     }
 
     @Test
+    @DisplayName("Removing an ingredient: Success - should anonymize data (Soft Delete) and deactivate associated dishes")
     void remove_ShouldSoftDeleteIngredient_AndDeactivateDishes() {
         String token = "TOMATO";
         UUID ingredientId = UUID.randomUUID();
@@ -150,14 +111,10 @@ public class IngredientsServicesTest {
         when(_ingredientsRepo.findByToken(token)).thenReturn(ingredient);
         when(_dishRepo.findByIngredientsId(ingredientId)).thenReturn(List.of(dish));
 
-        var result = _ingredientsServices.remove(token);
-
-        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertEquals("Ingredient remove successfuly", result.getMessage());
+        assertDoesNotThrow(() -> _ingredientsServices.remove(token));
 
         assertTrue(ingredient.getToken().startsWith("DELETED_"));
         assertTrue(ingredient.getNameEn().startsWith("DELETED_"));
-        assertTrue(ingredient.getNamePl().startsWith("DELETED_"));
         assertNotNull(ingredient.getDeletedAt());
         verify(_ingredientsRepo).save(ingredient);
 

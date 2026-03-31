@@ -1,7 +1,7 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.exceptions.UserNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.jpa.IJpaRoleRepository;
@@ -49,7 +49,7 @@ public class UserRepositoryTest {
     void findByToken_ShouldThrowException_WhenNotFound() {
         when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(Optional.empty());
 
-        assertThrows(UserNotFoundException.class, () ->
+        assertThrows(EntityNotFoundException.class, () ->
                 _userRepository.findByToken(TestConstants.FAKE_USER_TOKEN)
         );
     }
@@ -92,7 +92,7 @@ public class UserRepositoryTest {
     void isInRole_ShouldThrowUserNotFound_WhenUserTokenIsInvalid() {
         when(_jpaUserRepository.findByToken("INVALID")).thenReturn(Optional.empty());
 
-        assertThrows(UserNotFoundException.class, () ->
+        assertThrows(EntityNotFoundException.class, () ->
                 _userRepository.isInRole(TestConstants.FAKE_ROLE, "INVALID"));
     }
 

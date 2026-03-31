@@ -1,7 +1,6 @@
 package com.example.restaurant.repository;
 
-import com.example.restaurant.exceptions.StatusNotFoundException;
-import com.example.restaurant.exceptions.TableNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
@@ -27,7 +26,7 @@ public class TableRespository implements ITableRespository {
     @Override
     public RestaurantTables findByToken(String token) {
         return _jpaTableRepo.findByToken(token)
-                .orElseThrow(() -> new TableNotFoundException("Table not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Table not found"));
     }
 
     @Override
@@ -40,7 +39,7 @@ public class TableRespository implements ITableRespository {
     @Override
     public TableStatus findStatusByToken(String token) {
         return _jpaTableStatusRepo.findByToken(token)
-                .orElseThrow(() -> new StatusNotFoundException("Table status not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Table status not found"));
     }
 
     @Override

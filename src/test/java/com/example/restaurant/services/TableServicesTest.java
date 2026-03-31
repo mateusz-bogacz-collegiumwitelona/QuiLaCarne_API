@@ -3,8 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
-import com.example.restaurant.exceptions.StatusNotFoundException;
-import com.example.restaurant.exceptions.TableNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
@@ -185,9 +184,9 @@ public class TableServicesTest {
     @Test
     void changeStatusToClean_ShouldThrowTableNotFoundException_WhenTableNotFound() {
         when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
-                .thenThrow(new TableNotFoundException("Table not found"));
+                .thenThrow(new EntityNotFoundException("Table not found"));
 
-        assertThrows(TableNotFoundException.class,
+        assertThrows(EntityNotFoundException.class,
                 () -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN)
         );
 
@@ -199,9 +198,9 @@ public class TableServicesTest {
         RestaurantTables mockTable = new RestaurantTables();
         when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(mockTable);
         when(_tableRepo.findStatusByToken("CLEANING"))
-                .thenThrow(new StatusNotFoundException("Table status not found"));
+                .thenThrow(new EntityNotFoundException("Table status not found"));
 
-        assertThrows(StatusNotFoundException.class,
+        assertThrows(EntityNotFoundException.class,
                 () -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN)
         );
 

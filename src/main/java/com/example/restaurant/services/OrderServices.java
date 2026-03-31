@@ -7,7 +7,7 @@ import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
-import com.example.restaurant.exceptions.ReservationNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
@@ -47,7 +47,7 @@ public class OrderServices implements IOrderServices {
                 .collect(Collectors.toMap(Dishes::getToken, dish -> dish));
 
         var reservation = _reservationRepo.findByToken(reservationToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
         var table = _tableRepo.findByToken(tableToken);
 
@@ -264,7 +264,7 @@ public class OrderServices implements IOrderServices {
     @Override
     public void assignWaiterToOrders(String reservationToken, String waiterToken) {
         var order = _orderRepo.findByReservationToken(reservationToken)
-                .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
         var waiter = _userRepo.findByToken(waiterToken);
 

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -38,8 +39,11 @@ public class IngredientsController {
     @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
     @PostMapping
     public ResponseEntity<ResultHandler<Void>> add(@RequestBody @Valid AddIngredientRequest request) {
-        var result = _ingredientsServices.add(request);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        _ingredientsServices.add(request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Ingredient created successful",
+                HttpStatus.CREATED.value()
+        ));
     }
 
     @Operation(
@@ -60,7 +64,10 @@ public class IngredientsController {
     @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
     @DeleteMapping("/{token}")
     public ResponseEntity<ResultHandler<Void>> remove(@PathVariable String token) {
-        var result = _ingredientsServices.remove(token);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        _ingredientsServices.remove(token);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Ingredient remove successfuly",
+                HttpStatus.OK.value()
+        ));
     }
 }

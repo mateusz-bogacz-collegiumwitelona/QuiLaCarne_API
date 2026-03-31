@@ -1,6 +1,6 @@
 package com.example.restaurant.repository;
 
-import com.example.restaurant.exceptions.StatusNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.IReportRepository;
@@ -22,7 +22,7 @@ public class ReportRepository implements IReportRepository {
     public GuestReportStatus findStatusByToken(String token) {
         return _jpaReportStatusRepo.findByToken(token)
                 .orElseThrow(
-                        () -> new StatusNotFoundException("Report Status not found")
+                        () -> new EntityNotFoundException("Report Status not found")
                 );
     }
 

@@ -114,12 +114,8 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler({
-            UserNotFoundException.class,
-            ReservationNotFoundException.class,
-            StatusNotFoundException.class,
-    })
-    public ResponseEntity<ResultHandler<Object>> handleResourceNotFoundException(RuntimeException rex) {
+    @ExceptionHandler({EntityNotFoundException.class})
+    public ResponseEntity<ResultHandler<Object>> handleEntityNotFoundException(RuntimeException rex) {
         log.warn("Resource not found: {}", rex.getMessage());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(

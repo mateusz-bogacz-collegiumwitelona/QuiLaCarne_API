@@ -1,6 +1,6 @@
 package com.example.restaurant.repository;
 
-import com.example.restaurant.exceptions.StatusNotFoundException;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.lookup.BanStatus;
 import com.example.restaurant.repository.interfaces.jpa.IJpaBanRepository;
@@ -45,7 +45,7 @@ class BanRepositoryTest {
         String token = "NON_EXISTENT";
         when(_jpaStatusRepo.findByToken(token)).thenReturn(Optional.empty());
 
-        StatusNotFoundException exception = assertThrows(StatusNotFoundException.class, () -> {
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
             _banRepository.findStatusByToken(token);
         });
 
