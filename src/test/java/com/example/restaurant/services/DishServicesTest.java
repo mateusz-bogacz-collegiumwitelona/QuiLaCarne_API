@@ -1,10 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.dto.request.ChangeDishAvailableRequest;
-import com.example.restaurant.dto.request.DishFilterRequest;
-import com.example.restaurant.dto.request.EditDishRequest;
-import com.example.restaurant.dto.request.PaggedRequest;
+import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
@@ -16,6 +13,7 @@ import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -285,6 +283,101 @@ public class DishServicesTest {
         when(_s3Services.generateUniqFileName("steak.png")).thenReturn("new_uuid_steak.png");
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> _dishServices.edit(request));
+
+        assertEquals("Could not process photo file", exception.getMessage());
+        verify(_dishRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("add: Should create basic dish with trimmed name, set available to true, and save")
+    void add_ShouldCreateBasicDish_AndSave() {
+        AddDishRequest request = new AddDishRequest();
+        request.setName("  New Pasta  ");
+        request.setPrice(2500);
+        request.setCategoryToken("CAT_PASTA");
+
+        DishesCategories category = new DishesCategories();
+        when(_dishRepo.findCategoryByToken("CAT_PASTA")).thenReturn(category);
+
+        _dishServices.add(request);
+
+        ArgumentCaptor<Dishes> dishCaptor = ArgumentCaptor.forClass(Dishes.class);
+        verify(_dishRepo, times(1)).save(dishCaptor.capture());
+
+        Dishes savedDish = dishCaptor.getValue();
+        assertEquals("New Pasta", savedDish.getName(), "Name should be trimmed");
+        assertEquals(2500, savedDish.getPrice(), "Price should be mapped correctly");
+        assertEquals(category, savedDish.getCategory(), "Category should be mapped");
+        assertTrue(savedDish.isAvailable(), "New dish should be available by default");
+        assertNull(savedDish.getImageUrl(), "Image URL should be null if no photo was uploaded");
+        assertTrue(savedDish.getIngredients().isEmpty(), "Ingredients should be empty");
+
+        verifyNoInteractions(_s3Services);
+        verifyNoInteractions(_ingredientsRepo);
+    }
+
+    @Test
+    @DisplayName("add: Should correctly map category, ingredients, and upload photo to S3")
+    void add_ShouldCreateDishWithIngredientsAndPhoto() throws IOException {
+        AddDishRequest request = new AddDishRequest();
+        request.setName("Pizza");
+        request.setPrice(3000);
+        request.setCategoryToken("CAT_MAIN");
+        request.setIngredientTokens(List.of("ING_CHEESE"));
+
+        MultipartFile mockPhoto = mock(MultipartFile.class);
+        when(mockPhoto.isEmpty()).thenReturn(false);
+        when(mockPhoto.getOriginalFilename()).thenReturn("pizza.png");
+        when(mockPhoto.getContentType()).thenReturn("image/png");
+        when(mockPhoto.getSize()).thenReturn(2048L);
+        InputStream mockInputStream = mock(InputStream.class);
+        when(mockPhoto.getInputStream()).thenReturn(mockInputStream);
+
+        request.setPhoto(mockPhoto);
+
+        DishesCategories category = new DishesCategories();
+        Ingredients cheese = new Ingredients();
+
+        when(_dishRepo.findCategoryByToken("CAT_MAIN")).thenReturn(category);
+        when(_ingredientsRepo.findByToken("ING_CHEESE")).thenReturn(cheese);
+        when(_s3Services.generateUniqFileName("pizza.png")).thenReturn("uuid_pizza.png");
+        when(_s3Services.uploadFromStream(mockInputStream, "uuid_pizza.png", "image/png", 2048L))
+                .thenReturn("uuid_pizza.png");
+
+        _dishServices.add(request);
+
+        ArgumentCaptor<Dishes> dishCaptor = ArgumentCaptor.forClass(Dishes.class);
+        verify(_dishRepo, times(1)).save(dishCaptor.capture());
+
+        Dishes savedDish = dishCaptor.getValue();
+        assertEquals("Pizza", savedDish.getName());
+        assertEquals(category, savedDish.getCategory());
+        assertEquals(1, savedDish.getIngredients().size());
+        assertTrue(savedDish.getIngredients().contains(cheese));
+        assertEquals("uuid_pizza.png", savedDish.getImageUrl());
+
+        verify(_s3Services, never()).deleteFile(any());
+    }
+
+    @Test
+    @DisplayName("add: Should throw RuntimeException when reading photo input stream fails")
+    void add_ShouldThrowRuntimeException_WhenPhotoStreamFails() throws IOException {
+        AddDishRequest request = new AddDishRequest();
+        request.setName("Pizza");
+        request.setPrice(3000);
+        request.setCategoryToken("CAT_MAIN");
+
+        MultipartFile mockPhoto = mock(MultipartFile.class);
+        when(mockPhoto.isEmpty()).thenReturn(false);
+        when(mockPhoto.getOriginalFilename()).thenReturn("pizza.png");
+        when(mockPhoto.getInputStream()).thenThrow(new IOException("Stream error"));
+
+        request.setPhoto(mockPhoto);
+
+        when(_dishRepo.findCategoryByToken("CAT_MAIN")).thenReturn(new DishesCategories());
+        when(_s3Services.generateUniqFileName("pizza.png")).thenReturn("uuid_pizza.png");
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> _dishServices.add(request));
 
         assertEquals("Could not process photo file", exception.getMessage());
         verify(_dishRepo, never()).save(any());

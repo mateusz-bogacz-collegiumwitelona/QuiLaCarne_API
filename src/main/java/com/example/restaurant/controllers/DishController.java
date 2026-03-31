@@ -1,9 +1,6 @@
 package com.example.restaurant.controllers;
 
-import com.example.restaurant.dto.request.ChangeDishAvailableRequest;
-import com.example.restaurant.dto.request.DishFilterRequest;
-import com.example.restaurant.dto.request.EditDishRequest;
-import com.example.restaurant.dto.request.PaggedRequest;
+import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
@@ -156,6 +153,37 @@ public class DishController {
                 ResultHandler.success(
                         "Dish edited successfully",
                         HttpStatus.OK.value()
+                )
+        );
+    }
+
+    @Operation(
+            summary = "Add a new dish",
+            description = "Creates a new dish in the menu and optionally uploads its photo to S3. Requires ROLE_MANAGER privileges. Uses multipart/form-data."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Dish created successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data or invalid file format", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not Found - Category or Ingredient token does not exist", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> add(
+            @Valid @ModelAttribute AddDishRequest request
+    ) {
+        _dishServices.add(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ResultHandler.success(
+                        "Dish created successfully",
+                        HttpStatus.CREATED.value()
                 )
         );
     }

@@ -1,10 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.request.ChangeDishAvailableRequest;
-import com.example.restaurant.dto.request.DishFilterRequest;
-import com.example.restaurant.dto.request.EditDishRequest;
-import com.example.restaurant.dto.request.PaggedRequest;
+import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
@@ -26,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -119,19 +117,45 @@ public class DishServices implements IDishServices {
             dish.setCategory(category);
         }
 
-        if (!ObjectUtils.isEmpty(request.getIngredientTokens())) {
+        updateDishIngredients(dish, request.getIngredientTokens());
+        updateDishPhoto(dish, request.getPhoto());
+        _dishRepo.save(dish);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "ADD_DISH")
+    public void add(AddDishRequest request) {
+        Dishes dish = new Dishes();
+
+        dish.setName(request.getName().trim());
+        dish.setPrice(request.getPrice());
+
+        DishesCategories category = _dishRepo.findCategoryByToken(request.getCategoryToken());
+        dish.setCategory(category);
+
+        dish.setAvailable(true);
+        updateDishIngredients(dish, request.getIngredientTokens());
+        updateDishPhoto(dish, request.getPhoto());
+
+        _dishRepo.save(dish);
+    }
+
+    private void updateDishIngredients(Dishes dish, List<String> tokens) {
+        if (!ObjectUtils.isEmpty(tokens)) {
             Set<Ingredients> newIngredients = new HashSet<>();
-            for (String token : request.getIngredientTokens()) {
+            for (String token : tokens) {
                 Ingredients ingredient = _ingredientsRepo.findByToken(token);
                 newIngredients.add(ingredient);
             }
             dish.setIngredients(newIngredients);
         }
+    }
 
-        if (request.getPhoto() != null && !request.getPhoto().isEmpty()) {
+    private void updateDishPhoto(Dishes dish, MultipartFile photo) {
+        if (photo != null && !photo.isEmpty()) {
             if (dish.getImageUrl() != null) _s3Services.deleteFile(dish.getImageUrl());
 
-            MultipartFile photo = request.getPhoto();
             String generatedName = _s3Services.generateUniqFileName(photo.getOriginalFilename());
 
             try {
@@ -143,10 +167,9 @@ public class DishServices implements IDishServices {
                 );
                 dish.setImageUrl(finalFileName);
             } catch (java.io.IOException e) {
-                log.error("Error reading photo input stream for dish token: {}", request.getDishToken(), e);
+                log.error("Error reading photo input stream", e);
                 throw new RuntimeException("Could not process photo file", e);
             }
         }
-        _dishRepo.save(dish);
     }
 }
