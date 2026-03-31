@@ -6,6 +6,7 @@ import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableStatusRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +33,7 @@ public class TableRepositoryTest {
     private TableRespository _tableRepo;
 
     @Test
+    @DisplayName("find all table: should call find all if dates are null")
     void findAllTables_ShouldCallFindAll_WhenDatesAreNull() {
         when(_jpaTableRepo.findAll()).thenReturn(List.of(new RestaurantTables()));
 
@@ -43,6 +45,7 @@ public class TableRepositoryTest {
     }
 
     @Test
+    @DisplayName("find all table: should call find avalible in time frame  if dates aren't null")
     void findAllTables_ShouldCallFindAvailableInTimeframe_WhenDatesProvided() {
         OffsetDateTime start = OffsetDateTime.now();
         OffsetDateTime end = start.plusHours(2);
@@ -58,6 +61,7 @@ public class TableRepositoryTest {
     }
 
     @Test
+    @DisplayName("find table: should return table when found")
     void findByToken_ShouldReturnTable_WhenFound() {
         RestaurantTables mockTable = new RestaurantTables();
         when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
@@ -70,6 +74,7 @@ public class TableRepositoryTest {
     }
 
     @Test
+    @DisplayName("find table: should throw exception when table not found")
     void findByToken_ShouldThrowTableNotFoundException_WhenNotFound() {
         when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
                 .thenReturn(Optional.empty());
@@ -82,6 +87,7 @@ public class TableRepositoryTest {
     }
 
     @Test
+    @DisplayName("is table exist: should return true if exist")
     void isTableExist_ShouldReturnTrue_WhenTableExists() {
         when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
                 .thenReturn(Optional.of(new RestaurantTables()));
@@ -90,6 +96,7 @@ public class TableRepositoryTest {
     }
 
     @Test
+    @DisplayName("is table exist: should return false if doesn't exist")
     void isTableExist_ShouldReturnFalse_WhenTableDoesNotExist() {
         when(_jpaTableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
                 .thenReturn(Optional.empty());
@@ -98,6 +105,7 @@ public class TableRepositoryTest {
     }
 
     @Test
+    @DisplayName("is status by token: should return status if found")
     void findStatusByToken_ShouldReturnStatus_WhenFound() {
         TableStatus mockStatus = new TableStatus();
         when(_jpaTableStatusRepo.findByToken("CLEANING"))
@@ -110,6 +118,7 @@ public class TableRepositoryTest {
     }
 
     @Test
+    @DisplayName("is status by token: should throw exception if status not found")
     void findStatusByToken_ShouldThrowTableStatusNotFoundException_WhenNotFound() {
         when(_jpaTableStatusRepo.findByToken("CLEANING"))
                 .thenReturn(Optional.empty());
@@ -122,6 +131,7 @@ public class TableRepositoryTest {
     }
 
     @Test
+    @DisplayName("save: should save JPA")
     void save_ShouldCallJpaSave() {
         RestaurantTables table = new RestaurantTables();
         _tableRepo.save(table);
@@ -129,6 +139,7 @@ public class TableRepositoryTest {
     }
 
     @Test
+    @DisplayName("is tale available: should return true if is available")
     void isTableAvailable_ShouldReturnTrue_WhenTableIsInAvailableList() {
         RestaurantTables table = new RestaurantTables();
         table.setToken("T1");

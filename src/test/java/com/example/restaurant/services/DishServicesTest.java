@@ -25,7 +25,7 @@ import java.util.Locale;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class DishServicesTest {
@@ -39,7 +39,7 @@ public class DishServicesTest {
     private DishServices _dishServices;
 
     @Test
-    @DisplayName("Pobieranie menu: Powinno użyć aktualnego języka, zmapować dania i dodać URL do S3")
+    @DisplayName("get menu: should use the current language, map the dishes and add the URL to S3")
     void getMenu_ShouldUseCurrentLocale_MapDishes_AndAppendS3Url() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
         ReflectionTestUtils.setField(_dishServices, "s3Endpoint", "http://localhost:9000");
@@ -60,7 +60,7 @@ public class DishServicesTest {
     }
 
     @Test
-    @DisplayName("Pobieranie menu: Nie powinno modyfikować URL, jeśli zaczyna się od 'http'")
+    @DisplayName("Get menu: It should not modify the URL if it starts with 'http'")
     void getMenu_ShouldNotModifyUrl_WhenItAlreadyStartsHttp() {
         Page<Dishes> mockPage = new PageImpl<>(List.of(new Dishes()));
         DishListResponse dishResponse = DishListResponse.builder().imageUrl("https://external.com/img.jpg").build();
@@ -74,12 +74,34 @@ public class DishServicesTest {
     }
 
     @Test
-    @DisplayName("Pobieranie menu: Powinno poprawnie obsłużyć pustą stronę wyników")
+    @DisplayName("Get Menu: It should handle a blank results page correctly")
     void getMenu_ShouldHandleEmptyPage() {
         when(_dishRepo.findAllDishes(any(), any())).thenReturn(Page.empty());
 
         PagedResult<DishListResponse> result = _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
 
         assertTrue(result.getItems().isEmpty());
+    }
+
+    @Test
+    @DisplayName("remove: should disable the availability of the dish, add the reason and date of deletion (soft delete)")
+    void remove_ShouldMarkDishAsDeleted_AndSaveToRepository() {
+        String token = "DISH_TOKEN_123";
+        Dishes dish = new Dishes();
+        dish.setToken(token);
+        dish.setAvailable(true);
+        dish.setUnavailableReason(null);
+        dish.setDeletedAt(null);
+
+        when(_dishRepo.findByToken(token)).thenReturn(dish);
+
+        _dishServices.remove(token);
+
+        assertFalse(dish.isAvailable());
+        assertEquals("Dish is deleted", dish.getUnavailableReason());
+        assertNotNull(dish.getDeletedAt());
+
+        verify(_dishRepo, times(1)).findByToken(token);
+        verify(_dishRepo, times(1)).save(dish);
     }
 }

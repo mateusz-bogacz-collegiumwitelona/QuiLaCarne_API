@@ -1,18 +1,23 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
+import com.example.restaurant.models.Dishes;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.services.interfaces.IDishServices;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+
+import java.time.OffsetDateTime;
 
 
 @Service
@@ -50,5 +55,18 @@ public class DishServices implements IDishServices {
         });
 
         return new PagedResult<>(result);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "REMOVE_DISH")
+    public void remove(String dishToken) {
+        Dishes dish = _dishRepo.findByToken(dishToken);
+
+        dish.setUnavailableReason("Dish is deleted");
+        dish.setAvailable(false);
+        dish.setDeletedAt(OffsetDateTime.now());
+
+        _dishRepo.save(dish);
     }
 }

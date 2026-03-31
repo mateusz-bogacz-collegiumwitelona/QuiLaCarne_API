@@ -6,6 +6,7 @@ import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationsRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,6 +35,7 @@ public class ReservationRepositoryTest {
     private ReservationRepository _reservationRepo;
 
     @Test
+    @DisplayName("Save: should call JPA")
     void save_ShouldCallJpaSave() {
         Reservations res = new Reservations();
         _reservationRepo.save(res);
@@ -41,6 +43,7 @@ public class ReservationRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find all: should call JPA")
     void findAll_ShouldCallJpaFindAll() {
         Page<Reservations> page = new PageImpl<>(List.of());
         when(_jpaReservationsRepo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
@@ -51,6 +54,7 @@ public class ReservationRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find status by token: should return staus if exist")
     void findStatusByToken_ShouldReturnStatus_WhenFound() {
         ReservationStatus status = new ReservationStatus();
         when(_jpaReservationStatusRepo.findByToken("ACTIVE")).thenReturn(Optional.of(status));
@@ -62,6 +66,7 @@ public class ReservationRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find by token: should return reservation if exist")
     void findByToken_ShouldReturnReservation_WhenFound() {
         Reservations mockReservation = new Reservations();
         when(_jpaReservationsRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
@@ -74,6 +79,7 @@ public class ReservationRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find status by token: should throw exeception if not found")
     void findStatusByToken_ShouldThrowException_WhenNotFound() {
         when(_jpaReservationStatusRepo.findByToken("ANY")).thenReturn(Optional.empty());
 
@@ -83,6 +89,7 @@ public class ReservationRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find by reservation and user token: should call JPA")
     void findByTokenAndUserToken_ShouldCallJpa() {
         _reservationRepo.findByTokenAndUserToken("RES_1", "USER_1");
         verify(_jpaReservationsRepo).findByTokenAndUser_Token("RES_1", "USER_1");

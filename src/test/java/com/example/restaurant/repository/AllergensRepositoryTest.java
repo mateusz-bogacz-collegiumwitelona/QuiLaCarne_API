@@ -2,6 +2,7 @@ package com.example.restaurant.repository;
 
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.jpa.IJpaAllergensRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +24,7 @@ public class AllergensRepositoryTest {
     private AllergensRepository _allergensRepo;
 
     @Test
+    @DisplayName("Find allergens: Return list of allergens")
     void findAllergens_ShouldReturnListOfAllergens() {
         List<String> tokens = List.of("GLUTEN", "LACTOSE");
 
@@ -39,6 +41,7 @@ public class AllergensRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find allergens: Return empty list when no tokens")
     void findAllergens_ShouldReturnEmptyList_WhenTokensListIsEmpty() {
         List<Allergens> result = _allergensRepo.findAllergens(List.of());
 
@@ -47,6 +50,7 @@ public class AllergensRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find allergens: Return empty list when tokens is null")
     void findAllergens_ShouldReturnEmptyList_WhenTokensListIsNull() {
         List<Allergens> result = _allergensRepo.findAllergens(null);
 

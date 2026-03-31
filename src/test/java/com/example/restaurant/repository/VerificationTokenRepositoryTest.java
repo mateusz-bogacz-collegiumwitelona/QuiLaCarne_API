@@ -3,6 +3,7 @@ package com.example.restaurant.repository;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.models.VerificationToken;
 import com.example.restaurant.repository.interfaces.jpa.IJpaVerificationTokenRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +24,7 @@ public class VerificationTokenRepositoryTest {
     private VerificationTokenRepository _tokenRepo;
 
     @Test
+    @DisplayName("save: Should Call Jpa Save")
     void save_ShouldCallJpaSave() {
         VerificationToken token = new VerificationToken();
         _tokenRepo.save(token);
@@ -30,6 +32,7 @@ public class VerificationTokenRepositoryTest {
     }
 
     @Test
+    @DisplayName("delete: Should Call Jpa")
     void delete_ShouldCallJpaDelete() {
         VerificationToken token = new VerificationToken();
         _tokenRepo.delete(token);
@@ -37,6 +40,7 @@ public class VerificationTokenRepositoryTest {
     }
 
     @Test
+    @DisplayName("find By Token And Type: Should Call Jpa")
     void findByTokenAndType_ShouldCallJpaMethod() {
         when(_jpaTokenRepo.findByTokenAndType("token", TokenTypeEnum.ACTIVATION))
                 .thenReturn(Optional.of(new VerificationToken()));
@@ -46,6 +50,7 @@ public class VerificationTokenRepositoryTest {
     }
 
     @Test
+    @DisplayName("find By Token And Type: Should Return Empty When Not Found")
     void findByTokenAndType_ShouldReturnEmpty_WhenNotFound() {
         when(_jpaTokenRepo.findByTokenAndType("MISSING", TokenTypeEnum.ACTIVATION))
                 .thenReturn(Optional.empty());

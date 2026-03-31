@@ -2,8 +2,10 @@ package com.example.restaurant.repository;
 
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.repository.interfaces.jpa.IJpaDishRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,10 +17,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -31,6 +33,7 @@ public class DishRepositoryTest {
     private DishRepository _dishRepo;
 
     @Test
+    @DisplayName("Find all dishes: should return full if no allergens excluded")
     void findAllDishes_ShouldCallJpaFindAll_WhenNoAllergensExcluded() {
         Dishes dishes = new Dishes();
         dishes.setName("Pizza");
@@ -54,6 +57,7 @@ public class DishRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find all dishes: should return list without excluded allergens")
     void findAllDishes_ShouldCallJpaFindWithoutAllergens_WhenAllergensAreExcluded() {
         Dishes dishes = new Dishes();
         dishes.setName("Salad");
@@ -80,6 +84,7 @@ public class DishRepositoryTest {
     }
 
     @Test
+    @DisplayName("List for orders: return list of dishes")
     void listForOrder_ShouldReturnListOfDishes() {
         List<String> tokens = List.of("TOKEN1", "TOKEN2");
         List<Dishes> expectedDishes = List.of(new Dishes(), new Dishes());
@@ -93,6 +98,7 @@ public class DishRepositoryTest {
     }
 
     @Test
+    @DisplayName("Get: should return dish if exist")
     void get_ShouldReturnDish_WhenTokenExists() {
         Dishes d1 = new Dishes();
         d1.setToken("T1");
@@ -105,11 +111,13 @@ public class DishRepositoryTest {
     }
 
     @Test
+    @DisplayName("Get: Throw exception when dish doesn't exists")
     void get_ShouldThrowException_WhenTokenDoesNotExist() {
         assertThrows(RuntimeException.class, () -> _dishRepo.get(List.of(), "MISSING"));
     }
 
     @Test
+    @DisplayName("Find dish by ingridient id: should return full list of dishes")
     void findByIngredientsId_ShouldReturnListOfDishes() {
         UUID id = UUID.randomUUID();
         List<Dishes> expectedDishes = List.of(new Dishes(), new Dishes());
@@ -119,5 +127,48 @@ public class DishRepositoryTest {
 
         assertEquals(2, result.size());
         verify(_jpaDishRepo).findByIngredientsId(id);
+    }
+
+    @Test
+    @DisplayName("find By Token: Solving the problem when a token exists")
+    void findByToken_ShouldReturnDish_WhenExists() {
+        String token = "VALID_TOKEN";
+        Dishes expectedDish = new Dishes();
+        expectedDish.setToken(token);
+
+        when(_jpaDishRepo.findByToken(token)).thenReturn(Optional.of(expectedDish));
+
+        Dishes result = _dishRepo.findByToken(token);
+
+        assertNotNull(result);
+        assertEquals(token, result.getToken());
+        verify(_jpaDishRepo, times(1)).findByToken(token);
+    }
+
+    @Test
+    @DisplayName("find By Token: Should throw EntityNotFoundException when token does not exist")
+    void findByToken_ShouldThrowEntityNotFoundException_WhenDoesNotExist() {
+        String token = "INVALID_TOKEN";
+        when(_jpaDishRepo.findByToken(token)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> _dishRepo.findByToken(token)
+        );
+
+        assertEquals("Dish not found", exception.getMessage());
+        verify(_jpaDishRepo, times(1)).findByToken(token);
+    }
+
+    @Test
+    @DisplayName("save: should correctly trigger a write to the JPA repository")
+    void save_ShouldCallJpaSave() {
+
+        Dishes dish = new Dishes();
+        dish.setName("Pasta");
+
+        _dishRepo.save(dish);
+
+        verify(_jpaDishRepo, times(1)).save(dish);
     }
 }

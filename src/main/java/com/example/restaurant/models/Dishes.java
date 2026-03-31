@@ -5,6 +5,7 @@ import com.example.restaurant.models.lookup.DishesCategories;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import java.util.Set;
 @Table(name = "dishes")
 @Getter
 @Setter
+@SQLRestriction("deleted_at IS NULL")
 public class Dishes extends BaseNamedEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")

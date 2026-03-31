@@ -4,6 +4,7 @@ import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.jpa.IJpaGuestReportRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaGuestReportStatusRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +33,7 @@ public class ReportRepositoryTest {
     private ReportRepository _reportRepo;
 
     @Test
+    @DisplayName("Find status by token: should return status id exists")
     void findStatusByToken_ShouldReturnStatus_WhenExists() {
         GuestReportStatus status = new GuestReportStatus();
         when(_jpaGuestStausRepo.findByToken("TOKEN")).thenReturn(Optional.of(status));
@@ -44,6 +46,7 @@ public class ReportRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find status by token: should throw exception if doesn't exists")
     void findStatusByToken_ShouldThrowException_WhenNotFound() {
         when(_jpaGuestStausRepo.findByToken("UNKNOWN")).thenReturn(Optional.empty());
 
@@ -55,6 +58,7 @@ public class ReportRepositoryTest {
     }
 
     @Test
+    @DisplayName("Save: should call JPA")
     void save_ShouldCallJpaRepository() {
         GuestReports report = new GuestReports();
 
@@ -64,6 +68,7 @@ public class ReportRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find all: should return page")
     void findAll_ShouldReturnPageFromJpaRepository() {
         Specification<GuestReports> mockSpec = mock(Specification.class);
         Pageable mockPageable = mock(Pageable.class);
@@ -80,6 +85,7 @@ public class ReportRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find by toke: should return report")
     void findByToken_ShouldReturnReport_WhenCalled() {
         String token = "report-token-123";
         GuestReports mockReport = new GuestReports();

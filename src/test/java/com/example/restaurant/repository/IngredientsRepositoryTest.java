@@ -2,6 +2,7 @@ package com.example.restaurant.repository;
 
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.jpa.IJpaIngredientsRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +24,7 @@ public class IngredientsRepositoryTest {
     private IngredientsRepository _ingredientsRepository;
 
     @Test
+    @DisplayName("Save: Success")
     void save_ShouldCallJpaSave() {
         Ingredients ingredient = new Ingredients();
         _ingredientsRepository.save(ingredient);
@@ -31,6 +33,7 @@ public class IngredientsRepositoryTest {
     }
 
     @Test
+    @DisplayName("Is name taken: return true if polish name is taken")
     void isNameTaken_ShouldReturnTrue_WhenPlNameExists() {
         when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.of(new Ingredients()));
 
@@ -40,6 +43,7 @@ public class IngredientsRepositoryTest {
     }
 
     @Test
+    @DisplayName("Is name taken: return true if english name is taken")
     void isNameTaken_ShouldReturnTrue_WhenEnNameExists() {
         when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.empty());
         when(_jpaIngredientsRepo.findByNameEn("Onion")).thenReturn(Optional.of(new Ingredients()));
@@ -50,6 +54,7 @@ public class IngredientsRepositoryTest {
     }
 
     @Test
+    @DisplayName("Is name taken: return false if polish and english name isn't taken")
     void isNameTaken_ShouldReturnFalse_WhenNamesAreFree() {
         when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.empty());
         when(_jpaIngredientsRepo.findByNameEn("Onion")).thenReturn(Optional.empty());
@@ -60,6 +65,7 @@ public class IngredientsRepositoryTest {
     }
 
     @Test
+    @DisplayName("Is name taken: should not checking english name if polish name is taken")
     void isNameTaken_ShouldNotCheckEnglishName_IfPolishNameIsAlreadyTaken() {
         when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.of(new Ingredients()));
 
@@ -70,6 +76,7 @@ public class IngredientsRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find by token: return ingrediant if exist")
     void findByToken_ShouldReturnIngredient_WhenExists() {
         Ingredients ingredient = new Ingredients();
         when(_jpaIngredientsRepo.findByToken("TOMATO")).thenReturn(Optional.of(ingredient));
@@ -81,6 +88,7 @@ public class IngredientsRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find by token: throw exception if ingridients not found")
     void findByToken_ShouldThrowException_WhenNotFound() {
         when(_jpaIngredientsRepo.findByToken("UNKNOWN")).thenReturn(Optional.empty());
 

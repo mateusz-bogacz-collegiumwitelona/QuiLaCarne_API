@@ -5,6 +5,7 @@ import com.example.restaurant.models.Users;
 import com.example.restaurant.models.VerificationToken;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +30,7 @@ public class VerificationTokenServicesTest {
     private VerificationTokenServices _tokenServices;
 
     @Test
+    @DisplayName("create Token: Should Save And Return Token")
     void createToken_ShouldSaveAndReturnTokenValue() {
         Users mockUser = new Users();
         when(_userRepo.findByToken("user-token")).thenReturn(mockUser);
@@ -40,6 +42,7 @@ public class VerificationTokenServicesTest {
     }
 
     @Test
+    @DisplayName("validate Token: With User Token Should Return True And Delete When Valid")
     void validateToken_WithUserToken_ShouldReturnTrueAndDelete_WhenValid() {
         Users mockUser = new Users();
         mockUser.setToken("user-token-123");
@@ -58,6 +61,7 @@ public class VerificationTokenServicesTest {
     }
 
     @Test
+    @DisplayName("validate Token: Without User Token Should Return User Token And Delete When Valid")
     void validateToken_WithoutUserToken_ShouldReturnUserTokenAndDelete_WhenValid() {
         Users mockUser = new Users();
         mockUser.setToken("user-token-123");
@@ -77,6 +81,7 @@ public class VerificationTokenServicesTest {
     }
 
     @Test
+    @DisplayName("validate Token: Should Reture False When Token Expired")
     void validateToken_ShouldReturnFalse_WhenTokenExpired() {
         VerificationToken vt = new VerificationToken();
         vt.setExpiryDate(OffsetDateTime.now().minusMinutes(15));
@@ -91,6 +96,7 @@ public class VerificationTokenServicesTest {
     }
 
     @Test
+    @DisplayName("validate Token: Should Return False When User Token Does Not Match")
     void validateToken_ShouldReturnFalse_WhenUserTokenDoesNotMatch() {
         Users differentUser = new Users();
         differentUser.setToken("wrong-user");
@@ -107,6 +113,7 @@ public class VerificationTokenServicesTest {
     }
 
     @Test
+    @DisplayName("validate Token: Should Return Empty When Token Not Found In Db")
     void validateToken_ShouldReturnEmpty_WhenTokenNotFoundInDb() {
         when(_tokenRepo.findByTokenAndType("missing", TokenTypeEnum.ACTIVATION)).thenReturn(Optional.empty());
 

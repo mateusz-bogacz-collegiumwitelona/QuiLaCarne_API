@@ -7,6 +7,7 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaOrderItemStatusRepos
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrderItemsRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrderRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrederStatusRepositry;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,6 +39,7 @@ public class OrderRepositoryTest {
     private OrderRepository _orderRepo;
 
     @Test
+    @DisplayName("Save ordrer with items: should save")
     void saveOrderWithItems_ShouldSaveOrderAndItems() {
         Orders mockOrder = new Orders();
         OrderItems mockItem = new OrderItems();
@@ -50,6 +52,7 @@ public class OrderRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find status by token: should return status if exist")
     void findStatusByToken_ShouldReturnStatus_WhenFound() {
         OrderStatus mockStatus = new OrderStatus();
         when(_jpaOrderStatusRepo.findByToken("PENDING"))
@@ -62,6 +65,7 @@ public class OrderRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find status by token: should throw exception if status doesn't exist")
     void findStatusByToken_ShouldThrowException_WhenStatusNotFound() {
         when(_jpaOrderStatusRepo.findByToken("PENDING"))
                 .thenReturn(Optional.empty());
@@ -74,6 +78,7 @@ public class OrderRepositoryTest {
     }
 
     @Test
+    @DisplayName("Save all items: shoould save all items")
     void saveAllItems_ShouldSaveAllItems() {
         List<OrderItems> items = List.of(new OrderItems(), new OrderItems());
         _orderRepo.saveAllItems(items);
@@ -81,6 +86,7 @@ public class OrderRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find status by token: should throw exception if status not found")
     void findItemStatusByToken_ShouldThrowException_WhenNotFound() {
         when(_jpaOrderItemStatusRepo.findByToken("INVALID")).thenReturn(Optional.empty());
 
@@ -88,6 +94,7 @@ public class OrderRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find by reservation token: should call jpa")
     void findByReservationToken_ShouldCallJpa() {
         _orderRepo.findByReservationToken("RES_123");
         verify(_jpaOrderRepo).findByReservation_Token("RES_123");

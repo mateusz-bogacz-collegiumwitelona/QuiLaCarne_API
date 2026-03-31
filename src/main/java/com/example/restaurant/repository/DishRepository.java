@@ -2,6 +2,7 @@ package com.example.restaurant.repository;
 
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaDishRepository;
@@ -43,7 +44,7 @@ public class DishRepository implements IDishRepository {
         return dishes.stream()
                 .filter(d -> d.getToken().equals(token))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Dish not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Dish not found"));
     }
 
     @Override
@@ -54,5 +55,11 @@ public class DishRepository implements IDishRepository {
     @Override
     public void save(Dishes dish) {
         _jpaDishRepo.save(dish);
+    }
+
+    @Override
+    public Dishes findByToken(String token) {
+        return _jpaDishRepo.findByToken(token)
+                .orElseThrow(() -> new EntityNotFoundException("Dish not found"));
     }
 }

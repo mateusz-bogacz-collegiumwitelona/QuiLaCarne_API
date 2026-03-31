@@ -5,6 +5,7 @@ import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.lookup.BanStatus;
 import com.example.restaurant.repository.interfaces.jpa.IJpaBanRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaBanStatusRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +29,7 @@ class BanRepositoryTest {
     private BanRepository _banRepository;
 
     @Test
+    @DisplayName("Find status: Return status if exist")
     void findStatusByToken_ShouldReturnStatus_WhenExists() {
         String token = "ACTIVE";
         BanStatus status = new BanStatus();
@@ -41,19 +43,19 @@ class BanRepositoryTest {
     }
 
     @Test
+    @DisplayName("Find allergens: throw execption when not found")
     void findStatusByToken_ShouldThrowException_WhenNotFound() {
         String token = "NON_EXISTENT";
         when(_jpaStatusRepo.findByToken(token)).thenReturn(Optional.empty());
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
-            _banRepository.findStatusByToken(token);
-        });
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> _banRepository.findStatusByToken(token));
 
         assertEquals("Ban status not found", exception.getMessage());
         verify(_jpaStatusRepo, times(1)).findByToken(token);
     }
 
     @Test
+    @DisplayName("Save: Success")
     void save_ShouldCallJpaRepositorySave() {
         Bans ban = new Bans();
 

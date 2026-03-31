@@ -7,4 +7,6 @@ import com.example.restaurant.helpers.PagedResult;
 
 public interface IDishServices {
     PagedResult<DishListResponse> getMenu(DishFilterRequest request, PaggedRequest pagged);
+
+    void remove(String dishToken);
 }

@@ -2,6 +2,7 @@ package com.example.restaurant.repository;
 
 import com.example.restaurant.models.AuditLog;
 import com.example.restaurant.repository.interfaces.jpa.IJpaAuditLogRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +21,7 @@ public class AuditLogRepositoryTest {
     private AuditLogRepository _auditLogRepo;
 
     @Test
+    @DisplayName("Save log: Success")
     void save_ShouldCallJpaSaveAndFlush() {
         AuditLog log = new AuditLog();
         _auditLogRepo.save(log);
@@ -28,6 +30,7 @@ public class AuditLogRepositoryTest {
     }
 
     @Test
+    @DisplayName("Save log: JPA error")
     void save_ShouldThrowException_WhenJpaFails() {
         AuditLog log = new AuditLog();
         doThrow(new RuntimeException("DB Error")).when(_jpaAuditRepo).saveAndFlush(log);

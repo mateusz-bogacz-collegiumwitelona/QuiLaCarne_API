@@ -18,4 +18,6 @@ public interface IDishRepository {
     List<Dishes> findByIngredientsId(UUID id);
 
     void save(Dishes dish);
+
+    Dishes findByToken(String token);
 }

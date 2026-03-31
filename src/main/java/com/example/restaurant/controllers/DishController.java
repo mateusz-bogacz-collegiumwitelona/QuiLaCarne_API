@@ -18,10 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(value = "/api/dishes", produces = "application/json")
@@ -59,5 +57,20 @@ public class DishController {
                 "Menu retrived",
                 HttpStatus.OK.value(),
                 result));
+    }
+
+    @DeleteMapping("/{token}")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> remove(
+            @PathVariable String token
+    ) {
+        _dishServices.remove(token);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                        "Dish remove successfully",
+                        HttpStatus.OK.value()
+                )
+
+        );
     }
 }
