@@ -2,6 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddEmployeeRequest;
+import com.example.restaurant.dto.request.EditEmployeeRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
@@ -252,5 +253,123 @@ public class UserServicesTest {
 
         verify(_roleRepository).setRole("ROLE_WAITER");
         verify(_userRepo).save(any(Users.class));
+    }
+
+    @Test
+    @DisplayName("Edit Employee: Success when updating both email and username")
+    void editEmployee_ShouldUpdateBoth_WhenValid() {
+        EditEmployeeRequest request = new EditEmployeeRequest();
+        request.setEmployeeToken(TestConstants.FAKE_USER_TOKEN);
+        request.setEmail("new_employee@test.pl");
+        request.setUserName("NewEmployeeName");
+
+        Users employee = new Users();
+        employee.setEmail("old@test.pl");
+        employee.setNormalizedEmail("OLD@TEST.PL");
+        employee.setUsername("OldName");
+        employee.setNormalizedUsername("OLDNAME");
+
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
+        when(_userRepo.findByNormalizedEmail("NEW_EMPLOYEE@TEST.PL")).thenReturn(Optional.empty());
+        when(_userRepo.existsByUsername("NEWEMPLOYEENAME")).thenReturn(false);
+
+        _userServices.editEmployee(request);
+
+        assertEquals("new_employee@test.pl", employee.getEmail());
+        assertEquals("NEW_EMPLOYEE@TEST.PL", employee.getNormalizedEmail());
+        assertEquals("NewEmployeeName", employee.getUsername());
+        assertEquals("NEWEMPLOYEENAME", employee.getNormalizedUsername());
+        verify(_userRepo).save(employee);
+    }
+
+    @Test
+    @DisplayName("Edit Employee: Success when updating only email")
+    void editEmployee_ShouldUpdateOnlyEmail_WhenUsernameIsBlank() {
+        EditEmployeeRequest request = new EditEmployeeRequest();
+        request.setEmployeeToken(TestConstants.FAKE_USER_TOKEN);
+        request.setEmail("new_employee@test.pl");
+        request.setUserName("   ");
+
+        Users employee = new Users();
+        employee.setNormalizedEmail("OLD@TEST.PL");
+        employee.setUsername("OldName");
+        employee.setNormalizedUsername("OLDNAME");
+
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
+        when(_userRepo.findByNormalizedEmail("NEW_EMPLOYEE@TEST.PL")).thenReturn(Optional.empty());
+
+        _userServices.editEmployee(request);
+
+        assertEquals("new_employee@test.pl", employee.getEmail());
+        assertEquals("OldName", employee.getUsername(), "Username should not change");
+        verify(_userRepo).save(employee);
+    }
+
+    @Test
+    @DisplayName("Edit Employee: Throws IllegalStateException when new email is the same as current")
+    void editEmployee_ShouldThrowException_WhenEmailIsSameAsCurrent() {
+        EditEmployeeRequest request = new EditEmployeeRequest();
+        request.setEmployeeToken(TestConstants.FAKE_USER_TOKEN);
+        request.setEmail("same@test.pl");
+
+        Users employee = new Users();
+        employee.setNormalizedEmail("SAME@TEST.PL");
+
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> _userServices.editEmployee(request));
+        assertEquals("Email must be different", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Edit Employee: Throws EntityAlreadyExistsException when new email is already taken")
+    void editEmployee_ShouldThrowException_WhenEmailIsTaken() {
+        EditEmployeeRequest request = new EditEmployeeRequest();
+        request.setEmployeeToken(TestConstants.FAKE_USER_TOKEN);
+        request.setEmail("taken@test.pl");
+
+        Users employee = new Users();
+        employee.setNormalizedEmail("OLD@TEST.PL");
+
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
+        when(_userRepo.findByNormalizedEmail("TAKEN@TEST.PL")).thenReturn(Optional.of(new Users()));
+
+        assertThrows(EntityAlreadyExistsException.class, () -> _userServices.editEmployee(request));
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Edit Employee: Throws IllegalStateException when new username is the same as current")
+    void editEmployee_ShouldThrowException_WhenUsernameIsSameAsCurrent() {
+        EditEmployeeRequest request = new EditEmployeeRequest();
+        request.setEmployeeToken(TestConstants.FAKE_USER_TOKEN);
+        request.setUserName("SameName");
+
+        Users employee = new Users();
+        employee.setNormalizedUsername("SAMENAME");
+
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> _userServices.editEmployee(request));
+        assertEquals("User name must be different", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Edit Employee: Throws EntityAlreadyExistsException when new username is already taken")
+    void editEmployee_ShouldThrowException_WhenUsernameIsTaken() {
+        EditEmployeeRequest request = new EditEmployeeRequest();
+        request.setEmployeeToken(TestConstants.FAKE_USER_TOKEN);
+        request.setUserName("TakenName");
+
+        Users employee = new Users();
+        employee.setNormalizedUsername("OLDNAME");
+
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
+        when(_userRepo.existsByUsername("TAKENNAME")).thenReturn(true);
+
+        assertThrows(EntityAlreadyExistsException.class, () -> _userServices.editEmployee(request));
+        verify(_userRepo, never()).save(any());
     }
 }

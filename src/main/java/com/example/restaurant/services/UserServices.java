@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.AddEmployeeRequest;
+import com.example.restaurant.dto.request.EditEmployeeRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
@@ -39,17 +40,6 @@ public class UserServices implements IUserServices {
     @Transactional
     public String create(RegisterRequest request, String userRole, boolean isActive) {
         return buildAndSaveUser(request, userRole, isActive);
-    }
-
-    @Override
-    @Transactional
-    @Auditable(action = "ADD_NEW_EMPLOYEE")
-    public void createEmployee(AddEmployeeRequest request) {
-        if (request.isAdmin()) {
-            buildAndSaveUser(request.getRegister(), "ROLE_MANAGER", true);
-        } else {
-            buildAndSaveUser(request.getRegister(), "ROLE_WAITER", true);
-        }
     }
 
     @Override
@@ -177,6 +167,52 @@ public class UserServices implements IUserServices {
         user.setIsActive(false);
         user.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
         _userRepo.save(user);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "ADD_NEW_EMPLOYEE")
+    public void createEmployee(AddEmployeeRequest request) {
+        if (request.isAdmin()) {
+            buildAndSaveUser(request.getRegister(), "ROLE_MANAGER", true);
+        } else {
+            buildAndSaveUser(request.getRegister(), "ROLE_WAITER", true);
+        }
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "EDIT_EMPLOYEE")
+    public void editEmployee(EditEmployeeRequest request) {
+        Users employee = _userRepo.findByToken(request.getEmployeeToken());
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            String normalizedEmail = request.getEmail().toUpperCase().trim();
+
+            if (employee.getNormalizedEmail().equals(normalizedEmail))
+                throw new IllegalStateException("Email must be different");
+
+            if (_userRepo.findByNormalizedEmail(normalizedEmail).isPresent())
+                throw new EntityAlreadyExistsException("User with this email already exists");
+
+            employee.setEmail(request.getEmail().trim());
+            employee.setNormalizedEmail(normalizedEmail);
+        }
+
+        if (request.getUserName() != null && !request.getUserName().isBlank()) {
+            String normalizedUserName = request.getUserName().toUpperCase().trim();
+
+            if (employee.getNormalizedUsername().equals(normalizedUserName))
+                throw new IllegalStateException("User name must be different");
+
+            if (_userRepo.existsByUsername(normalizedUserName))
+                throw new EntityAlreadyExistsException("User with this username already exists");
+
+            employee.setUsername(request.getUserName().trim());
+            employee.setNormalizedUsername(normalizedUserName);
+        }
+
+        _userRepo.save(employee);
     }
 
     private String buildAndSaveUser(RegisterRequest request, String userRole, boolean isActive) {

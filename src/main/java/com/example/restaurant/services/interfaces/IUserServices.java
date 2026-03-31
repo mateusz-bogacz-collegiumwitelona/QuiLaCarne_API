@@ -2,6 +2,7 @@ package com.example.restaurant.services.interfaces;
 
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.AddEmployeeRequest;
+import com.example.restaurant.dto.request.EditEmployeeRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 
@@ -27,4 +28,6 @@ public interface IUserServices {
     void updateUserName(String userName, String userToken);
 
     void deleteAccount(String userToken);
+
+    void editEmployee(EditEmployeeRequest request);
 }
