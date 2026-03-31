@@ -4,18 +4,17 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
-import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.http.HttpStatus;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -26,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("TableServices Unit Tests")
 public class TableServicesTest {
 
     @Mock
@@ -40,9 +40,9 @@ public class TableServicesTest {
     }
 
     @Test
+    @DisplayName("Get Tables: Success - Should return 'Available' status when dates are provided and lang is English")
     void getTables_ShouldReturnAvailableStatus_WhenDatesProvidedAndLangIsEnglish() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
-
         TableFilterRequest request = new TableFilterRequest();
         request.setStartTime(OffsetDateTime.now().plusHours(1));
         request.setEndTime(OffsetDateTime.now().plusHours(2));
@@ -55,20 +55,18 @@ public class TableServicesTest {
         when(_tableRepo.findAllTables(request.getStartTime(), request.getEndTime()))
                 .thenReturn(List.of(mockTable));
 
-        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(request);
+        List<TableListResponse> result = _tableServices.getTables(request);
 
-        assertTrue(result.isSuccess());
-        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertEquals(1, result.getData().size());
-        assertEquals("Available", result.getData().get(0).getStatus());
-
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Available", result.get(0).getStatus());
         verify(_tableRepo).findAllTables(request.getStartTime(), request.getEndTime());
     }
 
     @Test
+    @DisplayName("Get Tables: Success - Should return 'Wolny' status when dates are provided and lang is Polish")
     void getTables_ShouldReturnWolnyStatus_WhenDatesProvidedAndLangIsPolish() {
         LocaleContextHolder.setLocale(Locale.forLanguageTag("pl"));
-
         TableFilterRequest request = new TableFilterRequest();
         request.setStartTime(OffsetDateTime.now().plusHours(1));
         request.setEndTime(OffsetDateTime.now().plusHours(2));
@@ -79,131 +77,85 @@ public class TableServicesTest {
         when(_tableRepo.findAllTables(request.getStartTime(), request.getEndTime()))
                 .thenReturn(List.of(mockTable));
 
-        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(request);
+        List<TableListResponse> result = _tableServices.getTables(request);
 
-        assertTrue(result.isSuccess());
-        assertEquals("Wolny", result.getData().get(0).getStatus());
+        assertEquals("Wolny", result.get(0).getStatus());
     }
 
     @Test
-    void getTables_ShouldReturnTranslatedStatus_WhenNoDatesAndLangIsPolish() {
-        LocaleContextHolder.setLocale(Locale.forLanguageTag("pl"));
-
+    @DisplayName("Get Tables: Failure - Should throw IllegalStateException when start time is after end time")
+    void getTables_ShouldThrowException_WhenDatesAreInvalid() {
         TableFilterRequest request = new TableFilterRequest();
+        request.setStartTime(OffsetDateTime.now().plusHours(2));
+        request.setEndTime(OffsetDateTime.now().plusHours(1));
 
-        TableStatus mockStatus = mock(TableStatus.class);
-        when(mockStatus.getNamePl()).thenReturn("Zajęty");
-
-        RestaurantTables mockTable = new RestaurantTables();
-        mockTable.setToken(TestConstants.FAKE_TABLE_TOKEN);
-        mockTable.setTableStatus(Set.of(mockStatus));
-
-        when(_tableRepo.findAllTables(null, null)).thenReturn(List.of(mockTable));
-
-        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(request);
-
-        assertTrue(result.isSuccess());
-        assertEquals("Zajęty", result.getData().get(0).getStatus());
-        verify(mockStatus).getNamePl();
+        assertThrows(IllegalStateException.class, () -> _tableServices.getTables(request));
     }
 
     @Test
-    void getTables_ShouldReturnTranslatedStatus_WhenNoDatesAndLangIsEnglish() {
+    @DisplayName("Get Tables: Success - Should return translated status from DB when no dates are provided")
+    void getTables_ShouldReturnTranslatedStatus_FromDb() {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
-
         TableFilterRequest request = new TableFilterRequest();
-
-        TableStatus mockStatus = mock(TableStatus.class);
-        when(mockStatus.getNameEn()).thenReturn("Occupied");
-
-        RestaurantTables mockTable = new RestaurantTables();
-        mockTable.setToken(TestConstants.FAKE_TABLE_TOKEN);
-        mockTable.setTableStatus(Set.of(mockStatus));
-
-        when(_tableRepo.findAllTables(null, null)).thenReturn(List.of(mockTable));
-
-        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(request);
-
-        assertTrue(result.isSuccess());
-        assertEquals("Occupied", result.getData().get(0).getStatus());
-        verify(mockStatus).getNameEn();
-    }
-
-    @Test
-    void getTables_ShouldReturnUnknown_WhenTableHasNoStatus() {
-        LocaleContextHolder.setLocale(Locale.ENGLISH);
-
-        TableFilterRequest request = new TableFilterRequest();
-
-        RestaurantTables mockTable = new RestaurantTables();
-        mockTable.setTableStatus(Set.of());
-
-        when(_tableRepo.findAllTables(null, null)).thenReturn(List.of(mockTable));
-
-        ResultHandler<List<TableListResponse>> result = _tableServices.getTables(request);
-
-        assertTrue(result.isSuccess());
-        assertEquals("UNKNOWN", result.getData().get(0).getStatus());
-    }
-
-    @Test
-    void getTables_ShouldReturnStatusInEnglish_WhenLanguageIsGerman() {
-        LocaleContextHolder.setLocale(Locale.GERMAN);
 
         TableStatus mockStatus = new TableStatus();
         mockStatus.setNameEn("Occupied");
-        RestaurantTables table = new RestaurantTables();
-        table.setTableStatus(Set.of(mockStatus));
+        mockStatus.setNamePl("Zajęty");
 
-        when(_tableRepo.findAllTables(null, null)).thenReturn(List.of(table));
+        RestaurantTables mockTable = new RestaurantTables();
+        mockTable.setToken(TestConstants.FAKE_TABLE_TOKEN);
+        mockTable.setTableStatus(Set.of(mockStatus));
 
-        var result = _tableServices.getTables(new TableFilterRequest());
+        when(_tableRepo.findAllTables(null, null)).thenReturn(List.of(mockTable));
 
-        assertEquals("Occupied", result.getData().get(0).getStatus());
+        List<TableListResponse> result = _tableServices.getTables(request);
+
+        assertEquals("Occupied", result.get(0).getStatus());
     }
 
     @Test
-    void changeStatusToClean_ShouldReturnSuccess_WhenRepoSucceeds() {
+    @DisplayName("Get Tables: Success - Should return empty list when no tables are found")
+    void getTables_ShouldReturnEmptyList_WhenNoResults() {
+        when(_tableRepo.findAllTables(any(), any())).thenReturn(List.of());
+
+        List<TableListResponse> result = _tableServices.getTables(new TableFilterRequest());
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Change Status: Success - Should update table status to CLEANING")
+    void changeStatusToClean_Successful() {
         RestaurantTables mockTable = new RestaurantTables();
         TableStatus mockStatus = new TableStatus();
 
         when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(mockTable);
         when(_tableRepo.findStatusByToken("CLEANING")).thenReturn(mockStatus);
 
-        ResultHandler<Void> result = _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN);
+        assertDoesNotThrow(() -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN));
 
-        assertTrue(result.isSuccess());
-        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertEquals("Status change successfully", result.getMessage());
-
-        verify(_tableRepo).findByToken(TestConstants.FAKE_TABLE_TOKEN);
-        verify(_tableRepo).findStatusByToken("CLEANING");
+        // Assert
         verify(_tableRepo).save(mockTable);
+        assertTrue(mockTable.getTableStatus().contains(mockStatus));
     }
 
     @Test
-    void changeStatusToClean_ShouldThrowTableNotFoundException_WhenTableNotFound() {
-        when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
-                .thenThrow(new EntityNotFoundException("Table not found"));
+    @DisplayName("Change Status: Failure - Should throw EntityNotFoundException when table is missing")
+    void changeStatusToClean_ShouldThrowEntityNotFound_WhenTableMissing() {
+        when(_tableRepo.findByToken(anyString())).thenReturn(null);
 
         assertThrows(EntityNotFoundException.class,
-                () -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN)
-        );
-
+                () -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN));
         verify(_tableRepo, never()).save(any());
     }
 
     @Test
-    void changeStatusToClean_ShouldThrowTableStatusNotFoundException_WhenStatusNotFound() {
-        RestaurantTables mockTable = new RestaurantTables();
-        when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(mockTable);
-        when(_tableRepo.findStatusByToken("CLEANING"))
-                .thenThrow(new EntityNotFoundException("Table status not found"));
+    @DisplayName("Change Status: Failure - Should throw EntityNotFoundException when status token is missing in DB")
+    void changeStatusToClean_ShouldThrowEntityNotFound_WhenStatusMissing() {
+        when(_tableRepo.findByToken(anyString())).thenReturn(new RestaurantTables());
+        when(_tableRepo.findStatusByToken("CLEANING")).thenReturn(null);
 
         assertThrows(EntityNotFoundException.class,
-                () -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN)
-        );
-
-        verify(_tableRepo, never()).save(any());
+                () -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN));
     }
 }

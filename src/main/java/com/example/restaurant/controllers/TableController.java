@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,11 @@ public class TableController {
     @GetMapping
     public ResponseEntity<ResultHandler<List<TableListResponse>>> getTables(@Valid TableFilterRequest request) {
         var result = _tableServices.getTables(request);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        return ResponseEntity.ok(
+                ResultHandler.success("Tables retrived",
+                        HttpStatus.OK.value(),
+                        result
+                ));
     }
 
     @Operation(
@@ -65,7 +70,10 @@ public class TableController {
     @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @PatchMapping("/{token}/clear")
     public ResponseEntity<ResultHandler<Void>> clearTables(@Parameter(description = "Table token") @PathVariable String token) {
-        var result = _tableServices.changeStatusToClean(token);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        _tableServices.changeStatusToClean(token);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Status change successfully",
+                HttpStatus.OK.value()
+        ));
     }
 }
