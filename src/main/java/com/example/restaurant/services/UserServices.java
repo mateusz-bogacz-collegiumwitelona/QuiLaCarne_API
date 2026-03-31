@@ -2,6 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
+import com.example.restaurant.dto.request.AddEmployeeRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
@@ -37,19 +38,18 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     public String create(RegisterRequest request, String userRole, boolean isActive) {
-        Roles role = _roleRepository.setRole(userRole);
+        return buildAndSaveUser(request, userRole, isActive);
+    }
 
-        Users user = new Users();
-        user.setUsername(request.getUsername());
-        user.setNormalizedUsername(request.getUsername().toUpperCase().trim());
-        user.setEmail(request.getEmail());
-        user.setNormalizedEmail(request.getEmail().toUpperCase().trim());
-        user.setPassword(_passwordEncoder.encode(request.getPassword()));
-        user.setIsActive(isActive);
-        user.setRoles(Set.of(role));
-
-        _userRepo.save(user);
-        return user.getToken();
+    @Override
+    @Transactional
+    @Auditable(action = "ADD_NEW_EMPLOYEE")
+    public void createEmployee(AddEmployeeRequest request) {
+        if (request.isAdmin()) {
+            buildAndSaveUser(request.getRegister(), "ROLE_MANAGER", true);
+        } else {
+            buildAndSaveUser(request.getRegister(), "ROLE_WAITER", true);
+        }
     }
 
     @Override
@@ -177,5 +177,27 @@ public class UserServices implements IUserServices {
         user.setIsActive(false);
         user.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
         _userRepo.save(user);
+    }
+
+    private String buildAndSaveUser(RegisterRequest request, String userRole, boolean isActive) {
+        if (_userRepo.findByNormalizedEmail(request.getEmail().toUpperCase().trim()).isPresent())
+            throw new EntityAlreadyExistsException("User with this email already exists");
+
+        if (_userRepo.existsByUsername(request.getUsername().toUpperCase().trim()))
+            throw new EntityAlreadyExistsException("User with this username already exists");
+
+        Roles role = _roleRepository.setRole(userRole);
+
+        Users user = new Users();
+        user.setUsername(request.getUsername());
+        user.setNormalizedUsername(request.getUsername().toUpperCase().trim());
+        user.setEmail(request.getEmail());
+        user.setNormalizedEmail(request.getEmail().toUpperCase().trim());
+        user.setPassword(_passwordEncoder.encode(request.getPassword()));
+        user.setIsActive(isActive);
+        user.setRoles(Set.of(role));
+
+        _userRepo.save(user);
+        return user.getToken();
     }
 }

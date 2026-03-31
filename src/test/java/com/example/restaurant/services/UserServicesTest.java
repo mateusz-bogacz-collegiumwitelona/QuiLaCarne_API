@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.request.AddEmployeeRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
@@ -50,6 +51,8 @@ public class UserServicesTest {
         request.setPassword(TestConstants.FAKE_PASSWORD);
 
         Roles mockRole = new Roles();
+        when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.empty());
+        when(_userRepo.existsByUsername(anyString())).thenReturn(false);
         when(_roleRepository.setRole(anyString())).thenReturn(mockRole);
         when(_passwordEncoder.encode(anyString())).thenReturn(TestConstants.FAKE_HASH);
 
@@ -178,5 +181,76 @@ public class UserServicesTest {
         assertTrue(user.getUsername().startsWith("DELETED_"));
         assertNotNull(user.getDeletedAt());
         verify(_userRepo).save(user);
+    }
+
+    @Test
+    @DisplayName("Create User: Throws EntityAlreadyExistsException when email is taken")
+    void create_ShouldThrowException_WhenEmailExists() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername(TestConstants.FAKE_USERNAME);
+        request.setEmail(TestConstants.FAKE_EMAIL);
+        request.setPassword(TestConstants.FAKE_PASSWORD);
+
+        when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.of(new Users()));
+
+        assertThrows(EntityAlreadyExistsException.class, () -> _userServices.create(request, "ROLE_CLIENT", false));
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Create User: Throws EntityAlreadyExistsException when username is taken")
+    void create_ShouldThrowException_WhenUsernameExists() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername(TestConstants.FAKE_USERNAME);
+        request.setEmail(TestConstants.FAKE_EMAIL);
+        request.setPassword(TestConstants.FAKE_PASSWORD);
+
+        when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.empty());
+        when(_userRepo.existsByUsername(anyString())).thenReturn(true);
+
+        assertThrows(EntityAlreadyExistsException.class, () -> _userServices.create(request, "ROLE_CLIENT", false));
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Create Employee: Success for Admin role")
+    void createEmployee_ShouldCreateManager_WhenAdminIsTrue() {
+        AddEmployeeRequest request = new AddEmployeeRequest();
+        request.setAdmin(true);
+        RegisterRequest regRequest = new RegisterRequest();
+        regRequest.setUsername("Manager1");
+        regRequest.setEmail("manager@test.pl");
+        regRequest.setPassword("Pass123!");
+        request.setRegister(regRequest);
+
+        when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.empty());
+        when(_userRepo.existsByUsername(anyString())).thenReturn(false);
+        when(_roleRepository.setRole("ROLE_MANAGER")).thenReturn(new Roles());
+
+        _userServices.createEmployee(request);
+
+        verify(_roleRepository).setRole("ROLE_MANAGER");
+        verify(_userRepo).save(any(Users.class));
+    }
+
+    @Test
+    @DisplayName("Create Employee: Success for Waiter role")
+    void createEmployee_ShouldCreateWaiter_WhenAdminIsFalse() {
+        AddEmployeeRequest request = new AddEmployeeRequest();
+        request.setAdmin(false);
+        RegisterRequest regRequest = new RegisterRequest();
+        regRequest.setUsername("Waiter1");
+        regRequest.setEmail("waiter@test.pl");
+        regRequest.setPassword("Pass123!");
+        request.setRegister(regRequest);
+
+        when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.empty());
+        when(_userRepo.existsByUsername(anyString())).thenReturn(false);
+        when(_roleRepository.setRole("ROLE_WAITER")).thenReturn(new Roles());
+
+        _userServices.createEmployee(request);
+
+        verify(_roleRepository).setRole("ROLE_WAITER");
+        verify(_userRepo).save(any(Users.class));
     }
 }

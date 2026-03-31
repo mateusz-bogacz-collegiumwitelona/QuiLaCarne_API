@@ -1,6 +1,7 @@
 package com.example.restaurant.services.interfaces;
 
 import com.example.restaurant.dto.domain.UserDomain;
+import com.example.restaurant.dto.request.AddEmployeeRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 
@@ -8,6 +9,8 @@ import java.util.Optional;
 
 public interface IUserServices {
     String create(RegisterRequest request, String userRole, boolean isActive);
+
+    void createEmployee(AddEmployeeRequest request);
 
     void activeUser(String userToken);
 

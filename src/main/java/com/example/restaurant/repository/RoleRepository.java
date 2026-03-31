@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaRoleRepository;
@@ -13,7 +14,7 @@ public class RoleRepository implements IRoleRepository {
 
     public Roles setRole(String role) {
         return _jpaRoleRepository.findByName(role)
-                .orElseThrow(() -> new RuntimeException("Role not found: " + role));
+                .orElseThrow(() -> new EntityNotFoundException("Role not found: " + role));
     }
 
     public boolean isRoleExists(String role) {

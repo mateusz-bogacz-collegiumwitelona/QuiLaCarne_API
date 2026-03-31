@@ -1,10 +1,13 @@
 package com.example.restaurant.controllers;
 
+import com.example.restaurant.dto.request.AddEmployeeRequest;
 import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IUserServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -18,7 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(value = "/api/user/me", produces = "application/json")
+@RequestMapping(value = "/api/user", produces = "application/json")
 @RequiredArgsConstructor
 public class UserController {
     private final IUserServices _userServices;
@@ -35,7 +38,7 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
-    @PatchMapping("/password")
+    @PatchMapping("/me/password")
     public ResponseEntity<ResultHandler<Void>> updatePassword(
             @RequestBody @Valid UpdatePasswordRequest request,
             @AuthenticationPrincipal(expression = "token") String userToken) {
@@ -59,7 +62,7 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
-    @PatchMapping("email/update")
+    @PatchMapping("/me/email/update")
     public ResponseEntity<ResultHandler<Void>> updateEmail(
             @RequestParam
             @Parameter(description = "New email")
@@ -87,7 +90,7 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
-    @PatchMapping("/email/confirm")
+    @PatchMapping("/me/email/confirm")
     public ResponseEntity<ResultHandler<Void>> confirmEmail(
             @RequestParam(name = "verificationToken")
             @NotBlank
@@ -109,7 +112,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
-    @PatchMapping("/username")
+    @PatchMapping("/me/username")
     public ResponseEntity<ResultHandler<Void>> updateUserName(
             @RequestParam
             @NotBlank
@@ -131,13 +134,43 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
-    @DeleteMapping("/delete")
+    @DeleteMapping("/me/delete")
     public ResponseEntity<ResultHandler<Void>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
         _userServices.deleteAccount(userToken);
 
         return ResponseEntity.ok(ResultHandler.success(
                 "User deleted successfully",
                 HttpStatus.OK.value())
+        );
+    }
+
+    @Operation(
+            summary = "Add a new employee",
+            description = "Creates a new employee account (Manager or Waiter) and automatically activates it. Requires ROLE_MANAGER privileges."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Employee created successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data or email/username already exists", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @PostMapping("/employees")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> createEmployee(
+            @Valid @RequestBody AddEmployeeRequest request
+    ) {
+        _userServices.createEmployee(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ResultHandler.success(
+                        "Employee created successfully",
+                        HttpStatus.CREATED.value()
+                )
         );
     }
 }

@@ -7,7 +7,6 @@ import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
-import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IUserServices;
@@ -97,29 +96,12 @@ public class AuthServicesTest {
     }
 
     @Test
-    @DisplayName("Register: Throws EntityAlreadyExistsException if username taken")
-    void register_ShouldThrowException_WhenUsernameExists() {
-        when(_userRepository.existsByUsername(anyString())).thenReturn(true);
-
-        assertThrows(EntityAlreadyExistsException.class, () -> _authServices.register(_registerRequest));
-    }
-
-    @Test
     @DisplayName("Register: Throws IllegalStateException if passwords mismatch")
     void register_ShouldThrowException_WhenPasswordsMismatch() {
         _registerRequest.setConfirmPassword("mismatch");
         assertThrows(IllegalStateException.class, () -> _authServices.register(_registerRequest));
     }
 
-    @Test
-    @DisplayName("Register: Throws Exception when email already exist")
-    void register_ShouldThrowException_WhenEmailAlreadyExists() {
-        when(_userRepository.existsByUsername(anyString())).thenReturn(false);
-        when(_userRepository.existByEmail(anyString())).thenReturn(true);
-
-        assertThrows(EntityAlreadyExistsException.class, () -> _authServices.register(_registerRequest));
-        verify(_userServices, never()).create(any(), anyString(), anyBoolean());
-    }
 
     @Test
     @DisplayName("Register Confirm: Success")
@@ -135,8 +117,6 @@ public class AuthServicesTest {
     @Test
     @DisplayName("Register: Success")
     void register_ShouldSucceed_AndCallAllDependencies() {
-        when(_userRepository.existsByUsername(anyString())).thenReturn(false);
-        when(_userRepository.existByEmail(anyString())).thenReturn(false);
         when(_userServices.create(any(), eq("ROLE_CLIENT"), eq(false))).thenReturn("user-token");
         when(_tokenServices.createToken(eq("user-token"), eq(TokenTypeEnum.ACTIVATION), anyInt())).thenReturn("act-token");
 

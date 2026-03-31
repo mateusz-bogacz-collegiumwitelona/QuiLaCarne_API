@@ -8,7 +8,6 @@ import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
-import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
@@ -64,11 +63,6 @@ public class AuthServices implements IAuthServices {
     @Auditable(action = "USER_REGISTERED")
     @Transactional
     public void register(RegisterRequest request) {
-        if (_userRepository.existsByUsername(request.getUsername().toUpperCase().trim()))
-            throw new EntityAlreadyExistsException("Username already exists");
-
-        if (_userRepository.existByEmail(request.getEmail().toUpperCase().trim()))
-            throw new EntityAlreadyExistsException("Email already exists");
 
         if (!request.getPassword().equals(request.getConfirmPassword()))
             throw new IllegalStateException("Passwords do not match");
