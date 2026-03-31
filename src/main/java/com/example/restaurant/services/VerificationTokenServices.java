@@ -40,7 +40,7 @@ public class VerificationTokenServices implements IVerificationTokenServices {
     @Override
     @Transactional
     public boolean validateToken(String userToken, String tokenValue, TokenTypeEnum type) {
-        return _tokenRepo.findByTokenAndType(tokenValue, type)
+        return _tokenRepo.findByTokenAndType(tokenValue.trim(), type)
                 .map(vt -> {
                     if (vt.isExpired()) return false;
                     if (!vt.getUser().getToken().equals(userToken)) return false;
@@ -53,7 +53,7 @@ public class VerificationTokenServices implements IVerificationTokenServices {
     @Override
     @Transactional
     public Optional<String> validateToken(String tokenValue, TokenTypeEnum type) {
-        return _tokenRepo.findByTokenAndType(tokenValue, type)
+        return _tokenRepo.findByTokenAndType(tokenValue.trim(), type)
                 .filter(vt -> !vt.isExpired())
                 .map(vt -> {
                     String userToken = vt.getUser().getToken();

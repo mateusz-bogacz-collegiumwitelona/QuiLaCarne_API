@@ -21,6 +21,11 @@ public class S3StorageService {
 
     @PostConstruct
     public void initBucket() {
+        if (bucketName == null || bucketName.isBlank()) {
+            log.error("S3 bucket name is not configured! Storage service will not work properly.");
+            return;
+        }
+
         try {
             _s3Client.headBucket(HeadBucketRequest.builder()
                     .bucket(bucketName)
@@ -64,12 +69,23 @@ public class S3StorageService {
             String contentType,
             long contentLength
     ) {
-        PutObjectRequest put = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(fileName)
-                .contentType(contentType)
-                .build();
+        if (is == null) throw new IllegalArgumentException("Input stream cannot be null");
+        if (fileName == null || fileName.isBlank()) throw new IllegalArgumentException("File name cannot be empty");
+        if (contentLength <= 0) throw new IllegalArgumentException("Content length must be greater than 0");
 
-        _s3Client.putObject(put, RequestBody.fromInputStream(is, contentLength));
+        String cleanFileName = fileName.trim().replaceAll("\\s+", "_");
+
+        try {
+            PutObjectRequest put = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(cleanFileName)
+                    .contentType(contentType)
+                    .build();
+
+            _s3Client.putObject(put, RequestBody.fromInputStream(is, contentLength));
+        } catch (S3Exception e) {
+            log.error("Failed to upload file to S3: {}", e.getMessage());
+            throw new IllegalStateException("Could not upload file to cloud storage", e);
+        }
     }
 }
