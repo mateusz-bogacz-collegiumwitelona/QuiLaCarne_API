@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -58,9 +59,11 @@ public class ReservationController {
     ) {
         var result = _reservationServices.create(request, userToken);
 
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Reservation created successfully",
+                HttpStatus.CREATED.value(),
+                result
+        ));
     }
 
     @Operation(
@@ -86,9 +89,11 @@ public class ReservationController {
     ) {
         var result = _reservationServices.history(request, pagged, userToken);
 
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        return ResponseEntity.ok(ResultHandler.success(
+                "User reservations retrieved successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
     }
 
     @Operation(
@@ -114,9 +119,11 @@ public class ReservationController {
 
     ) {
         var result = _reservationServices.details(token, userToken);
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        return ResponseEntity.ok(ResultHandler.success(
+                "User reservations details retrieved successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
     }
 
     @Operation(
@@ -130,10 +137,11 @@ public class ReservationController {
             @PathVariable String token,
             @AuthenticationPrincipal(expression = "token") String userToken
     ) {
-        var result = _reservationServices.cancel(token, userToken);
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        _reservationServices.cancel(token, userToken);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Reservation cancelled successfully",
+                HttpStatus.OK.value()
+        ));
     }
 
     @Operation(
@@ -151,9 +159,11 @@ public class ReservationController {
             @ParameterObject @Valid @ModelAttribute PaggedRequest pagged
     ) {
         var result = _reservationServices.today(pagged);
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Today's reservations retrieved successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
     }
 
     @Operation(
@@ -174,10 +184,11 @@ public class ReservationController {
             @RequestParam String reservationToken,
             @Valid @RequestBody ReservationDishRequest request
     ) {
-        var result = _reservationServices.removeItemFromReservation(waiterToken, reservationToken, request);
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        _reservationServices.removeItemFromReservation(waiterToken, reservationToken, request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Order item removed successfully",
+                HttpStatus.OK.value()
+        ));
     }
 
     @Operation(
@@ -206,10 +217,11 @@ public class ReservationController {
             @RequestParam String reservationToken,
             @Valid @RequestBody List<ReservationDishRequest> request
     ) {
-        var result = _reservationServices.addItemFromReservation(waiterToken, reservationToken, request);
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        _reservationServices.addItemFromReservation(waiterToken, reservationToken, request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Order items add successfully",
+                HttpStatus.OK.value()
+        ));
     }
 
     @Operation(
@@ -228,10 +240,11 @@ public class ReservationController {
             @Parameter(description = "Reservation token") @PathVariable String token,
             @AuthenticationPrincipal(expression = "token") String waiterToken
     ) {
-        var result = _reservationServices.assignWaiter(token, waiterToken);
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        _reservationServices.assignWaiter(token, waiterToken);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Waiters assigned successfully",
+                HttpStatus.OK.value()
+        ));
     }
 
     @Operation(
@@ -249,9 +262,9 @@ public class ReservationController {
     @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @PatchMapping("/{token}/absent")
     public ResponseEntity<ResultHandler<Void>> absent(@Parameter(description = "Reservation token") @PathVariable String token) {
-        var result = _reservationServices.isAbsent(token);
-        return ResponseEntity
-                .status(result.getStatusCode())
-                .body(result);
+        _reservationServices.isAbsent(token);
+        return ResponseEntity.ok(
+                ResultHandler.success("Absent success", HttpStatus.OK.value())
+        );
     }
 }

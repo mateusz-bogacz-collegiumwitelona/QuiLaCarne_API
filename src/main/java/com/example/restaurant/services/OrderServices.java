@@ -66,7 +66,7 @@ public class OrderServices implements IOrderServices {
             var dish = dishesMap.get(req.getDishToken());
 
             if (dish == null)
-                throw new RuntimeException("Dish not found: " + req.getDishToken());
+                throw new EntityNotFoundException("Dish not found: " + req.getDishToken());
 
             int itemTotalPrice = dish.getPrice() * req.getQuantity();
             totalPrice += itemTotalPrice;
@@ -167,7 +167,7 @@ public class OrderServices implements IOrderServices {
     public void removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
         Orders order = _orderRepo.findByReservationToken(reservationToken)
                 .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
-                .orElseThrow(() -> new RuntimeException("Order not found or you are not the assigned waiter"));
+                .orElseThrow(() -> new EntityNotFoundException("Assigned order not found"));
 
         List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
 
@@ -177,7 +177,7 @@ public class OrderServices implements IOrderServices {
                 .filter(i -> i.getProduct().getToken().equals(request.getDishToken()) && Objects.equals(reqNote, normalizeNote(i.getNote())))
                 .filter(i -> i.getStatuses().stream().noneMatch(s -> "CANCELLED".equals(s.getToken())))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Active dish with specified note not found in the order"));
+                .orElseThrow(() -> new EntityNotFoundException("Active dish with specified note not found in the order"));
 
         int currentQuantity = itemToMod.getQuantity();
         int quantityToRemove = request.getQuantity();

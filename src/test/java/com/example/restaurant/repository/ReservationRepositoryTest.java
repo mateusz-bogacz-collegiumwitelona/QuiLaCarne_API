@@ -4,7 +4,6 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
-import com.example.restaurant.repository.interfaces.IOrderRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationsRepository;
 import org.junit.jupiter.api.Test;
@@ -30,8 +29,6 @@ public class ReservationRepositoryTest {
     private IJpaReservationStatusRepository _jpaReservationStatusRepo;
     @Mock
     private IJpaReservationsRepository _jpaReservationsRepo;
-    @Mock
-    private IOrderRepository _orderRepo;
 
     @InjectMocks
     private ReservationRepository _reservationRepo;

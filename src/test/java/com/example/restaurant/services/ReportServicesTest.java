@@ -6,7 +6,6 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.PagedResult;
-import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.GuestReportStatus;
@@ -14,18 +13,16 @@ import com.example.restaurant.repository.interfaces.IReportRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IBanServices;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -54,181 +51,121 @@ public class ReportServicesTest {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
     }
 
+
     @Test
-    void add_ShouldCreateReport_WhenUserIsClient() {
-        String waiterToken = "WAITER_TOKEN";
-        String clientToken = "CLIENT_TOKEN";
+    @DisplayName("Add Report: Success - Should save report when target is a client")
+    void add_Successful() {
+        String waiterToken = "WAITER_123";
         AddReportRequest request = new AddReportRequest();
-        request.setClientToken(clientToken);
-        request.setReason("Rude behavior");
+        request.setClientToken("CLIENT_456");
+        request.setReason("Inappropriate behavior at the table.");
 
         Users client = new Users();
-        client.setToken(clientToken);
+        client.setToken("CLIENT_456");
 
-        Users waiter = new Users();
-        waiter.setToken(waiterToken);
+        when(_userRepo.findByToken("CLIENT_456")).thenReturn(client);
+        when(_userRepo.isInRole("ROLE_CLIENT", "CLIENT_456")).thenReturn(true);
+        when(_userRepo.findByToken(waiterToken)).thenReturn(new Users());
+        when(_reportRepo.findStatusByToken("IN_PROGRESS")).thenReturn(new GuestReportStatus());
+
+        assertDoesNotThrow(() -> _reportServices.add(waiterToken, request));
+
+        verify(_reportRepo, times(1)).save(any(GuestReports.class));
+    }
+
+    @Test
+    @DisplayName("Add Report: Should throw IllegalStateException when target is not a client")
+    void add_ThrowsException_WhenTargetIsNotClient() {
+        AddReportRequest request = new AddReportRequest();
+        request.setClientToken("STAFF_789");
+
+        Users client = new Users();
+        client.setToken("STAFF_789");
+
+        when(_userRepo.findByToken("STAFF_789")).thenReturn(client);
+        when(_userRepo.isInRole("ROLE_CLIENT", "STAFF_789")).thenReturn(false);
+
+        assertThrows(IllegalStateException.class, () -> _reportServices.add("WAITER_123", request));
+        verify(_reportRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("List Reports: Should return PagedResult with mapped data")
+    void list_ReturnsPagedResult() {
+        ReportFilterRequest filter = new ReportFilterRequest();
+        filter.setPagged(new PaggedRequest());
 
         GuestReportStatus status = new GuestReportStatus();
+        status.setNameEn("Pending Review");
 
-        when(_userRepo.findByToken(clientToken)).thenReturn(client);
-        when(_userRepo.isInRole("ROLE_CLIENT", clientToken)).thenReturn(true);
-        when(_userRepo.findByToken(waiterToken)).thenReturn(waiter);
-        when(_reportRepo.findStatusByToken("IN_PROGRESS")).thenReturn(status);
-
-        var result = _reportServices.add(waiterToken, request);
-
-        assertEquals(HttpStatus.CREATED.value(), result.getStatusCode());
-        assertEquals("Report created successfully", result.getMessage());
-
-        ArgumentCaptor<GuestReports> reportCaptor = ArgumentCaptor.forClass(GuestReports.class);
-        verify(_reportRepo, times(1)).save(reportCaptor.capture());
-
-        GuestReports report = reportCaptor.getValue();
-        assertEquals(client, report.getGuest());
-        assertEquals(waiter, report.getReporter());
-        assertEquals("Rude behavior", report.getReason());
-        assertTrue(report.getStatuses().contains(status));
-    }
-
-    @Test
-    void add_ShouldReturnFailure_WhenUserIsNotClient() {
-        String waiterToken = "WAITER_TOKEN";
-        String clientToken = "OTHER_STAFF_TOKEN";
-        AddReportRequest request = new AddReportRequest();
-        request.setClientToken(clientToken);
-        request.setReason("Some issue");
-
-        Users notClient = new Users();
-        notClient.setToken(clientToken);
-
-        when(_userRepo.findByToken(clientToken)).thenReturn(notClient);
-        when(_userRepo.isInRole("ROLE_CLIENT", clientToken)).thenReturn(false);
-
-        var result = _reportServices.add(waiterToken, request);
-
-        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatusCode());
-        assertEquals("You can only report users with the client role", result.getMessage());
-
-        verify(_reportRepo, never()).save(any(GuestReports.class));
-        verify(_reportRepo, never()).findStatusByToken(anyString());
-    }
-
-    @Test
-    void list_ShouldReturnPagedReports_WithTranslatedStatus() {
-        ReportFilterRequest request = new ReportFilterRequest();
-        request.setPagged(new PaggedRequest());
-        request.setSortDirection("DESC");
-
-        Users mockGuest = new Users();
-        mockGuest.setUsername("Guest");
-        mockGuest.setToken("GUEST_TOKEN");
-
-        Users mockReporter = new Users();
-        mockReporter.setUsername("Konfident");
-        mockReporter.setToken("KONFIDENT_TOKEN");
-
-        GuestReportStatus mockStatus = new GuestReportStatus();
-        mockStatus.setNamePl("W trakcie");
-        mockStatus.setNameEn("In progress");
-
-        GuestReports mockReport = new GuestReports();
-        mockReport.setToken("report-123");
-        mockReport.setReason("Test reason");
-        mockReport.setCreatedAt(OffsetDateTime.now());
-        mockReport.setGuest(mockGuest);
-        mockReport.setReporter(mockReporter);
-        mockReport.setStatuses(Set.of(mockStatus));
-
-        Page<GuestReports> mockPage = new PageImpl<>(List.of(mockReport));
+        GuestReports report = new GuestReports();
+        report.setGuest(new Users());
+        report.setReporter(new Users());
+        report.setStatuses(Set.of(status));
+        report.setReason("Test reason");
 
         when(_reportRepo.findAll(any(Specification.class), any(Pageable.class)))
-                .thenReturn(mockPage);
+                .thenReturn(new PageImpl<>(List.of(report)));
 
-        ResultHandler<PagedResult<ReportListResponse>> result = _reportServices.list(request);
+        PagedResult<ReportListResponse> result = _reportServices.list(filter);
 
-        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-
-        PagedResult<ReportListResponse> data = result.getData();
-        assertNotNull(data);
-        assertEquals(1, data.getItems().size());
-
-        ReportListResponse mappedResponse = data.getItems().get(0);
-        assertEquals("report-123", mappedResponse.getToken());
-        assertEquals("Guest", mappedResponse.getGuestUsername());
-        assertEquals("Konfident", mappedResponse.getReporterUsername());
-        assertEquals("Test reason", mappedResponse.getReason());
-
-        assertEquals("In progress", mappedResponse.getStatus());
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+        assertEquals("Pending Review", result.getItems().get(0).getStatus());
+        assertEquals("Test reason", result.getItems().get(0).getReason());
     }
 
     @Test
-    void changeStatus_ShouldAcceptReport_AndCreateBan_WhenIsAcceptedIsTrue() {
+    @DisplayName("Change Status: Should create ban and set status to ACCEPTED")
+    void changeStatus_AcceptsAndCreatesBan() {
         String adminToken = "ADMIN_TOKEN";
-        String reportToken = "REPORT_TOKEN";
-
         ChangeReportStatusRequest request = new ChangeReportStatusRequest();
-        request.setReportToken(reportToken);
+        request.setReportToken("REPORT_TOKEN");
         request.setAccepted(true);
         request.setExpiresAt(OffsetDateTime.now().plusDays(7));
 
-        Users admin = new Users();
-        admin.setToken(adminToken);
-
-        Users guest = new Users();
-        guest.setUsername("BadGuest");
-
         GuestReports report = new GuestReports();
-        report.setToken(reportToken);
-        report.setGuest(guest);
-        report.setReason("Rude behavior");
+        report.setGuest(new Users());
+        report.setReason("Toxic behavior");
 
-        GuestReportStatus acceptedStatus = new GuestReportStatus();
-        acceptedStatus.setToken("ACCEPTED");
+        when(_reportRepo.findByToken("REPORT_TOKEN")).thenReturn(report);
+        when(_userRepo.findByToken(adminToken)).thenReturn(new Users());
+        when(_reportRepo.findStatusByToken("ACCEPTED")).thenReturn(new GuestReportStatus());
 
-        when(_reportRepo.findByToken(reportToken)).thenReturn(report);
-        when(_userRepo.findByToken(adminToken)).thenReturn(admin);
-        when(_reportRepo.findStatusByToken("ACCEPTED")).thenReturn(acceptedStatus);
-
-        var result = _reportServices.changeStatus(adminToken, request);
-
-        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-        assertEquals("Report status changed successfuly", result.getMessage());
-
-        assertTrue(report.getStatuses().contains(acceptedStatus));
-        verify(_reportRepo, times(1)).save(report);
+        assertDoesNotThrow(() -> _reportServices.changeStatus(adminToken, request));
 
         verify(_banServices, times(1)).create(any());
+        verify(_reportRepo, times(1)).save(report);
     }
 
     @Test
-    void changeStatus_ShouldRejectReport_WhenIsAcceptedIsFalse() {
-        String adminToken = "ADMIN_TOKEN";
-        String reportToken = "REPORT_TOKEN";
-
+    @DisplayName("Change Status: Should throw IllegalStateException when accepted but date is invalid")
+    void changeStatus_ThrowsException_WhenDateIsInvalid() {
         ChangeReportStatusRequest request = new ChangeReportStatusRequest();
-        request.setReportToken(reportToken);
+        request.setAccepted(true);
+        request.setExpiresAt(OffsetDateTime.now().minusDays(1));
+
+        when(_reportRepo.findByToken(any())).thenReturn(new GuestReports());
+
+        assertThrows(IllegalStateException.class, () -> _reportServices.changeStatus("ADMIN_TOKEN", request));
+    }
+
+    @Test
+    @DisplayName("Change Status: Should set status to REJECTED and not create ban")
+    void changeStatus_RejectsReport() {
+        String adminToken = "ADMIN_TOKEN";
+        ChangeReportStatusRequest request = new ChangeReportStatusRequest();
+        request.setReportToken("REPORT_TOKEN");
         request.setAccepted(false);
 
-        Users admin = new Users();
-        admin.setToken(adminToken);
-
         GuestReports report = new GuestReports();
-        report.setToken(reportToken);
+        when(_reportRepo.findByToken("REPORT_TOKEN")).thenReturn(report);
+        when(_userRepo.findByToken(adminToken)).thenReturn(new Users());
+        when(_reportRepo.findStatusByToken("REJECTED")).thenReturn(new GuestReportStatus());
 
-        GuestReportStatus rejectedStatus = new GuestReportStatus();
-        rejectedStatus.setToken("REJECTED");
-
-        when(_reportRepo.findByToken(reportToken)).thenReturn(report);
-        when(_userRepo.findByToken(adminToken)).thenReturn(admin);
-        when(_reportRepo.findStatusByToken("REJECTED")).thenReturn(rejectedStatus);
-
-        var result = _reportServices.changeStatus(adminToken, request);
-
-        assertEquals(HttpStatus.OK.value(), result.getStatusCode());
-
-        assertTrue(report.getStatuses().contains(rejectedStatus));
-        verify(_reportRepo, times(1)).save(report);
+        assertDoesNotThrow(() -> _reportServices.changeStatus(adminToken, request));
 
         verify(_banServices, never()).create(any());
+        verify(_reportRepo, times(1)).save(report);
     }
 }

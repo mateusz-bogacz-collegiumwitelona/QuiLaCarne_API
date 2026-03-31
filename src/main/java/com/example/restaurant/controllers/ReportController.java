@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -49,8 +50,11 @@ public class ReportController {
             @Valid @RequestBody AddReportRequest request,
             @AuthenticationPrincipal(expression = "token") String userToken
     ) {
-        var result = _reportServices.add(userToken, request);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        _reportServices.add(userToken, request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Report created successfully",
+                HttpStatus.CREATED.value()
+        ));
     }
 
 
@@ -81,7 +85,11 @@ public class ReportController {
             @ParameterObject @ModelAttribute @Valid ReportFilterRequest request
     ) {
         var result = _reportServices.list(request);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Reports retrieved successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
     }
 
     @Operation(
@@ -106,8 +114,11 @@ public class ReportController {
             @AuthenticationPrincipal(expression = "token") String adminToken,
             @RequestBody @Valid ChangeReportStatusRequest request
     ) {
-        var result = _reportServices.changeStatus(adminToken, request);
-        return ResponseEntity.status(result.getStatusCode()).body(result);
+        _reportServices.changeStatus(adminToken, request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Report status changed successfuly",
+                HttpStatus.OK.value()
+        ));
     }
 
 }

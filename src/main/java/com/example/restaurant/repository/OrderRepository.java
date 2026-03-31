@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
@@ -22,11 +23,11 @@ public class OrderRepository implements IOrderRepository {
     private final IJpaOrderItemsRepository _jpaOrderItemRepo;
     private final IJpaOrederStatusRepositry _jpaOrderStatusRepo;
     private final IJpaOrderItemStatusRepository _jpaOrderItemStatusRepo;
-    
+
     @Override
     public OrderStatus findStatusByToken(String token) {
         return _jpaOrderStatusRepo.findByToken(token).orElseThrow(
-                () -> new RuntimeException("Order status not found")
+                () -> new EntityNotFoundException("Order status not found")
         );
     }
 
@@ -59,7 +60,7 @@ public class OrderRepository implements IOrderRepository {
     @Override
     public OrderItemsStatus findItemStatusByToken(String token) {
         return _jpaOrderItemStatusRepo.findByToken(token).orElseThrow(
-                () -> new RuntimeException("Order status not found")
+                () -> new EntityNotFoundException("Order status not found")
         );
     }
 

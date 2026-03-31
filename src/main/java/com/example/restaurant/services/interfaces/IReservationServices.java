@@ -9,26 +9,25 @@ import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.dto.response.TodayReservationsResponse;
 import com.example.restaurant.helpers.PagedResult;
-import com.example.restaurant.helpers.ResultHandler;
 
 import java.util.List;
 
 public interface IReservationServices {
-    ResultHandler<ReservationResponse> create(ReservationRequest request, String userToken);
+    ReservationResponse create(ReservationRequest request, String userToken);
 
-    ResultHandler<PagedResult<ClientReservationResponse>> history(ClientReservationRequest request, PaggedRequest pagged, String userToken);
+    PagedResult<ClientReservationResponse> history(ClientReservationRequest request, PaggedRequest pagged, String userToken);
 
-    ResultHandler<ReservationDetailsResponse> details(String reservationToken, String userToken);
+    ReservationDetailsResponse details(String reservationToken, String userToken);
 
-    ResultHandler<Void> cancel(String reservationToken, String userToken);
+    void cancel(String reservationToken, String userToken);
 
-    ResultHandler<PagedResult<TodayReservationsResponse>> today(PaggedRequest request);
+    PagedResult<TodayReservationsResponse> today(PaggedRequest request);
 
-    ResultHandler<Void> removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
+    void removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
 
-    ResultHandler<Void> addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request);
+    void addItemFromReservation(String userToken, String reservationToken, List<ReservationDishRequest> request);
 
-    ResultHandler<Void> assignWaiter(String reservationToken, String waiterToken);
+    void assignWaiter(String reservationToken, String waiterToken);
 
-    ResultHandler<Void> isAbsent(String reservationToken);
+    void isAbsent(String reservationToken);
 }

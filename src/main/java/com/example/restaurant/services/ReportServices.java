@@ -7,7 +7,6 @@ import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.PagedResult;
-import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.IReportRepository;
@@ -24,9 +23,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -42,14 +41,11 @@ public class ReportServices implements IReportServices {
     @Override
     @Transactional
     @Auditable(action = "ADD_REPORT")
-    public ResultHandler<Void> add(String waiterToken, AddReportRequest request) {
+    public void add(String waiterToken, AddReportRequest request) {
         var client = _userRepo.findByToken(request.getClientToken());
 
         if (!_userRepo.isInRole("ROLE_CLIENT", client.getToken()))
-            return ResultHandler.failure(
-                    "You can only report users with the client role",
-                    HttpStatus.BAD_REQUEST.value()
-            );
+            throw new IllegalStateException("You can only report users with the client role");
 
         var waiter = _userRepo.findByToken(waiterToken);
         var status = _reportRepo.findStatusByToken("IN_PROGRESS");
@@ -57,19 +53,19 @@ public class ReportServices implements IReportServices {
         GuestReports report = new GuestReports();
         report.setGuest(client);
         report.setReporter(waiter);
-        report.setReason(request.getReason());
+        report.setReason(request.getReason().trim());
         report.setStatuses(Set.of(status));
 
         _reportRepo.save(report);
-
-        return ResultHandler.success(
-                "Report created successfully",
-                HttpStatus.CREATED.value()
-        );
     }
 
     @Override
-    public ResultHandler<PagedResult<ReportListResponse>> list(ReportFilterRequest request) {
+    public PagedResult<ReportListResponse> list(ReportFilterRequest request) {
+        if (request.getFromDate() != null && request.getToDate() != null
+                && request.getFromDate().isAfter(request.getToDate()))
+            throw new IllegalStateException("Start date cannot be after end date");
+
+
         String lang = LocaleContextHolder.getLocale().getLanguage();
 
         Sort.Direction direction = "ASC".equalsIgnoreCase(request.getSortDirection())
@@ -101,7 +97,7 @@ public class ReportServices implements IReportServices {
 
         Page<GuestReports> page = _reportRepo.findAll(spec, pageable);
 
-        var response = new PagedResult<>(page.map(r -> {
+        return new PagedResult<>(page.map(r -> {
             String translatedStatus = "UNKNOWN";
 
             if (r.getStatuses() != null && !r.getStatuses().isEmpty()) {
@@ -123,23 +119,22 @@ public class ReportServices implements IReportServices {
                     .status(translatedStatus)
                     .build();
         }));
-
-        return ResultHandler.success(
-                "Reports retrieved successfully",
-                HttpStatus.OK.value(),
-                response
-        );
     }
 
     @Override
     @Transactional
     @Auditable(action = "CHANGE_REPORT_STATUS")
-    public ResultHandler<Void> changeStatus(String adminToken, ChangeReportStatusRequest request) {
+    public void changeStatus(String adminToken, ChangeReportStatusRequest request) {
         var report = _reportRepo.findByToken(request.getReportToken());
 
         var admin = _userRepo.findByToken(adminToken);
 
         if (request.isAccepted()) {
+            if (request.getExpiresAt() == null ||
+                    request.getExpiresAt().isBefore(OffsetDateTime.now()))
+                throw new IllegalStateException("A valid future expiration date is required to accept a report and issue a ban");
+
+
             CreateBanDomain banDomain = new CreateBanDomain(
                     report.getGuest(),
                     admin,
@@ -158,10 +153,5 @@ public class ReportServices implements IReportServices {
         }
 
         _reportRepo.save(report);
-
-        return ResultHandler.success(
-                "Report status changed successfuly",
-                HttpStatus.OK.value()
-        );
     }
 }
