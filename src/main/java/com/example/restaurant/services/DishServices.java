@@ -3,12 +3,16 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.ChangeDishAvailableRequest;
 import com.example.restaurant.dto.request.DishFilterRequest;
+import com.example.restaurant.dto.request.EditDishRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.models.Dishes;
+import com.example.restaurant.models.Ingredients;
+import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.repository.interfaces.IDishRepository;
+import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import com.example.restaurant.services.interfaces.IDishServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +21,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @Service
@@ -27,6 +35,8 @@ import java.time.OffsetDateTime;
 public class DishServices implements IDishServices {
     private final IDishRepository _dishRepo;
     private final DishMapper _dishMapper;
+    private final IIngredientsRepository _ingredientsRepo;
+    private final S3StorageService _s3Services;
 
     @Value("${application.storage.s3.public-endpoint}")
     private String s3Endpoint;
@@ -68,6 +78,10 @@ public class DishServices implements IDishServices {
         dish.setAvailable(false);
         dish.setDeletedAt(OffsetDateTime.now());
 
+        _s3Services.deleteFile(dish.getImageUrl());
+
+        dish.setImageUrl(null);
+
         _dishRepo.save(dish);
     }
 
@@ -86,6 +100,53 @@ public class DishServices implements IDishServices {
             dish.setUnavailableReason(reason != null && !reason.isBlank() ? reason.trim() : "Brak składników");
         }
 
+        _dishRepo.save(dish);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "EDIT_DISH")
+    public void edit(EditDishRequest request) {
+        Dishes dish = _dishRepo.findByToken(request.getDishToken());
+
+        if (request.getNewName() != null && !request.getNewName().isBlank())
+            dish.setName(request.getNewName().trim());
+
+        if (request.getPrice() != null) dish.setPrice(request.getPrice());
+
+        if (request.getCategoryToken() != null) {
+            DishesCategories category = _dishRepo.findCategoryByToken(request.getCategoryToken());
+            dish.setCategory(category);
+        }
+
+        if (!ObjectUtils.isEmpty(request.getIngredientTokens())) {
+            Set<Ingredients> newIngredients = new HashSet<>();
+            for (String token : request.getIngredientTokens()) {
+                Ingredients ingredient = _ingredientsRepo.findByToken(token);
+                newIngredients.add(ingredient);
+            }
+            dish.setIngredients(newIngredients);
+        }
+
+        if (request.getPhoto() != null && !request.getPhoto().isEmpty()) {
+            if (dish.getImageUrl() != null) _s3Services.deleteFile(dish.getImageUrl());
+
+            MultipartFile photo = request.getPhoto();
+            String generatedName = _s3Services.generateUniqFileName(photo.getOriginalFilename());
+
+            try {
+                String finalFileName = _s3Services.uploadFromStream(
+                        photo.getInputStream(),
+                        generatedName,
+                        photo.getContentType(),
+                        photo.getSize()
+                );
+                dish.setImageUrl(finalFileName);
+            } catch (java.io.IOException e) {
+                log.error("Error reading photo input stream for dish token: {}", request.getDishToken(), e);
+                throw new RuntimeException("Could not process photo file", e);
+            }
+        }
         _dishRepo.save(dish);
     }
 }

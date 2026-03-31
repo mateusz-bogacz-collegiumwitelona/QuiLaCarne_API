@@ -33,5 +33,6 @@ docker compose run --rm test
 |---------|---------------------------------------------|
 | Swagger | http://localhost:8080/swagger-ui/index.html |
 | Mailpit | http://localhost:8025/                      |
+| Minio   | http://localhost:9001/                      |
 
 ### Po klucz do google zgłosić się do matiego

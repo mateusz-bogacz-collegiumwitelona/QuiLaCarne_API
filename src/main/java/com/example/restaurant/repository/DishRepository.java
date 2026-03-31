@@ -4,8 +4,10 @@ import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Dishes;
+import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaDishRepository;
+import com.example.restaurant.repository.interfaces.jpa.IJpaDishesCategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DishRepository implements IDishRepository {
     private final IJpaDishRepository _jpaDishRepo;
+    private final IJpaDishesCategoryRepository _jpaDishCategoryRepo;
 
     @Override
     public Page<Dishes> findAllDishes(DishFilterRequest request, PaggedRequest pagged) {
@@ -61,5 +64,13 @@ public class DishRepository implements IDishRepository {
     public Dishes findByToken(String token) {
         return _jpaDishRepo.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("Dish not found"));
+    }
+
+    @Override
+    public DishesCategories findCategoryByToken(String token) {
+        return _jpaDishCategoryRepo.findByToken(token)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Dish category not found")
+                );
     }
 }

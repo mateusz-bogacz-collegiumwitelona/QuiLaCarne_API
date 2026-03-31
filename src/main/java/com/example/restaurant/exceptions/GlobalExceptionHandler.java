@@ -28,8 +28,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             InvalidDateException.class,
             EntityAlreadyExistsException.class,
+            IllegalArgumentException.class
     })
-    public ResponseEntity<ResultHandler<Object>> handleInvalidDateException(RuntimeException rex) {
+    public ResponseEntity<ResultHandler<Object>> handleBadRequestExceptions(RuntimeException rex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ResultHandler.failure(
                                 rex.getMessage(),
@@ -114,7 +115,7 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler({EntityNotFoundException.class})
+    @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ResultHandler<Object>> handleEntityNotFoundException(RuntimeException rex) {
         log.warn("Resource not found: {}", rex.getMessage());
 
@@ -124,7 +125,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ResultHandler<Object>> handleBadCredentials(BadCredentialsException bex) {
+    public ResponseEntity<ResultHandler<Object>> handleBadCredentials() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 ResultHandler.failure("Invalid credentials", HttpStatus.UNAUTHORIZED.value())
         );

@@ -4,7 +4,9 @@ import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Dishes;
+import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.repository.interfaces.jpa.IJpaDishRepository;
+import com.example.restaurant.repository.interfaces.jpa.IJpaDishesCategoryRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +30,9 @@ import static org.mockito.Mockito.*;
 public class DishRepositoryTest {
     @Mock
     private IJpaDishRepository _jpaDishRepo;
+
+    @Mock
+    private IJpaDishesCategoryRepository _jpaDishCategoryRepo;
 
     @InjectMocks
     private DishRepository _dishRepo;
@@ -170,5 +175,33 @@ public class DishRepositoryTest {
         _dishRepo.save(dish);
 
         verify(_jpaDishRepo, times(1)).save(dish);
+    }
+
+    @Test
+    @DisplayName("findCategoryByToken: Should return category when token exists")
+    void findCategoryByToken_ShouldReturnCategory_WhenExists() {
+        String token = "CAT_TOKEN";
+        DishesCategories expectedCategory = new DishesCategories();
+        when(_jpaDishCategoryRepo.findByToken(token)).thenReturn(Optional.of(expectedCategory));
+
+        DishesCategories result = _dishRepo.findCategoryByToken(token);
+
+        assertNotNull(result);
+        verify(_jpaDishCategoryRepo, times(1)).findByToken(token);
+    }
+
+    @Test
+    @DisplayName("findCategoryByToken: Should throw EntityNotFoundException when category does not exist")
+    void findCategoryByToken_ShouldThrowException_WhenNotFound() {
+        String token = "INVALID_CAT_TOKEN";
+        when(_jpaDishCategoryRepo.findByToken(token)).thenReturn(Optional.empty());
+
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> _dishRepo.findCategoryByToken(token)
+        );
+
+        assertEquals("Dish category not found", exception.getMessage());
+        verify(_jpaDishCategoryRepo, times(1)).findByToken(token);
     }
 }

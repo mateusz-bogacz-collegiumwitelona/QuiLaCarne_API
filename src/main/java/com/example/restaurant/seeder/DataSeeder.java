@@ -184,7 +184,6 @@ public class DataSeeder implements CommandLineRunner {
         Ingredients parmesan = createIngredient("Ser Grana Padano", "Grana Padano Cheese", "grana-padano", Set.of(lactose));
         Ingredients oliveOil = createIngredient("Oliwa z oliwek", "Olive Oil", "olive-oil", Set.of());
 
-        DishesCategories startCat = _jpaDishesCategoryRepo.findByToken("STARTER").orElseThrow();
         DishesCategories mainCat = _jpaDishesCategoryRepo.findByToken("MAIN").orElseThrow();
 
         Dishes steak = new Dishes();
@@ -193,8 +192,8 @@ public class DataSeeder implements CommandLineRunner {
         steak.setCategory(mainCat);
         steak.setAvailable(true);
         steak.setIngredients(Set.of(beef, oliveOil));
-        uploadImage("images/steak.jpg", "steak.jpg");
-        steak.setImageUrl("steak.jpg");
+        String steakImageUrl = uploadImage("images/steak.jpg", "steak.jpg");
+        steak.setImageUrl(steakImageUrl);
         _jpaDishRepo.save(steak);
 
         Dishes pastaDish = new Dishes();
@@ -203,8 +202,8 @@ public class DataSeeder implements CommandLineRunner {
         pastaDish.setCategory(mainCat);
         pastaDish.setAvailable(true);
         pastaDish.setIngredients(Set.of(pasta, beef, tomato, parmesan));
-        uploadImage("images/pasta.jpg", "pasta.jpg");
-        pastaDish.setImageUrl("pasta.jpg");
+        String pastaImageUrl = uploadImage("images/pasta.jpg", "pasta.jpg");
+        pastaDish.setImageUrl(pastaImageUrl);
         _jpaDishRepo.save(pastaDish);
     }
 
@@ -239,12 +238,12 @@ public class DataSeeder implements CommandLineRunner {
         _jpaTableRepo.save(table);
     }
 
-    private void uploadImage(String resourcePath, String fileName) {
+    private String uploadImage(String resourcePath, String fileName) {
         try {
             var resource = _resourceLoader.getResource("classpath:" + resourcePath);
 
             if (resource.exists()) {
-                _s3StorageService.uploadFromStream(
+                return _s3StorageService.uploadFromStream(
                         resource.getInputStream(),
                         fileName,
                         "image/jpeg",
@@ -252,9 +251,11 @@ public class DataSeeder implements CommandLineRunner {
                 );
             } else {
                 log.warn("Resource not found: " + resourcePath);
+                return null;
             }
         } catch (Exception e) {
             log.error("Error uploading image: " + fileName, e);
+            return null;
         }
     }
 }

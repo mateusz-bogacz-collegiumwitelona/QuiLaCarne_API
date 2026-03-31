@@ -2,6 +2,7 @@ package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.ChangeDishAvailableRequest;
 import com.example.restaurant.dto.request.DishFilterRequest;
+import com.example.restaurant.dto.request.EditDishRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
@@ -18,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -122,6 +124,37 @@ public class DishController {
         return ResponseEntity.ok(
                 ResultHandler.success(
                         "Dish available change successfull",
+                        HttpStatus.OK.value()
+                )
+        );
+    }
+
+    @Operation(
+            summary = "Edit an existing dish",
+            description = "Updates dish details and/or replaces its photo on S3. Requires ROLE_MANAGER privileges. Uses multipart/form-data."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dish edited successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not Found - Dish not found", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> edit(
+            @Valid @ModelAttribute EditDishRequest request
+    ) {
+        _dishServices.edit(request);
+
+        return ResponseEntity.ok(
+                ResultHandler.success(
+                        "Dish edited successfully",
                         HttpStatus.OK.value()
                 )
         );
