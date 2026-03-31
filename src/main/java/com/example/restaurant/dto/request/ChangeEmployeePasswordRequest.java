@@ -7,9 +7,9 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class UpdatePasswordRequest {
-    @NotBlank(message = "Old password is required")
-    private String oldPassword;
+public class ChangeEmployeePasswordRequest {
+    @NotBlank(message = "Employee token is required")
+    private String employeeToken;
 
     @Schema(description = "Password (min. 6 chars, 1 uppercase, 1 digit, 1 special)", example = "SecurePass123!")
     @NotBlank(message = "Password is required")

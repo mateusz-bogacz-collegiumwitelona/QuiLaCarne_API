@@ -2,10 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
-import com.example.restaurant.dto.request.AddEmployeeRequest;
-import com.example.restaurant.dto.request.EditEmployeeRequest;
-import com.example.restaurant.dto.request.RegisterRequest;
-import com.example.restaurant.dto.request.UpdatePasswordRequest;
+import com.example.restaurant.dto.request.*;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
@@ -67,7 +64,7 @@ public class UserServices implements IUserServices {
     @Override
     @Auditable(action = "UPDATE_PASSWORD")
     @Transactional
-    public void updatePassword(String userToken, UpdatePasswordRequest request) {
+    public void updatePassword(String userToken, ChangePasswordRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword()))
             throw new IllegalStateException("Passwords do not match");
 
@@ -214,6 +211,25 @@ public class UserServices implements IUserServices {
 
         _userRepo.save(employee);
     }
+
+    @Override
+    @Transactional
+    @Auditable(action = "CHANGE_EMPLOYEE_PASSWORD")
+    public void changeEmployeePassword(String adminToken, ChangeEmployeePasswordRequest request) {
+        if (adminToken.trim().equals(request.getEmployeeToken().trim()))
+            throw new IllegalStateException("You can't change your own password");
+
+        if (!request.getPassword().equals(request.getConfirmPassword()))
+            throw new IllegalStateException("Passwords do not match");
+
+        Users user = _userRepo.findByToken(request.getEmployeeToken());
+
+        user.setPassword(_passwordEncoder.encode(request.getConfirmPassword()));
+
+        _userRepo.save(user);
+    }
+
+    public void changeEmpolyeeRole(boolean isAdmin)
 
     private String buildAndSaveUser(RegisterRequest request, String userRole, boolean isActive) {
         if (_userRepo.findByNormalizedEmail(request.getEmail().toUpperCase().trim()).isPresent())

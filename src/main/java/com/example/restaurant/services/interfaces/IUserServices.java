@@ -1,10 +1,7 @@
 package com.example.restaurant.services.interfaces;
 
 import com.example.restaurant.dto.domain.UserDomain;
-import com.example.restaurant.dto.request.AddEmployeeRequest;
-import com.example.restaurant.dto.request.EditEmployeeRequest;
-import com.example.restaurant.dto.request.RegisterRequest;
-import com.example.restaurant.dto.request.UpdatePasswordRequest;
+import com.example.restaurant.dto.request.*;
 
 import java.util.Optional;
 
@@ -19,7 +16,7 @@ public interface IUserServices {
 
     void changePassword(String token, String newPassword);
 
-    void updatePassword(String userToken, UpdatePasswordRequest request);
+    void updatePassword(String userToken, ChangePasswordRequest request);
 
     void updateEmail(String userToken, String email);
 
@@ -30,4 +27,6 @@ public interface IUserServices {
     void deleteAccount(String userToken);
 
     void editEmployee(EditEmployeeRequest request);
+
+    void changeEmployeePassword(String adminToken, ChangeEmployeePasswordRequest request);
 }

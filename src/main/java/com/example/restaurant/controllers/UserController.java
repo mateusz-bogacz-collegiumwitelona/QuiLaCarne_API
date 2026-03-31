@@ -1,8 +1,9 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.AddEmployeeRequest;
+import com.example.restaurant.dto.request.ChangeEmployeePasswordRequest;
+import com.example.restaurant.dto.request.ChangePasswordRequest;
 import com.example.restaurant.dto.request.EditEmployeeRequest;
-import com.example.restaurant.dto.request.UpdatePasswordRequest;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IUserServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,7 +42,7 @@ public class UserController {
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/me/password")
     public ResponseEntity<ResultHandler<Void>> updatePassword(
-            @RequestBody @Valid UpdatePasswordRequest request,
+            @RequestBody @Valid ChangePasswordRequest request,
             @AuthenticationPrincipal(expression = "token") String userToken) {
         _userServices.updatePassword(userToken, request);
 
@@ -160,7 +161,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
-    @PostMapping("/employees")
+    @PostMapping("/employee")
     @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
     public ResponseEntity<ResultHandler<Void>> createEmployee(
             @Valid @RequestBody AddEmployeeRequest request
@@ -191,7 +192,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
-    @PatchMapping("/employees")
+    @PatchMapping("/employee")
     @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
     public ResponseEntity<ResultHandler<Void>> editEmployee(
             @Valid @RequestBody EditEmployeeRequest request
@@ -204,5 +205,31 @@ public class UserController {
                         HttpStatus.OK.value()
                 )
         );
+    }
+
+    @Operation(
+            summary = "Change employee password",
+            description = "Allows a manager to forcefully change an employee's password. Managers cannot change their own password using this endpoint."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password updated successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(responseCode = "400", description = "Bad Request - Passwords do not match or invalid format", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role or tried to change own password", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @PatchMapping("/employee/change-password")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> changeEmployeePassword(
+            @AuthenticationPrincipal(expression = "token") String adminToken,
+            @Valid @RequestBody ChangeEmployeePasswordRequest request
+    ) {
+        _userServices.changeEmployeePassword(adminToken, request);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Employee password changed successfully",
+                HttpStatus.OK.value()
+        ));
     }
 }

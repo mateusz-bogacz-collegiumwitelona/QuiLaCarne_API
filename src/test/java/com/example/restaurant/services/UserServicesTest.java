@@ -1,10 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.dto.request.AddEmployeeRequest;
-import com.example.restaurant.dto.request.EditEmployeeRequest;
-import com.example.restaurant.dto.request.RegisterRequest;
-import com.example.restaurant.dto.request.UpdatePasswordRequest;
+import com.example.restaurant.dto.request.*;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.models.Users;
@@ -95,7 +92,7 @@ public class UserServicesTest {
     @Test
     @DisplayName("Update Password: Throws BadCredentialsException on wrong old password")
     void updatePassword_ShouldThrowException_WhenOldPasswordInvalid() {
-        UpdatePasswordRequest request = new UpdatePasswordRequest();
+        ChangePasswordRequest request = new ChangePasswordRequest();
         request.setOldPassword("wrong");
         request.setPassword("new");
         request.setConfirmPassword("new");
@@ -371,5 +368,61 @@ public class UserServicesTest {
 
         assertThrows(EntityAlreadyExistsException.class, () -> _userServices.editEmployee(request));
         verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Change Employee Password: Success when valid data is provided")
+    void changeEmployeePassword_ShouldSucceed_WhenValidData() {
+        String adminToken = "ADMIN_TOKEN_123";
+        ChangeEmployeePasswordRequest request = new ChangeEmployeePasswordRequest();
+        request.setEmployeeToken("EMPLOYEE_TOKEN_456");
+        request.setPassword("NewPass123!");
+        request.setConfirmPassword("NewPass123!");
+
+        Users employee = new Users();
+        employee.setToken("EMPLOYEE_TOKEN_456");
+        employee.setPassword("OldHashedPassword");
+
+        when(_userRepo.findByToken("EMPLOYEE_TOKEN_456")).thenReturn(employee);
+        when(_passwordEncoder.encode("NewPass123!")).thenReturn("NewHashedPassword123");
+
+        _userServices.changeEmployeePassword(adminToken, request);
+
+        assertEquals("NewHashedPassword123", employee.getPassword());
+        verify(_userRepo, times(1)).save(employee);
+    }
+
+    @Test
+    @DisplayName("Change Employee Password: Throws IllegalStateException when manager tries to change own password")
+    void changeEmployeePassword_ShouldThrowException_WhenAdminChangesOwnPassword() {
+        String adminToken = "ADMIN_TOKEN_123";
+        ChangeEmployeePasswordRequest request = new ChangeEmployeePasswordRequest();
+        request.setEmployeeToken(" ADMIN_TOKEN_123 ");
+        request.setPassword("NewPass123!");
+        request.setConfirmPassword("NewPass123!");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> _userServices.changeEmployeePassword(adminToken, request));
+
+        assertEquals("You can't change your own password", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+        verify(_passwordEncoder, never()).encode(anyString());
+    }
+
+    @Test
+    @DisplayName("Change Employee Password: Throws IllegalStateException when passwords do not match")
+    void changeEmployeePassword_ShouldThrowException_WhenPasswordsMismatch() {
+        String adminToken = "ADMIN_TOKEN_123";
+        ChangeEmployeePasswordRequest request = new ChangeEmployeePasswordRequest();
+        request.setEmployeeToken("EMPLOYEE_TOKEN_456");
+        request.setPassword("NewPass123!");
+        request.setConfirmPassword("DifferentPass123!");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> _userServices.changeEmployeePassword(adminToken, request));
+
+        assertEquals("Passwords do not match", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+        verify(_passwordEncoder, never()).encode(anyString());
     }
 }
