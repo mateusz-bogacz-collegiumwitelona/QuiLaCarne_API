@@ -1,5 +1,6 @@
 package com.example.restaurant.controllers;
 
+import com.example.restaurant.dto.request.ChangeDishAvailableRequest;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
@@ -59,6 +60,28 @@ public class DishController {
                 result));
     }
 
+    @Operation(
+            summary = "Remove a dish (Soft Delete)",
+            description = "Marks a dish as deleted by setting its availability to false, adding an unavailable reason, and setting the deleted_at timestamp. Requires ROLE_MANAGER privileges."
+    )
+    @Parameter(
+            name = "token",
+            in = ParameterIn.PATH,
+            description = "The unique token of the dish to be removed",
+            required = true,
+            schema = @Schema(type = "string")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dish removed successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not Found - Dish with the provided token does not exist", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     @DeleteMapping("/{token}")
     @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
     public ResponseEntity<ResultHandler<Void>> remove(
@@ -71,6 +94,36 @@ public class DishController {
                         HttpStatus.OK.value()
                 )
 
+        );
+    }
+
+    @Operation(
+            summary = "Change dish availability",
+            description = "Toggles the availability of a dish. If marking as unavailable, an optional reason can be provided. Requires ROLE_MANAGER privileges."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dish availability changed successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not Found - Dish with the provided token does not exist", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @PatchMapping
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> changeAvailable(
+            @RequestBody @Valid ChangeDishAvailableRequest request
+    ) {
+        _dishServices.changeAvailable(request);
+        return ResponseEntity.ok(
+                ResultHandler.success(
+                        "Dish available change successfull",
+                        HttpStatus.OK.value()
+                )
         );
     }
 }

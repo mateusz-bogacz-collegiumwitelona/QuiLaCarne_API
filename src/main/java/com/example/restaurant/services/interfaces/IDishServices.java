@@ -1,5 +1,6 @@
 package com.example.restaurant.services.interfaces;
 
+import com.example.restaurant.dto.request.ChangeDishAvailableRequest;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
@@ -9,4 +10,6 @@ public interface IDishServices {
     PagedResult<DishListResponse> getMenu(DishFilterRequest request, PaggedRequest pagged);
 
     void remove(String dishToken);
+
+    void changeAvailable(ChangeDishAvailableRequest request);
 }

@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.dto.request.ChangeDishAvailableRequest;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
@@ -66,6 +67,24 @@ public class DishServices implements IDishServices {
         dish.setUnavailableReason("Dish is deleted");
         dish.setAvailable(false);
         dish.setDeletedAt(OffsetDateTime.now());
+
+        _dishRepo.save(dish);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "CHANGE_DISH_AVAILABLE")
+    public void changeAvailable(ChangeDishAvailableRequest request) {
+        Dishes dish = _dishRepo.findByToken(request.getToken());
+
+        dish.setAvailable(request.isAvailable());
+
+        if (request.isAvailable()) {
+            dish.setUnavailableReason(null);
+        } else {
+            String reason = request.getUnavailableReason();
+            dish.setUnavailableReason(reason != null && !reason.isBlank() ? reason.trim() : "Brak składników");
+        }
 
         _dishRepo.save(dish);
     }

@@ -1,5 +1,7 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.request.ChangeDishAvailableRequest;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.response.DishListResponse;
@@ -102,6 +104,71 @@ public class DishServicesTest {
         assertNotNull(dish.getDeletedAt());
 
         verify(_dishRepo, times(1)).findByToken(token);
+        verify(_dishRepo, times(1)).save(dish);
+    }
+
+    @Test
+    @DisplayName("changeAvailable: should restore the availability of the dish and remove the reason for its unavailability")
+    void changeAvailable_ShouldSetAvailable_AndClearReason() {
+        Dishes dish = new Dishes();
+        dish.setAvailable(false);
+        dish.setUnavailableReason("Zepsuty piec");
+
+        ChangeDishAvailableRequest request = new ChangeDishAvailableRequest();
+        request.setToken(TestConstants.FAKE_DISH_TOKEN);
+        request.setAvailable(true);
+        request.setUnavailableReason("Ten tekst i tak zostanie zignorowany");
+
+        when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+
+        _dishServices.changeAvailable(request);
+
+        assertTrue(dish.isAvailable());
+        assertNull(dish.getUnavailableReason());
+
+        verify(_dishRepo, times(1)).findByToken(TestConstants.FAKE_DISH_TOKEN);
+        verify(_dishRepo, times(1)).save(dish);
+    }
+
+    @Test
+    @DisplayName("changeAvailable: should disable accessibility and set custom reason ")
+    void changeAvailable_ShouldSetUnavailable_AndSetCustomReason() {
+        Dishes dish = new Dishes();
+        dish.setAvailable(true);
+
+        ChangeDishAvailableRequest request = new ChangeDishAvailableRequest();
+        request.setToken(TestConstants.FAKE_DISH_TOKEN);
+        request.setAvailable(false);
+        request.setUnavailableReason("   Brak świeżej bazylii   ");
+
+        when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+
+        _dishServices.changeAvailable(request);
+
+        assertFalse(dish.isAvailable());
+        assertEquals("Brak świeżej bazylii", dish.getUnavailableReason());
+
+        verify(_dishRepo, times(1)).save(dish);
+    }
+
+    @Test
+    @DisplayName("changeAvailable: should disable accessibility and set default reason when null/empty string is sent")
+    void changeAvailable_ShouldSetUnavailable_AndSetDefaultReason_WhenReasonIsNullOrBlank() {
+        Dishes dish = new Dishes();
+        dish.setAvailable(true);
+
+        ChangeDishAvailableRequest request = new ChangeDishAvailableRequest();
+        request.setToken(TestConstants.FAKE_DISH_TOKEN);
+        request.setAvailable(false);
+        request.setUnavailableReason(null);
+
+        when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+
+        _dishServices.changeAvailable(request);
+
+        assertFalse(dish.isAvailable());
+        assertEquals("Brak składników", dish.getUnavailableReason());
+
         verify(_dishRepo, times(1)).save(dish);
     }
 }
