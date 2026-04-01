@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,7 +28,7 @@ public class ReportRepositoryTest {
     private IJpaGuestReportRepository _jpaReportRepo;
 
     @Mock
-    private IJpaGuestReportStatusRepository _jpaGuestStausRepo;
+    private IJpaGuestReportStatusRepository _jpaStausRepo;
 
     @InjectMocks
     private ReportRepository _reportRepo;
@@ -36,19 +37,19 @@ public class ReportRepositoryTest {
     @DisplayName("Find status by token: should return status id exists")
     void findStatusByToken_ShouldReturnStatus_WhenExists() {
         GuestReportStatus status = new GuestReportStatus();
-        when(_jpaGuestStausRepo.findByToken("TOKEN")).thenReturn(Optional.of(status));
+        when(_jpaStausRepo.findByToken("TOKEN")).thenReturn(Optional.of(status));
 
         GuestReportStatus result = _reportRepo.findStatusByToken("TOKEN");
 
         assertNotNull(result);
         assertEquals(status, result);
-        verify(_jpaGuestStausRepo, times(1)).findByToken("TOKEN");
+        verify(_jpaStausRepo, times(1)).findByToken("TOKEN");
     }
 
     @Test
     @DisplayName("Find status by token: should throw exception if doesn't exists")
     void findStatusByToken_ShouldThrowException_WhenNotFound() {
-        when(_jpaGuestStausRepo.findByToken("UNKNOWN")).thenReturn(Optional.empty());
+        when(_jpaStausRepo.findByToken("UNKNOWN")).thenReturn(Optional.empty());
 
         RuntimeException exception = assertThrows(RuntimeException.class,
                 () -> _reportRepo.findStatusByToken("UNKNOWN")
@@ -99,5 +100,18 @@ public class ReportRepositoryTest {
         assertEquals(token, result.getToken());
 
         verify(_jpaReportRepo, times(1)).findByToken(token);
+    }
+
+    @Test
+    @DisplayName("findAllStatuses: Should return list of statuses from JPA")
+    void findAllStatuses_ShouldReturnListOfStatuses() {
+        List<GuestReportStatus> expectedStatuses = List.of(new GuestReportStatus(), new GuestReportStatus());
+
+        when(_jpaStausRepo.findAll()).thenReturn(expectedStatuses);
+
+        List<GuestReportStatus> result = _reportRepo.findAllStatuses();
+
+        assertEquals(expectedStatuses, result);
+        verify(_jpaStausRepo, times(1)).findAll();
     }
 }

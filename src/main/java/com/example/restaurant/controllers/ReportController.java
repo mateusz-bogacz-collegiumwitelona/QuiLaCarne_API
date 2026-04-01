@@ -3,11 +3,14 @@ package com.example.restaurant.controllers;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IReportServices;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,6 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/report", produces = "application/json")
@@ -123,4 +128,34 @@ public class ReportController {
         ));
     }
 
+    @Operation(
+            summary = "Get list of report categories",
+            description = "Retrieves a dictionary list of all report categories available in the system. The names are translated based on the 'Accept-Language' header."
+    )
+    @Parameter(
+            name = "Accept-Language",
+            in = ParameterIn.HEADER,
+            description = "Preferred language (e.g., 'pl' or 'en')",
+            required = false,
+            schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dictionary review successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @GetMapping("/dictionary")
+    public ResponseEntity<ResultHandler<List<EntityResponse>>> getDictionary() {
+        var result = _reportServices.getDictionary();
+        return ResponseEntity.ok(
+                ResultHandler.success(
+                        "Dictionary review successfully",
+                        HttpStatus.OK.value(),
+                        result
+                )
+        );
+    }
 }

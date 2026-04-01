@@ -4,6 +4,7 @@ import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.models.GuestReports;
@@ -12,6 +13,7 @@ import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.IReportRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IBanServices;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,6 +53,10 @@ public class ReportServicesTest {
         LocaleContextHolder.setLocale(Locale.ENGLISH);
     }
 
+    @AfterEach
+    void tearDown() {
+        LocaleContextHolder.resetLocaleContext();
+    }
 
     @Test
     @DisplayName("Add Report: Success - Should save report when target is a client")
@@ -167,5 +173,53 @@ public class ReportServicesTest {
 
         verify(_banServices, never()).create(any());
         verify(_reportRepo, times(1)).save(report);
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns empty list when repository returns empty")
+    void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
+        when(_reportRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
+
+        List<EntityResponse> result = _reportServices.getDictionary();
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
+    void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
+        LocaleContextHolder.setLocale(new Locale("pl"));
+
+        GuestReportStatus status = new GuestReportStatus();
+        status.setToken("IN_PROGRESS");
+        status.setNamePl("W trakcie PL");
+        status.setNameEn("In Progress EN");
+
+        when(_reportRepo.findAllStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _reportServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("IN_PROGRESS", result.getFirst().getToken());
+        assertEquals("W trakcie PL", result.getFirst().getName());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
+    void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
+        LocaleContextHolder.setLocale(new Locale("en"));
+
+        GuestReportStatus status = new GuestReportStatus();
+        status.setToken("ACCEPTED");
+        status.setNamePl("Zaakceptowane PL");
+        status.setNameEn("Accepted EN");
+
+        when(_reportRepo.findAllStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _reportServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("ACCEPTED", result.getFirst().getToken());
+        assertEquals("Accepted EN", result.getFirst().getName());
     }
 }

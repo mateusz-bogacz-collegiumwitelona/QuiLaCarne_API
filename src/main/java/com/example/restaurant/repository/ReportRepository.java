@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class ReportRepository implements IReportRepository {
@@ -39,5 +41,10 @@ public class ReportRepository implements IReportRepository {
     @Override
     public GuestReports findByToken(String token) {
         return _jpaRepostRepo.findByToken(token);
+    }
+
+    @Override
+    public List<GuestReportStatus> findAllStatuses() {
+        return _jpaReportStatusRepo.findAll();
     }
 }
