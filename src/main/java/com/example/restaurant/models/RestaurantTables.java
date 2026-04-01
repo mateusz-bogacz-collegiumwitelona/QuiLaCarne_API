@@ -5,6 +5,7 @@ import com.example.restaurant.models.lookup.TableStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import java.util.Set;
 @Table(name = "restaurant_tables")
 @Getter
 @Setter
+@SQLRestriction("deleted_at IS NULL")
 public class RestaurantTables extends BaseEntity {
     @Column(name = "table_number")
     private int tableNumber;

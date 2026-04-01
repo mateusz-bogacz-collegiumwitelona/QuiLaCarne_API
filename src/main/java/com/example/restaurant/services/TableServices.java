@@ -64,7 +64,16 @@ public class TableServices implements ITableServices {
     @Transactional
     @Auditable(action = "CHANGE_TABLE_STATUS_TO_CLEAN")
     public void changeStatusToClean(String tableToken) {
-        changeStatus(tableToken, "CLEANING");
+        String CLEANING_STATUS = "CLEANING";
+        changeStatus(tableToken, CLEANING_STATUS);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "CHANGE_TABLE_STATUS_TO_OUT_OF_SERVICE")
+    public void changeStatusToOutOfService(String tableToken) {
+        String OUT_OF_SERVICE = "OUT_OF_SERVICE";
+        changeStatus(tableToken, OUT_OF_SERVICE);
     }
 
     private void changeStatus(String token, String statusToken) {
@@ -81,4 +90,6 @@ public class TableServices implements ITableServices {
         table.setTableStatus(new HashSet<>(Set.of(cleanStatus)));
         _tableRepo.save(table);
     }
+
+
 }

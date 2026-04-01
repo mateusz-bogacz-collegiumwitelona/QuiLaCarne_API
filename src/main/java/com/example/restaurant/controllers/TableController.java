@@ -72,7 +72,28 @@ public class TableController {
     public ResponseEntity<ResultHandler<Void>> clearTables(@Parameter(description = "Table token") @PathVariable String token) {
         _tableServices.changeStatusToClean(token);
         return ResponseEntity.ok(ResultHandler.success(
-                "Status change successfully",
+                "Status changed successfully",
+                HttpStatus.OK.value()
+        ));
+    }
+
+    @Operation(
+            summary = "Change table status to out of service",
+            description = "Updates the status of a specific table to OUT_OF_SERVICE. This is typically used by waiters to indicate that a table have a problem (leg is broken)."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Table status changed successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_WAITER role"),
+            @ApiResponse(responseCode = "404", description = "Table or table status not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PreAuthorize("hasAnyRole('ROLE_WAITER')")
+    @PatchMapping("/{token}/out-of-services")
+    public ResponseEntity<ResultHandler<Void>> changeStatusToOutOfServices(@Parameter(description = "Table token") @PathVariable String token) {
+        _tableServices.changeStatusToOutOfService(token);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Status changed successfully",
                 HttpStatus.OK.value()
         ));
     }

@@ -158,4 +158,53 @@ public class TableServicesTest {
         assertThrows(EntityNotFoundException.class,
                 () -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN));
     }
+
+    @Test
+    @DisplayName("Change Status To Out Of Service: Success when table and status exist")
+    void changeStatusToOutOfService_ShouldChangeStatus_WhenValid() {
+        String tableToken = "table-123";
+        RestaurantTables table = new RestaurantTables();
+
+        TableStatus outOfServiceStatus = new TableStatus();
+        outOfServiceStatus.setToken("OUT_OF_SERVICE");
+        outOfServiceStatus.setNameEn("Out of service");
+
+        when(_tableRepo.findByToken(tableToken)).thenReturn(table);
+        when(_tableRepo.findStatusByToken("OUT_OF_SERVICE")).thenReturn(outOfServiceStatus);
+
+        _tableServices.changeStatusToOutOfService(tableToken);
+
+        assertTrue(table.getTableStatus().contains(outOfServiceStatus));
+        verify(_tableRepo, times(1)).save(table);
+    }
+
+    @Test
+    @DisplayName("Change Status To Out Of Service: Throws Exception when table is not found")
+    void changeStatusToOutOfService_ShouldThrowException_WhenTableNotFound() {
+        String tableToken = "invalid-token";
+
+        when(_tableRepo.findByToken(tableToken)).thenReturn(null);
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> _tableServices.changeStatusToOutOfService(tableToken));
+
+        assertEquals("Table with token " + tableToken + " not found", exception.getMessage());
+        verify(_tableRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Change Status To Out Of Service: Throws Exception when status is not found in DB")
+    void changeStatusToOutOfService_ShouldThrowException_WhenStatusNotFound() {
+        String tableToken = "table-123";
+        RestaurantTables table = new RestaurantTables();
+
+        when(_tableRepo.findByToken(tableToken)).thenReturn(table);
+        when(_tableRepo.findStatusByToken("OUT_OF_SERVICE")).thenReturn(null); // Brak statusu w bazie
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> _tableServices.changeStatusToOutOfService(tableToken));
+
+        assertEquals("Table status 'OUT_OF_SERVICE' not found", exception.getMessage());
+        verify(_tableRepo, never()).save(any());
+    }
 }

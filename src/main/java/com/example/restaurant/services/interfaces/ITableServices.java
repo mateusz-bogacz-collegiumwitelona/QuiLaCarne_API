@@ -9,4 +9,6 @@ public interface ITableServices {
     List<TableListResponse> getTables(TableFilterRequest request);
 
     void changeStatusToClean(String tableToken);
+
+    void changeStatusToOutOfService(String tableToken);
 }
