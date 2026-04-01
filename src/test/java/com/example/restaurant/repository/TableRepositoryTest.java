@@ -152,4 +152,15 @@ public class TableRepositoryTest {
 
         assertTrue(result);
     }
+
+    @Test
+    @DisplayName("exists By Table Number: should return true when table exists in JPA")
+    void existsByTableNumber_ShouldReturnTrue_WhenTableExists() {
+        when(_jpaTableRepo.existsByTableNumber(10)).thenReturn(true);
+
+        boolean exists = _tableRepo.existsByTableNumber(10);
+
+        assertTrue(exists);
+        verify(_jpaTableRepo, times(1)).existsByTableNumber(10);
+    }
 }

@@ -250,11 +250,11 @@ public class DataSeeder implements CommandLineRunner {
                         resource.contentLength()
                 );
             } else {
-                log.warn("Resource not found: " + resourcePath);
+                log.warn("Resource not found: {}", resourcePath);
                 return null;
             }
         } catch (Exception e) {
-            log.error("Error uploading image: " + fileName, e);
+            log.error("Error uploading image: {}", fileName, e);
             return null;
         }
     }

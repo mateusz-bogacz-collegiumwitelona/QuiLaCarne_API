@@ -1,5 +1,6 @@
 package com.example.restaurant.services.interfaces;
 
+import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
 
@@ -11,4 +12,6 @@ public interface ITableServices {
     void changeStatusToClean(String tableToken);
 
     void changeStatusToOutOfService(String tableToken);
+
+    void add(AddTableRequest request);
 }

@@ -53,4 +53,9 @@ public class TableRespository implements ITableRespository {
                 .stream()
                 .anyMatch(table -> table.getToken().equals(tableToken));
     }
+
+    @Override
+    public boolean existsByTableNumber(int tableNumber) {
+        return _jpaTableRepo.existsByTableNumber(tableNumber);
+    }
 }

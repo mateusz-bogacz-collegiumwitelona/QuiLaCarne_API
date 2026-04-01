@@ -1,8 +1,10 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
@@ -74,6 +76,26 @@ public class TableServices implements ITableServices {
     public void changeStatusToOutOfService(String tableToken) {
         String OUT_OF_SERVICE = "OUT_OF_SERVICE";
         changeStatus(tableToken, OUT_OF_SERVICE);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "ADD_TABLE")
+    public void add(AddTableRequest request) {
+        if (_tableRepo.existsByTableNumber(request.getTableNumber()))
+            throw new EntityAlreadyExistsException("Table with number " + request.getTableNumber() + " already exists");
+
+        TableStatus status = _tableRepo.findStatusByToken("AVAILABLE");
+
+        if (status == null)
+            throw new EntityNotFoundException("Default table status 'AVAILABLE' not found in database");
+
+        RestaurantTables table = new RestaurantTables();
+        table.setTableNumber(request.getTableNumber());
+        table.setCapacity(request.getCapacity());
+        table.setTableStatus(Set.of(status));
+
+        _tableRepo.save(table);
     }
 
     private void changeStatus(String token, String statusToken) {

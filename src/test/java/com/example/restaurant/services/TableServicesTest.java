@@ -1,8 +1,10 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
@@ -205,6 +207,62 @@ public class TableServicesTest {
                 () -> _tableServices.changeStatusToOutOfService(tableToken));
 
         assertEquals("Table status 'OUT_OF_SERVICE' not found", exception.getMessage());
+        verify(_tableRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Add Table: Success when valid request")
+    void add_ShouldSaveTable_WhenValidRequest() {
+        AddTableRequest request = new AddTableRequest();
+        request.setTableNumber(5);
+        request.setCapacity(4);
+
+        TableStatus availableStatus = new TableStatus();
+        availableStatus.setToken("AVAILABLE");
+
+        when(_tableRepo.existsByTableNumber(5)).thenReturn(false);
+        when(_tableRepo.findStatusByToken("AVAILABLE")).thenReturn(availableStatus);
+
+        _tableServices.add(request);
+
+        verify(_tableRepo, times(1)).save(argThat(table ->
+                table.getTableNumber() == 5 &&
+                        table.getCapacity() == 4 &&
+                        table.getTableStatus().contains(availableStatus)
+        ));
+    }
+
+    @Test
+    @DisplayName("Add Table: Throws EntityAlreadyExistsException when table number exists")
+    void add_ShouldThrowException_WhenTableNumberExists() {
+        AddTableRequest request = new AddTableRequest();
+        request.setTableNumber(5);
+        request.setCapacity(4);
+
+        when(_tableRepo.existsByTableNumber(5)).thenReturn(true);
+
+        EntityAlreadyExistsException exception = assertThrows(EntityAlreadyExistsException.class,
+                () -> _tableServices.add(request));
+
+        assertEquals("Table with number 5 already exists", exception.getMessage());
+        verify(_tableRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Add Table: Throws EntityNotFoundException when AVAILABLE status is missing")
+    void add_ShouldThrowException_WhenStatusNotFound() {
+
+        AddTableRequest request = new AddTableRequest();
+        request.setTableNumber(5);
+        request.setCapacity(4);
+
+        when(_tableRepo.existsByTableNumber(5)).thenReturn(false);
+        when(_tableRepo.findStatusByToken("AVAILABLE")).thenReturn(null);
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> _tableServices.add(request));
+
+        assertEquals("Default table status 'AVAILABLE' not found in database", exception.getMessage());
         verify(_tableRepo, never()).save(any());
     }
 }

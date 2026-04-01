@@ -18,4 +18,7 @@ public interface ITableRespository {
     void save(RestaurantTables table);
 
     boolean isTableAvailable(String tableToken, OffsetDateTime startTime, OffsetDateTime endTime);
+
+    boolean existsByTableNumber(int tableNumber);
+    
 }

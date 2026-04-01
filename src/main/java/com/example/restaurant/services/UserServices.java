@@ -10,6 +10,7 @@ import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.SoftDeleteHelpers;
 import com.example.restaurant.models.Users;
+import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
@@ -247,13 +248,13 @@ public class UserServices implements IUserServices {
         if (!request.isAdmin() && !isCurrentlyManager)
             throw new IllegalStateException("User is already a Waiter");
 
+        Roles role;
         if (request.isAdmin()) {
-            Roles role = _roleRepository.setRole(ROLE_MANAGER);
-            user.setRoles(Set.of(role));
+            role = _roleRepository.setRole(ROLE_MANAGER);
         } else {
-            Roles role = _roleRepository.setRole(ROLE_WAITER);
-            user.setRoles(Set.of(role));
+            role = _roleRepository.setRole(ROLE_WAITER);
         }
+        user.setRoles(Set.of(role));
 
         _userRepo.save(user);
     }
@@ -327,7 +328,7 @@ public class UserServices implements IUserServices {
                 .username(u.getUsername())
                 .email(u.getEmail())
                 .isActive(u.getIsActive())
-                .roles(u.getRoles().stream().map(r -> r.getName()).toList())
+                .roles(u.getRoles().stream().map(BaseNamedEntity::getName).toList())
                 .createdAt(u.getCreatedAt())
                 .build()
         );

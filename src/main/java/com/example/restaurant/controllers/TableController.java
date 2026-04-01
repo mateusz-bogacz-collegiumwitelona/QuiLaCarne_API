@@ -1,5 +1,6 @@
 package com.example.restaurant.controllers;
 
+import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.helpers.ResultHandler;
@@ -96,5 +97,35 @@ public class TableController {
                 "Status changed successfully",
                 HttpStatus.OK.value()
         ));
+    }
+
+    @Operation(
+            summary = "Add a new restaurant table",
+            description = "Creates a new table with the specified number and capacity. The table is automatically assigned the default 'AVAILABLE' status. Requires ROLE_MANAGER."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Table created successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Bad Request - Table number already exists or invalid input", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> addTable(
+            @Valid @RequestBody AddTableRequest request
+    ) {
+        _tableServices.add(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ResultHandler.success(
+                        "Table added successfully",
+                        HttpStatus.CREATED.value()
+                )
+        );
     }
 }

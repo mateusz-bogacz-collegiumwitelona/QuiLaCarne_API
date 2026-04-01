@@ -29,4 +29,6 @@ public interface IJpaTableRepository extends JpaRepository<RestaurantTables, UUI
     );
 
     Optional<RestaurantTables> findByToken(String token);
+
+    boolean existsByTableNumber(int tableNumber);
 }
