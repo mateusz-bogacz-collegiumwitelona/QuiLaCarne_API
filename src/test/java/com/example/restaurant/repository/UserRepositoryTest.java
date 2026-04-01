@@ -12,6 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +39,14 @@ public class UserRepositoryTest {
     void existsByUsername_ShouldReturnTrue_WhenUserExists() {
         when(_jpaUserRepository.findByNormalizedUsername(anyString())).thenReturn(Optional.of(new Users()));
         assertTrue(_userRepository.existsByUsername("TEST"));
+    }
+
+
+    @Test
+    @DisplayName("find By Normalized Username: Should Call Jpa")
+    void findByNormalizedUsername_ShouldCallJpa() {
+        when(_jpaUserRepository.findByNormalizedUsername(anyString())).thenReturn(Optional.of(new Users()));
+        assertTrue(_userRepository.findByNormalizedUsername("TEST").isPresent());
     }
 
     @Test
@@ -119,5 +130,29 @@ public class UserRepositoryTest {
         when(_jpaRoleRepository.findByName("ADMIN")).thenReturn(Optional.of(searchRole));
 
         assertFalse(_userRepository.isInRole("ADMIN", "T1"));
+    }
+
+    @Test
+    @DisplayName("exist By Email: should return true when email exists")
+    void existByEmail_ShouldReturnTrue_WhenEmailExists() {
+        when(_jpaUserRepository.findByNormalizedEmail(anyString())).thenReturn(Optional.of(new Users()));
+        assertTrue(_userRepository.existByEmail("TEST@TEST.PL"));
+    }
+
+
+    @Test
+    @DisplayName("find All Users: Should Call Jpa with Specification and Pageable")
+    @SuppressWarnings("unchecked")
+    void findAllUsers_ShouldCallJpaWithSpecificationAndPageable() {
+        Specification<Users> mockSpec = mock(Specification.class);
+        Pageable mockPageable = mock(Pageable.class);
+        Page<Users> mockPage = mock(Page.class);
+
+        when(_jpaUserRepository.findAll(mockSpec, mockPageable)).thenReturn(mockPage);
+
+        Page<Users> result = _userRepository.findAllUsers(mockSpec, mockPageable);
+
+        assertEquals(mockPage, result);
+        verify(_jpaUserRepository, times(1)).findAll(mockSpec, mockPageable);
     }
 }

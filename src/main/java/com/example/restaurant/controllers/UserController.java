@@ -1,6 +1,8 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.*;
+import com.example.restaurant.dto.response.UserListResponse;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IUserServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -304,6 +306,28 @@ public class UserController {
         return ResponseEntity.ok(ResultHandler.success(
                 "Employee deleted successfully",
                 HttpStatus.OK.value()
+        ));
+    }
+
+    @Operation(
+            summary = "Get paginated user list",
+            description = "Retrieves a list of users with dynamic filtering (search, role, isActive) and sorting. Excludes deleted users. Requires ROLE_MANAGER."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List fetched successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role")
+    })
+    @GetMapping("/list")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<UserListResponse>>> getUsers(
+            @ModelAttribute UserFilterRequest filter,
+            @Valid @ModelAttribute PaggedRequest pagged
+    ) {
+        var result = _userServices.getUserList(filter, pagged);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Users retrieved successfully",
+                HttpStatus.OK.value(),
+                result
         ));
     }
 }

@@ -30,7 +30,8 @@ public class ReportController {
 
     @Operation(
             summary = "Create a new guest report",
-            description = "Creates a new incident report for a specific client. The user being reported must have the ROLE_CLIENT. The report is created with an initial status of IN_PROGRESS. Requires WAITER or MANAGER role."
+            description = "Creates a new incident report for a specific client. The user being reported must have the ROLE_CLIENT. " +
+                    "The report is created with an initial status of IN_PROGRESS. Requires WAITER or MANAGER role."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -94,7 +95,8 @@ public class ReportController {
 
     @Operation(
             summary = "Change report status and process bans",
-            description = "Allows a manager to accept or reject an existing guest report. If the report is accepted (`isAccepted: true`), the system automatically issues a ban for the reported guest until the specified `expiresAt` date and sends an email notification. Requires MANAGER role."
+            description = "Allows a manager to accept or reject an existing guest report. If the report is accepted (`isAccepted: true`), " +
+                    "the system automatically issues a ban for the reported guest until the specified `expiresAt` date and sends an email notification. Requires MANAGER role."
     )
     @ApiResponses(value = {
             @ApiResponse(

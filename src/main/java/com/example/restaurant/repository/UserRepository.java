@@ -7,6 +7,9 @@ import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaRoleRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -62,5 +65,10 @@ public class UserRepository implements IUserRepository {
     @Override
     public Optional<Users> findByNormalizedEmail(String email) {
         return _jpaUserRepository.findByNormalizedEmail(email);
+    }
+
+    @Override
+    public Page<Users> findAllUsers(Specification<Users> spec, Pageable pageable) {
+        return _jpaUserRepository.findAll(spec, pageable);
     }
 }

@@ -50,7 +50,7 @@ public class TableController {
     public ResponseEntity<ResultHandler<List<TableListResponse>>> getTables(@Valid TableFilterRequest request) {
         var result = _tableServices.getTables(request);
         return ResponseEntity.ok(
-                ResultHandler.success("Tables retrived",
+                ResultHandler.success("Tables reviewed sucessfully",
                         HttpStatus.OK.value(),
                         result
                 ));
