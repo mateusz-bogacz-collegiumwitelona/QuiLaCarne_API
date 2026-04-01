@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -44,5 +45,10 @@ public class ReservationRepository implements IReservationRepository {
     @Override
     public Optional<Reservations> findByTokenAndUserToken(String resToken, String userToken) {
         return _jpaReservationsRepo.findByTokenAndUser_Token(resToken, userToken);
+    }
+
+    @Override
+    public List<ReservationStatus> findAllStatuses() {
+        return _jpaReservationStatusRepo.findAll();
     }
 }

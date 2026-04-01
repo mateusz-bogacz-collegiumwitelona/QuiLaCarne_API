@@ -4,10 +4,7 @@ import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
-import com.example.restaurant.dto.response.ClientReservationResponse;
-import com.example.restaurant.dto.response.ReservationDetailsResponse;
-import com.example.restaurant.dto.response.ReservationResponse;
-import com.example.restaurant.dto.response.TodayReservationsResponse;
+import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
 
 import java.util.List;
@@ -30,4 +27,6 @@ public interface IReservationServices {
     void assignWaiter(String reservationToken, String waiterToken);
 
     void isAbsent(String reservationToken);
+
+    List<EntityResponse> getDictionary();
 }

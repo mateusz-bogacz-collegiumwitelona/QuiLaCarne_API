@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface IReservationRepository {
@@ -19,4 +20,6 @@ public interface IReservationRepository {
     Optional<Reservations> findByToken(String token);
 
     Optional<Reservations> findByTokenAndUserToken(String resToken, String userToken);
+
+    List<ReservationStatus> findAllStatuses();
 }

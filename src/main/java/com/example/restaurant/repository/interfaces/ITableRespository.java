@@ -20,5 +20,7 @@ public interface ITableRespository {
     boolean isTableAvailable(String tableToken, OffsetDateTime startTime, OffsetDateTime endTime);
 
     boolean existsByTableNumber(int tableNumber);
-    
+
+    List<TableStatus> findAllStatuses();
+
 }

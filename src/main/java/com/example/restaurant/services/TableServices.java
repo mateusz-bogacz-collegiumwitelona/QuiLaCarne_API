@@ -3,9 +3,11 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
+import com.example.restaurant.mappers.DictionaryMapper;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
@@ -123,5 +125,9 @@ public class TableServices implements ITableServices {
         _tableRepo.save(table);
     }
 
-
+    @Override
+    public List<EntityResponse> getDictionary() {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
+        return DictionaryMapper.map(_tableRepo.findAllStatuses(), lang);
+    }
 }

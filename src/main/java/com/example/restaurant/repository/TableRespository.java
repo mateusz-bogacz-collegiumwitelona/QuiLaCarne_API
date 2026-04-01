@@ -58,4 +58,9 @@ public class TableRespository implements ITableRespository {
     public boolean existsByTableNumber(int tableNumber) {
         return _jpaTableRepo.existsByTableNumber(tableNumber);
     }
+
+    @Override
+    public List<TableStatus> findAllStatuses() {
+        return _jpaTableStatusRepo.findAll();
+    }
 }

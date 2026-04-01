@@ -2,6 +2,7 @@ package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.ITableServices;
@@ -150,5 +151,36 @@ public class TableController {
                 "Table deleted successfully",
                 HttpStatus.OK.value()
         ));
+    }
+
+    @Operation(
+            summary = "Get list of table statuses",
+            description = "Retrieves a dictionary list of all table statuses available in the system. The names are translated based on the 'Accept-Language' header."
+    )
+    @Parameter(
+            name = "Accept-Language",
+            in = ParameterIn.HEADER,
+            description = "Preferred language (e.g., 'pl' or 'en')",
+            required = false,
+            schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dictionary review successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @GetMapping("/dictionary")
+    public ResponseEntity<ResultHandler<List<EntityResponse>>> getDictionary() {
+        var result = _tableServices.getDictionary();
+        return ResponseEntity.ok(
+                ResultHandler.success(
+                        "Dictionary review successfully",
+                        HttpStatus.OK.value(),
+                        result
+                )
+        );
     }
 }

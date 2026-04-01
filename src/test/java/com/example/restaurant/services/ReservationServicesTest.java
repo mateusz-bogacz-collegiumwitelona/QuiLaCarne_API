@@ -8,6 +8,7 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
@@ -209,5 +210,49 @@ public class ReservationServicesTest {
         request.setEndTime(OffsetDateTime.now().plusHours(2));
         request.setDishes(new ArrayList<>());
         return request;
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns empty list when repository returns empty")
+    void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
+        when(_reservationRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
+        List<EntityResponse> result = _reservationServices.getDictionary();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns Polish names when language is pl")
+    void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
+        LocaleContextHolder.setLocale(new Locale("pl"));
+        ReservationStatus status = new ReservationStatus();
+        status.setToken("ACTIVE");
+        status.setNamePl("Aktywna PL");
+        status.setNameEn("Active EN");
+
+        when(_reservationRepo.findAllStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _reservationServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("ACTIVE", result.get(0).getToken());
+        assertEquals("Aktywna PL", result.get(0).getName());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns English names when language is not pl")
+    void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
+        LocaleContextHolder.setLocale(new Locale("en"));
+        ReservationStatus status = new ReservationStatus();
+        status.setToken("CANCELLED");
+        status.setNamePl("Anulowana PL");
+        status.setNameEn("Cancelled EN");
+
+        when(_reservationRepo.findAllStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _reservationServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("CANCELLED", result.get(0).getToken());
+        assertEquals("Cancelled EN", result.get(0).getName());
     }
 }

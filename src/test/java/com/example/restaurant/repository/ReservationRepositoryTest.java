@@ -94,4 +94,16 @@ public class ReservationRepositoryTest {
         _reservationRepo.findByTokenAndUserToken("RES_1", "USER_1");
         verify(_jpaReservationsRepo).findByTokenAndUser_Token("RES_1", "USER_1");
     }
+
+    @Test
+    @DisplayName("findAllStatuses: Should return list of reservation statuses from JPA")
+    void findAllStatuses_ShouldReturnListOfStatuses() {
+        List<ReservationStatus> expectedStatuses = List.of(new ReservationStatus(), new ReservationStatus());
+        when(_jpaReservationStatusRepo.findAll()).thenReturn(expectedStatuses);
+
+        List<ReservationStatus> result = _reservationRepo.findAllStatuses();
+
+        assertEquals(expectedStatuses, result);
+        verify(_jpaReservationStatusRepo, times(1)).findAll();
+    }
 }

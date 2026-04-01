@@ -163,4 +163,16 @@ public class TableRepositoryTest {
         assertTrue(exists);
         verify(_jpaTableRepo, times(1)).existsByTableNumber(10);
     }
+
+    @Test
+    @DisplayName("findAllStatuses: Should return list of table statuses from JPA")
+    void findAllStatuses_ShouldReturnListOfStatuses() {
+        List<TableStatus> expectedStatuses = List.of(new TableStatus(), new TableStatus());
+        when(_jpaTableStatusRepo.findAll()).thenReturn(expectedStatuses);
+
+        List<TableStatus> result = _tableRepo.findAllStatuses();
+
+        assertEquals(expectedStatuses, result);
+        verify(_jpaTableStatusRepo, times(1)).findAll();
+    }
 }

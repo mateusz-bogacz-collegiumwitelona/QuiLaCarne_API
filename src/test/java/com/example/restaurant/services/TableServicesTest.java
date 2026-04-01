@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
@@ -293,5 +294,50 @@ public class TableServicesTest {
 
         assertEquals("Table not found", exception.getMessage());
         verify(_tableRepo, never()).save(any());
+    }
+
+
+    @Test
+    @DisplayName("getDictionary: Returns empty list when repository returns empty")
+    void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
+        when(_tableRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
+        List<EntityResponse> result = _tableServices.getDictionary();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns Polish names when language is pl")
+    void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
+        LocaleContextHolder.setLocale(new Locale("pl"));
+        TableStatus status = new TableStatus();
+        status.setToken("AVAILABLE");
+        status.setNamePl("Wolny PL");
+        status.setNameEn("Available EN");
+
+        when(_tableRepo.findAllStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _tableServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("AVAILABLE", result.get(0).getToken());
+        assertEquals("Wolny PL", result.get(0).getName());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns English names when language is not pl")
+    void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
+        LocaleContextHolder.setLocale(new Locale("en"));
+        TableStatus status = new TableStatus();
+        status.setToken("CLEANING");
+        status.setNamePl("Sprzątanie PL");
+        status.setNameEn("Cleaning EN");
+
+        when(_tableRepo.findAllStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _tableServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("CLEANING", result.get(0).getToken());
+        assertEquals("Cleaning EN", result.get(0).getName());
     }
 }

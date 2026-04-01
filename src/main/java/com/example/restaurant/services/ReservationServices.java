@@ -8,6 +8,7 @@ import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.*;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.mappers.DictionaryMapper;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
@@ -227,5 +228,11 @@ public class ReservationServices implements IReservationServices {
         reservation.setReservationStatus(Set.of(_reservationRepo.findStatusByToken(STATUS_NO_SHOW)));
         _reservationRepo.save(reservation);
         _orderServices.isAbsent(reservationToken);
+    }
+
+    @Override
+    public List<EntityResponse> getDictionary() {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
+        return DictionaryMapper.map(_reservationRepo.findAllStatuses(), lang);
     }
 }
