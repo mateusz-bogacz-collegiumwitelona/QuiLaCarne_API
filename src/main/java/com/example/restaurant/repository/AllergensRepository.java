@@ -20,4 +20,9 @@ public class AllergensRepository implements IAllergensRepository {
 
         return _jpaAllergensRepo.findByTokenIn(allergenTokens);
     }
+
+    @Override
+    public List<Allergens> findAll() {
+        return _jpaAllergensRepo.findAll();
+    }
 }

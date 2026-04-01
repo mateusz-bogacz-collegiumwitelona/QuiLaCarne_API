@@ -57,4 +57,17 @@ public class AllergensRepositoryTest {
         assertTrue(result.isEmpty());
         verify(_jpaAllergensRepo, never()).findByTokenIn(any());
     }
+
+    @Test
+    @DisplayName("findAll: Returns all allergens")
+    void findAll_ShouldReturnAllAllergens() {
+        List<Allergens> expectedAllergens = List.of(new Allergens());
+
+        when(_jpaAllergensRepo.findAll()).thenReturn(expectedAllergens);
+
+        List<Allergens> result = _allergensRepo.findAll();
+
+        assertEquals(expectedAllergens, result);
+        verify(_jpaAllergensRepo).findAll();
+    }
 }

@@ -36,7 +36,6 @@ public class DishController {
             name = "Accept-Language",
             in = ParameterIn.HEADER,
             description = "Preferred language (e.g., 'pl' or 'en')",
-            required = false,
             schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
     )
     @ApiResponses(value = {
