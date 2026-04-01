@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -95,6 +96,15 @@ public class TableServices implements ITableServices {
         table.setCapacity(request.getCapacity());
         table.setTableStatus(Set.of(status));
 
+        _tableRepo.save(table);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "DELETE_TABLE")
+    public void delete(String token) {
+        RestaurantTables table = _tableRepo.findByToken(token);
+        table.setDeletedAt(OffsetDateTime.now());
         _tableRepo.save(table);
     }
 

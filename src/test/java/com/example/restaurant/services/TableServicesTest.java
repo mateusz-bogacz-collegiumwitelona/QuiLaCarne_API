@@ -265,4 +265,33 @@ public class TableServicesTest {
         assertEquals("Default table status 'AVAILABLE' not found in database", exception.getMessage());
         verify(_tableRepo, never()).save(any());
     }
+
+    @Test
+    @DisplayName("Delete Table: Success with Soft Delete")
+    void delete_ShouldSetDeletedAt_WhenTableExists() {
+        String tableToken = "table-123";
+        RestaurantTables table = new RestaurantTables();
+
+        when(_tableRepo.findByToken(tableToken)).thenReturn(table);
+
+        _tableServices.delete(tableToken);
+
+        assertNotNull(table.getDeletedAt());
+        verify(_tableRepo, times(1)).save(table);
+    }
+
+    @Test
+    @DisplayName("Delete Table: Throws Exception when table not found")
+    void delete_ShouldThrowException_WhenTableNotFound() {
+        String tableToken = "invalid-token";
+
+        when(_tableRepo.findByToken(tableToken))
+                .thenThrow(new EntityNotFoundException("Table not found"));
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> _tableServices.delete(tableToken));
+
+        assertEquals("Table not found", exception.getMessage());
+        verify(_tableRepo, never()).save(any());
+    }
 }

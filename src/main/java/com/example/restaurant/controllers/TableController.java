@@ -36,7 +36,6 @@ public class TableController {
             name = "Accept-Language",
             in = ParameterIn.HEADER,
             description = "Preferred language (e.g., 'pl' or 'en')",
-            required = false,
             schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
     )
     @ApiResponses(value = {
@@ -127,5 +126,29 @@ public class TableController {
                         HttpStatus.CREATED.value()
                 )
         );
+    }
+
+    @Operation(
+            summary = "Delete a restaurant table",
+            description = "Performs a soft delete of a table. It will no longer be visible in the active tables list. Requires ROLE_MANAGER."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Table deleted successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Table not found", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @DeleteMapping("/{token}/delete")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> deleteTable(
+            @Parameter(description = "Table token") @PathVariable String token
+    ) {
+        _tableServices.delete(token);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Table deleted successfully",
+                HttpStatus.OK.value()
+        ));
     }
 }
