@@ -5,9 +5,11 @@ import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
+import com.example.restaurant.mappers.DictionaryMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
@@ -15,6 +17,7 @@ import com.example.restaurant.repository.interfaces.*;
 import com.example.restaurant.services.interfaces.IOrderServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -307,6 +310,18 @@ public class OrderServices implements IOrderServices {
             _orderRepo.saveAllItems(items);
             _orderRepo.save(order);
         }
+    }
+
+    @Override
+    public List<EntityResponse> getDictionary() {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
+        return DictionaryMapper.map(_orderRepo.findAllStatuses(), lang);
+    }
+
+    @Override
+    public List<EntityResponse> getItemStatusesDictionary() {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
+        return DictionaryMapper.map(_orderRepo.findAllItemStatuses(), lang);
     }
 
     private String normalizeNote(String note) {

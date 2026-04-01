@@ -4,15 +4,14 @@ import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
-import com.example.restaurant.dto.response.ClientReservationResponse;
-import com.example.restaurant.dto.response.ReservationDetailsResponse;
-import com.example.restaurant.dto.response.ReservationResponse;
-import com.example.restaurant.dto.response.TodayReservationsResponse;
+import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.services.interfaces.IOrderServices;
 import com.example.restaurant.services.interfaces.IReservationServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,6 +32,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReservationController {
     private final IReservationServices _reservationServices;
+    private final IOrderServices _orderServices;
 
     @Operation(
             summary = "Create a new table reservation",
@@ -265,6 +265,68 @@ public class ReservationController {
         _reservationServices.isAbsent(token);
         return ResponseEntity.ok(
                 ResultHandler.success("Absent success", HttpStatus.OK.value())
+        );
+    }
+
+    @Operation(
+            summary = "Get list of order statuses",
+            description = "Retrieves a dictionary list of all order statuses available in the system. The names are translated based on the 'Accept-Language' header."
+    )
+    @Parameter(
+            name = "Accept-Language",
+            in = ParameterIn.HEADER,
+            description = "Preferred language (e.g., 'pl' or 'en')",
+            required = false,
+            schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dictionary review successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @GetMapping("/order/dictionary")
+    public ResponseEntity<ResultHandler<List<EntityResponse>>> getDictionary() {
+        var result = _orderServices.getDictionary();
+        return ResponseEntity.ok(
+                ResultHandler.success(
+                        "Dictionary review successfully",
+                        HttpStatus.OK.value(),
+                        result
+                )
+        );
+    }
+
+    @Operation(
+            summary = "Get list of order item statuses",
+            description = "Retrieves a dictionary list of all order item statuses available in the system. The names are translated based on the 'Accept-Language' header."
+    )
+    @Parameter(
+            name = "Accept-Language",
+            in = ParameterIn.HEADER,
+            description = "Preferred language (e.g., 'pl' or 'en')",
+            required = false,
+            schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dictionary review successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @GetMapping("/order/item/dictionary")
+    public ResponseEntity<ResultHandler<List<EntityResponse>>> getItemStatusesDictionary() {
+        var result = _orderServices.getItemStatusesDictionary();
+        return ResponseEntity.ok(
+                ResultHandler.success(
+                        "Dictionary review successfully",
+                        HttpStatus.OK.value(),
+                        result
+                )
         );
     }
 }

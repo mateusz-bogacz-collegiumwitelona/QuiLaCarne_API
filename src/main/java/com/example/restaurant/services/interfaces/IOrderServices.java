@@ -4,6 +4,7 @@ import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 
 import java.util.List;
 
@@ -25,4 +26,8 @@ public interface IOrderServices {
     void assignWaiterToOrders(String reservationToken, String waiterToken);
 
     void isAbsent(String reservationToken);
+
+    List<EntityResponse> getDictionary();
+
+    List<EntityResponse> getItemStatusesDictionary();
 }

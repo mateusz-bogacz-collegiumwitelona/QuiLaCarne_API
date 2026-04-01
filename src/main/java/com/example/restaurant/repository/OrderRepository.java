@@ -68,4 +68,14 @@ public class OrderRepository implements IOrderRepository {
     public void saveAllItems(List<OrderItems> items) {
         _jpaOrderItemRepo.saveAll(items);
     }
+
+    @Override
+    public List<OrderStatus> findAllStatuses() {
+        return _jpaOrderStatusRepo.findAll();
+    }
+
+    @Override
+    public List<OrderItemsStatus> findAllItemStatuses() {
+        return _jpaOrderItemStatusRepo.findAll();
+    }
 }

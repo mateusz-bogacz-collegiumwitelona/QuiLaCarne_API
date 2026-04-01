@@ -2,6 +2,7 @@ package com.example.restaurant.repository;
 
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
+import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrderItemStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrderItemsRepository;
@@ -98,5 +99,29 @@ public class OrderRepositoryTest {
     void findByReservationToken_ShouldCallJpa() {
         _orderRepo.findByReservationToken("RES_123");
         verify(_jpaOrderRepo).findByReservation_Token("RES_123");
+    }
+
+    @Test
+    @DisplayName("findAllStatuses: Should return list of order statuses from JPA")
+    void findAllStatuses_ShouldReturnListOfStatuses() {
+        List<OrderStatus> expectedStatuses = List.of(new OrderStatus(), new OrderStatus());
+        when(_jpaOrderStatusRepo.findAll()).thenReturn(expectedStatuses);
+
+        List<OrderStatus> result = _orderRepo.findAllStatuses();
+
+        assertEquals(expectedStatuses, result);
+        verify(_jpaOrderStatusRepo, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("findAllItemStatuses: Should return list of order item statuses from JPA")
+    void findAllItemStatuses_ShouldReturnListOfItemStatuses() {
+        List<OrderItemsStatus> expectedStatuses = List.of(new OrderItemsStatus(), new OrderItemsStatus());
+        when(_jpaOrderItemStatusRepo.findAll()).thenReturn(expectedStatuses);
+
+        List<OrderItemsStatus> result = _orderRepo.findAllItemStatuses();
+
+        assertEquals(expectedStatuses, result);
+        verify(_jpaOrderItemStatusRepo, times(1)).findAll();
     }
 }

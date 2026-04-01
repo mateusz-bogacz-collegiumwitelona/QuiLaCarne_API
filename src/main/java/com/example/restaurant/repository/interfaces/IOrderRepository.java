@@ -25,4 +25,8 @@ public interface IOrderRepository {
     OrderItemsStatus findItemStatusByToken(String token);
 
     void saveAllItems(List<OrderItems> items);
+
+    List<OrderStatus> findAllStatuses();
+
+    List<OrderItemsStatus> findAllItemStatuses();
 }

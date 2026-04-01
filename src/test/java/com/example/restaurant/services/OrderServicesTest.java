@@ -5,21 +5,22 @@ import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.ReservationDishRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.i18n.LocaleContextHolder;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,6 +47,10 @@ public class OrderServicesTest {
     @InjectMocks
     private OrderServices _orderServices;
 
+    @AfterEach
+    void tearDown() {
+        LocaleContextHolder.resetLocaleContext();
+    }
 
     @Test
     void createOrderForReservation_ShouldCalculatePriceAndReturnDomain_WhenSuccessful() {
@@ -548,5 +553,93 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(1)).saveAllItems(orderItems);
         verify(_orderRepo, times(1)).save(mockOrder);
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns empty list when repository returns empty")
+    void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
+        when(_orderRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
+        List<EntityResponse> result = _orderServices.getDictionary();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns Polish names when language is pl")
+    void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
+        LocaleContextHolder.setLocale(new Locale("pl"));
+        OrderStatus status = new OrderStatus();
+        status.setToken("PENDING");
+        status.setNamePl("Oczekujące PL");
+        status.setNameEn("Pending EN");
+
+        when(_orderRepo.findAllStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _orderServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("PENDING", result.get(0).getToken());
+        assertEquals("Oczekujące PL", result.get(0).getName());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns English names when language is not pl")
+    void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
+        LocaleContextHolder.setLocale(new Locale("en"));
+        OrderStatus status = new OrderStatus();
+        status.setToken("COMPLETED");
+        status.setNamePl("Zakończone PL");
+        status.setNameEn("Completed EN");
+
+        when(_orderRepo.findAllStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _orderServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("COMPLETED", result.get(0).getToken());
+        assertEquals("Completed EN", result.get(0).getName());
+    }
+
+    @Test
+    @DisplayName("getItemStatusesDictionary: Returns empty list when repository returns empty")
+    void getItemStatusesDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
+        when(_orderRepo.findAllItemStatuses()).thenReturn(new java.util.ArrayList<>());
+        List<EntityResponse> result = _orderServices.getItemStatusesDictionary();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getItemStatusesDictionary: Returns Polish names when language is pl")
+    void getItemStatusesDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
+        LocaleContextHolder.setLocale(new Locale("pl"));
+        OrderItemsStatus status = new OrderItemsStatus();
+        status.setToken("READY");
+        status.setNamePl("Gotowe PL");
+        status.setNameEn("Ready EN");
+
+        when(_orderRepo.findAllItemStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _orderServices.getItemStatusesDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("READY", result.get(0).getToken());
+        assertEquals("Gotowe PL", result.get(0).getName());
+    }
+
+    @Test
+    @DisplayName("getItemStatusesDictionary: Returns English names when language is not pl")
+    void getItemStatusesDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
+        LocaleContextHolder.setLocale(new Locale("en"));
+        OrderItemsStatus status = new OrderItemsStatus();
+        status.setToken("READY");
+        status.setNamePl("Gotowe PL");
+        status.setNameEn("Ready EN");
+
+        when(_orderRepo.findAllItemStatuses()).thenReturn(List.of(status));
+
+        List<EntityResponse> result = _orderServices.getItemStatusesDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("READY", result.get(0).getToken());
+        assertEquals("Ready EN", result.get(0).getName());
     }
 }
