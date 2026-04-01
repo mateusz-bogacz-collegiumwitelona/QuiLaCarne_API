@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.models.Dishes;
@@ -10,6 +11,7 @@ import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +52,11 @@ public class DishServicesTest {
 
     @InjectMocks
     private DishServices _dishServices;
+
+    @AfterEach
+    void tearDown() {
+        LocaleContextHolder.resetLocaleContext();
+    }
 
     @Test
     @DisplayName("get menu: should use the current language, map the dishes and add the URL to S3")
@@ -381,5 +388,56 @@ public class DishServicesTest {
 
         assertEquals("Could not process photo file", exception.getMessage());
         verify(_dishRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns empty list when repository returns empty")
+    void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
+        // Arrange
+        when(_dishRepo.findAllCategories()).thenReturn(new java.util.ArrayList<>());
+
+        // Act
+        java.util.List<EntityResponse> result = _dishServices.getDictionary();
+
+        // Assert
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
+    void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
+        LocaleContextHolder.setLocale(new Locale("pl"));
+
+        DishesCategories category = new DishesCategories();
+        category.setToken("SOUPS");
+        category.setNamePl("Zupy PL");
+        category.setNameEn("Soups EN");
+
+        when(_dishRepo.findAllCategories()).thenReturn(java.util.List.of(category));
+
+        java.util.List<EntityResponse> result = _dishServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("SOUPS", result.getFirst().getToken());
+        assertEquals("Zupy PL", result.getFirst().getName());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
+    void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
+        LocaleContextHolder.setLocale(new Locale("en"));
+
+        DishesCategories category = new DishesCategories();
+        category.setToken("DESSERTS");
+        category.setNamePl("Desery PL");
+        category.setNameEn("Desserts EN");
+
+        when(_dishRepo.findAllCategories()).thenReturn(java.util.List.of(category));
+
+        java.util.List<EntityResponse> result = _dishServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("DESSERTS", result.getFirst().getToken());
+        assertEquals("Desserts EN", result.getFirst().getName());
     }
 }

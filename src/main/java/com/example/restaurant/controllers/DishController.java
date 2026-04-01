@@ -2,6 +2,7 @@ package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IDishServices;
@@ -20,6 +21,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/dishes", produces = "application/json")
@@ -183,6 +186,37 @@ public class DishController {
                 ResultHandler.success(
                         "Dish created successfully",
                         HttpStatus.CREATED.value()
+                )
+        );
+    }
+
+    @Operation(
+            summary = "Get list of dish categories",
+            description = "Retrieves a dictionary list of all dish categories available in the system. The names are translated based on the 'Accept-Language' header."
+    )
+    @Parameter(
+            name = "Accept-Language",
+            in = ParameterIn.HEADER,
+            description = "Preferred language (e.g., 'pl' or 'en')",
+            required = false,
+            schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dictionary review successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @GetMapping("/dictionary")
+    public ResponseEntity<ResultHandler<List<EntityResponse>>> getDictionary() {
+        var result = _dishServices.getDictionary();
+        return ResponseEntity.ok(
+                ResultHandler.success(
+                        "Dictionary review successfully",
+                        HttpStatus.OK.value(),
+                        result
                 )
         );
     }

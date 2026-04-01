@@ -73,4 +73,9 @@ public class DishRepository implements IDishRepository {
                         () -> new EntityNotFoundException("Dish category not found")
                 );
     }
+
+    @Override
+    public List<DishesCategories> findAllCategories() {
+        return _jpaDishCategoryRepo.findAll();
+    }
 }

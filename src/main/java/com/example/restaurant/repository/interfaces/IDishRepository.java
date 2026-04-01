@@ -23,4 +23,6 @@ public interface IDishRepository {
     Dishes findByToken(String token);
 
     DishesCategories findCategoryByToken(String token);
+
+    List<DishesCategories> findAllCategories();
 }

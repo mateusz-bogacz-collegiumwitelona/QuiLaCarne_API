@@ -204,4 +204,17 @@ public class DishRepositoryTest {
         assertEquals("Dish category not found", exception.getMessage());
         verify(_jpaDishCategoryRepo, times(1)).findByToken(token);
     }
+
+    @Test
+    @DisplayName("findAllCategories: Should return list of categories from JPA")
+    void findAllCategories_ShouldReturnListOfCategories() {
+        List<DishesCategories> expectedCategories = List.of(new DishesCategories(), new DishesCategories());
+
+        when(_jpaDishCategoryRepo.findAll()).thenReturn(expectedCategories);
+
+        List<DishesCategories> result = _dishRepo.findAllCategories();
+
+        assertEquals(expectedCategories, result);
+        verify(_jpaDishCategoryRepo, times(1)).findAll();
+    }
 }

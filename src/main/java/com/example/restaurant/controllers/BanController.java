@@ -57,8 +57,8 @@ public class BanController {
     }
 
     @Operation(
-            summary = "Get list of bas statuses",
-            description = "Retrieves a dictionary list of all bas statuses available in the system. The names are translated based on the 'Accept-Language' header."
+            summary = "Get list of bans statuses",
+            description = "Retrieves a dictionary list of all bans statuses available in the system. The names are translated based on the 'Accept-Language' header."
     )
     @Parameter(
             name = "Accept-Language",
