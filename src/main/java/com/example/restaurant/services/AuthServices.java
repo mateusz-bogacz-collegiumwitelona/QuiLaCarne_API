@@ -46,6 +46,8 @@ public class AuthServices implements IAuthServices {
     @Value("${application.security.google.client-id}")
     private String googleClientId;
 
+    private final String ROLE_CLIENT = "ROLE_CLIENT";
+
     @Auditable(action = "USER_LOGIN")
     public AuthResponse authenticate(LoginRequest request) {
         var auth = _authManager.authenticate(
@@ -57,7 +59,7 @@ public class AuthServices implements IAuthServices {
 
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
 
-        return buildSuccessAuthResponse(userDetails, "Login successful");
+        return buildSuccessAuthResponse(userDetails);
     }
 
     @Auditable(action = "USER_REGISTERED")
@@ -67,7 +69,7 @@ public class AuthServices implements IAuthServices {
         if (!request.getPassword().equals(request.getConfirmPassword()))
             throw new IllegalStateException("Passwords do not match");
 
-        String ROLE_CLIENT = "ROLE_CLIENT";
+
         String userToken = _userServices.create(request, ROLE_CLIENT, false);
 
         String activationToken = _tokenServices.createToken(userToken, TokenTypeEnum.ACTIVATION, 24 * 60);
@@ -157,7 +159,7 @@ public class AuthServices implements IAuthServices {
             }
 
             UserDetails userDetails = _userDetailsService.loadUserByUsername(usernameToLogin);
-            return buildSuccessAuthResponse(userDetails, "Google login successful");
+            return buildSuccessAuthResponse(userDetails);
 
         } catch (Exception ex) {
             log.error("Google authentication error", ex);
@@ -165,7 +167,7 @@ public class AuthServices implements IAuthServices {
         }
     }
 
-    private AuthResponse buildSuccessAuthResponse(UserDetails userDetails, String message) {
+    private AuthResponse buildSuccessAuthResponse(UserDetails userDetails) {
         if (!userDetails.isEnabled())
             throw new AuthenticationException("User not enabled") {
                 @Override
@@ -180,12 +182,10 @@ public class AuthServices implements IAuthServices {
         if (jwtToken == null)
             throw new RuntimeException("Jwt Token not generated");
 
-        AuthResponse response = AuthResponse.builder()
+        return AuthResponse.builder()
                 .token(jwtToken)
                 .username(userDetails.getUsername())
                 .build();
-
-        return response;
     }
 
     private GoogleIdToken.Payload verifyGoogleToken(String token) throws Exception {
@@ -209,7 +209,7 @@ public class AuthServices implements IAuthServices {
             counter++;
         }
 
-        String randomPassword = UUID.randomUUID().toString() + "G00G1E#";
+        String randomPassword = UUID.randomUUID() + "G00G1E#";
 
         RegisterRequest register = new RegisterRequest();
         register.setEmail(email);
@@ -217,7 +217,7 @@ public class AuthServices implements IAuthServices {
         register.setUsername(baseUserName);
         register.setConfirmPassword(randomPassword);
 
-        _userServices.create(register, "ROLE_CLIENT", true);
+        _userServices.create(register, ROLE_CLIENT, true);
 
         return baseUserName;
     }

@@ -19,6 +19,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -424,5 +425,116 @@ public class UserServicesTest {
         assertEquals("Passwords do not match", exception.getMessage());
         verify(_userRepo, never()).save(any());
         verify(_passwordEncoder, never()).encode(anyString());
+    }
+
+    @Test
+    @DisplayName("Change Employee Role: Throws Exception when admin tries to change own role")
+    void changeEmployeeRole_ShouldThrowException_WhenAdminChangesOwnRole() {
+        ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest();
+        request.setEmployeeToken("admin-token");
+        request.setAdmin(true);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> _userServices.changeEmployeeRole("admin-token", request));
+
+        assertEquals("You can't change your own role", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+        verify(_roleRepository, never()).setRole(anyString());
+    }
+
+    @Test
+    @DisplayName("Change Employee Role: Throws Exception when user is already a Manager")
+    void changeEmployeeRole_ShouldThrowException_WhenAlreadyManager() {
+        ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest();
+        request.setEmployeeToken("employee-token");
+        request.setAdmin(true);
+
+        Roles managerRole = new Roles();
+        managerRole.setName("ROLE_MANAGER");
+
+        Users employee = new Users();
+        employee.setRoles(Set.of(managerRole));
+        when(_userRepo.findByToken("employee-token")).thenReturn(employee);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> _userServices.changeEmployeeRole("admin-token", request));
+
+        assertEquals("User is already a Manager", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Change Employee Role: Throws Exception when user is already a Waiter")
+    void changeEmployeeRole_ShouldThrowException_WhenAlreadyWaiter() {
+        // Arrange
+        ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest();
+        request.setEmployeeToken("employee-token");
+        request.setAdmin(false);
+
+        Roles waiterRole = new Roles();
+        waiterRole.setName("ROLE_WAITER");
+
+        Users employee = new Users();
+        employee.setRoles(Set.of(waiterRole));
+
+        when(_userRepo.findByToken("employee-token")).thenReturn(employee);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> _userServices.changeEmployeeRole("admin-token", request));
+
+        assertEquals("User is already a Waiter", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Change Employee Role: Success promoting to Manager")
+    void changeEmployeeRole_ShouldPromoteToManager_WhenValid() {
+        ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest();
+        request.setEmployeeToken("employee-token");
+        request.setAdmin(true);
+
+        Roles waiterRole = new Roles();
+        waiterRole.setName("ROLE_WAITER");
+
+        Users employee = new Users();
+        employee.setRoles(Set.of(waiterRole));
+
+        Roles newManagerRole = new Roles();
+        newManagerRole.setName("ROLE_MANAGER");
+
+        when(_userRepo.findByToken("employee-token")).thenReturn(employee);
+        when(_roleRepository.setRole("ROLE_MANAGER")).thenReturn(newManagerRole);
+
+        _userServices.changeEmployeeRole("admin-token", request);
+
+        assertTrue(employee.getRoles().contains(newManagerRole));
+        verify(_roleRepository).setRole("ROLE_MANAGER");
+        verify(_userRepo).save(employee);
+    }
+
+    @Test
+    @DisplayName("Change Employee Role: Success demoting to Waiter")
+    void changeEmployeeRole_ShouldDemoteToWaiter_WhenValid() {
+        ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest();
+        request.setEmployeeToken("employee-token");
+        request.setAdmin(false);
+
+        Roles managerRole = new Roles();
+        managerRole.setName("ROLE_MANAGER");
+
+        Users employee = new Users();
+        employee.setRoles(Set.of(managerRole));
+
+        Roles newWaiterRole = new Roles();
+        newWaiterRole.setName("ROLE_WAITER");
+
+        when(_userRepo.findByToken("employee-token")).thenReturn(employee);
+        when(_roleRepository.setRole("ROLE_WAITER")).thenReturn(newWaiterRole);
+
+        _userServices.changeEmployeeRole("admin-token", request);
+
+        assertTrue(employee.getRoles().contains(newWaiterRole));
+        verify(_roleRepository).setRole("ROLE_WAITER");
+        verify(_userRepo).save(employee);
     }
 }

@@ -29,4 +29,6 @@ public interface IUserServices {
     void editEmployee(EditEmployeeRequest request);
 
     void changeEmployeePassword(String adminToken, ChangeEmployeePasswordRequest request);
+
+    void changeEmployeeRole(String adminToken, ChangeEmployeeRoleRequest request);
 }

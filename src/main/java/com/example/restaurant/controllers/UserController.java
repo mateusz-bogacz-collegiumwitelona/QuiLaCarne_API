@@ -1,9 +1,6 @@
 package com.example.restaurant.controllers;
 
-import com.example.restaurant.dto.request.AddEmployeeRequest;
-import com.example.restaurant.dto.request.ChangeEmployeePasswordRequest;
-import com.example.restaurant.dto.request.ChangePasswordRequest;
-import com.example.restaurant.dto.request.EditEmployeeRequest;
+import com.example.restaurant.dto.request.*;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IUserServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -229,6 +226,32 @@ public class UserController {
 
         return ResponseEntity.ok(ResultHandler.success(
                 "Employee password changed successfully",
+                HttpStatus.OK.value()
+        ));
+    }
+
+    @Operation(
+            summary = "Change employee role",
+            description = "Allows a manager to change the role of an employee (e.g., promote to Manager or demote to Waiter). Managers cannot change their own role."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Employee role updated successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role or tried to change own role", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @PatchMapping("/employee/change-role")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> changeEmployeeRole(
+            @AuthenticationPrincipal(expression = "token") String adminToken,
+            @Valid @RequestBody ChangeEmployeeRoleRequest request
+    ) {
+        _userServices.changeEmployeeRole(adminToken, request);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Employee role changed successfully",
                 HttpStatus.OK.value()
         ));
     }

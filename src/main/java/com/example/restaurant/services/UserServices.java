@@ -33,6 +33,9 @@ public class UserServices implements IUserServices {
     private final PasswordEncoder _passwordEncoder;
     private final IVerificationTokenServices _tokenServices;
 
+    private final String ROLE_MANAGER = "ROLE_MANAGER";
+    private final String ROLE_WAITER = "ROLE_WAITER";
+
     @Override
     @Transactional
     public String create(RegisterRequest request, String userRole, boolean isActive) {
@@ -171,9 +174,9 @@ public class UserServices implements IUserServices {
     @Auditable(action = "ADD_NEW_EMPLOYEE")
     public void createEmployee(AddEmployeeRequest request) {
         if (request.isAdmin()) {
-            buildAndSaveUser(request.getRegister(), "ROLE_MANAGER", true);
+            buildAndSaveUser(request.getRegister(), ROLE_MANAGER, true);
         } else {
-            buildAndSaveUser(request.getRegister(), "ROLE_WAITER", true);
+            buildAndSaveUser(request.getRegister(), ROLE_WAITER, true);
         }
     }
 
@@ -229,7 +232,33 @@ public class UserServices implements IUserServices {
         _userRepo.save(user);
     }
 
-    public void changeEmpolyeeRole(boolean isAdmin)
+    @Override
+    @Transactional
+    @Auditable(action = "CHANGE_EMPLOYEE_ROLE")
+    public void changeEmployeeRole(String adminToken, ChangeEmployeeRoleRequest request) {
+        if (adminToken.trim().equals(request.getEmployeeToken().trim()))
+            throw new IllegalStateException("You can't change your own role");
+
+        Users user = _userRepo.findByToken(request.getEmployeeToken());
+
+        boolean isCurrentlyManager = user.getRoles().stream().anyMatch(r -> r.getName().equals(ROLE_MANAGER));
+
+        if (request.isAdmin() && isCurrentlyManager)
+            throw new IllegalStateException("User is already a Manager");
+
+        if (!request.isAdmin() && !isCurrentlyManager)
+            throw new IllegalStateException("User is already a Waiter");
+
+        if (request.isAdmin()) {
+            Roles role = _roleRepository.setRole(ROLE_MANAGER);
+            user.setRoles(Set.of(role));
+        } else {
+            Roles role = _roleRepository.setRole(ROLE_WAITER);
+            user.setRoles(Set.of(role));
+        }
+
+        _userRepo.save(user);
+    }
 
     private String buildAndSaveUser(RegisterRequest request, String userRole, boolean isActive) {
         if (_userRepo.findByNormalizedEmail(request.getEmail().toUpperCase().trim()).isPresent())
