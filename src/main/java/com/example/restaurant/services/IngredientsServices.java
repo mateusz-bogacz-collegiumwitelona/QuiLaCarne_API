@@ -2,8 +2,10 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddIngredientRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.helpers.SoftDeleteHelpers;
+import com.example.restaurant.mappers.DictionaryMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -12,12 +14,14 @@ import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import com.example.restaurant.services.interfaces.IIngredientsServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -84,5 +88,9 @@ public class IngredientsServices implements IIngredientsServices {
         }
     }
 
-
+    @Override
+    public List<EntityResponse> getDictionary() {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
+        return DictionaryMapper.map(_ingredientsRepo.findAll(), lang);
+    }
 }

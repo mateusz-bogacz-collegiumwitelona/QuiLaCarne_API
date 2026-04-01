@@ -5,6 +5,7 @@ import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
+import com.example.restaurant.services.interfaces.IAllergensServices;
 import com.example.restaurant.services.interfaces.IDishServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +30,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DishController {
     private final IDishServices _dishServices;
+    private final IAllergensServices _allergensServices;
 
     @Operation(
             summary = "Get full restaurant menu",
@@ -212,6 +214,37 @@ public class DishController {
     @GetMapping("/dictionary")
     public ResponseEntity<ResultHandler<List<EntityResponse>>> getDictionary() {
         var result = _dishServices.getDictionary();
+        return ResponseEntity.ok(
+                ResultHandler.success(
+                        "Dictionary review successfully",
+                        HttpStatus.OK.value(),
+                        result
+                )
+        );
+    }
+
+    @Operation(
+            summary = "Get list of allergens",
+            description = "Retrieves a dictionary list of all allergens available in the system. The names are translated based on the 'Accept-Language' header."
+    )
+    @Parameter(
+            name = "Accept-Language",
+            in = ParameterIn.HEADER,
+            description = "Preferred language (e.g., 'pl' or 'en')",
+            required = false,
+            schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dictionary review successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @GetMapping("/allergens/dictionary")
+    public ResponseEntity<ResultHandler<List<EntityResponse>>> getAllergensDictionary() {
+        var result = _allergensServices.getDictionary();
         return ResponseEntity.ok(
                 ResultHandler.success(
                         "Dictionary review successfully",

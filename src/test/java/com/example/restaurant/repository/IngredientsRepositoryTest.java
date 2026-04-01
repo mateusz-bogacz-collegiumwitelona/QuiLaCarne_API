@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -96,5 +97,18 @@ public class IngredientsRepositoryTest {
             _ingredientsRepository.findByToken("UNKNOWN");
         });
         assertEquals("Ingredient not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("findAll: Should return list of ingredients from JPA")
+    void findAll_ShouldReturnListOfIngredients() {
+        List<Ingredients> expectedIngredients = List.of(new Ingredients(), new Ingredients());
+
+        when(_jpaIngredientsRepo.findAll()).thenReturn(expectedIngredients);
+
+        List<Ingredients> result = _ingredientsRepository.findAll();
+
+        assertEquals(expectedIngredients, result);
+        verify(_jpaIngredientsRepo, times(1)).findAll();
     }
 }

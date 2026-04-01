@@ -2,6 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddIngredientRequest;
+import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
@@ -9,14 +10,17 @@ import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,6 +40,11 @@ public class IngredientsServicesTest {
 
     @InjectMocks
     private IngredientsServices _ingredientsServices;
+
+    @AfterEach
+    void tearDown() {
+        LocaleContextHolder.resetLocaleContext();
+    }
 
     @Test
     @DisplayName("Adding Ingredient: Should save the component with the correct token")
@@ -121,5 +130,49 @@ public class IngredientsServicesTest {
         assertFalse(dish.isAvailable());
         assertEquals("Tomato is deleted", dish.getUnavailableReason());
         verify(_dishRepo).save(dish);
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns empty list when repository returns empty")
+    void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
+        when(_ingredientsRepo.findAll()).thenReturn(new java.util.ArrayList<>());
+        java.util.List<EntityResponse> result = _ingredientsServices.getDictionary();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns Polish names when language is pl")
+    void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
+        LocaleContextHolder.setLocale(new Locale("pl"));
+        Ingredients ingredient = new Ingredients();
+        ingredient.setToken("SALT");
+        ingredient.setNamePl("Sól PL");
+        ingredient.setNameEn("Salt EN");
+
+        when(_ingredientsRepo.findAll()).thenReturn(List.of(ingredient));
+
+        java.util.List<EntityResponse> result = _ingredientsServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("SALT", result.get(0).getToken());
+        assertEquals("Sól PL", result.get(0).getName());
+    }
+
+    @Test
+    @DisplayName("getDictionary: Returns English names when language is not pl")
+    void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
+        LocaleContextHolder.setLocale(new Locale("en"));
+        Ingredients ingredient = new Ingredients();
+        ingredient.setToken("PEPPER");
+        ingredient.setNamePl("Pieprz PL");
+        ingredient.setNameEn("Pepper EN");
+
+        when(_ingredientsRepo.findAll()).thenReturn(List.of(ingredient));
+
+        java.util.List<EntityResponse> result = _ingredientsServices.getDictionary();
+
+        assertEquals(1, result.size());
+        assertEquals("PEPPER", result.get(0).getToken());
+        assertEquals("Pepper EN", result.get(0).getName());
     }
 }

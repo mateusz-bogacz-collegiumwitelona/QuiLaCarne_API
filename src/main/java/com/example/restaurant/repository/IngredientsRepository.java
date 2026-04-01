@@ -7,6 +7,8 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaIngredientsRepositor
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class IngredientsRepository implements IIngredientsRepository {
@@ -29,5 +31,10 @@ public class IngredientsRepository implements IIngredientsRepository {
                 .orElseThrow(
                         () -> new EntityNotFoundException("Ingredient not found")
                 );
+    }
+
+    @Override
+    public List<Ingredients> findAll() {
+        return _jpaIngredientsRepo.findAll();
     }
 }
