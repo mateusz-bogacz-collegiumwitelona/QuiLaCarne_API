@@ -9,6 +9,8 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaBanStatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class BanRepository implements IBanRepository {
@@ -24,5 +26,10 @@ public class BanRepository implements IBanRepository {
     @Override
     public void save(Bans ban) {
         _jpaBanRepo.save(ban);
+    }
+
+    @Override
+    public List<BanStatus> findAllStatuses() {
+        return _jpaStatusRepo.findAll();
     }
 }

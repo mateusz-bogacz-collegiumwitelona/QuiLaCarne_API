@@ -3,6 +3,8 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.CreateBanRequest;
+import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.mappers.DictionaryMapper;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IBanRepository;
@@ -11,8 +13,10 @@ import com.example.restaurant.services.interfaces.IBanServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -76,6 +80,12 @@ public class BanServices implements IBanServices {
                 domain.client().getUsername(),
                 domain.reason()
         );
+    }
+
+    @Override
+    public List<EntityResponse> getDictionary() {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
+        return DictionaryMapper.map(_banRepo.findAllStatuses(), lang);
     }
 
     private void validatePermissions(Users admin, Users client) {

@@ -39,7 +39,7 @@ public class AllergensController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Allergens retrieved successfully",
+                    description = "Dictionary review successfully",
                     content = @Content(schema = @Schema(implementation = ResultHandler.class))
             ),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
@@ -49,7 +49,7 @@ public class AllergensController {
         var result = _allergensServices.getDictionary();
         return ResponseEntity.ok(
                 ResultHandler.success(
-                        "Dictionarie review successfully",
+                        "Dictionary review successfully",
                         HttpStatus.OK.value(),
                         result
                 )
