@@ -168,13 +168,16 @@ public class UserServicesTest {
 
     @Test
     @DisplayName("Delete Account: Success with Soft Delete")
-    void deleteAccount_ShouldAnonymizeDataAndDeactivate() {
+    void delete_ShouldAnonymizeDataAndDeactivate() {
         Users user = new Users();
         user.setUsername("Mati");
         user.setEmail("mati@test.pl");
+        user.setNormalizedUsername("MATI");
+        user.setNormalizedEmail("MATI@TEST.PL");
+
         when(_userRepo.findByToken(anyString())).thenReturn(user);
 
-        _userServices.deleteAccount(TestConstants.FAKE_USER_TOKEN);
+        _userServices.delete(TestConstants.FAKE_USER_TOKEN);
 
         assertFalse(user.getIsActive());
         assertTrue(user.getUsername().startsWith("DELETED_"));
@@ -535,6 +538,111 @@ public class UserServicesTest {
 
         assertTrue(employee.getRoles().contains(newWaiterRole));
         verify(_roleRepository).setRole("ROLE_WAITER");
+        verify(_userRepo).save(employee);
+    }
+
+    @Test
+    @DisplayName("Change Employee Availability: Throws Exception when admin tries to change own availability")
+    void blockEmployee_ShouldThrowException_WhenAdminChangesOwnAvailability() {
+        BlockEmployeeRequest request = new BlockEmployeeRequest();
+        request.setEmployeeToken("admin-token");
+        request.setAvailable(false);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> _userServices.blockEmployee("admin-token", request));
+
+        assertEquals("You can't change your own availability", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Change Employee Availability: Throws Exception when status is already the same")
+    void blockEmployee_ShouldThrowException_WhenAvailabilityIsTheSame() {
+        BlockEmployeeRequest request = new BlockEmployeeRequest();
+        request.setEmployeeToken("employee-token");
+        request.setAvailable(false);
+
+        Users employee = new Users();
+        employee.setIsActive(false);
+
+        when(_userRepo.findByToken("employee-token")).thenReturn(employee);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> _userServices.blockEmployee("admin-token", request));
+
+        assertEquals("Employee availability is already set to this state", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Change Employee Availability: Success when blocking an active employee")
+    void blockEmployee_ShouldBlockEmployee_WhenValid() {
+        BlockEmployeeRequest request = new BlockEmployeeRequest();
+        request.setEmployeeToken("employee-token");
+        request.setAvailable(false);
+
+        Users employee = new Users();
+        employee.setIsActive(true);
+
+        when(_userRepo.findByToken("employee-token")).thenReturn(employee);
+
+        _userServices.blockEmployee("admin-token", request);
+
+        assertFalse(employee.getIsActive());
+        verify(_userRepo).save(employee);
+    }
+
+    @Test
+    @DisplayName("Change Employee Availability: Success when unblocking an inactive employee")
+    void blockEmployee_ShouldUnblockEmployee_WhenValid() {
+        BlockEmployeeRequest request = new BlockEmployeeRequest();
+        request.setEmployeeToken("employee-token");
+        request.setAvailable(true);
+
+        Users employee = new Users();
+        employee.setIsActive(false);
+
+        when(_userRepo.findByToken("employee-token")).thenReturn(employee);
+
+        _userServices.blockEmployee("admin-token", request);
+
+        assertTrue(employee.getIsActive());
+        verify(_userRepo).save(employee);
+    }
+
+    @Test
+    @DisplayName("Delete Employee: Throws Exception when admin tries to delete themselves")
+    void deleteEmployee_ShouldThrowException_WhenDeletingSelf() {
+        String adminToken = "admin-token";
+        String employeeToken = " admin-token ";
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> _userServices.deleteEmployee(adminToken, employeeToken));
+
+        assertEquals("You can't delete yourself", exception.getMessage());
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Delete Employee: Success with Soft Delete")
+    void deleteEmployee_ShouldAnonymizeDataAndDeactivate() {
+        String adminToken = "admin-token";
+        String employeeToken = "employee-token";
+
+        Users employee = new Users();
+        employee.setUsername("Tomek");
+        employee.setEmail("tomek@test.pl");
+        employee.setNormalizedUsername("TOMEK");
+        employee.setNormalizedEmail("TOMEK@TEST.PL");
+
+        when(_userRepo.findByToken("employee-token")).thenReturn(employee);
+
+        _userServices.deleteEmployee(adminToken, employeeToken);
+
+        assertFalse(employee.getIsActive());
+        assertTrue(employee.getUsername().startsWith("DELETED_"));
+        assertTrue(employee.getEmail().startsWith("DELETED_"));
+        assertNotNull(employee.getDeletedAt());
         verify(_userRepo).save(employee);
     }
 }

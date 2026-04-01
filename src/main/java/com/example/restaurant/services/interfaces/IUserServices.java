@@ -24,11 +24,15 @@ public interface IUserServices {
 
     void updateUserName(String userName, String userToken);
 
-    void deleteAccount(String userToken);
+    void delete(String userToken);
 
     void editEmployee(EditEmployeeRequest request);
 
     void changeEmployeePassword(String adminToken, ChangeEmployeePasswordRequest request);
 
     void changeEmployeeRole(String adminToken, ChangeEmployeeRoleRequest request);
+
+    void blockEmployee(String adminToken, BlockEmployeeRequest request);
+
+    void deleteEmployee(String adminToken, String employeeToken);
 }

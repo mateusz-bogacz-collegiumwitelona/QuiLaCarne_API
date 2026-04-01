@@ -156,17 +156,8 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "DELETE_ACCOUNT")
-    public void deleteAccount(String userToken) {
-        Users user = _userRepo.findByToken(userToken);
-
-        user.setNormalizedEmail(SoftDeleteHelpers.markAsDelete(user.getNormalizedEmail()));
-        user.setNormalizedUsername(SoftDeleteHelpers.markAsDelete(user.getNormalizedUsername()));
-
-        user.setEmail(SoftDeleteHelpers.markAsDelete(user.getEmail()));
-        user.setUsername(SoftDeleteHelpers.markAsDelete(user.getUsername()));
-        user.setIsActive(false);
-        user.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
-        _userRepo.save(user);
+    public void delete(String userToken) {
+        deleteAccount(userToken);
     }
 
     @Override
@@ -260,6 +251,33 @@ public class UserServices implements IUserServices {
         _userRepo.save(user);
     }
 
+    @Override
+    @Transactional
+    @Auditable(action = "CHANGE_EMPLOYEE_AVALAIBLE")
+    public void blockEmployee(String adminToken, BlockEmployeeRequest request) {
+        if (adminToken.trim().equals(request.getEmployeeToken().trim()))
+            throw new IllegalStateException("You can't change your own availability");
+
+        Users user = _userRepo.findByToken(request.getEmployeeToken());
+
+        if (request.isAvailable() == user.getIsActive())
+            throw new IllegalStateException("Employee availability is already set to this state");
+
+        user.setIsActive(request.isAvailable());
+
+        _userRepo.save(user);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "DELETE_EMPLOYEE")
+    public void deleteEmployee(String adminToken, String employeeToken) {
+        if (adminToken.trim().equals(employeeToken.trim()))
+            throw new IllegalStateException("You can't delete yourself");
+
+        delete(employeeToken);
+    }
+
     private String buildAndSaveUser(RegisterRequest request, String userRole, boolean isActive) {
         if (_userRepo.findByNormalizedEmail(request.getEmail().toUpperCase().trim()).isPresent())
             throw new EntityAlreadyExistsException("User with this email already exists");
@@ -280,5 +298,18 @@ public class UserServices implements IUserServices {
 
         _userRepo.save(user);
         return user.getToken();
+    }
+
+    private void deleteAccount(String userToken) {
+        Users user = _userRepo.findByToken(userToken);
+
+        user.setNormalizedEmail(SoftDeleteHelpers.markAsDelete(user.getNormalizedEmail()));
+        user.setNormalizedUsername(SoftDeleteHelpers.markAsDelete(user.getNormalizedUsername()));
+
+        user.setEmail(SoftDeleteHelpers.markAsDelete(user.getEmail()));
+        user.setUsername(SoftDeleteHelpers.markAsDelete(user.getUsername()));
+        user.setIsActive(false);
+        user.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        _userRepo.save(user);
     }
 }

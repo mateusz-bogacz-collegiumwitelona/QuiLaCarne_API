@@ -135,7 +135,7 @@ public class UserController {
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @DeleteMapping("/me/delete")
     public ResponseEntity<ResultHandler<Void>> deleteUser(@AuthenticationPrincipal(expression = "token") String userToken) {
-        _userServices.deleteAccount(userToken);
+        _userServices.delete(userToken);
 
         return ResponseEntity.ok(ResultHandler.success(
                 "User deleted successfully",
@@ -252,6 +252,57 @@ public class UserController {
 
         return ResponseEntity.ok(ResultHandler.success(
                 "Employee role changed successfully",
+                HttpStatus.OK.value()
+        ));
+    }
+
+    @Operation(
+            summary = "Change employee availability (Block/Unblock)",
+            description = "Allows a manager to block or unblock an employee's access to the system. Managers cannot change their own availability."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Employee availability changed successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(responseCode = "400", description = "Bad Request - Status is already the same or invalid input", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role or tried to block themselves", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @PatchMapping("/employee/change-availability")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> blockEmployee(
+            @AuthenticationPrincipal(expression = "token") String adminToken,
+            @Valid @RequestBody BlockEmployeeRequest request
+    ) {
+        _userServices.blockEmployee(adminToken, request);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Employee availability changed successfully",
+                HttpStatus.OK.value()
+        ));
+    }
+
+    @Operation(
+            summary = "Delete employee",
+            description = "Performs a soft delete of an employee account, anonymizing their personal data and deactivating the account. Managers cannot delete themselves."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Employee deleted successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role or tried to delete themselves", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @DeleteMapping("/employee/{employeeToken}/delete")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> deleteEmployee(
+            @AuthenticationPrincipal(expression = "token") String adminToken,
+            @PathVariable("employeeToken") @Parameter(description = "Token of the employee to delete") String employeeToken
+    ) {
+        _userServices.deleteEmployee(adminToken, employeeToken);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Employee deleted successfully",
                 HttpStatus.OK.value()
         ));
     }
