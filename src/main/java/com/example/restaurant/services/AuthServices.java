@@ -9,7 +9,6 @@ import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.InvalidDateException;
-import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
 import com.example.restaurant.services.interfaces.IUserServices;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
@@ -29,7 +28,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +35,6 @@ import java.util.UUID;
 public class AuthServices implements IAuthServices {
     private final AuthenticationManager _authManager;
     private final JwtServices _jwtServices;
-    private final IUserRepository _userRepository;
     private final EmailServices _emailServices;
     private final UserDetailsService _userDetailsService;
     private final IUserServices _userServices;
@@ -46,7 +43,6 @@ public class AuthServices implements IAuthServices {
     @Value("${application.security.google.client-id}")
     private String googleClientId;
 
-    private final String ROLE_CLIENT = "ROLE_CLIENT";
 
     @Auditable(action = "USER_LOGIN")
     public AuthResponse authenticate(LoginRequest request) {
@@ -70,6 +66,7 @@ public class AuthServices implements IAuthServices {
             throw new IllegalStateException("Passwords do not match");
 
 
+        String ROLE_CLIENT = "ROLE_CLIENT";
         String userToken = _userServices.create(request, ROLE_CLIENT, false);
 
         String activationToken = _tokenServices.createToken(userToken, TokenTypeEnum.ACTIVATION, 24 * 60);
@@ -153,7 +150,7 @@ public class AuthServices implements IAuthServices {
             String usernameToLogin;
 
             if (userOpt.isEmpty()) {
-                usernameToLogin = registerWithGoogle(payload);
+                usernameToLogin = _userServices.createOAuthUser(email);
             } else {
                 usernameToLogin = userOpt.get().username();
             }
@@ -199,26 +196,4 @@ public class AuthServices implements IAuthServices {
         return idToken != null ? idToken.getPayload() : null;
     }
 
-    private String registerWithGoogle(GoogleIdToken.Payload payload) {
-        String email = payload.getEmail();
-        String baseUserName = email.split("@")[0];
-        int counter = 1;
-
-        while (_userRepository.existsByUsername(baseUserName.toUpperCase().trim())) {
-            baseUserName = baseUserName + counter;
-            counter++;
-        }
-
-        String randomPassword = UUID.randomUUID() + "G00G1E#";
-
-        RegisterRequest register = new RegisterRequest();
-        register.setEmail(email);
-        register.setPassword(randomPassword);
-        register.setUsername(baseUserName);
-        register.setConfirmPassword(randomPassword);
-
-        _userServices.create(register, ROLE_CLIENT, true);
-
-        return baseUserName;
-    }
 }

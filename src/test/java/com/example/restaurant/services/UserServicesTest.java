@@ -701,4 +701,30 @@ public class UserServicesTest {
                         pageRequest.getSort().getOrderFor("username").isAscending()
         ));
     }
+
+    @Test
+    @DisplayName("Create OAuth User: Success and generates unique username")
+    void createOAuthUser_ShouldCreateUser_WithUniqueUsername() {
+        String email = "jan.kowalski@gmail.com";
+
+        when(_userRepo.existsByUsername("JAN.KOWALSKI")).thenReturn(true).thenReturn(false);
+
+        Roles clientRole = new Roles();
+        clientRole.setName("ROLE_CLIENT");
+        when(_roleRepository.setRole("ROLE_CLIENT")).thenReturn(clientRole);
+        when(_passwordEncoder.encode(anyString())).thenReturn("hashed_google_password");
+
+        String generatedUsername = _userServices.createOAuthUser(email);
+
+        assertEquals("jan.kowalski1", generatedUsername);
+
+        verify(_userRepo).save(argThat(user ->
+                user.getEmail().equals(email) &&
+                        user.getNormalizedEmail().equals("JAN.KOWALSKI@GMAIL.COM") &&
+                        user.getUsername().equals("jan.kowalski1") &&
+                        user.getIsActive() &&
+                        user.getPassword().equals("hashed_google_password") &&
+                        user.getRoles().contains(clientRole)
+        ));
+    }
 }

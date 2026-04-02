@@ -39,4 +39,6 @@ public interface IUserServices {
     void deleteEmployee(String adminToken, String employeeToken);
 
     PagedResult<UserListResponse> getUserList(UserFilterRequest filter, PaggedRequest pagged);
+
+    String createOAuthUser(String email);
 }

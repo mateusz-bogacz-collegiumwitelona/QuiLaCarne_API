@@ -130,5 +130,4 @@ public class GlobalExceptionHandler {
                 ResultHandler.failure("Invalid credentials", HttpStatus.UNAUTHORIZED.value())
         );
     }
-
 }

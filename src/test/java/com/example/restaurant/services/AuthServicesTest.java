@@ -8,7 +8,6 @@ import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.InvalidDateException;
-import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IUserServices;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,18 +37,22 @@ public class AuthServicesTest {
 
     @Mock
     private AuthenticationManager _authManager;
+
     @Mock
     private JwtServices _jwtServices;
-    @Mock
-    private IUserRepository _userRepository;
+
     @Mock
     private EmailServices _emailServices;
+
     @Mock
     private IUserServices _userServices;
+
     @Mock
     private IVerificationTokenServices _tokenServices;
+
     @Mock
     private Authentication _auth;
+
     @Mock
     private UserDetails _userDetails;
 

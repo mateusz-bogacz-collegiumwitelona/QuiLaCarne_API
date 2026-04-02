@@ -31,6 +31,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +44,7 @@ public class UserServices implements IUserServices {
 
     private final String ROLE_MANAGER = "ROLE_MANAGER";
     private final String ROLE_WAITER = "ROLE_WAITER";
+
 
     @Override
     @Transactional
@@ -334,6 +336,37 @@ public class UserServices implements IUserServices {
         );
 
         return new PagedResult<>(response);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "CREATE_OAUTH_USER")
+    public String createOAuthUser(String email) {
+        String baseUserName = email.split("@")[0];
+        int counter = 1;
+
+        while (_userRepo.existsByUsername(baseUserName.toUpperCase().trim())) {
+            baseUserName = baseUserName + counter;
+            counter++;
+        }
+
+        String randomPassword = UUID.randomUUID() + "G00G1E#";
+
+        String ROLE_CLIENT = "ROLE_CLIENT";
+        Roles role = _roleRepository.setRole(ROLE_CLIENT);
+
+        Users user = new Users();
+        user.setUsername(baseUserName);
+        user.setNormalizedUsername(baseUserName.trim().toUpperCase());
+        user.setEmail(email);
+        user.setNormalizedEmail(email.toUpperCase().trim());
+        user.setPassword(_passwordEncoder.encode(randomPassword));
+        user.setIsActive(true);
+        user.setRoles(Set.of(role));
+
+        _userRepo.save(user);
+
+        return baseUserName;
     }
 
     private String buildAndSaveUser(RegisterRequest request, String userRole, boolean isActive) {
