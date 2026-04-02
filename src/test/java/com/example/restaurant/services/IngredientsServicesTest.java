@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.EntityResponse;
@@ -19,10 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -50,24 +48,24 @@ public class IngredientsServicesTest {
     @DisplayName("Adding Ingredient: Should save the component with the correct token")
     void add_ShouldSaveIngredient_WhenDataIsCorrect() {
         AddEntityRequest entityReq = new AddEntityRequest();
-        entityReq.setNamePl("Cebula");
-        entityReq.setNameEn("Onion Ring");
+        entityReq.setNamePl(TestConstants.INGREDIENT_PL);
+        entityReq.setNameEn(TestConstants.INGREDIENT_EN);
 
         AddIngredientRequest request = new AddIngredientRequest();
         request.setEntity(entityReq);
-        request.setAllergenTokens(Set.of("GLUTEN"));
+        request.setAllergenTokens(Set.of(TestConstants.TOKEN_GLUTEN));
 
         Allergens mockAllergen = new Allergens();
-        mockAllergen.setToken("GLUTEN");
+        mockAllergen.setToken(TestConstants.TOKEN_GLUTEN);
         when(_ingredientsRepo.isNameTaken(anyString(), anyString())).thenReturn(false);
         when(_allergensRepo.findAllergens(anyList())).thenReturn(List.of(mockAllergen));
 
         assertDoesNotThrow(() -> _ingredientsServices.add(request));
 
         verify(_ingredientsRepo, times(1)).save(argThat(ingredient ->
-                ingredient.getNamePl().equals("Cebula") &&
-                        ingredient.getNameEn().equals("Onion Ring") &&
-                        ingredient.getToken().equals("ONION_RING")
+                ingredient.getNamePl().equals(TestConstants.INGREDIENT_PL) &&
+                        ingredient.getNameEn().equals(TestConstants.INGREDIENT_EN) &&
+                        ingredient.getToken().equals(TestConstants.INGREDIENT_EN.toUpperCase())
         ));
     }
 
@@ -75,12 +73,13 @@ public class IngredientsServicesTest {
     @DisplayName("Adding Ingredient: Throws EntityAlreadyExistsException when name is taken")
     void add_ShouldThrowException_WhenNameIsTaken() {
         AddEntityRequest entityReq = new AddEntityRequest();
-        entityReq.setNamePl("Cebula");
-        entityReq.setNameEn("Onion");
+        entityReq.setNamePl(TestConstants.INGREDIENT_PL);
+        entityReq.setNameEn(TestConstants.INGREDIENT_EN);
         AddIngredientRequest request = new AddIngredientRequest();
         request.setEntity(entityReq);
 
-        when(_ingredientsRepo.isNameTaken("Cebula", "Onion")).thenReturn(true);
+        when(_ingredientsRepo.isNameTaken(TestConstants.INGREDIENT_PL, TestConstants.INGREDIENT_EN))
+                .thenReturn(true);
 
         assertThrows(EntityAlreadyExistsException.class, () -> _ingredientsServices.add(request));
         verify(_ingredientsRepo, never()).save(any());
@@ -90,11 +89,11 @@ public class IngredientsServicesTest {
     @DisplayName("Adding Ingredient: Throws IllegalStateException when not all allergens are found")
     void add_ShouldThrowException_WhenAllergensNotFound() {
         AddEntityRequest entityReq = new AddEntityRequest();
-        entityReq.setNamePl("Sól");
-        entityReq.setNameEn("Salt");
+        entityReq.setNamePl(TestConstants.INGREDIENT_PL);
+        entityReq.setNameEn(TestConstants.INGREDIENT_EN);
         AddIngredientRequest request = new AddIngredientRequest();
         request.setEntity(entityReq);
-        request.setAllergenTokens(Set.of("GLUTEN", "LACTOSE"));
+        request.setAllergenTokens(Set.of(TestConstants.TOKEN_GLUTEN, TestConstants.TOKEN_1));
 
         when(_ingredientsRepo.isNameTaken(anyString(), anyString())).thenReturn(false);
         when(_allergensRepo.findAllergens(anyList())).thenReturn(List.of(new Allergens()));
@@ -105,14 +104,14 @@ public class IngredientsServicesTest {
     @Test
     @DisplayName("Removing an ingredient: Success - should anonymize data (Soft Delete) and deactivate associated dishes")
     void remove_ShouldSoftDeleteIngredient_AndDeactivateDishes() {
-        String token = "TOMATO";
+        String token = TestConstants.TOKEN_INGREDIENT;
         UUID ingredientId = UUID.randomUUID();
 
         Ingredients ingredient = new Ingredients();
         ingredient.setId(ingredientId);
         ingredient.setToken(token);
-        ingredient.setNameEn("Tomato");
-        ingredient.setNamePl("Pomidor");
+        ingredient.setNameEn(TestConstants.INGREDIENT_EN);
+        ingredient.setNamePl(TestConstants.INGREDIENT_PL);
 
         Dishes dish = new Dishes();
         dish.setAvailable(true);
@@ -128,51 +127,51 @@ public class IngredientsServicesTest {
         verify(_ingredientsRepo).save(ingredient);
 
         assertFalse(dish.isAvailable());
-        assertEquals("Tomato is deleted", dish.getUnavailableReason());
+        assertEquals(TestConstants.INGREDIENT_EN + " is deleted", dish.getUnavailableReason());
         verify(_dishRepo).save(dish);
     }
 
     @Test
     @DisplayName("getDictionary: Returns empty list when repository returns empty")
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
-        when(_ingredientsRepo.findAll()).thenReturn(new java.util.ArrayList<>());
-        java.util.List<EntityResponse> result = _ingredientsServices.getDictionary();
+        when(_ingredientsRepo.findAll()).thenReturn(new ArrayList<>());
+        List<EntityResponse> result = _ingredientsServices.getDictionary();
         assertTrue(result.isEmpty());
     }
 
     @Test
     @DisplayName("getDictionary: Returns Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale("pl"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
         Ingredients ingredient = new Ingredients();
-        ingredient.setToken("SALT");
-        ingredient.setNamePl("Sól PL");
-        ingredient.setNameEn("Salt EN");
+        ingredient.setToken(TestConstants.TOKEN_INGREDIENT);
+        ingredient.setNamePl(TestConstants.INGREDIENT_PL);
+        ingredient.setNameEn(TestConstants.INGREDIENT_EN);
 
         when(_ingredientsRepo.findAll()).thenReturn(List.of(ingredient));
 
-        java.util.List<EntityResponse> result = _ingredientsServices.getDictionary();
+        List<EntityResponse> result = _ingredientsServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("SALT", result.get(0).getToken());
-        assertEquals("Sól PL", result.get(0).getName());
+        assertEquals(TestConstants.TOKEN_INGREDIENT, result.getFirst().getToken());
+        assertEquals(TestConstants.INGREDIENT_PL, result.getFirst().getName());
     }
 
     @Test
     @DisplayName("getDictionary: Returns English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale("en"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
         Ingredients ingredient = new Ingredients();
-        ingredient.setToken("PEPPER");
-        ingredient.setNamePl("Pieprz PL");
-        ingredient.setNameEn("Pepper EN");
+        ingredient.setToken(TestConstants.TOKEN_INGREDIENT);
+        ingredient.setNamePl(TestConstants.INGREDIENT_PL);
+        ingredient.setNameEn(TestConstants.INGREDIENT_EN);
 
         when(_ingredientsRepo.findAll()).thenReturn(List.of(ingredient));
 
-        java.util.List<EntityResponse> result = _ingredientsServices.getDictionary();
+        List<EntityResponse> result = _ingredientsServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("PEPPER", result.get(0).getToken());
-        assertEquals("Pepper EN", result.get(0).getName());
+        assertEquals(TestConstants.TOKEN_INGREDIENT, result.getFirst().getToken());
+        assertEquals(TestConstants.INGREDIENT_EN, result.getFirst().getName());
     }
 }

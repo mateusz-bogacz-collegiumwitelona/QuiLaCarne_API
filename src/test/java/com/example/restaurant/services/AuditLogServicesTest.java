@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.LogDomain;
 import com.example.restaurant.models.AuditLog;
 import com.example.restaurant.models.Users;
@@ -34,9 +35,16 @@ public class AuditLogServicesTest {
     @Test
     @DisplayName("Audit Log: Success - Save log with user")
     void log_ShouldSaveAuditLogWithUser_WhenUserIsKnown() {
-        LogDomain logDomain = new LogDomain("testUser", "ACTION", "127.0.0.1", Map.of());
+        LogDomain logDomain = new LogDomain(
+                TestConstants.FAKE_USERNAME,
+                TestConstants.FAKE_ACTION,
+                TestConstants.FAKE_IP,
+                Map.of()
+        );
         Users mockUser = new Users();
-        when(_userRepo.findByNormalizedUsername("TESTUSER")).thenReturn(Optional.of(mockUser));
+
+        when(_userRepo.findByNormalizedUsername(TestConstants.FAKE_USERNAME.toUpperCase()))
+                .thenReturn(Optional.of(mockUser));
 
         _auditLogServices.log(logDomain);
 
@@ -55,9 +63,15 @@ public class AuditLogServicesTest {
     @Test
     @DisplayName("Audit Log: Error Handling - Catch exception but don't rethrow")
     void log_ShouldCatchExceptionAndNotThrow_WhenRepositoryFails() {
-        LogDomain logDomain = new LogDomain("anonymousUser", "ACTION", "127.0.0.1", Map.of());
+        LogDomain logDomain = new LogDomain(
+                TestConstants.ANONYMOUS_USER,
+                TestConstants.FAKE_ACTION,
+                TestConstants.FAKE_IP,
+                Map.of()
+        );
         doThrow(new RuntimeException("DB error")).when(_auditRepo).save(any(AuditLog.class));
 
         assertDoesNotThrow(() -> _auditLogServices.log(logDomain));
+        verify(_auditRepo).save(any(AuditLog.class));
     }
 }

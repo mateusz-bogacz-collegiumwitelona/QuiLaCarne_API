@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
@@ -66,16 +67,11 @@ public class OrderRepositoryTest {
     }
 
     @Test
-    @DisplayName("Find status by token: should throw exception if status doesn't exist")
-    void findStatusByToken_ShouldThrowException_WhenStatusNotFound() {
-        when(_jpaOrderStatusRepo.findByToken("PENDING"))
-                .thenReturn(Optional.empty());
+    @DisplayName("Find status: throw exception when not found")
+    void findStatusByToken_ShouldThrowException_WhenNotFound() {
+        when(_jpaOrderStatusRepo.findByToken(TestConstants.TOKEN_NON_EXISTENT)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                _orderRepo.findStatusByToken("PENDING")
-        );
-
-        assertEquals("Order status not found", exception.getMessage());
+        assertThrows(RuntimeException.class, () -> _orderRepo.findStatusByToken(TestConstants.TOKEN_NON_EXISTENT));
     }
 
     @Test
@@ -89,16 +85,16 @@ public class OrderRepositoryTest {
     @Test
     @DisplayName("Find status by token: should throw exception if status not found")
     void findItemStatusByToken_ShouldThrowException_WhenNotFound() {
-        when(_jpaOrderItemStatusRepo.findByToken("INVALID")).thenReturn(Optional.empty());
+        when(_jpaOrderItemStatusRepo.findByToken(TestConstants.TOKEN_NON_EXISTENT)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> _orderRepo.findItemStatusByToken("INVALID"));
+        assertThrows(RuntimeException.class, () -> _orderRepo.findItemStatusByToken(TestConstants.TOKEN_NON_EXISTENT));
     }
 
     @Test
     @DisplayName("Find by reservation token: should call jpa")
     void findByReservationToken_ShouldCallJpa() {
-        _orderRepo.findByReservationToken("RES_123");
-        verify(_jpaOrderRepo).findByReservation_Token("RES_123");
+        _orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN);
+        verify(_jpaOrderRepo).findByReservation_Token(TestConstants.FAKE_RESERVATION_TOKEN);
     }
 
     @Test

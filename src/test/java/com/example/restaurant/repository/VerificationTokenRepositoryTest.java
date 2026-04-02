@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.models.VerificationToken;
 import com.example.restaurant.repository.interfaces.jpa.IJpaVerificationTokenRepository;
@@ -42,20 +43,29 @@ public class VerificationTokenRepositoryTest {
     @Test
     @DisplayName("find By Token And Type: Should Call Jpa")
     void findByTokenAndType_ShouldCallJpaMethod() {
-        when(_jpaTokenRepo.findByTokenAndType("token", TokenTypeEnum.ACTIVATION))
+        when(_jpaTokenRepo.findByTokenAndType(TestConstants.FAKE_VERIFICATION_TOKEN, TokenTypeEnum.ACTIVATION))
                 .thenReturn(Optional.of(new VerificationToken()));
 
-        assertTrue(_tokenRepo.findByTokenAndType("token", TokenTypeEnum.ACTIVATION).isPresent());
-        verify(_jpaTokenRepo, times(1)).findByTokenAndType("token", TokenTypeEnum.ACTIVATION);
+        assertTrue(_tokenRepo.findByTokenAndType(
+                TestConstants.FAKE_VERIFICATION_TOKEN,
+                TokenTypeEnum.ACTIVATION).isPresent()
+        );
+        verify(_jpaTokenRepo, times(1)).findByTokenAndType(
+                TestConstants.FAKE_VERIFICATION_TOKEN,
+                TokenTypeEnum.ACTIVATION
+        );
     }
 
     @Test
     @DisplayName("find By Token And Type: Should Return Empty When Not Found")
     void findByTokenAndType_ShouldReturnEmpty_WhenNotFound() {
-        when(_jpaTokenRepo.findByTokenAndType("MISSING", TokenTypeEnum.ACTIVATION))
+        when(_jpaTokenRepo.findByTokenAndType(TestConstants.TOKEN_NON_EXISTENT, TokenTypeEnum.ACTIVATION))
                 .thenReturn(Optional.empty());
 
-        Optional<VerificationToken> result = _tokenRepo.findByTokenAndType("MISSING", TokenTypeEnum.ACTIVATION);
+        Optional<VerificationToken> result = _tokenRepo.findByTokenAndType(
+                TestConstants.TOKEN_NON_EXISTENT,
+                TokenTypeEnum.ACTIVATION
+        );
 
         assertTrue(result.isEmpty());
     }

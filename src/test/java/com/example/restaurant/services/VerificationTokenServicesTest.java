@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.VerificationToken;
@@ -33,9 +34,13 @@ public class VerificationTokenServicesTest {
     @DisplayName("create Token: Should Save And Return Token")
     void createToken_ShouldSaveAndReturnTokenValue() {
         Users mockUser = new Users();
-        when(_userRepo.findByToken("user-token")).thenReturn(mockUser);
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(mockUser);
 
-        String tokenValue = _tokenServices.createToken("user-token", TokenTypeEnum.ACTIVATION, 15);
+        String tokenValue = _tokenServices.createToken(
+                TestConstants.FAKE_USER_TOKEN,
+                TokenTypeEnum.ACTIVATION,
+                15
+        );
 
         assertNotNull(tokenValue);
         verify(_tokenRepo, times(1)).save(any(VerificationToken.class));
@@ -115,9 +120,10 @@ public class VerificationTokenServicesTest {
     @Test
     @DisplayName("validate Token: Should Return Empty When Token Not Found In Db")
     void validateToken_ShouldReturnEmpty_WhenTokenNotFoundInDb() {
-        when(_tokenRepo.findByTokenAndType("missing", TokenTypeEnum.ACTIVATION)).thenReturn(Optional.empty());
+        when(_tokenRepo.findByTokenAndType(TestConstants.TOKEN_NON_EXISTENT, TokenTypeEnum.ACTIVATION)).
+                thenReturn(Optional.empty());
 
-        Optional<String> result = _tokenServices.validateToken("missing", TokenTypeEnum.ACTIVATION);
+        Optional<String> result = _tokenServices.validateToken(TestConstants.TOKEN_NON_EXISTENT, TokenTypeEnum.ACTIVATION);
 
         assertTrue(result.isEmpty());
     }

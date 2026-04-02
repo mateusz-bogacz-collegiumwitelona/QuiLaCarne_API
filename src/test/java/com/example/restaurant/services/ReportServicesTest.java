@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
@@ -188,10 +189,10 @@ public class ReportServicesTest {
     @Test
     @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale("pl"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
 
         GuestReportStatus status = new GuestReportStatus();
-        status.setToken("IN_PROGRESS");
+        status.setToken(TestConstants.STATUS_IN_PROGRESS);
         status.setNamePl("W trakcie PL");
         status.setNameEn("In Progress EN");
 
@@ -200,17 +201,16 @@ public class ReportServicesTest {
         List<EntityResponse> result = _reportServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("IN_PROGRESS", result.getFirst().getToken());
+        assertEquals(TestConstants.STATUS_IN_PROGRESS, result.getFirst().getToken());
         assertEquals("W trakcie PL", result.getFirst().getName());
     }
 
     @Test
     @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale("en"));
-
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
         GuestReportStatus status = new GuestReportStatus();
-        status.setToken("ACCEPTED");
+        status.setToken(TestConstants.STATUS_ACCEPTED);
         status.setNamePl("Zaakceptowane PL");
         status.setNameEn("Accepted EN");
 
@@ -219,7 +219,7 @@ public class ReportServicesTest {
         List<EntityResponse> result = _reportServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("ACCEPTED", result.getFirst().getToken());
+        assertEquals(TestConstants.STATUS_ACCEPTED, result.getFirst().getToken());
         assertEquals("Accepted EN", result.getFirst().getName());
     }
 }

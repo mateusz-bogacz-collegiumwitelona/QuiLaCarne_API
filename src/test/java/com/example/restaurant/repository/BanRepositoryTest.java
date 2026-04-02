@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.lookup.BanStatus;
@@ -31,7 +32,7 @@ class BanRepositoryTest {
     @Test
     @DisplayName("Find status: Return status if exist")
     void findStatusByToken_ShouldReturnStatus_WhenExists() {
-        String token = "ACTIVE";
+        String token = TestConstants.STATUS_ACTIVE;
         BanStatus status = new BanStatus();
         when(_jpaStatusRepo.findByToken(token)).thenReturn(Optional.of(status));
 
@@ -45,7 +46,7 @@ class BanRepositoryTest {
     @Test
     @DisplayName("Find allergens: throw execption when not found")
     void findStatusByToken_ShouldThrowException_WhenNotFound() {
-        String token = "NON_EXISTENT";
+        String token = TestConstants.TOKEN_NON_EXISTENT;
         when(_jpaStatusRepo.findByToken(token)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> _banRepository.findStatusByToken(token));

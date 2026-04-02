@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.jpa.IJpaAllergensRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +27,10 @@ public class AllergensRepositoryTest {
     @Test
     @DisplayName("Find allergens: Return list of allergens")
     void findAllergens_ShouldReturnListOfAllergens() {
-        List<String> tokens = List.of("GLUTEN", "LACTOSE");
+        List<String> tokens = List.of(TestConstants.TOKEN_GLUTEN, TestConstants.TOKEN_LACTOSE);
 
         Allergens gluten = new Allergens();
-        gluten.setToken("GLUTEN");
+        gluten.setToken(TestConstants.TOKEN_GLUTEN);
 
         when(_jpaAllergensRepo.findByTokenIn(tokens))
                 .thenReturn(List.of(gluten));

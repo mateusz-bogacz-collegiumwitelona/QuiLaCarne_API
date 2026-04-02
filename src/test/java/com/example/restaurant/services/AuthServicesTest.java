@@ -78,12 +78,12 @@ public class AuthServicesTest {
         when(_auth.getPrincipal()).thenReturn(_userDetails);
         when(_userDetails.isEnabled()).thenReturn(true);
         when(_userDetails.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
-        when(_jwtServices.generateToken(any(UserDetails.class))).thenReturn("fake-jwt-token");
+        when(_jwtServices.generateToken(any(UserDetails.class))).thenReturn(TestConstants.FAKE_ACTION_TOKEN);
 
         AuthResponse result = _authServices.authenticate(loginRequest);
 
         assertNotNull(result);
-        assertEquals("fake-jwt-token", result.getToken());
+        assertEquals(TestConstants.FAKE_ACTION_TOKEN, result.getToken());
         assertEquals(TestConstants.FAKE_USERNAME, result.getUsername());
     }
 
@@ -101,7 +101,7 @@ public class AuthServicesTest {
     @Test
     @DisplayName("Register: Throws IllegalStateException if passwords mismatch")
     void register_ShouldThrowException_WhenPasswordsMismatch() {
-        _registerRequest.setConfirmPassword("mismatch");
+        _registerRequest.setConfirmPassword(TestConstants.FAKE_ACTION);
         assertThrows(IllegalStateException.class, () -> _authServices.register(_registerRequest));
     }
 
@@ -109,9 +109,10 @@ public class AuthServicesTest {
     @Test
     @DisplayName("Register Confirm: Success")
     void registerConfirm_ShouldReturnTrue_WhenTokenIsValid() {
-        when(_tokenServices.validateToken("valid-token", TokenTypeEnum.ACTIVATION)).thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
+        when(_tokenServices.validateToken(TestConstants.FAKE_ACTION_TOKEN, TokenTypeEnum.ACTIVATION))
+                .thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
 
-        Boolean result = _authServices.registerConfirm("valid-token");
+        Boolean result = _authServices.registerConfirm(TestConstants.FAKE_ACTION_TOKEN);
 
         assertTrue(result);
         verify(_userServices).activeUser(TestConstants.FAKE_USER_TOKEN);
@@ -120,12 +121,14 @@ public class AuthServicesTest {
     @Test
     @DisplayName("Register: Success")
     void register_ShouldSucceed_AndCallAllDependencies() {
-        when(_userServices.create(any(), eq("ROLE_CLIENT"), eq(false))).thenReturn("user-token");
-        when(_tokenServices.createToken(eq("user-token"), eq(TokenTypeEnum.ACTIVATION), anyInt())).thenReturn("act-token");
+        when(_userServices.create(any(), eq(TestConstants.ROLE_CLIENT), eq(false)))
+                .thenReturn(TestConstants.FAKE_USER_TOKEN);
+        when(_tokenServices.createToken(eq(TestConstants.FAKE_USER_TOKEN), eq(TokenTypeEnum.ACTIVATION), anyInt()))
+                .thenReturn(TestConstants.FAKE_ACTION_TOKEN);
 
         _authServices.register(_registerRequest);
 
-        verify(_emailServices).sendActivationEmail(TestConstants.FAKE_EMAIL, TestConstants.FAKE_USERNAME, "act-token");
+        verify(_emailServices).sendActivationEmail(TestConstants.FAKE_EMAIL, TestConstants.FAKE_USERNAME, TestConstants.FAKE_ACTION_TOKEN);
     }
 
     @Test
@@ -140,25 +143,26 @@ public class AuthServicesTest {
     @DisplayName("Set New Password: Throws IllegalStateException if passwords mismatch")
     void setNewPassword_ShouldThrowException_WhenPasswordsMismatch() {
         ResetPasswordRequest request = new ResetPasswordRequest();
-        request.setPassword("pass");
-        request.setConfirmPassword("different");
+        request.setPassword(TestConstants.FAKE_PASSWORD);
+        request.setConfirmPassword(TestConstants.FAKE_DIFF_PASSWORD);
 
         assertThrows(IllegalStateException.class, () -> _authServices.setNewPassword(request));
     }
 
     @Test
-    @DisplayName("Set New Password: Successes if token is valid")
-    void setNewPassword_ShouldSucceed_WhenTokenIsValid() {
+    @DisplayName("Set New Password: Change password when token is valid")
+    void setNewPassword_ShouldChangePassword_WhenTokenIsValid() {
         ResetPasswordRequest req = new ResetPasswordRequest();
-        req.setToken("valid-token");
-        req.setPassword("NewPass123!");
-        req.setConfirmPassword("NewPass123!");
+        req.setToken(TestConstants.FAKE_VERIFICATION_TOKEN);
+        req.setPassword(TestConstants.VALID_PASSWORD);
+        req.setConfirmPassword(TestConstants.VALID_PASSWORD);
 
-        when(_tokenServices.validateToken("valid-token", TokenTypeEnum.PASSWORD_RESET)).thenReturn(Optional.of("user-token"));
+        when(_tokenServices.validateToken(TestConstants.FAKE_VERIFICATION_TOKEN, TokenTypeEnum.PASSWORD_RESET))
+                .thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
 
         _authServices.setNewPassword(req);
 
-        verify(_userServices).changePassword("user-token", "NewPass123!");
+        verify(_userServices).changePassword(TestConstants.FAKE_USER_TOKEN, TestConstants.VALID_PASSWORD);
     }
 
     @Test
@@ -166,7 +170,7 @@ public class AuthServicesTest {
     void resetPassword_ShouldDoNothing_WhenUserNotFound() {
         when(_userServices.findMinimalByEmail(anyString())).thenReturn(Optional.empty());
 
-        _authServices.resetPassword("nonexistent@test.pl");
+        _authServices.resetPassword(TestConstants.NON_EXISTENT_EMAIL);
 
         verify(_tokenServices, never()).createToken(anyString(), any(), anyInt());
         verify(_emailServices, never()).sendResetPasswordEmail(any(), any(), any());
@@ -175,12 +179,25 @@ public class AuthServicesTest {
     @Test
     @DisplayName("Reset Password: Send email when user  found")
     void resetPassword_ShouldSendEmail_WhenUserFound() {
-        UserDomain domain = new UserDomain("token", "user", "USER", "test@test.pl", "TEST@TEST.PL");
+        UserDomain domain = new UserDomain(
+                TestConstants.FAKE_USER_TOKEN,
+                TestConstants.FAKE_USERNAME,
+                TestConstants.ROLE_CLIENT,
+                TestConstants.FAKE_EMAIL,
+                TestConstants.FAKE_EMAIL.toUpperCase()
+        );
+
         when(_userServices.findMinimalByEmail(anyString())).thenReturn(Optional.of(domain));
-        when(_tokenServices.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt())).thenReturn("reset-token");
 
-        _authServices.resetPassword("test@test.pl");
+        when(_tokenServices.createToken(anyString(), eq(TokenTypeEnum.PASSWORD_RESET), anyInt()))
+                .thenReturn(TestConstants.FAKE_VERIFICATION_TOKEN);
 
-        verify(_emailServices).sendResetPasswordEmail("test@test.pl", "user", "reset-token");
+        _authServices.resetPassword(TestConstants.FAKE_EMAIL);
+
+        verify(_emailServices).sendResetPasswordEmail(
+                TestConstants.FAKE_EMAIL,
+                TestConstants.FAKE_USERNAME,
+                TestConstants.FAKE_VERIFICATION_TOKEN
+        );
     }
 }

@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.jpa.IJpaIngredientsRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -36,22 +37,25 @@ public class IngredientsRepositoryTest {
     @Test
     @DisplayName("Is name taken: return true if polish name is taken")
     void isNameTaken_ShouldReturnTrue_WhenPlNameExists() {
-        when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.of(new Ingredients()));
+        when(_jpaIngredientsRepo.findByNamePl(TestConstants.INGREDIENT_PL)).thenReturn(Optional.of(new Ingredients()));
 
-        boolean result = _ingredientsRepository.isNameTaken("Cebula", "Onion");
+        boolean result = _ingredientsRepository.isNameTaken(TestConstants.INGREDIENT_PL, TestConstants.INGREDIENT_EN);
 
         assertTrue(result);
+        verify(_jpaIngredientsRepo, times(1)).findByNamePl(TestConstants.INGREDIENT_PL);
     }
 
     @Test
     @DisplayName("Is name taken: return true if english name is taken")
     void isNameTaken_ShouldReturnTrue_WhenEnNameExists() {
-        when(_jpaIngredientsRepo.findByNamePl("Cebula")).thenReturn(Optional.empty());
-        when(_jpaIngredientsRepo.findByNameEn("Onion")).thenReturn(Optional.of(new Ingredients()));
+        when(_jpaIngredientsRepo.findByNamePl(anyString())).thenReturn(Optional.empty());
+        when(_jpaIngredientsRepo.findByNameEn(TestConstants.INGREDIENT_EN)).thenReturn(Optional.of(new Ingredients()));
 
-        boolean result = _ingredientsRepository.isNameTaken("Cebula", "Onion");
+        boolean result = _ingredientsRepository.isNameTaken(TestConstants.INGREDIENT_PL, TestConstants.INGREDIENT_EN);
 
         assertTrue(result);
+        verify(_jpaIngredientsRepo, times(1)).findByNamePl(TestConstants.INGREDIENT_PL);
+        verify(_jpaIngredientsRepo, times(1)).findByNameEn(TestConstants.INGREDIENT_EN);
     }
 
     @Test
@@ -80,9 +84,9 @@ public class IngredientsRepositoryTest {
     @DisplayName("Find by token: return ingrediant if exist")
     void findByToken_ShouldReturnIngredient_WhenExists() {
         Ingredients ingredient = new Ingredients();
-        when(_jpaIngredientsRepo.findByToken("TOMATO")).thenReturn(Optional.of(ingredient));
+        when(_jpaIngredientsRepo.findByToken(TestConstants.TOKEN_TOMATO)).thenReturn(Optional.of(ingredient));
 
-        Ingredients result = _ingredientsRepository.findByToken("TOMATO");
+        Ingredients result = _ingredientsRepository.findByToken(TestConstants.TOKEN_TOMATO);
 
         assertNotNull(result);
         assertEquals(ingredient, result);
@@ -91,11 +95,11 @@ public class IngredientsRepositoryTest {
     @Test
     @DisplayName("Find by token: throw exception if ingridients not found")
     void findByToken_ShouldThrowException_WhenNotFound() {
-        when(_jpaIngredientsRepo.findByToken("UNKNOWN")).thenReturn(Optional.empty());
+        when(_jpaIngredientsRepo.findByToken(TestConstants.TOKEN_NON_EXISTENT)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            _ingredientsRepository.findByToken("UNKNOWN");
-        });
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> _ingredientsRepository.findByToken(
+                TestConstants.TOKEN_NON_EXISTENT
+        ));
         assertEquals("Ingredient not found", exception.getMessage());
     }
 

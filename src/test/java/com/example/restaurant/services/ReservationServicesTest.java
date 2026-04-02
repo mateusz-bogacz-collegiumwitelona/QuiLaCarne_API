@@ -223,9 +223,9 @@ public class ReservationServicesTest {
     @Test
     @DisplayName("getDictionary: Returns Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale("pl"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
         ReservationStatus status = new ReservationStatus();
-        status.setToken("ACTIVE");
+        status.setToken(TestConstants.STATUS_ACTIVE);
         status.setNamePl("Aktywna PL");
         status.setNameEn("Active EN");
 
@@ -234,16 +234,16 @@ public class ReservationServicesTest {
         List<EntityResponse> result = _reservationServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("ACTIVE", result.get(0).getToken());
-        assertEquals("Aktywna PL", result.get(0).getName());
+        assertEquals(TestConstants.STATUS_ACTIVE, result.getFirst().getToken());
+        assertEquals("Aktywna PL", result.getFirst().getName());
     }
 
     @Test
     @DisplayName("getDictionary: Returns English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale("en"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
         ReservationStatus status = new ReservationStatus();
-        status.setToken("CANCELLED");
+        status.setToken(TestConstants.STATUS_CANCELLED);
         status.setNamePl("Anulowana PL");
         status.setNameEn("Cancelled EN");
 
@@ -252,7 +252,7 @@ public class ReservationServicesTest {
         List<EntityResponse> result = _reservationServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("CANCELLED", result.get(0).getToken());
-        assertEquals("Cancelled EN", result.get(0).getName());
+        assertEquals(TestConstants.STATUS_CANCELLED, result.getFirst().getToken());
+        assertEquals("Cancelled EN", result.getFirst().getName());
     }
 }

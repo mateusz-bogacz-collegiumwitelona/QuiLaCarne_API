@@ -668,14 +668,14 @@ public class UserServicesTest {
         pagged.setSize(5);
 
         Users mockUser = new Users();
-        mockUser.setToken("TOKEN_123");
-        mockUser.setUsername("TestUser");
-        mockUser.setEmail("test@test.pl");
+        mockUser.setToken(TestConstants.FAKE_USER_TOKEN);
+        mockUser.setUsername(TestConstants.FAKE_USERNAME);
+        mockUser.setEmail(TestConstants.FAKE_EMAIL);
         mockUser.setIsActive(true);
         mockUser.setCreatedAt(OffsetDateTime.now());
 
         Roles waiterRole = new Roles();
-        waiterRole.setName("ROLE_WAITER");
+        waiterRole.setName(TestConstants.ROLE_WAITER);
         mockUser.setRoles(Set.of(waiterRole));
 
         Page<Users> mockPage = new org.springframework.data.domain.PageImpl<>(java.util.List.of(mockUser));
@@ -689,11 +689,11 @@ public class UserServicesTest {
         assertEquals(1, result.getItems().size());
 
         UserListResponse mappedUser = result.getItems().get(0);
-        assertEquals("TOKEN_123", mappedUser.getToken());
-        assertEquals("TestUser", mappedUser.getUsername());
-        assertEquals("test@test.pl", mappedUser.getEmail());
+        assertEquals(TestConstants.FAKE_USER_TOKEN, mappedUser.getToken());
+        assertEquals(TestConstants.FAKE_USERNAME, mappedUser.getUsername());
+        assertEquals(TestConstants.FAKE_EMAIL, mappedUser.getEmail());
         assertTrue(mappedUser.getIsActive());
-        assertTrue(mappedUser.getRoles().contains("ROLE_WAITER"));
+        assertTrue(mappedUser.getRoles().contains(TestConstants.ROLE_WAITER));
 
         verify(_userRepo).findAllUsers(any(Specification.class), argThat(pageRequest ->
                 pageRequest.getPageNumber() == 1 &&

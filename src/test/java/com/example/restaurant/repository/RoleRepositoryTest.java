@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.jpa.IJpaRoleRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +27,11 @@ public class RoleRepositoryTest {
     @Test
     @DisplayName("Set role: should throw exception if role not found")
     void setRole_ShouldThrowException_WhenRoleNotFound() {
-        when(_jpaRoleRepository.findByName("NON_EXISTENT")).thenReturn(Optional.empty());
+        when(_jpaRoleRepository.findByName(TestConstants.TOKEN_NON_EXISTENT)).thenReturn(Optional.empty());
+
 
         assertThrows(RuntimeException.class, () -> {
-            _roleRepository.setRole("NON_EXISTENT");
+            _roleRepository.setRole(TestConstants.TOKEN_NON_EXISTENT);
         });
     }
 
@@ -37,20 +39,20 @@ public class RoleRepositoryTest {
     @DisplayName("Set role: should return role if found")
     void setRole_ShouldReturnRole_WhenFound() {
         Roles mockRole = new Roles();
-        mockRole.setName("USER");
-        when(_jpaRoleRepository.findByName("USER")).thenReturn(Optional.of(mockRole));
+        mockRole.setName(TestConstants.ROLE_CLIENT);
+        when(_jpaRoleRepository.findByName(TestConstants.ROLE_CLIENT)).thenReturn(Optional.of(mockRole));
 
-        Roles result = _roleRepository.setRole("USER");
+        Roles result = _roleRepository.setRole(TestConstants.ROLE_CLIENT);
 
-        assertEquals("USER", result.getName());
-        verify(_jpaRoleRepository).findByName("USER");
+        assertEquals(TestConstants.ROLE_CLIENT, result.getName());
+        verify(_jpaRoleRepository).findByName(TestConstants.ROLE_CLIENT);
     }
 
     @Test
     @DisplayName("Is role exist: should return true if exist")
     void isRoleExists_ShouldReturnTrue_WhenExists() {
-        when(_jpaRoleRepository.findByName("ADMIN")).thenReturn(Optional.of(new Roles()));
-        assertTrue(_roleRepository.isRoleExists("ADMIN"));
+        when(_jpaRoleRepository.findByName(TestConstants.ROLE_MANAGER)).thenReturn(Optional.of(new Roles()));
+        assertTrue(_roleRepository.isRoleExists(TestConstants.ROLE_MANAGER));
     }
 
 }

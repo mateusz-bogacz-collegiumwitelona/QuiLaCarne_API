@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -47,38 +48,38 @@ public class AllergensServicesTest {
     @Test
     @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale("pl"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
 
         Allergens allergen = new Allergens();
-        allergen.setToken("GLUTEN");
-        allergen.setNamePl("Gluten PL");
-        allergen.setNameEn("Gluten EN");
+        allergen.setToken(TestConstants.TOKEN_GLUTEN);
+        allergen.setNamePl(TestConstants.FAKE_ALLERGEN_PL);
+        allergen.setNameEn(TestConstants.FAKE_ALLERGEN_EN);
 
         when(_allergenRepo.findAll()).thenReturn(List.of(allergen));
 
         List<EntityResponse> result = _allergensServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("GLUTEN", result.getFirst().getToken());
-        assertEquals("Gluten PL", result.getFirst().getName());
+        assertEquals(TestConstants.TOKEN_GLUTEN, result.getFirst().getToken());
+        assertEquals(TestConstants.FAKE_ALLERGEN_PL, result.getFirst().getName());
     }
 
     @Test
     @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale("en"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
 
         Allergens allergen = new Allergens();
-        allergen.setToken("NUTS");
-        allergen.setNamePl("Orzechy PL");
-        allergen.setNameEn("Nuts EN");
+        allergen.setToken(TestConstants.TOKEN_NUTS);
+        allergen.setNamePl(TestConstants.FAKE_ALLERGEN_PL);
+        allergen.setNameEn(TestConstants.FAKE_ALLERGEN_EN);
 
         when(_allergenRepo.findAll()).thenReturn(List.of(allergen));
 
         List<EntityResponse> result = _allergensServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("NUTS", result.getFirst().getToken());
-        assertEquals("Nuts EN", result.getFirst().getName());
+        assertEquals(TestConstants.TOKEN_NUTS, result.getFirst().getToken());
+        assertEquals(TestConstants.FAKE_ALLERGEN_EN, result.getFirst().getName());
     }
 }

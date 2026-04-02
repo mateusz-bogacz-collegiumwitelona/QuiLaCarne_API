@@ -610,9 +610,9 @@ public class OrderServicesTest {
     @Test
     @DisplayName("getItemStatusesDictionary: Returns Polish names when language is pl")
     void getItemStatusesDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale("pl"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
         OrderItemsStatus status = new OrderItemsStatus();
-        status.setToken("READY");
+        status.setToken(TestConstants.STATUS_READY);
         status.setNamePl("Gotowe PL");
         status.setNameEn("Ready EN");
 
@@ -621,16 +621,16 @@ public class OrderServicesTest {
         List<EntityResponse> result = _orderServices.getItemStatusesDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("READY", result.get(0).getToken());
+        assertEquals(TestConstants.STATUS_READY, result.get(0).getToken());
         assertEquals("Gotowe PL", result.get(0).getName());
     }
 
     @Test
     @DisplayName("getItemStatusesDictionary: Returns English names when language is not pl")
     void getItemStatusesDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale("en"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
         OrderItemsStatus status = new OrderItemsStatus();
-        status.setToken("READY");
+        status.setToken(TestConstants.STATUS_READY);
         status.setNamePl("Gotowe PL");
         status.setNameEn("Ready EN");
 
@@ -639,7 +639,7 @@ public class OrderServicesTest {
         List<EntityResponse> result = _orderServices.getItemStatusesDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("READY", result.get(0).getToken());
+        assertEquals(TestConstants.STATUS_READY, result.get(0).getToken());
         assertEquals("Ready EN", result.get(0).getName());
     }
 }

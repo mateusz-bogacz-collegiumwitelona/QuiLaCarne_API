@@ -81,18 +81,24 @@ public class ReservationRepositoryTest {
     @Test
     @DisplayName("Find status by token: should throw exeception if not found")
     void findStatusByToken_ShouldThrowException_WhenNotFound() {
-        when(_jpaReservationStatusRepo.findByToken("ANY")).thenReturn(Optional.empty());
+        when(_jpaReservationStatusRepo.findByToken(TestConstants.TOKEN_NON_EXISTENT)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () ->
-                _reservationRepo.findStatusByToken("ANY")
+                _reservationRepo.findStatusByToken(TestConstants.TOKEN_NON_EXISTENT)
         );
     }
 
     @Test
     @DisplayName("Find by reservation and user token: should call JPA")
     void findByTokenAndUserToken_ShouldCallJpa() {
-        _reservationRepo.findByTokenAndUserToken("RES_1", "USER_1");
-        verify(_jpaReservationsRepo).findByTokenAndUser_Token("RES_1", "USER_1");
+        _reservationRepo.findByTokenAndUserToken(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
+        verify(_jpaReservationsRepo).findByTokenAndUser_Token(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_USER_TOKEN
+        );
     }
 
     @Test

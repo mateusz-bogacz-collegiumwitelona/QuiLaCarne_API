@@ -120,23 +120,24 @@ public class UserRepositoryTest {
     @DisplayName("is In Role: Should Return False When User Does Not Have Role")
     void isInRole_ShouldReturnFalse_WhenUserDoesNotHaveTheRole() {
         Roles userRole = new Roles();
-        userRole.setName("USER");
+        userRole.setName(TestConstants.ROLE_CLIENT);
         Roles searchRole = new Roles();
-        searchRole.setName("ADMIN");
+        searchRole.setName(TestConstants.ROLE_MANAGER);
         Users mockUser = new Users();
         mockUser.setRoles(Set.of(userRole));
 
-        when(_jpaUserRepository.findByToken("T1")).thenReturn(Optional.of(mockUser));
-        when(_jpaRoleRepository.findByName("ADMIN")).thenReturn(Optional.of(searchRole));
+        when(_jpaUserRepository.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(Optional.of(mockUser));
 
-        assertFalse(_userRepository.isInRole("ADMIN", "T1"));
+        when(_jpaRoleRepository.findByName(TestConstants.ROLE_MANAGER)).thenReturn(Optional.of(searchRole));
+
+        assertFalse(_userRepository.isInRole(TestConstants.ROLE_MANAGER, TestConstants.FAKE_USER_TOKEN));
     }
 
     @Test
     @DisplayName("exist By Email: should return true when email exists")
     void existByEmail_ShouldReturnTrue_WhenEmailExists() {
         when(_jpaUserRepository.findByNormalizedEmail(anyString())).thenReturn(Optional.of(new Users()));
-        assertTrue(_userRepository.existByEmail("TEST@TEST.PL"));
+        assertTrue(_userRepository.existByEmail(TestConstants.FAKE_EMAIL.toUpperCase()));
     }
 
 

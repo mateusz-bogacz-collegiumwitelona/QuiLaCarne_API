@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.DishFilterRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.exceptions.EntityNotFoundException;
@@ -193,7 +194,7 @@ public class DishRepositoryTest {
     @Test
     @DisplayName("findCategoryByToken: Should throw EntityNotFoundException when category does not exist")
     void findCategoryByToken_ShouldThrowException_WhenNotFound() {
-        String token = "INVALID_CAT_TOKEN";
+        String token = TestConstants.TOKEN_NON_EXISTENT;
         when(_jpaDishCategoryRepo.findByToken(token)).thenReturn(Optional.empty());
 
         EntityNotFoundException exception = assertThrows(

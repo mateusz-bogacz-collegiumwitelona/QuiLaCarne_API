@@ -1,5 +1,6 @@
 package com.example.restaurant.mappers;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
 import org.junit.jupiter.api.DisplayName;
@@ -37,31 +38,29 @@ public class DictionaryMapperTest {
     @Test
     @DisplayName("map: Should map to Polish names when lang is 'pl'")
     void map_ShouldMapToPolishNames_WhenLangIsPl() {
-        // Arrange
         List<DummyEntity> entities = List.of(
-                new DummyEntity("TOKEN_1", "Jabłko", "Apple"),
-                new DummyEntity("TOKEN_2", "Gruszka", "Pear")
+                new DummyEntity(TestConstants.TOKEN_1, "Jabłko", "Apple"),
+                new DummyEntity(TestConstants.TOKEN_2, "Gruszka", "Pear")
         );
 
-        List<EntityResponse> result = DictionaryMapper.map(entities, "pl");
+        List<EntityResponse> result = DictionaryMapper.map(entities, TestConstants.LANG_PL);
 
         assertEquals(2, result.size());
-        assertEquals("TOKEN_1", result.get(0).getToken());
+        assertEquals(TestConstants.TOKEN_1, result.get(0).getToken());
         assertEquals("Jabłko", result.get(0).getName());
-        assertEquals("TOKEN_2", result.get(1).getToken());
+        assertEquals(TestConstants.TOKEN_2, result.get(1).getToken());
         assertEquals("Gruszka", result.get(1).getName());
     }
 
     @Test
     @DisplayName("map: Should map to English names when lang is not 'pl'")
     void map_ShouldMapToEnglishNames_WhenLangIsNotPl() {
-        // Arrange
         List<DummyEntity> entities = List.of(
-                new DummyEntity("TOKEN_1", "Jabłko", "Apple"),
-                new DummyEntity("TOKEN_2", "Gruszka", "Pear")
+                new DummyEntity(TestConstants.TOKEN_1, "Jabłko", "Apple"),
+                new DummyEntity(TestConstants.TOKEN_2, "Gruszka", "Pear")
         );
 
-        List<EntityResponse> result = DictionaryMapper.map(entities, "en");
+        List<EntityResponse> result = DictionaryMapper.map(entities, TestConstants.LANG_EN);
 
         assertEquals(2, result.size());
         assertEquals("Apple", result.get(0).getName());
@@ -73,8 +72,8 @@ public class DictionaryMapperTest {
     void map_ShouldIgnoreCase_WhenLangIsPlWithDifferentCases() {
         List<DummyEntity> entities = List.of(new DummyEntity("T1", "Polski", "English"));
 
-        assertEquals("Polski", DictionaryMapper.map(entities, "PL").get(0).getName());
-        assertEquals("Polski", DictionaryMapper.map(entities, "Pl").get(0).getName());
-        assertEquals("Polski", DictionaryMapper.map(entities, "pl").get(0).getName());
+        assertEquals("Polski", DictionaryMapper.map(entities, "PL").getFirst().getName());
+        assertEquals("Polski", DictionaryMapper.map(entities, "Pl").getFirst().getName());
+        assertEquals("Polski", DictionaryMapper.map(entities, "pl").getFirst().getName());
     }
 }

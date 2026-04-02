@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.TestConstants;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.jpa.IJpaGuestReportRepository;
@@ -37,13 +38,13 @@ public class ReportRepositoryTest {
     @DisplayName("Find status by token: should return status id exists")
     void findStatusByToken_ShouldReturnStatus_WhenExists() {
         GuestReportStatus status = new GuestReportStatus();
-        when(_jpaStausRepo.findByToken("TOKEN")).thenReturn(Optional.of(status));
+        when(_jpaStausRepo.findByToken(TestConstants.TOKEN_NON_EXISTENT)).thenReturn(Optional.of(status));
 
-        GuestReportStatus result = _reportRepo.findStatusByToken("TOKEN");
+        GuestReportStatus result = _reportRepo.findStatusByToken(TestConstants.TOKEN_NON_EXISTENT);
 
         assertNotNull(result);
         assertEquals(status, result);
-        verify(_jpaStausRepo, times(1)).findByToken("TOKEN");
+        verify(_jpaStausRepo, times(1)).findByToken(TestConstants.TOKEN_NON_EXISTENT);
     }
 
     @Test
@@ -88,18 +89,17 @@ public class ReportRepositoryTest {
     @Test
     @DisplayName("Find by toke: should return report")
     void findByToken_ShouldReturnReport_WhenCalled() {
-        String token = "report-token-123";
         GuestReports mockReport = new GuestReports();
-        mockReport.setToken(token);
+        mockReport.setToken(TestConstants.FAKE_REPORT_TOKEN);
 
-        when(_jpaReportRepo.findByToken(token)).thenReturn(mockReport);
+        when(_jpaReportRepo.findByToken(TestConstants.FAKE_REPORT_TOKEN)).thenReturn(mockReport);
 
-        GuestReports result = _reportRepo.findByToken(token);
+        GuestReports result = _reportRepo.findByToken(TestConstants.FAKE_REPORT_TOKEN);
 
         assertNotNull(result);
-        assertEquals(token, result.getToken());
+        assertEquals(TestConstants.FAKE_REPORT_TOKEN, result.getToken());
 
-        verify(_jpaReportRepo, times(1)).findByToken(token);
+        verify(_jpaReportRepo, times(1)).findByToken(TestConstants.FAKE_REPORT_TOKEN);
     }
 
     @Test

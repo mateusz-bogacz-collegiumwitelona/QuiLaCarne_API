@@ -53,14 +53,14 @@ class BanServicesTest {
     void setUp() {
         admin = new Users();
         admin.setToken(TestConstants.FAKE_USER_TOKEN);
-        admin.setRoles(Set.of(createRole("ROLE_MANAGER")));
+        admin.setRoles(Set.of(createRole(TestConstants.ROLE_MANAGER)));
 
         client = new Users();
         client.setToken(CLIENT_TOKEN);
         client.setIsActive(true);
         client.setEmail(TestConstants.FAKE_EMAIL);
         client.setUsername(TestConstants.FAKE_USERNAME);
-        client.setRoles(Set.of(createRole("ROLE_CLIENT")));
+        client.setRoles(Set.of(createRole(TestConstants.ROLE_CLIENT)));
     }
 
     @Test
@@ -97,7 +97,7 @@ class BanServicesTest {
     @Test
     @DisplayName("Ban Create: Failure - Target is not a client")
     void create_ShouldThrowException_WhenTargetIsNotClient() {
-        client.setRoles(Set.of(createRole("ROLE_WAITER")));
+        client.setRoles(Set.of(createRole(TestConstants.ROLE_WAITER)));
         when(_userRepo.findByToken(anyString())).thenReturn(admin).thenReturn(client);
 
         CreateBanRequest request = new CreateBanRequest();
@@ -119,10 +119,10 @@ class BanServicesTest {
     @Test
     @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale("pl"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
 
         BanStatus status = new BanStatus();
-        status.setToken("ACTIVE");
+        status.setToken(TestConstants.STATUS_ACTIVE);
         status.setNamePl("Aktywny PL");
         status.setNameEn("Active EN");
 
@@ -131,16 +131,17 @@ class BanServicesTest {
         java.util.List<EntityResponse> result = _banServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("ACTIVE", result.getFirst().getToken());
+        assertEquals(TestConstants.STATUS_ACTIVE, result.getFirst().getToken());
         assertEquals("Aktywny PL", result.getFirst().getName());
     }
 
     @Test
     @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale("en"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
+
         BanStatus status = new BanStatus();
-        status.setToken("EXPIRED");
+        status.setToken(TestConstants.STATUS_EXPIRED);
         status.setNamePl("Wygasły PL");
         status.setNameEn("Expired EN");
 
@@ -149,7 +150,7 @@ class BanServicesTest {
         java.util.List<EntityResponse> result = _banServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("EXPIRED", result.getFirst().getToken());
+        assertEquals(TestConstants.STATUS_EXPIRED, result.getFirst().getToken());
         assertEquals("Expired EN", result.getFirst().getName());
     }
 

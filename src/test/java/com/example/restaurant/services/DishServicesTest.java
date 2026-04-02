@@ -106,16 +106,15 @@ public class DishServicesTest {
     @Test
     @DisplayName("remove: should disable the availability of the dish, add the reason and date of deletion (soft delete)")
     void remove_ShouldMarkDishAsDeleted_AndSaveToRepository() {
-        String token = "DISH_TOKEN_123";
         Dishes dish = new Dishes();
-        dish.setToken(token);
+        dish.setToken(TestConstants.FAKE_DISH_TOKEN);
         dish.setAvailable(true);
         dish.setUnavailableReason(null);
         dish.setDeletedAt(null);
 
-        when(_dishRepo.findByToken(token)).thenReturn(dish);
+        when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
 
-        _dishServices.remove(token);
+        _dishServices.remove(TestConstants.FAKE_DISH_TOKEN);
 
         assertNull(dish.getImageUrl());
         verify(_s3Services, times(1)).deleteFile(any());
@@ -124,7 +123,7 @@ public class DishServicesTest {
         assertEquals("Dish is deleted", dish.getUnavailableReason());
         assertNotNull(dish.getDeletedAt());
 
-        verify(_dishRepo, times(1)).findByToken(token);
+        verify(_dishRepo, times(1)).findByToken(TestConstants.FAKE_DISH_TOKEN);
         verify(_dishRepo, times(1)).save(dish);
     }
 
@@ -198,7 +197,7 @@ public class DishServicesTest {
     void edit_ShouldUpdateBasicProperties_AndSave() {
         EditDishRequest request = new EditDishRequest();
         request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
-        request.setNewName("  New Steak Name  ");
+        request.setNewName(TestConstants.FAKE_DISH_NAME);
         request.setPrice(1500);
 
         Dishes dish = new Dishes();
@@ -209,7 +208,7 @@ public class DishServicesTest {
 
         _dishServices.edit(request);
 
-        assertEquals("New Steak Name", dish.getName(), "Name should be updated and trimmed");
+        assertEquals(TestConstants.FAKE_DISH_NAME, dish.getName(), "Name should be updated and trimmed");
         assertEquals(1500, dish.getPrice(), "Price should be updated");
         verify(_dishRepo, times(1)).save(dish);
         verifyNoInteractions(_s3Services);
@@ -221,16 +220,16 @@ public class DishServicesTest {
     void edit_ShouldUpdateCategoryAndIngredients() {
         EditDishRequest request = new EditDishRequest();
         request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
-        request.setCategoryToken("CAT_MAIN");
-        request.setIngredientTokens(List.of("ING_BEEF"));
+        request.setCategoryToken(TestConstants.FAKE_DISH_CATEGORY);
+        request.setIngredientTokens(List.of(TestConstants.INGREDIENT_PL));
 
         Dishes dish = new Dishes();
         DishesCategories category = new DishesCategories();
         Ingredients ingredient = new Ingredients();
 
         when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
-        when(_dishRepo.findCategoryByToken("CAT_MAIN")).thenReturn(category);
-        when(_ingredientsRepo.findByToken("ING_BEEF")).thenReturn(ingredient);
+        when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY)).thenReturn(category);
+        when(_ingredientsRepo.findByToken(TestConstants.INGREDIENT_PL)).thenReturn(ingredient);
 
         _dishServices.edit(request);
 
@@ -299,12 +298,12 @@ public class DishServicesTest {
     @DisplayName("add: Should create basic dish with trimmed name, set available to true, and save")
     void add_ShouldCreateBasicDish_AndSave() {
         AddDishRequest request = new AddDishRequest();
-        request.setName("  New Pasta  ");
+        request.setName(TestConstants.FAKE_DISH_NAME);
         request.setPrice(2500);
-        request.setCategoryToken("CAT_PASTA");
+        request.setCategoryToken(TestConstants.FAKE_DISH_CATEGORY);
 
         DishesCategories category = new DishesCategories();
-        when(_dishRepo.findCategoryByToken("CAT_PASTA")).thenReturn(category);
+        when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY)).thenReturn(category);
 
         _dishServices.add(request);
 
@@ -312,7 +311,7 @@ public class DishServicesTest {
         verify(_dishRepo, times(1)).save(dishCaptor.capture());
 
         Dishes savedDish = dishCaptor.getValue();
-        assertEquals("New Pasta", savedDish.getName(), "Name should be trimmed");
+        assertEquals(TestConstants.FAKE_DISH_NAME, savedDish.getName(), "Name should be trimmed");
         assertEquals(2500, savedDish.getPrice(), "Price should be mapped correctly");
         assertEquals(category, savedDish.getCategory(), "Category should be mapped");
         assertTrue(savedDish.isAvailable(), "New dish should be available by default");
@@ -327,10 +326,10 @@ public class DishServicesTest {
     @DisplayName("add: Should correctly map category, ingredients, and upload photo to S3")
     void add_ShouldCreateDishWithIngredientsAndPhoto() throws IOException {
         AddDishRequest request = new AddDishRequest();
-        request.setName("Pizza");
+        request.setName(TestConstants.FAKE_DISH_NAME);
         request.setPrice(3000);
-        request.setCategoryToken("CAT_MAIN");
-        request.setIngredientTokens(List.of("ING_CHEESE"));
+        request.setCategoryToken(TestConstants.FAKE_DISH_CATEGORY);
+        request.setIngredientTokens(List.of(TestConstants.INGREDIENT_EN));
 
         MultipartFile mockPhoto = mock(MultipartFile.class);
         when(mockPhoto.isEmpty()).thenReturn(false);
@@ -345,8 +344,8 @@ public class DishServicesTest {
         DishesCategories category = new DishesCategories();
         Ingredients cheese = new Ingredients();
 
-        when(_dishRepo.findCategoryByToken("CAT_MAIN")).thenReturn(category);
-        when(_ingredientsRepo.findByToken("ING_CHEESE")).thenReturn(cheese);
+        when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY)).thenReturn(category);
+        when(_ingredientsRepo.findByToken(TestConstants.INGREDIENT_EN)).thenReturn(cheese);
         when(_s3Services.generateUniqFileName("pizza.png")).thenReturn("uuid_pizza.png");
         when(_s3Services.uploadFromStream(mockInputStream, "uuid_pizza.png", "image/png", 2048L))
                 .thenReturn("uuid_pizza.png");
@@ -357,7 +356,7 @@ public class DishServicesTest {
         verify(_dishRepo, times(1)).save(dishCaptor.capture());
 
         Dishes savedDish = dishCaptor.getValue();
-        assertEquals("Pizza", savedDish.getName());
+        assertEquals(TestConstants.FAKE_DISH_NAME, savedDish.getName());
         assertEquals(category, savedDish.getCategory());
         assertEquals(1, savedDish.getIngredients().size());
         assertTrue(savedDish.getIngredients().contains(cheese));
@@ -370,9 +369,9 @@ public class DishServicesTest {
     @DisplayName("add: Should throw RuntimeException when reading photo input stream fails")
     void add_ShouldThrowRuntimeException_WhenPhotoStreamFails() throws IOException {
         AddDishRequest request = new AddDishRequest();
-        request.setName("Pizza");
+        request.setName(TestConstants.FAKE_DISH_NAME);
         request.setPrice(3000);
-        request.setCategoryToken("CAT_MAIN");
+        request.setCategoryToken(TestConstants.FAKE_DISH_CATEGORY);
 
         MultipartFile mockPhoto = mock(MultipartFile.class);
         when(mockPhoto.isEmpty()).thenReturn(false);
@@ -381,7 +380,7 @@ public class DishServicesTest {
 
         request.setPhoto(mockPhoto);
 
-        when(_dishRepo.findCategoryByToken("CAT_MAIN")).thenReturn(new DishesCategories());
+        when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY)).thenReturn(new DishesCategories());
         when(_s3Services.generateUniqFileName("pizza.png")).thenReturn("uuid_pizza.png");
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> _dishServices.add(request));
@@ -393,23 +392,20 @@ public class DishServicesTest {
     @Test
     @DisplayName("getDictionary: Returns empty list when repository returns empty")
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
-        // Arrange
         when(_dishRepo.findAllCategories()).thenReturn(new java.util.ArrayList<>());
 
-        // Act
-        java.util.List<EntityResponse> result = _dishServices.getDictionary();
+        List<EntityResponse> result = _dishServices.getDictionary();
 
-        // Assert
         assertTrue(result.isEmpty());
     }
 
     @Test
     @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale("pl"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
 
         DishesCategories category = new DishesCategories();
-        category.setToken("SOUPS");
+        category.setToken(TestConstants.TOKEN_SOUPS);
         category.setNamePl("Zupy PL");
         category.setNameEn("Soups EN");
 
@@ -418,17 +414,17 @@ public class DishServicesTest {
         java.util.List<EntityResponse> result = _dishServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("SOUPS", result.getFirst().getToken());
+        assertEquals(TestConstants.TOKEN_SOUPS, result.getFirst().getToken());
         assertEquals("Zupy PL", result.getFirst().getName());
     }
 
     @Test
     @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale("en"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
 
         DishesCategories category = new DishesCategories();
-        category.setToken("DESSERTS");
+        category.setToken(TestConstants.TOKEN_DESSERTS);
         category.setNamePl("Desery PL");
         category.setNameEn("Desserts EN");
 
@@ -437,7 +433,7 @@ public class DishServicesTest {
         java.util.List<EntityResponse> result = _dishServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("DESSERTS", result.getFirst().getToken());
+        assertEquals(TestConstants.TOKEN_DESSERTS, result.getFirst().getToken());
         assertEquals("Desserts EN", result.getFirst().getName());
     }
 }

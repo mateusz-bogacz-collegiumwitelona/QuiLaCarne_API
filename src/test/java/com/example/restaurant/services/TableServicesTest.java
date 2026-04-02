@@ -308,9 +308,9 @@ public class TableServicesTest {
     @Test
     @DisplayName("getDictionary: Returns Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale("pl"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
         TableStatus status = new TableStatus();
-        status.setToken("AVAILABLE");
+        status.setToken(TestConstants.STATUS_AVAILABLE);
         status.setNamePl("Wolny PL");
         status.setNameEn("Available EN");
 
@@ -319,16 +319,16 @@ public class TableServicesTest {
         List<EntityResponse> result = _tableServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("AVAILABLE", result.get(0).getToken());
+        assertEquals(TestConstants.STATUS_AVAILABLE, result.get(0).getToken());
         assertEquals("Wolny PL", result.get(0).getName());
     }
 
     @Test
     @DisplayName("getDictionary: Returns English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale("en"));
+        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
         TableStatus status = new TableStatus();
-        status.setToken("CLEANING");
+        status.setToken(TestConstants.STATUS_CLEANING);
         status.setNamePl("Sprzątanie PL");
         status.setNameEn("Cleaning EN");
 
@@ -337,7 +337,7 @@ public class TableServicesTest {
         List<EntityResponse> result = _tableServices.getDictionary();
 
         assertEquals(1, result.size());
-        assertEquals("CLEANING", result.get(0).getToken());
+        assertEquals(TestConstants.STATUS_CLEANING, result.get(0).getToken());
         assertEquals("Cleaning EN", result.get(0).getName());
     }
 }
