@@ -1,7 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.dto.response.EntityResponse;
-import com.example.restaurant.mappers.DictionaryMapper;
+import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
 import com.example.restaurant.services.interfaces.IAllergensServices;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +18,6 @@ public class AllergensServices implements IAllergensServices {
     @Override
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryMapper.map(_allergenRepo.findAll(), lang);
+        return DictionaryHelper.map(_allergenRepo.findAll(), lang);
     }
 }

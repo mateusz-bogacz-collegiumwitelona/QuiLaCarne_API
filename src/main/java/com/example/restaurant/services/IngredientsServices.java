@@ -3,9 +3,8 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.EntityResponse;
-import com.example.restaurant.exceptions.EntityAlreadyExistsException;
+import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.SoftDeleteHelpers;
-import com.example.restaurant.mappers.DictionaryMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -34,34 +33,26 @@ public class IngredientsServices implements IIngredientsServices {
     @Override
     @Auditable(action = "ADD_INGREDIENTS")
     public void add(AddIngredientRequest request) {
-        String namePl = request.getEntity().getNamePl().trim();
-        String nameEn = request.getEntity().getNameEn().trim();
+        Ingredients ingredient = DictionaryHelper.createEntity(
+                Ingredients::new,
+                request.getEntity(),
+                _ingredientsRepo::isNameTaken,
+                "Ingredient already exists"
+        );
 
-        if (_ingredientsRepo.isNameTaken(namePl, nameEn))
-            throw new EntityAlreadyExistsException("Ingredient already exists");
-
-        var allergenTokens = request.getAllergenTokens() != null
+        List<String> allergenTokens = request.getAllergenTokens() != null
                 ? new ArrayList<>(request.getAllergenTokens())
-                : new ArrayList<String>();
+                : new ArrayList<>();
 
         var allergens = _allergensRepo.findAllergens(allergenTokens);
 
-        if (allergenTokens.size() != allergens.size())
+        if (allergenTokens.size() != allergens.size()) {
             throw new IllegalStateException("One or more allergens from the provided list do not exist");
+        }
 
-        int requestedSize = request.getAllergenTokens() != null ? request.getAllergenTokens().size() : 0;
-        if (allergens.size() != requestedSize)
-            throw new RuntimeException("One or more allergens not found");
+        ingredient.setAllergens(new HashSet<>(allergens));
 
-        Ingredients ingredients = new Ingredients();
-        ingredients.setNamePl(request.getEntity().getNamePl());
-        ingredients.setNameEn(request.getEntity().getNameEn());
-        ingredients.setToken(nameEn.toUpperCase().replace(" ", "_"));
-        ingredients.setAllergens(new HashSet<>(allergens));
-
-        _ingredientsRepo.save(ingredients);
-
-
+        _ingredientsRepo.save(ingredient);
     }
 
     @Transactional
@@ -91,6 +82,6 @@ public class IngredientsServices implements IIngredientsServices {
     @Override
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryMapper.map(_ingredientsRepo.findAll(), lang);
+        return DictionaryHelper.map(_ingredientsRepo.findAll(), lang);
     }
 }

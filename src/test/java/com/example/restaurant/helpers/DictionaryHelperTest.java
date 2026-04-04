@@ -1,4 +1,4 @@
-package com.example.restaurant.mappers;
+package com.example.restaurant.helpers;
 
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.response.EntityResponse;
@@ -12,7 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class DictionaryMapperTest {
+public class DictionaryHelperTest {
     private static class DummyEntity extends BaseTranslatedEntity {
         public DummyEntity(String token, String namePl, String nameEn) {
             this.setToken(token);
@@ -24,14 +24,14 @@ public class DictionaryMapperTest {
     @Test
     @DisplayName("map: Should return empty list when entities list is null")
     void map_ShouldReturnEmptyList_WhenEntitiesAreNull() {
-        List<EntityResponse> result = DictionaryMapper.map(null, "pl");
+        List<EntityResponse> result = DictionaryHelper.map(null, "pl");
         assertTrue(result.isEmpty());
     }
 
     @Test
     @DisplayName("map: Should return empty list when entities list is empty")
     void map_ShouldReturnEmptyList_WhenEntitiesAreEmpty() {
-        List<EntityResponse> result = DictionaryMapper.map(new ArrayList<>(), "en");
+        List<EntityResponse> result = DictionaryHelper.map(new ArrayList<>(), "en");
         assertTrue(result.isEmpty());
     }
 
@@ -43,7 +43,7 @@ public class DictionaryMapperTest {
                 new DummyEntity(TestConstants.TOKEN_2, "Gruszka", "Pear")
         );
 
-        List<EntityResponse> result = DictionaryMapper.map(entities, TestConstants.LANG_PL);
+        List<EntityResponse> result = DictionaryHelper.map(entities, TestConstants.LANG_PL);
 
         assertEquals(2, result.size());
         assertEquals(TestConstants.TOKEN_1, result.get(0).getToken());
@@ -60,7 +60,7 @@ public class DictionaryMapperTest {
                 new DummyEntity(TestConstants.TOKEN_2, "Gruszka", "Pear")
         );
 
-        List<EntityResponse> result = DictionaryMapper.map(entities, TestConstants.LANG_EN);
+        List<EntityResponse> result = DictionaryHelper.map(entities, TestConstants.LANG_EN);
 
         assertEquals(2, result.size());
         assertEquals("Apple", result.get(0).getName());
@@ -72,8 +72,8 @@ public class DictionaryMapperTest {
     void map_ShouldIgnoreCase_WhenLangIsPlWithDifferentCases() {
         List<DummyEntity> entities = List.of(new DummyEntity("T1", "Polski", "English"));
 
-        assertEquals("Polski", DictionaryMapper.map(entities, "PL").getFirst().getName());
-        assertEquals("Polski", DictionaryMapper.map(entities, "Pl").getFirst().getName());
-        assertEquals("Polski", DictionaryMapper.map(entities, "pl").getFirst().getName());
+        assertEquals("Polski", DictionaryHelper.map(entities, "PL").getFirst().getName());
+        assertEquals("Polski", DictionaryHelper.map(entities, "Pl").getFirst().getName());
+        assertEquals("Polski", DictionaryHelper.map(entities, "pl").getFirst().getName());
     }
 }

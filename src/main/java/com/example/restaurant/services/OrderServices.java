@@ -9,7 +9,7 @@ import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
-import com.example.restaurant.mappers.DictionaryMapper;
+import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
@@ -315,13 +315,13 @@ public class OrderServices implements IOrderServices {
     @Override
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryMapper.map(_orderRepo.findAllStatuses(), lang);
+        return DictionaryHelper.map(_orderRepo.findAllStatuses(), lang);
     }
 
     @Override
     public List<EntityResponse> getItemStatusesDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryMapper.map(_orderRepo.findAllItemStatuses(), lang);
+        return DictionaryHelper.map(_orderRepo.findAllItemStatuses(), lang);
     }
 
     private String normalizeNote(String note) {

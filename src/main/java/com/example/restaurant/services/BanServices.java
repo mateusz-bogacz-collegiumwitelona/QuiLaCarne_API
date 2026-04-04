@@ -4,7 +4,7 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.EntityResponse;
-import com.example.restaurant.mappers.DictionaryMapper;
+import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IBanRepository;
@@ -85,7 +85,7 @@ public class BanServices implements IBanServices {
     @Override
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryMapper.map(_banRepo.findAllStatuses(), lang);
+        return DictionaryHelper.map(_banRepo.findAllStatuses(), lang);
     }
 
     private void validatePermissions(Users admin, Users client) {

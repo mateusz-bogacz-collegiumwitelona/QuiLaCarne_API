@@ -7,8 +7,8 @@ import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.ReportListResponse;
+import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
-import com.example.restaurant.mappers.DictionaryMapper;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.IReportRepository;
@@ -160,6 +160,6 @@ public class ReportServices implements IReportServices {
     @Override
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryMapper.map(_reportRepo.findAllStatuses(), lang);
+        return DictionaryHelper.map(_reportRepo.findAllStatuses(), lang);
     }
 }
