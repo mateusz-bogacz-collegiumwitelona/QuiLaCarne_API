@@ -12,4 +12,6 @@ public interface IBanServices {
     void create(CreateBanDomain domain);
 
     List<EntityResponse> getDictionary();
+
+    void processExpiredBans();
 }

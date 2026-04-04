@@ -1,22 +1,20 @@
 package com.example.restaurant.services;
 
-import jakarta.mail.internet.MimeMessage;
+import com.example.restaurant.dto.domain.EmailDomain;
+import com.example.restaurant.services.queue.EmailQueueProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailServices {
-    private final JavaMailSender _mailSender;
-    private final TemplateEngine _templateEngine;
+    private final EmailQueueProducer _emailQueue;
 
     @Value("${app.cors.allowed-origins}")
     private String _appUrl;
@@ -25,44 +23,45 @@ public class EmailServices {
     public void sendActivationEmail(String to, String username, String token) {
         validateInputs(to, username, token);
 
-        Context context = new Context();
-        context.setVariable("username", username);
-        context.setVariable("activationUrl", token);
+        Map<String, Object> variables = Map.of(
+                "username", username,
+                "activationUrl", token
+        );
 
-        sendHtmlEmail(
+        enqueueHtmlEmail(
                 to,
                 "Qui la Carne - Confirm your account",
                 "emails/activation",
-                context,
-                "Confirmation"
+                variables
         );
     }
 
     @Async
     public void sendResetPasswordEmail(String to, String username, String token) {
-        Context context = new Context();
-        context.setVariable("username", username);
-        context.setVariable("resetUrl", token);
+        Map<String, Object> variables = Map.of(
+                "username", username,
+                "resetUrl", token
+        );
 
-        sendHtmlEmail(
+        enqueueHtmlEmail(
                 to,
                 "Qui la Carne - Reset your password",
                 "emails/reset-password",
-                context,
-                "Reset password");
+                variables
+        );
     }
 
     @Async
     public void sendEmailChangeVerification(String to, String token) {
-        Context context = new Context();
-        context.setVariable("validationUrl", token);
+        Map<String, Object> variables = Map.of(
+                "validationUrl", token
+        );
 
-        sendHtmlEmail(
+        enqueueHtmlEmail(
                 to,
                 "Qui la Carne - Confirm your new email address",
                 "emails/email-update",
-                context,
-                "Email change verification"
+                variables
         );
     }
 
@@ -70,40 +69,17 @@ public class EmailServices {
     public void sendEmailSetBan(String to, String userName, String reason) {
         validateInputs(to, userName, reason);
 
-        Context context = new Context();
-        context.setVariable("username", userName);
-        context.setVariable("reason", reason);
+        Map<String, Object> variables = Map.of(
+                "username", userName,
+                "reason", reason
+        );
 
-        sendHtmlEmail(
+        enqueueHtmlEmail(
                 to,
                 "Qui la Carne - Account Suspension Notice",
                 "emails/set_ban",
-                context,
-                "Create Ban"
+                variables
         );
-    }
-
-    private void sendHtmlEmail(
-            String to,
-            String subject,
-            String templateName,
-            Context context,
-            String actionName
-    ) {
-        try {
-            String html = _templateEngine.process(templateName, context);
-
-            MimeMessage message = _mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-
-            _mailSender.send(message);
-            log.info("{} email sent to {}", actionName, to);
-        } catch (Exception ex) {
-            log.error("Failed to send {} email to {}: {}", actionName, to, ex.getMessage(), ex);
-        }
     }
 
     private void validateInputs(String to, String... params) {
@@ -115,5 +91,15 @@ public class EmailServices {
                 throw new IllegalArgumentException("Required email context variable is missing or blank");
             }
         }
+    }
+
+    private void enqueueHtmlEmail(
+            String to,
+            String subject,
+            String templateName,
+            Map<String, Object> variables
+    ) {
+        EmailDomain job = new EmailDomain(to, subject, templateName, variables);
+        _emailQueue.enqueueEmail(job);
     }
 }

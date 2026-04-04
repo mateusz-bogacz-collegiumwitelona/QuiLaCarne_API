@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -86,6 +87,30 @@ public class BanServices implements IBanServices {
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_banRepo.findAllStatuses(), lang);
+    }
+
+    @Override
+    @Transactional
+    public void processExpiredBans() {
+        OffsetDateTime now = OffsetDateTime.now();
+        List<Bans> expiredBans = _banRepo.findExpiredActiveBans(now);
+
+        if (expiredBans.isEmpty()) return;
+
+        var expiredStatus = _banRepo.findStatusByToken("EXPIRED");
+
+        for (Bans ban : expiredBans) {
+            ban.setIsActive(false);
+            ban.getBanStatuses().clear();
+            ban.getBanStatuses().add(expiredStatus);
+
+            Users user = ban.getUser();
+            user.setIsActive(true);
+
+            _banRepo.save(ban);
+            _userRepo.save(user);
+            log.info("User {} has been automatically unbanned.", user.getUsername());
+        }
     }
 
     private void validatePermissions(Users admin, Users client) {

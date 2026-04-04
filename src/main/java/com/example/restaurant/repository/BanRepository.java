@@ -9,6 +9,7 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaBanStatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Repository
@@ -31,5 +32,10 @@ public class BanRepository implements IBanRepository {
     @Override
     public List<BanStatus> findAllStatuses() {
         return _jpaStatusRepo.findAll();
+    }
+
+    @Override
+    public List<Bans> findExpiredActiveBans(OffsetDateTime time) {
+        return _jpaBanRepo.findByIsActiveTrueAndExpiresAtBefore(time);
     }
 }
