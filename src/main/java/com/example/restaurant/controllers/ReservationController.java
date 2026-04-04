@@ -146,7 +146,8 @@ public class ReservationController {
 
     @Operation(
             summary = "Get today's reservations (Waiter/Manager)",
-            description = "Retrieves a paginated list of all reservations scheduled for today. Includes basic table and user details."
+            description = "Retrieves a paginated list of all reservations scheduled for today. " +
+                    "Includes basic table and user details."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -286,7 +287,9 @@ public class ReservationController {
     })
     @PreAuthorize("hasAnyRole('ROLE_WAITER')")
     @PatchMapping("/{token}/absent")
-    public ResponseEntity<ResultHandler<Void>> absent(@Parameter(description = "Reservation token") @PathVariable String token) {
+    public ResponseEntity<ResultHandler<Void>> absent(
+            @Parameter(description = "Reservation token") @PathVariable String token
+    ) {
         _reservationServices.isAbsent(token);
         return ResponseEntity.ok(
                 ResultHandler.success("Absent success", HttpStatus.OK.value())

@@ -6,8 +6,11 @@ import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.InvalidDateException;
+import com.example.restaurant.models.Users;
+import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IUserServices;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -54,7 +58,13 @@ public class AuthServicesTest {
     private Authentication _auth;
 
     @Mock
-    private UserDetails _userDetails;
+    private TwoFactorServices _2faServices;
+
+    @Mock
+    private IUserRepository _userRepo;
+
+    @Mock
+    private Users _user;
 
     private RegisterRequest _registerRequest;
 
@@ -68,23 +78,50 @@ public class AuthServicesTest {
     }
 
     @Test
-    @DisplayName("Authenticate: Success")
-    void authenticate_ShouldReturnAuthResponse_WhenCredentialsAreValid() {
+    @DisplayName("Authenticate: Success (2FA Disabled)")
+    void authenticate_ShouldReturnAuthResponse_WhenCredentialsAreValid_And_2FA_Disabled() {
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setUsername(TestConstants.FAKE_USERNAME);
         loginRequest.setPassword(TestConstants.FAKE_PASSWORD);
 
         when(_authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(_auth);
-        when(_auth.getPrincipal()).thenReturn(_userDetails);
-        when(_userDetails.isEnabled()).thenReturn(true);
-        when(_userDetails.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
+        when(_auth.getPrincipal()).thenReturn(_user);
+        when(_user.getIsTwoFactorEnabled()).thenReturn(false);
+        when(_user.isEnabled()).thenReturn(true);
+        when(_user.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
         when(_jwtServices.generateToken(any(UserDetails.class))).thenReturn(TestConstants.FAKE_ACTION_TOKEN);
 
         AuthResponse result = _authServices.authenticate(loginRequest);
 
         assertNotNull(result);
+        assertFalse(result.isRequires2fa());
         assertEquals(TestConstants.FAKE_ACTION_TOKEN, result.getToken());
         assertEquals(TestConstants.FAKE_USERNAME, result.getUsername());
+    }
+
+    @Test
+    @DisplayName("Authenticate: Pre-Auth Token (2FA Enabled)")
+    void authenticate_ShouldReturnPreAuthToken_WhenCredentialsAreValid_And_2FA_Enabled() {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setUsername(TestConstants.FAKE_USERNAME);
+        loginRequest.setPassword(TestConstants.FAKE_PASSWORD);
+
+        String preAuthToken = "fake-pre-auth-token";
+
+        when(_authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(_auth);
+        when(_auth.getPrincipal()).thenReturn(_user);
+        when(_user.getIsTwoFactorEnabled()).thenReturn(true);
+        when(_user.getToken()).thenReturn(TestConstants.FAKE_USER_TOKEN);
+        when(_user.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
+        when(_tokenServices.createToken(TestConstants.FAKE_USER_TOKEN, TokenTypeEnum.PRE_AUTH_2FA, 5)).thenReturn(preAuthToken);
+
+        AuthResponse result = _authServices.authenticate(loginRequest);
+
+        assertNotNull(result);
+        assertTrue(result.isRequires2fa());
+        assertEquals(preAuthToken, result.getToken());
+        assertEquals(TestConstants.FAKE_USERNAME, result.getUsername());
+        verify(_jwtServices, never()).generateToken(any());
     }
 
     @Test
@@ -92,10 +129,65 @@ public class AuthServicesTest {
     void authenticate_ShouldThrowException_WhenUserIsDisabled() {
         LoginRequest loginRequest = new LoginRequest();
         when(_authManager.authenticate(any())).thenReturn(_auth);
-        when(_auth.getPrincipal()).thenReturn(_userDetails);
-        when(_userDetails.isEnabled()).thenReturn(false);
+        when(_auth.getPrincipal()).thenReturn(_user);
+        when(_user.getIsTwoFactorEnabled()).thenReturn(false);
+        when(_user.isEnabled()).thenReturn(false);
 
         assertThrows(AuthenticationException.class, () -> _authServices.authenticate(loginRequest));
+    }
+
+    @Test
+    @DisplayName("Verify 2FA Login: Success")
+    void verify2faLogin_ShouldReturnJwtToken_WhenCodeIsValid() {
+        Verify2faLoginRequest request = new Verify2faLoginRequest();
+        request.setPreAuthToken("valid-pre-auth-token");
+        request.setCode(123456);
+
+        String fakeSecret = "SUPER_SECRET_KEY";
+
+        when(_tokenServices.validateToken("valid-pre-auth-token", TokenTypeEnum.PRE_AUTH_2FA)).thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(_user);
+        when(_user.getMfaSecret()).thenReturn(fakeSecret);
+        when(_2faServices.isOptValid(fakeSecret, 123456)).thenReturn(true);
+        when(_user.isEnabled()).thenReturn(true);
+        when(_user.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
+        when(_jwtServices.generateToken(_user)).thenReturn(TestConstants.FAKE_ACTION_TOKEN);
+
+        AuthResponse result = _authServices.verify2faLogin(request);
+
+        assertNotNull(result);
+        assertFalse(result.isRequires2fa());
+        assertEquals(TestConstants.FAKE_ACTION_TOKEN, result.getToken());
+        assertEquals(TestConstants.FAKE_USERNAME, result.getUsername());
+    }
+
+    @Test
+    @DisplayName("Verify 2FA Login: Throws Exception when Token is invalid")
+    void verify2faLogin_ShouldThrowException_WhenTokenIsInvalid() {
+        Verify2faLoginRequest request = new Verify2faLoginRequest();
+        request.setPreAuthToken("invalid-pre-auth-token");
+
+        when(_tokenServices.validateToken("invalid-pre-auth-token", TokenTypeEnum.PRE_AUTH_2FA)).thenReturn(Optional.empty());
+
+        assertThrows(AuthenticationException.class, () -> _authServices.verify2faLogin(request));
+    }
+
+    @Test
+    @DisplayName("Verify 2FA Login: Throws Exception when Code is invalid")
+    void verify2faLogin_ShouldThrowException_WhenCodeIsInvalid() {
+        Verify2faLoginRequest request = new Verify2faLoginRequest();
+        request.setPreAuthToken("valid-pre-auth-token");
+        request.setCode(999999);
+
+        String fakeSecret = "SUPER_SECRET_KEY";
+
+        when(_tokenServices.validateToken("valid-pre-auth-token", TokenTypeEnum.PRE_AUTH_2FA)).thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
+        when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(_user);
+        when(_user.getMfaSecret()).thenReturn(fakeSecret);
+        when(_2faServices.isOptValid(fakeSecret, 999999)).thenReturn(false);
+
+        assertThrows(BadCredentialsException.class, () -> _authServices.verify2faLogin(request));
+        verify(_jwtServices, never()).generateToken(any());
     }
 
     @Test

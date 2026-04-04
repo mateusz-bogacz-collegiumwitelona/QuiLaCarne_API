@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.*;
+import com.example.restaurant.dto.response.Generate2faResponse;
 import com.example.restaurant.dto.response.UserListResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
@@ -43,6 +44,7 @@ public class UserServices implements IUserServices {
     private final IRoleRepository _roleRepository;
     private final PasswordEncoder _passwordEncoder;
     private final IVerificationTokenServices _tokenServices;
+    private final TwoFactorServices _2faServices;
 
     private final String ROLE_MANAGER = "ROLE_MANAGER";
     private final String ROLE_WAITER = "ROLE_WAITER";
@@ -383,6 +385,61 @@ public class UserServices implements IUserServices {
         return baseUserName;
     }
 
+    @Override
+    @Transactional
+    @Auditable(action = "GENERATE_2FA_SECRET")
+    public Generate2faResponse generate2fa(String userToken) {
+        Users user = _userRepo.findByToken(userToken);
+
+        if (user.getIsTwoFactorEnabled() != null && user.getIsTwoFactorEnabled())
+            throw new IllegalStateException("2FA is already enabled for this user");
+
+        String secret = _2faServices.generateNewSecret();
+
+        user.setMfaSecret(secret);
+        _userRepo.save(user);
+
+        String qrUriCode = _2faServices.generateQrCodeImageUri(secret, user.getUsername());
+
+        return Generate2faResponse.builder()
+                .qrCodeUri(qrUriCode)
+                .manualCode(secret)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "ENABLE_2FA")
+    public void verifyAndEnable2fa(String userToken, Verify2faRequest request) {
+        Users user = _userRepo.findByToken(userToken);
+
+        if (user.getIsTwoFactorEnabled() != null && user.getIsTwoFactorEnabled())
+            throw new IllegalStateException("2FA is already enabled");
+
+        if (user.getMfaSecret() == null)
+            throw new IllegalStateException("2FA secret is not generated yet. Please call generate first.");
+
+        boolean isValid = _2faServices.isOptValid(user.getMfaSecret(), request.getCode());
+
+        if (!isValid) throw new IllegalStateException("Invalid 2FA code. Try again.");
+
+        user.setIsTwoFactorEnabled(true);
+        _userRepo.save(user);
+    }
+
+    private void deleteAccount(String userToken) {
+        Users user = _userRepo.findByToken(userToken);
+
+        user.setNormalizedEmail(SoftDeleteHelpers.markAsDelete(user.getNormalizedEmail()));
+        user.setNormalizedUsername(SoftDeleteHelpers.markAsDelete(user.getNormalizedUsername()));
+
+        user.setEmail(SoftDeleteHelpers.markAsDelete(user.getEmail()));
+        user.setUsername(SoftDeleteHelpers.markAsDelete(user.getUsername()));
+        user.setIsActive(false);
+        user.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        _userRepo.save(user);
+    }
+
     private String buildAndSaveUser(RegisterRequest request, String userRole, boolean isActive) {
         if (_userRepo.findByNormalizedEmail(request.getEmail().toUpperCase().trim()).isPresent())
             throw new EntityAlreadyExistsException("User with this email already exists");
@@ -403,18 +460,5 @@ public class UserServices implements IUserServices {
 
         _userRepo.save(user);
         return user.getToken();
-    }
-
-    private void deleteAccount(String userToken) {
-        Users user = _userRepo.findByToken(userToken);
-
-        user.setNormalizedEmail(SoftDeleteHelpers.markAsDelete(user.getNormalizedEmail()));
-        user.setNormalizedUsername(SoftDeleteHelpers.markAsDelete(user.getNormalizedUsername()));
-
-        user.setEmail(SoftDeleteHelpers.markAsDelete(user.getEmail()));
-        user.setUsername(SoftDeleteHelpers.markAsDelete(user.getUsername()));
-        user.setIsActive(false);
-        user.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
-        _userRepo.save(user);
     }
 }

@@ -38,8 +38,12 @@ public class Users extends BaseEntity implements UserDetails {
     private String pendingEmail;
 
     private String password;
-    private Boolean twoFactorEnabled;
+
+    @Column(name = "is_two_factor_enabled")
+    private Boolean isTwoFactorEnabled = false;
+
     private String mfaSecret;
+
     private Boolean isActive;
 
     @ManyToMany(fetch = FetchType.EAGER)

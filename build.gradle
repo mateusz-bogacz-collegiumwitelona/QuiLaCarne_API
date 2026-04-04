@@ -81,6 +81,8 @@ dependencies {
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
     implementation 'com.bucket4j:bucket4j-redis:8.10.1'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    implementation 'com.warrenstrange:googleauth:1.5.0'
 }
 
 tasks.named('test') {

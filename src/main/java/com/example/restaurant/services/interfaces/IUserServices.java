@@ -2,6 +2,7 @@ package com.example.restaurant.services.interfaces;
 
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.*;
+import com.example.restaurant.dto.response.Generate2faResponse;
 import com.example.restaurant.dto.response.UserListResponse;
 import com.example.restaurant.helpers.PagedResult;
 
@@ -41,4 +42,8 @@ public interface IUserServices {
     PagedResult<UserListResponse> getUserList(UserFilterRequest filter, PaggedRequest pagged);
 
     String createOAuthUser(String email);
+
+    Generate2faResponse generate2fa(String userToken);
+
+    void verifyAndEnable2fa(String userToken, Verify2faRequest request);
 }

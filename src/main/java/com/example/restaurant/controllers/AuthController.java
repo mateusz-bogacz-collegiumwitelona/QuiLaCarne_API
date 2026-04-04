@@ -5,6 +5,7 @@ import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IAuthServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,11 +29,11 @@ public class AuthController {
     private final IAuthServices _authServices;
 
     @Operation(
-            summary = "Authenticate user and receive a JWT Bearer token",
+            summary = "Authenticate user (Login Step 1)",
             description = "Authenticates a user using their username (or email) and password. " +
-                    "If credentials are valid, a JWT token is returned in the response body. " +
-                    "This token must be included in the 'Authorization: " +
-                    "Bearer <token>' header for all protected requests.",
+                    "If credentials are valid and 2FA is OFF, a final JWT token is returned. " +
+                    "If 2FA is ON, a Pre-Auth token is returned and the 'requires2fa' flag is set to true. " +
+                    "In that case, the client must proceed to the /verify-2fa endpoint.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = "application/json",
@@ -59,7 +60,8 @@ public class AuthController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "User successfully logged in, token returned",
+                    description = "Login successful. " +
+                            "Returns either a final JWT Token or a Pre-Auth token if 2FA is required.",
                     content = @Content(schema = @Schema(implementation = ResultHandler.class))
             ),
             @ApiResponse(responseCode = "401", description = "Invalid username/email or password"),
@@ -70,7 +72,7 @@ public class AuthController {
     public ResponseEntity<ResultHandler<AuthResponse>> login(@RequestBody LoginRequest request) {
         var response = _authServices.authenticate(request);
         return ResponseEntity.ok(ResultHandler.success(
-                "Login successful",
+                "Login processed successfully",
                 HttpStatus.OK.value(),
                 response
         ));
@@ -189,6 +191,33 @@ public class AuthController {
         var response = _authServices.authenticateWithGoogle(request);
         return ResponseEntity.ok(ResultHandler.success(
                 "Login successful",
+                HttpStatus.OK.value(),
+                response
+        ));
+    }
+
+    @Operation(
+            summary = "Verify 2FA code and get JWT Token",
+            description = "Validates the 6-digit 2FA code along with the Pre-Auth token. " +
+                    "If valid, returns the final JWT Bearer token giving full access to the system."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "2FA verified successfully, JWT token returned",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid 2FA code"),
+            @ApiResponse(responseCode = "401", description = "Pre-Auth token is invalid or expired"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/verify-2fa")
+    public ResponseEntity<ResultHandler<AuthResponse>> verify2faLogin(
+            @Valid @RequestBody Verify2faLoginRequest request
+    ) {
+        var response = _authServices.verify2faLogin(request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "2FA verification successful",
                 HttpStatus.OK.value(),
                 response
         ));

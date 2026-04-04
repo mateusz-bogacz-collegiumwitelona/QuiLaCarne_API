@@ -39,10 +39,15 @@ public class UserServicesTest {
 
     @Mock
     private IRoleRepository _roleRepository;
+
     @Mock
     private PasswordEncoder _passwordEncoder;
+
     @Mock
     private IVerificationTokenServices _tokenServices;
+
+    @Mock
+    private TwoFactorServices _2faServices;
 
     @InjectMocks
     private UserServices _userServices;
@@ -726,5 +731,91 @@ public class UserServicesTest {
                         user.getPassword().equals("hashed_google_password") &&
                         user.getRoles().contains(clientRole)
         ));
+    }
+
+    @Test
+    @DisplayName("Generate 2FA: Success")
+    void generate2fa_ShouldReturnResponse_WhenValid() {
+        String userToken = "user-token";
+        Users user = new Users();
+        user.setUsername("Mati");
+        user.setIsTwoFactorEnabled(false);
+
+        String fakeSecret = "JBSWY3DPEHPK3PXP";
+        String fakeQrUri = "otpauth://totp/QuiLaCarne:Mati?secret=JBSWY3DPEHPK3PXP";
+
+        when(_userRepo.findByToken(userToken)).thenReturn(user);
+        when(_2faServices.generateNewSecret()).thenReturn(fakeSecret);
+        when(_2faServices.generateQrCodeImageUri(fakeSecret, "Mati")).thenReturn(fakeQrUri);
+
+        var response = _userServices.generate2fa(userToken);
+
+        assertNotNull(response);
+        assertEquals(fakeSecret, response.getManualCode());
+        assertEquals(fakeQrUri, response.getQrCodeUri());
+        assertEquals(fakeSecret, user.getMfaSecret());
+        verify(_userRepo).save(user);
+    }
+
+    @Test
+    @DisplayName("Generate 2FA: Throws Exception if already enabled")
+    void generate2fa_ShouldThrowException_WhenAlreadyEnabled() {
+        String userToken = "user-token";
+        Users user = new Users();
+        user.setIsTwoFactorEnabled(true);
+
+        when(_userRepo.findByToken(userToken)).thenReturn(user);
+
+        assertThrows(IllegalStateException.class, () -> _userServices.generate2fa(userToken));
+        verify(_userRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Verify and Enable 2FA: Success")
+    void verifyAndEnable2fa_ShouldEnable_WhenCodeIsValid() {
+        String userToken = "user-token";
+        Verify2faRequest request = new Verify2faRequest();
+        request.setCode(123456);
+
+        Users user = new Users();
+        user.setIsTwoFactorEnabled(false);
+        user.setMfaSecret("SECRET");
+
+        when(_userRepo.findByToken(userToken)).thenReturn(user);
+        when(_2faServices.isOptValid("SECRET", 123456)).thenReturn(true);
+
+        _userServices.verifyAndEnable2fa(userToken, request);
+
+        assertTrue(user.getIsTwoFactorEnabled());
+        verify(_userRepo).save(user);
+    }
+
+    @Test
+    @DisplayName("Verify and Enable 2FA: Throws Exception on invalid code")
+    void verifyAndEnable2fa_ShouldThrowException_WhenCodeIsInvalid() {
+        String userToken = "user-token";
+        Verify2faRequest request = new Verify2faRequest();
+        request.setCode(999999);
+
+        Users user = new Users();
+        user.setMfaSecret("SECRET");
+
+        when(_userRepo.findByToken(userToken)).thenReturn(user);
+        when(_2faServices.isOptValid("SECRET", 999999)).thenReturn(false);
+
+        assertThrows(IllegalStateException.class, () -> _userServices.verifyAndEnable2fa(userToken, request));
+        assertFalse(user.getIsTwoFactorEnabled());
+    }
+
+    @Test
+    @DisplayName("Verify and Enable 2FA: Throws Exception if secret not generated")
+    void verifyAndEnable2fa_ShouldThrowException_WhenSecretMissing() {
+        String userToken = "user-token";
+        Users user = new Users();
+        user.setMfaSecret(null);
+
+        when(_userRepo.findByToken(userToken)).thenReturn(user);
+
+        assertThrows(IllegalStateException.class, () -> _userServices.verifyAndEnable2fa(userToken, new Verify2faRequest()));
     }
 }

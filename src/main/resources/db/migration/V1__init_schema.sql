@@ -86,20 +86,20 @@ CREATE TABLE guest_report_status
 
 CREATE TABLE users
 (
-    id                  UUID PRIMARY KEY,
-    token               VARCHAR(64) UNIQUE  NOT NULL,
-    username            VARCHAR(100) UNIQUE NOT NULL,
-    normalized_username VARCHAR(100) UNIQUE NOT NULL,
-    email               VARCHAR(255) UNIQUE NOT NULL,
-    normalized_email    VARCHAR(255) UNIQUE NOT NULL,
-    pending_email       VARCHAR(255) UNIQUE,
-    password            VARCHAR(255)        NOT NULL,
-    two_factor_enabled  BOOLEAN     DEFAULT FALSE,
-    mfa_secret          VARCHAR(255),
-    is_active           BOOLEAN     DEFAULT FALSE,
-    created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    deleted_at          TIMESTAMPTZ DEFAULT NULL
+    id                    UUID PRIMARY KEY,
+    token                 VARCHAR(64) UNIQUE  NOT NULL,
+    username              VARCHAR(100) UNIQUE NOT NULL,
+    normalized_username   VARCHAR(100) UNIQUE NOT NULL,
+    email                 VARCHAR(255) UNIQUE NOT NULL,
+    normalized_email      VARCHAR(255) UNIQUE NOT NULL,
+    pending_email         VARCHAR(255) UNIQUE,
+    password              VARCHAR(255)        NOT NULL,
+    is_two_factor_enabled BOOLEAN     DEFAULT FALSE,
+    mfa_secret            VARCHAR(255),
+    is_active             BOOLEAN     DEFAULT FALSE,
+    created_at            TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at            TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    deleted_at            TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE restaurant_tables

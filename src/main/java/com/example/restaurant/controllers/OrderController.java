@@ -28,7 +28,8 @@ public class OrderController {
 
     @Operation(
             summary = "Get list of order statuses",
-            description = "Retrieves a dictionary list of all order statuses available in the system. The names are translated based on the 'Accept-Language' header."
+            description = "Retrieves a dictionary list of all order statuses available in the system. " +
+                    "The names are translated based on the 'Accept-Language' header."
     )
     @Parameter(
             name = "Accept-Language",
@@ -59,7 +60,8 @@ public class OrderController {
 
     @Operation(
             summary = "Get list of order item statuses",
-            description = "Retrieves a dictionary list of all order item statuses available in the system. The names are translated based on the 'Accept-Language' header."
+            description = "Retrieves a dictionary list of all order item statuses available in the system. " +
+                    "The names are translated based on the 'Accept-Language' header."
     )
     @Parameter(
             name = "Accept-Language",
@@ -90,7 +92,8 @@ public class OrderController {
 
     @Operation(
             summary = "Add a new order status",
-            description = "Creates a new order status in the system. The English name is automatically used to generate a unique token. Requires MANAGER role."
+            description = "Creates a new order status in the system. " +
+                    "The English name is automatically used to generate a unique token. Requires MANAGER role."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -115,7 +118,8 @@ public class OrderController {
 
     @Operation(
             summary = "Add a new order item status",
-            description = "Creates a new order item status in the system. The English name is automatically used to generate a unique token. Requires MANAGER role."
+            description = "Creates a new order item status in the system. " +
+                    "The English name is automatically used to generate a unique token. Requires MANAGER role."
     )
     @ApiResponses(value = {
             @ApiResponse(

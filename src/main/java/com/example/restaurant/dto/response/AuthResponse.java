@@ -16,4 +16,6 @@ public class AuthResponse {
 
     @Schema(description = "Authenticated user's login")
     private String username;
+
+    private boolean requires2fa;
 }

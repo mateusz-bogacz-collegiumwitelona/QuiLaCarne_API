@@ -7,8 +7,11 @@ import com.example.restaurant.dto.request.LoginRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.InvalidDateException;
+import com.example.restaurant.models.Users;
+import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
 import com.example.restaurant.services.interfaces.IUserServices;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
@@ -21,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -39,6 +43,8 @@ public class AuthServices implements IAuthServices {
     private final UserDetailsService _userDetailsService;
     private final IUserServices _userServices;
     private final IVerificationTokenServices _tokenServices;
+    private final IUserRepository _userRepo;
+    private final TwoFactorServices _2faServices;
 
     @Value("${application.security.google.client-id}")
     private String googleClientId;
@@ -53,9 +59,23 @@ public class AuthServices implements IAuthServices {
                 )
         );
 
-        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        Users user = (Users) auth.getPrincipal();
 
-        return buildSuccessAuthResponse(userDetails);
+        if (user.getIsTwoFactorEnabled() != null && user.getIsTwoFactorEnabled()) {
+            String preAuthToken = _tokenServices.createToken(
+                    user.getToken(),
+                    TokenTypeEnum.PRE_AUTH_2FA,
+                    5
+            );
+
+            return AuthResponse.builder()
+                    .token(preAuthToken)
+                    .username(user.getUsername())
+                    .requires2fa(true)
+                    .build();
+        }
+
+        return buildSuccessAuthResponse(user);
     }
 
     @Auditable(action = "USER_REGISTERED")
@@ -164,6 +184,30 @@ public class AuthServices implements IAuthServices {
         }
     }
 
+    @Auditable(action = "USER_LOGIN_2FA")
+    @Transactional
+    @Override
+    public AuthResponse verify2faLogin(Verify2faLoginRequest request) {
+        var userTokenOpt = _tokenServices.validateToken(request.getPreAuthToken(), TokenTypeEnum.PRE_AUTH_2FA);
+
+        if (userTokenOpt.isEmpty()) {
+            throw new AuthenticationException("Pre-Auth token is invalid or expired") {
+                @Override
+                public String getMessage() {
+                    return super.getMessage();
+                }
+            };
+        }
+
+        Users user = _userRepo.findByToken(userTokenOpt.get());
+
+        boolean isValid = _2faServices.isOptValid(user.getMfaSecret(), request.getCode());
+
+        if (!isValid) throw new BadCredentialsException("Invalid 2FA code");
+
+        return buildSuccessAuthResponse(user);
+    }
+
     private AuthResponse buildSuccessAuthResponse(UserDetails userDetails) {
         if (!userDetails.isEnabled())
             throw new AuthenticationException("User not enabled") {
@@ -182,6 +226,7 @@ public class AuthServices implements IAuthServices {
         return AuthResponse.builder()
                 .token(jwtToken)
                 .username(userDetails.getUsername())
+                .requires2fa(false)
                 .build();
     }
 

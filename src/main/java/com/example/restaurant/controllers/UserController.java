@@ -1,6 +1,7 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.*;
+import com.example.restaurant.dto.response.Generate2faResponse;
 import com.example.restaurant.dto.response.UserListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
@@ -421,6 +422,64 @@ public class UserController {
                 "Users retrieved successfully",
                 HttpStatus.OK.value(),
                 result
+        ));
+    }
+
+    @Operation(
+            summary = "Generate 2FA QR code for setup",
+            description = "Generates a new 2FA secret and returns a QR code URI along with a manual code. " +
+                    "Does NOT enable 2FA yet. Requires ROLE_MANAGER."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "2FA secret generated successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "2FA is already enabled for this user"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/2fa/generate")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Generate2faResponse>> generate2fa(
+            @AuthenticationPrincipal(expression = "token") String userToken
+    ) {
+        var response = _userServices.generate2fa(userToken);
+        return ResponseEntity.ok(ResultHandler.success(
+                "2FA secret generated successfully",
+                HttpStatus.OK.value(),
+                response
+        ));
+    }
+
+    @Operation(
+            summary = "Verify code and enable 2FA on account",
+            description = "Verifies the 6-digit code from the authenticator app. " +
+                    "If correct, permanently enables 2FA for the manager's account. Requires ROLE_MANAGER."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "2FA enabled successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid 2FA code or secret not generated"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/2fa/enable")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> enable2fa(
+            @AuthenticationPrincipal(expression = "token") String userToken,
+            @Valid @RequestBody Verify2faRequest request
+    ) {
+        _userServices.verifyAndEnable2fa(userToken, request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "2FA enabled successfully",
+                HttpStatus.OK.value()
         ));
     }
 }

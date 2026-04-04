@@ -8,7 +8,7 @@ import java.time.Duration;
 
 public enum RateLimitEnum {
     GUEST(50), // 50 requests per minute
-    CLIENT(100), // 60 requests per minute
+    CLIENT(100), // 100 requests per minute
     STAFF(200); // 200 requests per minute
 
     private final int _bucketSize;
