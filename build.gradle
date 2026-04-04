@@ -59,7 +59,7 @@ dependencies {
 
     annotationProcessor 'org.projectlombok:lombok'
 
-    //Tests
+    // Tests
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
@@ -76,6 +76,11 @@ dependencies {
     // S3
     implementation platform('software.amazon.awssdk:bom:2.42.23')
     implementation 'software.amazon.awssdk:s3'
+
+    // Redis
+    implementation 'com.bucket4j:bucket4j-core:8.10.1'
+    implementation 'com.bucket4j:bucket4j-redis:8.10.1'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
 
 tasks.named('test') {
