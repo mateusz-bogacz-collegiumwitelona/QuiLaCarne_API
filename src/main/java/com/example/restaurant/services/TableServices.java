@@ -15,6 +15,8 @@ import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.services.interfaces.ITableServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,11 @@ public class TableServices implements ITableServices {
     private final ITableRespository _tableRepo;
 
     @Override
+    @Cacheable(
+            value = "tablesList",
+            key = "#request.toString() + '-' + " +
+                    "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
+    )
     public List<TableListResponse> getTables(TableFilterRequest request) {
         if (request.getStartTime() != null && request.getEndTime() != null) {
             if (request.getStartTime().isAfter(request.getEndTime())) {
@@ -69,6 +76,7 @@ public class TableServices implements ITableServices {
     @Override
     @Transactional
     @Auditable(action = "CHANGE_TABLE_STATUS_TO_CLEAN")
+    @CacheEvict(value = "tablesList", allEntries = true)
     public void changeStatusToClean(String tableToken) {
         String CLEANING_STATUS = "CLEANING";
         changeStatus(tableToken, CLEANING_STATUS);
@@ -77,6 +85,7 @@ public class TableServices implements ITableServices {
     @Override
     @Transactional
     @Auditable(action = "CHANGE_TABLE_STATUS_TO_OUT_OF_SERVICE")
+    @CacheEvict(value = "tablesList", allEntries = true)
     public void changeStatusToOutOfService(String tableToken) {
         String OUT_OF_SERVICE = "OUT_OF_SERVICE";
         changeStatus(tableToken, OUT_OF_SERVICE);
@@ -85,6 +94,7 @@ public class TableServices implements ITableServices {
     @Override
     @Transactional
     @Auditable(action = "ADD_TABLE")
+    @CacheEvict(value = "tablesList", allEntries = true)
     public void add(AddTableRequest request) {
         if (_tableRepo.existsByTableNumber(request.getTableNumber()))
             throw new EntityAlreadyExistsException("Table with number " + request.getTableNumber() + " already exists");
@@ -105,6 +115,7 @@ public class TableServices implements ITableServices {
     @Override
     @Transactional
     @Auditable(action = "DELETE_TABLE")
+    @CacheEvict(value = "tablesList", allEntries = true)
     public void delete(String token) {
         RestaurantTables table = _tableRepo.findByToken(token);
         table.setDeletedAt(OffsetDateTime.now());
@@ -127,6 +138,10 @@ public class TableServices implements ITableServices {
     }
 
     @Override
+    @Cacheable(
+            value = "tableStatuses",
+            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
+    )
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_tableRepo.findAllStatuses(), lang);
@@ -135,6 +150,7 @@ public class TableServices implements ITableServices {
     @Override
     @Transactional
     @Auditable(action = "ADD_TABLE_STATUS")
+    @CacheEvict(value = "tableStatuses", allEntries = true)
     public void addStatus(AddEntityRequest request) {
         TableStatus status = DictionaryHelper.createEntity(
                 TableStatus::new,
@@ -149,6 +165,7 @@ public class TableServices implements ITableServices {
     @Override
     @Transactional
     @Auditable(action = "REMOVE_TABLE_STATUS")
+    @CacheEvict(value = "tableStatuses", allEntries = true)
     public void removeStatus(String token) {
         DictionaryHelper.deleteEntity(
                 token,

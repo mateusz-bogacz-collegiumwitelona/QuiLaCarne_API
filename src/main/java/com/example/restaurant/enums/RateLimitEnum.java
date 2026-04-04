@@ -7,8 +7,8 @@ import io.github.bucket4j.Refill;
 import java.time.Duration;
 
 public enum RateLimitEnum {
-    GUEST(10), // 10 requests per minute
-    CLIENT(60), // 60 requests per minute
+    GUEST(50), // 50 requests per minute
+    CLIENT(100), // 60 requests per minute
     STAFF(200); // 200 requests per minute
 
     private final int _bucketSize;

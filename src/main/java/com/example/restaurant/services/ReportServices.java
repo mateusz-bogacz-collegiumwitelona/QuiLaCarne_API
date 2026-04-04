@@ -19,6 +19,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -158,6 +159,10 @@ public class ReportServices implements IReportServices {
     }
 
     @Override
+    @Cacheable(
+            value = "reportStatuses",
+            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
+    )
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_reportRepo.findAllStatuses(), lang);

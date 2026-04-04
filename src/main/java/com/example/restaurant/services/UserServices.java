@@ -19,6 +19,8 @@ import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -48,12 +50,14 @@ public class UserServices implements IUserServices {
 
     @Override
     @Transactional
+    @CacheEvict(value = "usersList", allEntries = true)
     public String create(RegisterRequest request, String userRole, boolean isActive) {
         return buildAndSaveUser(request, userRole, isActive);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = "usersList", allEntries = true)
     public void activeUser(String userToken) {
         Users user = _userRepo.findByToken(userToken);
 
@@ -126,6 +130,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "CONFIRM_EMAIL_CHANGE")
+    @CacheEvict(value = "usersList", allEntries = true)
     public void confirmEmailChange(String userToken, String token) {
         boolean isValidToken = _tokenServices.validateToken(userToken, token, TokenTypeEnum.EMAIL_UPDATE);
 
@@ -147,6 +152,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "UPDATE_USERNAME")
+    @CacheEvict(value = "usersList", allEntries = true)
     public void updateUserName(String userName, String userToken) {
         String normalizedNewName = userName.toUpperCase().trim();
 
@@ -166,6 +172,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "DELETE_ACCOUNT")
+    @CacheEvict(value = "usersList", allEntries = true)
     public void delete(String userToken) {
         deleteAccount(userToken);
     }
@@ -173,6 +180,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "ADD_NEW_EMPLOYEE")
+    @CacheEvict(value = "usersList", allEntries = true)
     public void createEmployee(AddEmployeeRequest request) {
         if (request.isAdmin()) {
             buildAndSaveUser(request.getRegister(), ROLE_MANAGER, true);
@@ -184,6 +192,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "EDIT_EMPLOYEE")
+    @CacheEvict(value = "usersList", allEntries = true)
     public void editEmployee(EditEmployeeRequest request) {
         Users employee = _userRepo.findByToken(request.getEmployeeToken());
 
@@ -236,6 +245,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "CHANGE_EMPLOYEE_ROLE")
+    @CacheEvict(value = "usersList", allEntries = true)
     public void changeEmployeeRole(String adminToken, ChangeEmployeeRoleRequest request) {
         if (adminToken.trim().equals(request.getEmployeeToken().trim()))
             throw new IllegalStateException("You can't change your own role");
@@ -264,6 +274,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "CHANGE_EMPLOYEE_AVALAIBLE")
+    @CacheEvict(value = "usersList", allEntries = true)
     public void blockEmployee(String adminToken, BlockEmployeeRequest request) {
         if (adminToken.trim().equals(request.getEmployeeToken().trim()))
             throw new IllegalStateException("You can't change your own availability");
@@ -281,6 +292,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "DELETE_EMPLOYEE")
+    @CacheEvict(value = "usersList", allEntries = true)
     public void deleteEmployee(String adminToken, String employeeToken) {
         if (adminToken.trim().equals(employeeToken.trim()))
             throw new IllegalStateException("You can't delete yourself");
@@ -289,6 +301,7 @@ public class UserServices implements IUserServices {
     }
 
     @Override
+    @Cacheable(value = "usersList", key = "#filter.toString() + '-' + #pagged.toString()")
     public PagedResult<UserListResponse> getUserList(UserFilterRequest filter, PaggedRequest pagged) {
         Sort sort = Sort.by(Sort.Direction.fromString(filter.getSortDirection()), filter.getSortBy());
 
@@ -341,6 +354,7 @@ public class UserServices implements IUserServices {
     @Override
     @Transactional
     @Auditable(action = "CREATE_OAUTH_USER")
+    @CacheEvict(value = "usersList", allEntries = true)
     public String createOAuthUser(String email) {
         String baseUserName = email.split("@")[0];
         int counter = 1;

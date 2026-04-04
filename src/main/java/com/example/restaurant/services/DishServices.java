@@ -17,6 +17,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -45,6 +48,9 @@ public class DishServices implements IDishServices {
     private String s3BucketName;
 
     @Override
+    @Cacheable(value = "dishMenu",
+            key = "#request.toString() + '-' + #pagged.toString() + '-' + " +
+                    "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
     public PagedResult<DishListResponse> getMenu(DishFilterRequest request, PaggedRequest pagged) {
         String lang = LocaleContextHolder.getLocale().getLanguage();
 
@@ -71,6 +77,7 @@ public class DishServices implements IDishServices {
     @Override
     @Transactional
     @Auditable(action = "REMOVE_DISH")
+    @CacheEvict(value = "dishMenu", allEntries = true)
     public void remove(String dishToken) {
         Dishes dish = _dishRepo.findByToken(dishToken);
 
@@ -88,6 +95,7 @@ public class DishServices implements IDishServices {
     @Override
     @Transactional
     @Auditable(action = "CHANGE_DISH_AVAILABLE")
+    @CacheEvict(value = "dishMenu", allEntries = true)
     public void changeAvailable(ChangeDishAvailableRequest request) {
         Dishes dish = _dishRepo.findByToken(request.getToken());
 
@@ -106,6 +114,7 @@ public class DishServices implements IDishServices {
     @Override
     @Transactional
     @Auditable(action = "EDIT_DISH")
+    @CacheEvict(value = "dishMenu", allEntries = true)
     public void edit(EditDishRequest request) {
         Dishes dish = _dishRepo.findByToken(request.getDishToken());
 
@@ -127,6 +136,7 @@ public class DishServices implements IDishServices {
     @Override
     @Transactional
     @Auditable(action = "ADD_DISH")
+    @CacheEvict(value = "dishMenu", allEntries = true)
     public void add(AddDishRequest request) {
         Dishes dish = new Dishes();
 
@@ -144,9 +154,52 @@ public class DishServices implements IDishServices {
     }
 
     @Override
+    @Cacheable(value = "dishCategories",
+            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_dishRepo.findAllCategories(), lang);
+    }
+
+
+    @Override
+    @Transactional
+    @Auditable(action = "ADD_DISH_CATEGORY")
+    @CacheEvict(value = "dishCategories", allEntries = true)
+    public void addCategory(AddEntityRequest request) {
+        DishesCategories category = DictionaryHelper.createEntity(
+                DishesCategories::new,
+                request,
+                _dishRepo::isCategoryNameTaken,
+                "Dish category already exists"
+        );
+
+        _dishRepo.saveCategory(category);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "REMOVE_DISH_CATEGORY")
+    @Caching(evict = {
+            @CacheEvict(value = "dishCategories", allEntries = true),
+            @CacheEvict(value = "dishMenu", allEntries = true)
+    })
+    public void removeCategory(String token) {
+        DictionaryHelper.deleteEntity(
+                token,
+                _dishRepo::findCategoryByToken,
+                _dishRepo::saveCategory,
+                c -> {
+                    DishesCategories fallback = _dishRepo.findCategoryByToken("OTHER");
+
+                    List<Dishes> affected = _dishRepo.findByCategoryId(c.getId());
+
+                    for (Dishes dish : affected) {
+                        dish.setCategory(fallback);
+                        _dishRepo.save(dish);
+                    }
+                }
+        );
     }
 
     private void updateDishIngredients(Dishes dish, List<String> tokens) {
@@ -159,6 +212,7 @@ public class DishServices implements IDishServices {
             dish.setIngredients(newIngredients);
         }
     }
+
 
     private void updateDishPhoto(Dishes dish, MultipartFile photo) {
         if (photo != null && !photo.isEmpty()) {
@@ -179,40 +233,5 @@ public class DishServices implements IDishServices {
                 throw new RuntimeException("Could not process photo file", e);
             }
         }
-    }
-
-    @Override
-    @Transactional
-    @Auditable(action = "ADD_DISH_CATEGORY")
-    public void addCategory(AddEntityRequest request) {
-        DishesCategories category = DictionaryHelper.createEntity(
-                DishesCategories::new,
-                request,
-                _dishRepo::isCategoryNameTaken,
-                "Dish category already exists"
-        );
-
-        _dishRepo.saveCategory(category);
-    }
-
-    @Override
-    @Transactional
-    @Auditable(action = "REMOVE_DISH_CATEGORY")
-    public void removeCategory(String token) {
-        DictionaryHelper.deleteEntity(
-                token,
-                _dishRepo::findCategoryByToken,
-                _dishRepo::saveCategory,
-                c -> {
-                    DishesCategories fallback = _dishRepo.findCategoryByToken("OTHER");
-
-                    List<Dishes> affected = _dishRepo.findByCategoryId(c.getId());
-
-                    for (Dishes dish : affected) {
-                        dish.setCategory(fallback);
-                        _dishRepo.save(dish);
-                    }
-                }
-        );
     }
 }

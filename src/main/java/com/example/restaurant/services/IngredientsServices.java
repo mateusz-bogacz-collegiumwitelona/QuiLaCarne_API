@@ -12,6 +12,9 @@ import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import com.example.restaurant.services.interfaces.IIngredientsServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +32,7 @@ public class IngredientsServices implements IIngredientsServices {
     @Transactional
     @Override
     @Auditable(action = "ADD_INGREDIENTS")
+    @CacheEvict(value = "ingredientsDictionary", allEntries = true)
     public void add(AddIngredientRequest request) {
         Ingredients ingredient = DictionaryHelper.createEntity(
                 Ingredients::new,
@@ -55,6 +59,10 @@ public class IngredientsServices implements IIngredientsServices {
     @Transactional
     @Override
     @Auditable(action = "REMOVE_INGREDIENTS")
+    @Caching(evict = {
+            @CacheEvict(value = "ingredientsDictionary", allEntries = true),
+            @CacheEvict(value = "dishMenu", allEntries = true)
+    })
     public void remove(String token) {
         DictionaryHelper.deleteEntity(
                 token,
@@ -75,6 +83,10 @@ public class IngredientsServices implements IIngredientsServices {
     }
 
     @Override
+    @Cacheable(
+            value = "ingredientsDictionary",
+            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
+    )
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_ingredientsRepo.findAll(), lang);

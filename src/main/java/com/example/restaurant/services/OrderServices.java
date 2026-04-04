@@ -21,6 +21,8 @@ import com.example.restaurant.repository.interfaces.*;
 import com.example.restaurant.services.interfaces.IOrderServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -317,12 +319,20 @@ public class OrderServices implements IOrderServices {
     }
 
     @Override
+    @Cacheable(
+            value = "orderStatuses",
+            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
+    )
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_orderRepo.findAllStatuses(), lang);
     }
 
     @Override
+    @Cacheable(
+            value = "orderItemStatuses",
+            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
+    )
     public List<EntityResponse> getItemStatusesDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_orderRepo.findAllItemStatuses(), lang);
@@ -331,6 +341,7 @@ public class OrderServices implements IOrderServices {
     @Override
     @Transactional
     @Auditable(action = "ADD_ORDER_STATUS")
+    @CacheEvict(value = "orderStatuses", allEntries = true)
     public void addStatus(AddEntityRequest request) {
         OrderStatus status = DictionaryHelper.createEntity(
                 OrderStatus::new,
@@ -345,6 +356,7 @@ public class OrderServices implements IOrderServices {
     @Override
     @Transactional
     @Auditable(action = "ADD_ORDER_ITEM_STATUS")
+    @CacheEvict(value = "orderItemStatuses", allEntries = true)
     public void addItemStatus(AddEntityRequest request) {
         OrderItemsStatus status = DictionaryHelper.createEntity(
                 OrderItemsStatus::new,
@@ -359,6 +371,7 @@ public class OrderServices implements IOrderServices {
     @Override
     @Transactional
     @Auditable(action = "REMOVE_ORDER_STATUS")
+    @CacheEvict(value = "orderStatuses", allEntries = true)
     public void removeStatus(String token) {
         DictionaryHelper.deleteEntity(
                 token,
@@ -381,6 +394,7 @@ public class OrderServices implements IOrderServices {
     @Override
     @Transactional
     @Auditable(action = "REMOVE_ORDER_ITEM_STATUS")
+    @CacheEvict(value = "orderItemStatuses", allEntries = true)
     public void removeItemStatus(String token) {
         DictionaryHelper.deleteEntity(
                 token,

@@ -13,6 +13,7 @@ import com.example.restaurant.services.interfaces.IBanServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -84,6 +85,9 @@ public class BanServices implements IBanServices {
     }
 
     @Override
+    @Cacheable(
+            value = "banStatuses",
+            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_banRepo.findAllStatuses(), lang);

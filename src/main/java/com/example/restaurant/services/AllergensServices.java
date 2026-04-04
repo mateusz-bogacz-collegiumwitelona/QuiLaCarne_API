@@ -11,6 +11,9 @@ import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import com.example.restaurant.services.interfaces.IAllergensServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,9 @@ public class AllergensServices implements IAllergensServices {
     private final IIngredientsRepository _ingredientsRepo;
 
     @Override
+    @Cacheable(
+            value = "allergensDictionary",
+            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_allergenRepo.findAll(), lang);
@@ -31,6 +37,7 @@ public class AllergensServices implements IAllergensServices {
     @Override
     @Transactional
     @Auditable(action = "ADD_ALLERGEN")
+    @CacheEvict(value = "allergensDictionary", allEntries = true)
     public void add(AddEntityRequest request) {
         Allergens allergen = DictionaryHelper.createEntity(
                 Allergens::new,
@@ -44,6 +51,11 @@ public class AllergensServices implements IAllergensServices {
     @Override
     @Transactional
     @Auditable(action = "REMOVE_ALLERGEN")
+    @Caching(evict = {
+            @CacheEvict(value = "allergensDictionary", allEntries = true),
+            @CacheEvict(value = "ingredientsDictionary", allEntries = true),
+            @CacheEvict(value = "dishMenu", allEntries = true)
+    })
     public void remove(String token) {
         DictionaryHelper.deleteEntity(
                 token,
