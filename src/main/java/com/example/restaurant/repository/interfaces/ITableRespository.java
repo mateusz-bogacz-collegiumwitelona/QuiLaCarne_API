@@ -26,4 +26,6 @@ public interface ITableRespository {
     boolean isStatusNameTaken(String pl, String en);
 
     void saveStatus(TableStatus status);
+
+    List<RestaurantTables> findTablesByStatus(TableStatus status);
 }

@@ -121,4 +121,35 @@ public class AllergensRepositoryTest {
 
         verify(_jpaAllergensRepo, times(1)).save(allergen);
     }
+
+    @Test
+    @DisplayName("findByToken: Should return allergen when exists")
+    void findByToken_ShouldReturnAllergen_WhenExists() {
+        String token = TestConstants.TOKEN_GLUTEN;
+        Allergens allergen = new Allergens();
+        allergen.setToken(token);
+
+        when(_jpaAllergensRepo.findByToken(token)).thenReturn(java.util.Optional.of(allergen));
+
+        Allergens result = _allergensRepo.findByToken(token);
+
+        assertNotNull(result);
+        assertEquals(token, result.getToken());
+        verify(_jpaAllergensRepo, times(1)).findByToken(token);
+    }
+
+    @Test
+    @DisplayName("findByToken: Should throw EntityNotFoundException when allergen does not exist")
+    void findByToken_ShouldThrowException_WhenNotFound() {
+        String token = "NON_EXISTING";
+        when(_jpaAllergensRepo.findByToken(token)).thenReturn(java.util.Optional.empty());
+
+        com.example.restaurant.exceptions.EntityNotFoundException exception = assertThrows(
+                com.example.restaurant.exceptions.EntityNotFoundException.class,
+                () -> _allergensRepo.findByToken(token)
+        );
+
+        assertEquals("Allergen not found", exception.getMessage());
+        verify(_jpaAllergensRepo, times(1)).findByToken(token);
+    }
 }

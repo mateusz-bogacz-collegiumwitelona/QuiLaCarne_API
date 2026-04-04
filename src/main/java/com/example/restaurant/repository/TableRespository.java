@@ -74,4 +74,9 @@ public class TableRespository implements ITableRespository {
     public void saveStatus(TableStatus status) {
         _jpaTableStatusRepo.save(status);
     }
+
+    @Override
+    public List<RestaurantTables> findTablesByStatus(TableStatus status) {
+        return _jpaTableRepo.findByTableStatusContaining(status);
+    }
 }

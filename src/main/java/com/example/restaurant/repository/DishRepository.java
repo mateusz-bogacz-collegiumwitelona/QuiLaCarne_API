@@ -89,4 +89,9 @@ public class DishRepository implements IDishRepository {
     public void saveCategory(DishesCategories categorie) {
         _jpaDishCategoryRepo.save(categorie);
     }
+
+    @Override
+    public List<Dishes> findByCategoryId(UUID id) {
+        return _jpaDishRepo.findByCategoryId(id);
+    }
 }

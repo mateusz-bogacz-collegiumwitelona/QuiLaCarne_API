@@ -19,13 +19,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -111,15 +111,15 @@ public class ReportServicesTest {
         report.setStatuses(Set.of(status));
         report.setReason("Test reason");
 
-        when(_reportRepo.findAll(any(Specification.class), any(Pageable.class)))
+        when(_reportRepo.findAll(ArgumentMatchers.any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(report)));
 
         PagedResult<ReportListResponse> result = _reportServices.list(filter);
 
         assertNotNull(result);
         assertEquals(1, result.getItems().size());
-        assertEquals("Pending Review", result.getItems().get(0).getStatus());
-        assertEquals("Test reason", result.getItems().get(0).getReason());
+        assertEquals("Pending Review", result.getItems().getFirst().getStatus());
+        assertEquals("Test reason", result.getItems().getFirst().getReason());
     }
 
     @Test

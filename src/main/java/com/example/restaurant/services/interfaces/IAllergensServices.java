@@ -9,4 +9,6 @@ public interface IAllergensServices {
     List<EntityResponse> getDictionary();
 
     void add(AddEntityRequest request);
+
+    void remove(String token);
 }

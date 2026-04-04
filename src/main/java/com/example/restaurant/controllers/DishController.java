@@ -5,7 +5,6 @@ import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.services.interfaces.IAllergensServices;
 import com.example.restaurant.services.interfaces.IDishServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,7 +29,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DishController {
     private final IDishServices _dishServices;
-    private final IAllergensServices _allergensServices;
 
     @Operation(
             summary = "Get full restaurant menu",
@@ -65,7 +63,9 @@ public class DishController {
 
     @Operation(
             summary = "Remove a dish (Soft Delete)",
-            description = "Marks a dish as deleted by setting its availability to false, adding an unavailable reason, and setting the deleted_at timestamp. Requires ROLE_MANAGER privileges."
+            description = "Marks a dish as deleted by setting its availability to false, " +
+                    "adding an unavailable reason, and setting the deleted_at timestamp. " +
+                    "Requires ROLE_MANAGER privileges."
     )
     @Parameter(
             name = "token",
@@ -80,9 +80,21 @@ public class DishController {
                     description = "Dish removed successfully",
                     content = @Content(schema = @Schema(implementation = ResultHandler.class))
             ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Not Found - Dish with the provided token does not exist", content = @Content),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - User is not logged in",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have the required ROLE_MANAGER role",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found - Dish with the provided token does not exist",
+                    content = @Content
+            ),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @DeleteMapping("/{token}")
@@ -96,13 +108,13 @@ public class DishController {
                         "Dish remove successfully",
                         HttpStatus.OK.value()
                 )
-
         );
     }
 
     @Operation(
             summary = "Change dish availability",
-            description = "Toggles the availability of a dish. If marking as unavailable, an optional reason can be provided. Requires ROLE_MANAGER privileges."
+            description = "Toggles the availability of a dish. " +
+                    "If marking as unavailable, an optional reason can be provided. Requires ROLE_MANAGER privileges."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -112,8 +124,15 @@ public class DishController {
             ),
             @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data", content = @Content),
             @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Not Found - Dish with the provided token does not exist", content = @Content),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have the required ROLE_MANAGER role",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found - Dish with the provided token does not exist",
+                    content = @Content),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @PatchMapping
@@ -132,7 +151,8 @@ public class DishController {
 
     @Operation(
             summary = "Edit an existing dish",
-            description = "Updates dish details and/or replaces its photo on S3. Requires ROLE_MANAGER privileges. Uses multipart/form-data."
+            description = "Updates dish details and/or replaces its photo on S3. " +
+                    "Requires ROLE_MANAGER privileges. Uses multipart/form-data."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -163,7 +183,8 @@ public class DishController {
 
     @Operation(
             summary = "Add a new dish",
-            description = "Creates a new dish in the menu and optionally uploads its photo to S3. Requires ROLE_MANAGER privileges. Uses multipart/form-data."
+            description = "Creates a new dish in the menu and optionally uploads its photo to S3. " +
+                    "Requires ROLE_MANAGER privileges. Uses multipart/form-data."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -171,10 +192,26 @@ public class DishController {
                     description = "Dish created successfully",
                     content = @Content(schema = @Schema(implementation = ResultHandler.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data or invalid file format", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Not Found - Category or Ingredient token does not exist", content = @Content),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad Request - Invalid input data or invalid file format",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - User is not logged in",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have the required ROLE_MANAGER role",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found - Category or Ingredient token does not exist",
+                    content = @Content
+            ),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -194,7 +231,8 @@ public class DishController {
 
     @Operation(
             summary = "Get list of dish categories",
-            description = "Retrieves a dictionary list of all dish categories available in the system. The names are translated based on the 'Accept-Language' header."
+            description = "Retrieves a dictionary list of all dish categories available in the system. " +
+                    "The names are translated based on the 'Accept-Language' header."
     )
     @Parameter(
             name = "Accept-Language",
@@ -223,73 +261,19 @@ public class DishController {
         );
     }
 
-    @Operation(
-            summary = "Get list of allergens",
-            description = "Retrieves a dictionary list of all allergens available in the system. The names are translated based on the 'Accept-Language' header."
-    )
-    @Parameter(
-            name = "Accept-Language",
-            in = ParameterIn.HEADER,
-            description = "Preferred language (e.g., 'pl' or 'en')",
-            required = false,
-            schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Dictionary review successfully",
-                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
-            ),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
-    })
-    @GetMapping("/allergens/dictionary")
-    public ResponseEntity<ResultHandler<List<EntityResponse>>> getAllergensDictionary() {
-        var result = _allergensServices.getDictionary();
-        return ResponseEntity.ok(
-                ResultHandler.success(
-                        "Dictionary review successfully",
-                        HttpStatus.OK.value(),
-                        result
-                )
-        );
-    }
-
-    @Operation(
-            summary = "Add a new allergen",
-            description = "Creates a new allergen in the system. The English name is automatically used to generate a unique token. Requires MANAGER role."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Allergen created successful",
-                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
-            ),
-            @ApiResponse(responseCode = "400", description = "Validation error or Ingredient name already exists"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
-    @PostMapping("/allergens/add")
-    public ResponseEntity<ResultHandler<Void>> add(@RequestBody @Valid AddEntityRequest request) {
-        _allergensServices.add(request);
-        return ResponseEntity.ok(ResultHandler.success(
-                "Allergen created successful",
-                HttpStatus.CREATED.value()
-        ));
-    }
 
     @Operation(
             summary = "Add a new dish category",
-            description = "Creates a new dish category in the system. The English name is automatically used to generate a unique token. Requires MANAGER role."
+            description = "Creates a new dish category in the system. " +
+                    "The English name is automatically used to generate a unique token. Requires MANAGER role."
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "201",
-                    description = "Allergen created successful",
+                    description = "Dish category created successfully",
                     content = @Content(schema = @Schema(implementation = ResultHandler.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Validation error or Ingredient name already exists"),
+            @ApiResponse(responseCode = "400", description = "Validation error or Category name already exists"),
             @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
@@ -299,8 +283,57 @@ public class DishController {
     public ResponseEntity<ResultHandler<Void>> addCategory(@RequestBody @Valid AddEntityRequest request) {
         _dishServices.addCategory(request);
         return ResponseEntity.ok(ResultHandler.success(
-                "Dish category created successful",
+                "Dish category created successfully",
                 HttpStatus.CREATED.value()
         ));
+    }
+
+    @Operation(
+            summary = "Remove a dish category (Soft Delete)",
+            description = "Marks a dish category as deleted and automatically reassigns " +
+                    "all associated dishes to the default 'OTHER' category. Requires ROLE_MANAGER privileges."
+    )
+    @Parameter(
+            name = "token",
+            in = ParameterIn.PATH,
+            description = "The unique token of the dish category to be removed",
+            required = true,
+            schema = @Schema(type = "string")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dish category removed successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - User is not logged in",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have the required ROLE_MANAGER role",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found - Category with the provided token does not exist",
+                    content = @Content
+            ),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @DeleteMapping("/category/{token}")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> removeCategory(
+            @PathVariable String token
+    ) {
+        _dishServices.removeCategory(token);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                        "Dish category removed successfully",
+                        HttpStatus.OK.value()
+                )
+        );
     }
 }

@@ -4,7 +4,6 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
-import com.example.restaurant.helpers.SoftDeleteHelpers;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -16,8 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -59,24 +56,22 @@ public class IngredientsServices implements IIngredientsServices {
     @Override
     @Auditable(action = "REMOVE_INGREDIENTS")
     public void remove(String token) {
-        var ingredient = _ingredientsRepo.findByToken(token);
+        DictionaryHelper.deleteEntity(
+                token,
+                _ingredientsRepo::findByToken,
+                _ingredientsRepo::save,
+                i -> {
+                    String orginaNameEn = i.getNameEn();
 
-        String orginaNameEn = ingredient.getNameEn();
+                    var affectedDishes = _dishRepo.findByIngredientsId(i.getId());
 
-        ingredient.setToken(SoftDeleteHelpers.markAsDelete(ingredient.getToken()));
-        ingredient.setNameEn(SoftDeleteHelpers.markAsDelete(ingredient.getNameEn()));
-        ingredient.setNamePl(SoftDeleteHelpers.markAsDelete(ingredient.getNamePl()));
-        ingredient.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
-
-        _ingredientsRepo.save(ingredient);
-
-        var affectedDishes = _dishRepo.findByIngredientsId(ingredient.getId());
-
-        for (Dishes dish : affectedDishes) {
-            dish.setAvailable(false);
-            dish.setUnavailableReason(orginaNameEn + " is deleted");
-            _dishRepo.save(dish);
-        }
+                    for (Dishes dish : affectedDishes) {
+                        dish.setAvailable(false);
+                        dish.setUnavailableReason(orginaNameEn + " is deleted");
+                        _dishRepo.save(dish);
+                    }
+                }
+        );
     }
 
     @Override

@@ -189,9 +189,30 @@ public class DishServices implements IDishServices {
                 DishesCategories::new,
                 request,
                 _dishRepo::isCategoryNameTaken,
-                "Dish category already exits"
+                "Dish category already exists"
         );
 
         _dishRepo.saveCategory(category);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "REMOVE_DISH_CATEGORY")
+    public void removeCategory(String token) {
+        DictionaryHelper.deleteEntity(
+                token,
+                _dishRepo::findCategoryByToken,
+                _dishRepo::saveCategory,
+                c -> {
+                    DishesCategories fallback = _dishRepo.findCategoryByToken("OTHER");
+
+                    List<Dishes> affected = _dishRepo.findByCategoryId(c.getId());
+
+                    for (Dishes dish : affected) {
+                        dish.setCategory(fallback);
+                        _dishRepo.save(dish);
+                    }
+                }
+        );
     }
 }

@@ -27,4 +27,6 @@ public interface IJpaDishRepository extends IJpaNamedEntityRepository<Dishes> {
     List<Dishes> findAllByTokenIn(List<String> tokens);
 
     List<Dishes> findByIngredientsId(UUID ingredientId);
+
+    List<Dishes> findByCategoryId(UUID categoryId);
 }

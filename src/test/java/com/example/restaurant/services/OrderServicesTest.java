@@ -679,4 +679,90 @@ public class OrderServicesTest {
                         status.getToken().equals("NEW_ITEM_STATUS_EN")
         ));
     }
+
+    @Test
+    @DisplayName("removeStatus: Should soft delete order status and reassign associated orders to OTHER")
+    void removeStatus_ShouldSoftDelete_AndReassignOrdersToOther() {
+        String tokenToRemove = "PENDING_TOKEN";
+
+        OrderStatus statusToRemove = new OrderStatus();
+        statusToRemove.setId(java.util.UUID.randomUUID());
+        statusToRemove.setToken(tokenToRemove);
+        statusToRemove.setNameEn("Pending");
+        statusToRemove.setNamePl("Oczekujący");
+
+        OrderStatus fallbackStatus = new OrderStatus();
+        fallbackStatus.setToken("OTHER");
+        fallbackStatus.setNameEn("Other");
+        fallbackStatus.setNamePl("Inne");
+
+        Orders order1 = new Orders();
+        order1.getStatuses().add(statusToRemove);
+
+        Orders order2 = new Orders();
+        order2.getStatuses().add(statusToRemove);
+
+        List<Orders> affectedOrders = List.of(order1, order2);
+
+        when(_orderRepo.findStatusByToken(tokenToRemove)).thenReturn(statusToRemove);
+        when(_orderRepo.findStatusByToken("OTHER")).thenReturn(fallbackStatus);
+        when(_orderRepo.findOrdersByStatus(statusToRemove)).thenReturn(affectedOrders);
+
+        assertDoesNotThrow(() -> _orderServices.removeStatus(tokenToRemove));
+
+        assertFalse(order1.getStatuses().contains(statusToRemove));
+        assertTrue(order1.getStatuses().contains(fallbackStatus));
+        assertFalse(order2.getStatuses().contains(statusToRemove));
+        assertTrue(order2.getStatuses().contains(fallbackStatus));
+        verify(_orderRepo, times(1)).save(order1);
+        verify(_orderRepo, times(1)).save(order2);
+
+        assertTrue(statusToRemove.getToken().startsWith("DELETED_"));
+        assertTrue(statusToRemove.getNameEn().startsWith("DELETED_"));
+        assertNotNull(statusToRemove.getDeletedAt());
+        verify(_orderRepo, times(1)).saveStatus(statusToRemove);
+    }
+
+    @Test
+    @DisplayName("removeItemStatus: Should soft delete order item status and reassign associated items to OTHER")
+    void removeItemStatus_ShouldSoftDelete_AndReassignItemsToOther() {
+        String tokenToRemove = "READY_TOKEN";
+
+        OrderItemsStatus statusToRemove = new OrderItemsStatus();
+        statusToRemove.setId(java.util.UUID.randomUUID());
+        statusToRemove.setToken(tokenToRemove);
+        statusToRemove.setNameEn("Ready");
+        statusToRemove.setNamePl("Gotowe");
+
+        OrderItemsStatus fallbackStatus = new OrderItemsStatus();
+        fallbackStatus.setToken("OTHER");
+        fallbackStatus.setNameEn("Other");
+        fallbackStatus.setNamePl("Inne");
+
+        OrderItems item1 = new OrderItems();
+        item1.getStatuses().add(statusToRemove);
+
+        OrderItems item2 = new OrderItems();
+        item2.getStatuses().add(statusToRemove);
+
+        List<OrderItems> affectedItems = List.of(item1, item2);
+
+        when(_orderRepo.findItemStatusByToken(tokenToRemove)).thenReturn(statusToRemove);
+        when(_orderRepo.findItemStatusByToken("OTHER")).thenReturn(fallbackStatus);
+        when(_orderRepo.findOrderItemsByStatus(statusToRemove)).thenReturn(affectedItems);
+
+        assertDoesNotThrow(() -> _orderServices.removeItemStatus(tokenToRemove));
+
+        assertFalse(item1.getStatuses().contains(statusToRemove));
+        assertTrue(item1.getStatuses().contains(fallbackStatus));
+        assertFalse(item2.getStatuses().contains(statusToRemove));
+        assertTrue(item2.getStatuses().contains(fallbackStatus));
+        verify(_orderRepo, times(1)).saveItem(item1);
+        verify(_orderRepo, times(1)).saveItem(item2);
+
+        assertTrue(statusToRemove.getToken().startsWith("DELETED_"));
+        assertTrue(statusToRemove.getNameEn().startsWith("DELETED_"));
+        assertNotNull(statusToRemove.getDeletedAt());
+        verify(_orderRepo, times(1)).saveItemStatus(statusToRemove);
+    }
 }

@@ -12,4 +12,6 @@ public interface IAllergensRepository {
     boolean isNameTaken(String pl, String en);
 
     void save(Allergens allergen);
+
+    Allergens findByToken(String token);
 }

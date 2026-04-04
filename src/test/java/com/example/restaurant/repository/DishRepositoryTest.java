@@ -266,4 +266,17 @@ public class DishRepositoryTest {
 
         verify(_jpaDishCategoryRepo, times(1)).save(category);
     }
+
+    @Test
+    @DisplayName("findByCategoryId: Should return list of dishes")
+    void findByCategoryId_ShouldReturnListOfDishes() {
+        UUID id = UUID.randomUUID();
+        List<Dishes> expectedDishes = List.of(new Dishes(), new Dishes());
+        when(_jpaDishRepo.findByCategoryId(id)).thenReturn(expectedDishes);
+
+        List<Dishes> result = _dishRepo.findByCategoryId(id);
+
+        assertEquals(2, result.size());
+        verify(_jpaDishRepo).findByCategoryId(id);
+    }
 }

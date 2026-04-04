@@ -1,5 +1,6 @@
 package com.example.restaurant.repository;
 
+import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaAllergensRepository;
@@ -35,5 +36,13 @@ public class AllergensRepository implements IAllergensRepository {
     @Override
     public void save(Allergens allergen) {
         _jpaAllergensRepo.save(allergen);
+    }
+
+    @Override
+    public Allergens findByToken(String token) {
+        return _jpaAllergensRepo.findByToken(token)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Allergen not found")
+                );
     }
 }

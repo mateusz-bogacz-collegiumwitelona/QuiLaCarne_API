@@ -455,4 +455,45 @@ public class DishServicesTest {
                         category.getToken().equals("STARTERS_EN")
         ));
     }
+
+    @Test
+    @DisplayName("removeCategory: Should soft delete category and reassign associated dishes to OTHER")
+    void removeCategory_ShouldSoftDelete_AndReassignDishesToOther() {
+        String tokenToRemove = "SOUPS_TOKEN";
+
+        DishesCategories categoryToRemove = new DishesCategories();
+        categoryToRemove.setId(java.util.UUID.randomUUID());
+        categoryToRemove.setToken(tokenToRemove);
+        categoryToRemove.setNameEn("Soups");
+        categoryToRemove.setNamePl("Zupy");
+
+        DishesCategories fallbackCategory = new DishesCategories();
+        fallbackCategory.setToken("OTHER");
+        fallbackCategory.setNameEn("Other");
+        fallbackCategory.setNamePl("Inne");
+
+        Dishes dish1 = new Dishes();
+        dish1.setCategory(categoryToRemove);
+
+        Dishes dish2 = new Dishes();
+        dish2.setCategory(categoryToRemove);
+
+        List<Dishes> affectedDishes = List.of(dish1, dish2);
+
+        when(_dishRepo.findCategoryByToken(tokenToRemove)).thenReturn(categoryToRemove);
+        when(_dishRepo.findCategoryByToken("OTHER")).thenReturn(fallbackCategory);
+        when(_dishRepo.findByCategoryId(categoryToRemove.getId())).thenReturn(affectedDishes);
+
+        assertDoesNotThrow(() -> _dishServices.removeCategory(tokenToRemove));
+
+        assertEquals(fallbackCategory, dish1.getCategory());
+        assertEquals(fallbackCategory, dish2.getCategory());
+        verify(_dishRepo, times(1)).save(dish1);
+        verify(_dishRepo, times(1)).save(dish2);
+
+        assertTrue(categoryToRemove.getToken().startsWith("DELETED_"));
+        assertTrue(categoryToRemove.getNameEn().startsWith("DELETED_"));
+        assertNotNull(categoryToRemove.getDeletedAt());
+        verify(_dishRepo, times(1)).saveCategory(categoryToRemove);
+    }
 }

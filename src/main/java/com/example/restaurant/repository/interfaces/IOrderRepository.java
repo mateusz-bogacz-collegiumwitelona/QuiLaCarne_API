@@ -37,4 +37,8 @@ public interface IOrderRepository {
     boolean isItemStatusNameTaken(String pl, String en);
 
     void saveItemStatus(OrderItemsStatus status);
+
+    List<Orders> findOrdersByStatus(OrderStatus status);
+
+    List<OrderItems> findOrderItemsByStatus(OrderItemsStatus status);
 }

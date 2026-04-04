@@ -66,7 +66,8 @@ public class ReservationController {
 
     @Operation(
             summary = "Get user reservations history",
-            description = "Retrieves a paginated and filterable list of reservations made by the currently authenticated user. " +
+            description = "Retrieves a paginated and filterable list of reservations " +
+                    "made by the currently authenticated user. " +
                     "Supports filtering by date range and status."
     )
     @ApiResponses(value = {
@@ -96,7 +97,8 @@ public class ReservationController {
 
     @Operation(
             summary = "Get reservation details",
-            description = "Retrieves the full details of a specific reservation, including pre-ordered dishes and total price."
+            description = "Retrieves the full details of a specific reservation, " +
+                    "including pre-ordered dishes and total price."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -147,7 +149,11 @@ public class ReservationController {
             description = "Retrieves a paginated list of all reservations scheduled for today. Includes basic table and user details."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Today's reservations retrieved successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Today's reservations retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -166,10 +172,16 @@ public class ReservationController {
 
     @Operation(
             summary = "Remove a dish from reservation",
-            description = "Decreases the quantity of a specific dish in the reservation's order. If the quantity to remove is equal to or greater than the current quantity, the dish is completely removed from the order."
+            description = "Decreases the quantity of a specific dish in the reservation's order. " +
+                    "If the quantity to remove is equal to or greater than the current quantity, " +
+                    "the dish is completely removed from the order."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Dish removed successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dish removed successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
             @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
             @ApiResponse(responseCode = "404", description = "Reservation or dish not found"),
@@ -193,7 +205,8 @@ public class ReservationController {
             summary = "Add multiple dishes to a reservation",
             description = "Allows adding as many new dishes as you want to an existing reservation in a single request. " +
                     "Pass a list of dishes in the request body. " +
-                    "If a requested dish (with the exact same note) already exists on the order, its quantity will be automatically increased. " +
+                    "If a requested dish (with the exact same note) already exists on the order, " +
+                    "its quantity will be automatically increased. " +
                     "If it is a new dish or has a different note, it will be added as a separate line item. " +
                     "The total price of the order is automatically recalculated."
     )
@@ -224,10 +237,15 @@ public class ReservationController {
 
     @Operation(
             summary = "Assign waiter to a reservation",
-            description = "Assigns a specific waiter to a reservation and its associated order. Automatically changes the status of the order and pending dishes to IN_PROGRESS."
+            description = "Assigns a specific waiter to a reservation and its associated order. " +
+                    "Automatically changes the status of the order and pending dishes to IN_PROGRESS."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Waiter assigned successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Waiter assigned successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
             @ApiResponse(responseCode = "403", description = "User does not have waiter privileges"),
             @ApiResponse(responseCode = "404", description = "Reservation or Waiter not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
@@ -247,11 +265,20 @@ public class ReservationController {
 
     @Operation(
             summary = "Mark reservation as absent (No-show)",
-            description = "Changes the reservation status to NO_SHOW. If an order is attached to the reservation, its status (and the status of its items) is changed to CANCELLED. Requires the reservation to be in the ACTIVE state. Available only for waiters."
+            description = "Changes the reservation status to NO_SHOW. " +
+                    "If an order is attached to the reservation, " +
+                    "its status (and the status of its items) is changed to CANCELLED. " +
+                    "Requires the reservation to be in the ACTIVE state. Available only for waiters."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully marked the reservation and orders as absent"),
-            @ApiResponse(responseCode = "400", description = "Invalid state (e.g., reservation is not in the ACTIVE state)"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successfully marked the reservation and orders as absent"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid state (e.g., reservation is not in the ACTIVE state)"
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized - valid JWT token required"),
             @ApiResponse(responseCode = "403", description = "Forbidden - requires ROLE_WAITER role"),
             @ApiResponse(responseCode = "404", description = "Reservation with the provided token not found"),
@@ -269,7 +296,8 @@ public class ReservationController {
 
     @Operation(
             summary = "Get list of reservation statuses",
-            description = "Retrieves a dictionary list of all reservation statuses available in the system. The names are translated based on the 'Accept-Language' header."
+            description = "Retrieves a dictionary list of all reservation statuses available in the system. " +
+                    "The names are translated based on the 'Accept-Language' header."
     )
     @Parameter(
             name = "Accept-Language",

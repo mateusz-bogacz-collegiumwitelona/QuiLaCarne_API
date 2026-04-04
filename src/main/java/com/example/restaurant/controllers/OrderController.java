@@ -137,4 +137,55 @@ public class OrderController {
                 HttpStatus.CREATED.value()
         ));
     }
+
+    @Operation(
+            summary = "Remove an order status (Soft Delete)",
+            description = "Marks an order status as deleted and automatically reassigns " +
+                    "all associated orders to the default 'OTHER' status. Requires ROLE_MANAGER."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "Order status removed successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER"),
+            @ApiResponse(responseCode = "404", description = "Status not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @DeleteMapping("/status/{token}")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> removeStatus(@PathVariable String token) {
+        _orderServices.removeStatus(token);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Order status removed successfully",
+                HttpStatus.OK.value())
+        );
+    }
+
+    @Operation(
+            summary = "Remove an order item status (Soft Delete)",
+            description = "Marks an order item status as deleted and automatically " +
+                    "reassigns all associated order items to the default 'OTHER' status. Requires ROLE_MANAGER."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Order item status removed successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER"),
+            @ApiResponse(responseCode = "404", description = "Status not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @DeleteMapping("/item/status/{token}")
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<Void>> removeItemStatus(@PathVariable String token) {
+        _orderServices.removeItemStatus(token);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Order item status removed successfully",
+                HttpStatus.OK.value()
+        ));
+    }
 }

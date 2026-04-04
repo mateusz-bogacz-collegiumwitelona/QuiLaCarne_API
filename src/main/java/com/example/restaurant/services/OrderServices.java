@@ -356,6 +356,50 @@ public class OrderServices implements IOrderServices {
         _orderRepo.saveItemStatus(status);
     }
 
+    @Override
+    @Transactional
+    @Auditable(action = "REMOVE_ORDER_STATUS")
+    public void removeStatus(String token) {
+        DictionaryHelper.deleteEntity(
+                token,
+                _orderRepo::findStatusByToken,
+                _orderRepo::saveStatus,
+                statusToRemove -> {
+                    OrderStatus fallbackStatus = _orderRepo.findStatusByToken("OTHER");
+
+                    List<Orders> affectedOrders = _orderRepo.findOrdersByStatus(statusToRemove);
+
+                    for (Orders order : affectedOrders) {
+                        order.getStatuses().remove(statusToRemove);
+                        order.getStatuses().add(fallbackStatus);
+                        _orderRepo.save(order);
+                    }
+                }
+        );
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "REMOVE_ORDER_ITEM_STATUS")
+    public void removeItemStatus(String token) {
+        DictionaryHelper.deleteEntity(
+                token,
+                _orderRepo::findItemStatusByToken,
+                _orderRepo::saveItemStatus,
+                statusToRemove -> {
+                    OrderItemsStatus fallbackStatus = _orderRepo.findItemStatusByToken("OTHER");
+
+                    List<OrderItems> affectedItems = _orderRepo.findOrderItemsByStatus(statusToRemove);
+
+                    for (OrderItems item : affectedItems) {
+                        item.getStatuses().remove(statusToRemove);
+                        item.getStatuses().add(fallbackStatus);
+                        _orderRepo.saveItem(item);
+                    }
+                }
+        );
+    }
+
     private String normalizeNote(String note) {
         if (note == null || note.trim().isEmpty()) return note;
         return note.trim();

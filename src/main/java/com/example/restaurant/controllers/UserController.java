@@ -53,7 +53,8 @@ public class UserController {
 
     @Operation(
             summary = "Request email update",
-            description = "Initiates the email update process by saving the new email in a pending state and sending a verification link to it."
+            description = "Initiates the email update process by saving the new email " +
+                    "in a pending state and sending a verification link to it."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Verification link sent to the new email address"),
@@ -82,7 +83,8 @@ public class UserController {
 
     @Operation(
             summary = "Confirm email change",
-            description = "Finalizes the email update process by validating the verification token sent to the user's new email address."
+            description = "Finalizes the email update process by validating " +
+                    "the verification token sent to the user's new email address."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Email updated successfully"),
@@ -147,7 +149,8 @@ public class UserController {
 
     @Operation(
             summary = "Add a new employee",
-            description = "Creates a new employee account (Manager or Waiter) and automatically activates it. Requires ROLE_MANAGER privileges."
+            description = "Creates a new employee account (Manager or Waiter) and automatically activates it. " +
+                    "Requires ROLE_MANAGER privileges."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -177,7 +180,8 @@ public class UserController {
 
     @Operation(
             summary = "Edit employee details",
-            description = "Updates the email and/or username of an existing employee. Only provided fields will be updated. Requires ROLE_MANAGER privileges."
+            description = "Updates the email and/or username of an existing employee. " +
+                    "Only provided fields will be updated. Requires ROLE_MANAGER privileges."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -185,10 +189,27 @@ public class UserController {
                     description = "Employee updated successfully",
                     content = @Content(schema = @Schema(implementation = ResultHandler.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data, email/username already taken, or values are the same as current", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad Request - Invalid input data, email/username already taken, " +
+                            "or values are the same as current",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - User is not logged in",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have the required ROLE_MANAGER role",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found - Employee token does not exist",
+                    content = @Content
+            ),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @PatchMapping("/employee")
@@ -208,14 +229,35 @@ public class UserController {
 
     @Operation(
             summary = "Change employee password",
-            description = "Allows a manager to forcefully change an employee's password. Managers cannot change their own password using this endpoint."
+            description = "Allows a manager to forcefully change an employee's password. " +
+                    "Managers cannot change their own password using this endpoint."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Password updated successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-            @ApiResponse(responseCode = "400", description = "Bad Request - Passwords do not match or invalid format", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role or tried to change own password", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Password updated successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad Request - Passwords do not match or invalid format",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - User is not logged in",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have ROLE_MANAGER role or tried to change own password",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found - Employee token does not exist",
+                    content = @Content
+            ),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @PatchMapping("/employee/change-password")
@@ -234,14 +276,27 @@ public class UserController {
 
     @Operation(
             summary = "Change employee role",
-            description = "Allows a manager to change the role of an employee (e.g., promote to Manager or demote to Waiter). Managers cannot change their own role."
+            description = "Allows a manager to change the role of an employee " +
+                    "(e.g., promote to Manager or demote to Waiter). Managers cannot change their own role."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Employee role updated successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Employee role updated successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
             @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data", content = @Content),
             @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role or tried to change own role", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have ROLE_MANAGER role or tried to change own role",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found - Employee token does not exist",
+                    content = @Content
+            ),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @PatchMapping("/employee/change-role")
@@ -260,14 +315,35 @@ public class UserController {
 
     @Operation(
             summary = "Change employee availability (Block/Unblock)",
-            description = "Allows a manager to block or unblock an employee's access to the system. Managers cannot change their own availability."
+            description = "Allows a manager to block or unblock an employee's access to the system. " +
+                    "Managers cannot change their own availability."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Employee availability changed successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-            @ApiResponse(responseCode = "400", description = "Bad Request - Status is already the same or invalid input", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role or tried to block themselves", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Employee availability changed successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad Request - Status is already the same or invalid input",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - User is not logged in",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have ROLE_MANAGER role or tried to block themselves",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found - Employee token does not exist",
+                    content = @Content
+            ),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @PatchMapping("/employee/change-availability")
@@ -286,13 +362,29 @@ public class UserController {
 
     @Operation(
             summary = "Delete employee",
-            description = "Performs a soft delete of an employee account, anonymizing their personal data and deactivating the account. Managers cannot delete themselves."
+            description = "Performs a soft delete of an employee account, " +
+                    "anonymizing their personal data and deactivating the account. Managers cannot delete themselves."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Employee deleted successfully", content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have ROLE_MANAGER role or tried to delete themselves", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Not Found - Employee token does not exist", content = @Content),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Employee deleted successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - User is not logged in",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have ROLE_MANAGER role or tried to delete themselves",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found - Employee token does not exist",
+                    content = @Content
+            ),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @DeleteMapping("/employee/{employeeToken}/delete")
@@ -311,7 +403,8 @@ public class UserController {
 
     @Operation(
             summary = "Get paginated user list",
-            description = "Retrieves a list of users with dynamic filtering (search, role, isActive) and sorting. Excludes deleted users. Requires ROLE_MANAGER."
+            description = "Retrieves a list of users with dynamic filtering (search, role, isActive) and sorting. " +
+                    "Excludes deleted users. Requires ROLE_MANAGER."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List fetched successfully"),

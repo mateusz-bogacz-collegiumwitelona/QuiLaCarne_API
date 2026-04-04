@@ -35,4 +35,8 @@ public interface IOrderServices {
     void addStatus(AddEntityRequest request);
 
     void addItemStatus(AddEntityRequest request);
+
+    void removeStatus(String token);
+
+    void removeItemStatus(String token);
 }

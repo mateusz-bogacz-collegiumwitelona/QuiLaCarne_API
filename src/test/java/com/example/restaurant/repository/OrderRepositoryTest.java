@@ -208,4 +208,30 @@ public class OrderRepositoryTest {
         _orderRepo.saveItemStatus(status);
         verify(_jpaOrderItemStatusRepo, times(1)).save(status);
     }
+
+    @Test
+    @DisplayName("findOrdersByStatus: Should return list of orders containing given status")
+    void findOrdersByStatus_ShouldReturnListOfOrders() {
+        OrderStatus status = new OrderStatus();
+        List<Orders> expectedOrders = List.of(new Orders(), new Orders());
+        when(_jpaOrderRepo.findByStatusesContaining(status)).thenReturn(expectedOrders);
+
+        List<Orders> result = _orderRepo.findOrdersByStatus(status);
+
+        assertEquals(2, result.size());
+        verify(_jpaOrderRepo, times(1)).findByStatusesContaining(status);
+    }
+
+    @Test
+    @DisplayName("findOrderItemsByStatus: Should return list of order items containing given status")
+    void findOrderItemsByStatus_ShouldReturnListOfOrderItems() {
+        OrderItemsStatus status = new OrderItemsStatus();
+        List<OrderItems> expectedItems = List.of(new OrderItems(), new OrderItems());
+        when(_jpaOrderItemRepo.findByStatusesContaining(status)).thenReturn(expectedItems);
+
+        List<OrderItems> result = _orderRepo.findOrderItemsByStatus(status);
+
+        assertEquals(2, result.size());
+        verify(_jpaOrderItemRepo, times(1)).findByStatusesContaining(status);
+    }
 }

@@ -31,7 +31,8 @@ public class AuthController {
             summary = "Authenticate user and receive a JWT Bearer token",
             description = "Authenticates a user using their username (or email) and password. " +
                     "If credentials are valid, a JWT token is returned in the response body. " +
-                    "This token must be included in the 'Authorization: Bearer <token>' header for all protected requests.",
+                    "This token must be included in the 'Authorization: " +
+                    "Bearer <token>' header for all protected requests.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = "application/json",
@@ -77,12 +78,22 @@ public class AuthController {
 
     @Operation(
             summary = "Register a new customer account (Step 1)",
-            description = "Creates a new account with 'isActive' set to false and sends an activation email containing a unique token. " +
+            description = "Creates a new account with 'isActive' set to false and " +
+                    "sends an activation email containing a unique token. " +
                     "The user must call the /confirm endpoint with this token to enable the account.",
             responses = {
-                    @ApiResponse(responseCode = "201", description = "User registered successfully, activation email sent"),
-                    @ApiResponse(responseCode = "400", description = "Invalid input data, password mismatch or username taken"),
-                    @ApiResponse(responseCode = "500", description = "Server error or email delivery failure")
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "User registered successfully, activation email sent"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid input data, password mismatch or username taken"
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Server error or email delivery failure"
+                    )
             }
     )
     @PostMapping("/register")
@@ -99,7 +110,12 @@ public class AuthController {
             description = "Finalizes the registration process by activating the user account. " +
                     "Expects a unique token received via email. Once activated, the user can log in.",
             parameters = {
-                    @Parameter(name = "token", description = "The unique activation token from the email", required = true, example = "f47ac10b-58cc-4372-a567-0e02b2c3d479")
+                    @Parameter(
+                            name = "token",
+                            description = "The unique activation token from the email",
+                            required = true,
+                            example = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+                    )
             },
             responses = {
                     @ApiResponse(responseCode = "200", description = "Account activated successfully"),
@@ -119,7 +135,8 @@ public class AuthController {
 
     @Operation(
             summary = "Request password reset",
-            description = "Sends a password reset link to the provided email address if the account exists. For privacy reasons, always returns a success message."
+            description = "Sends a password reset link to the provided email address if the account exists. " +
+                    "For privacy reasons, always returns a success message."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Request processed")
@@ -153,7 +170,9 @@ public class AuthController {
 
     @Operation(
             summary = "Continue with Google (Login/Register)",
-            description = "Accepts a Google ID Token. If the user doesn't exist, an account is created automatically. Returns a standard JWT Bearer token."
+            description = "Accepts a Google ID Token. If the user doesn't exist, " +
+                    "an account is created automatically. " +
+                    "Returns a standard JWT Bearer token."
     )
     @ApiResponses(value = {
             @ApiResponse(

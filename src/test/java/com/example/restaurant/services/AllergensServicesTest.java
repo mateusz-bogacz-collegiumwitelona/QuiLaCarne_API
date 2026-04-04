@@ -5,6 +5,7 @@ import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
+import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,9 @@ public class AllergensServicesTest {
 
     @Mock
     private IAllergensRepository _allergenRepo;
+
+    @Mock
+    private IIngredientsRepository _ingredientsRepo;
 
     @InjectMocks
     private AllergensServices _allergensServices;
@@ -101,5 +105,38 @@ public class AllergensServicesTest {
                                 TestConstants.FAKE_ALLERGEN_EN.toUpperCase().replace(" ", "_")
                         )
         ));
+    }
+
+    @Test
+    @DisplayName("Remove: Should soft delete allergen and remove it from associated ingredients")
+    void remove_ShouldSoftDeleteAllergen_AndRemoveFromIngredients() {
+        // Arrange
+        String token = TestConstants.TOKEN_GLUTEN;
+        Allergens allergen = new Allergens();
+        allergen.setToken(token);
+        allergen.setNameEn(TestConstants.FAKE_ALLERGEN_EN);
+        allergen.setNamePl(TestConstants.FAKE_ALLERGEN_PL);
+        
+        com.example.restaurant.models.Ingredients ingredient1 = new com.example.restaurant.models.Ingredients();
+        ingredient1.getAllergens().add(allergen);
+
+        com.example.restaurant.models.Ingredients ingredient2 = new com.example.restaurant.models.Ingredients();
+        ingredient2.getAllergens().add(allergen);
+
+        allergen.getIngredients().add(ingredient1);
+        allergen.getIngredients().add(ingredient2);
+
+        when(_allergenRepo.findByToken(token)).thenReturn(allergen);
+
+        assertDoesNotThrow(() -> _allergensServices.remove(token));
+        assertFalse(ingredient1.getAllergens().contains(allergen));
+        assertFalse(ingredient2.getAllergens().contains(allergen));
+        verify(_ingredientsRepo, times(1)).save(ingredient1);
+        verify(_ingredientsRepo, times(1)).save(ingredient2);
+
+        assertTrue(allergen.getToken().startsWith("DELETED_"));
+        assertTrue(allergen.getNameEn().startsWith("DELETED_"));
+        assertNotNull(allergen.getDeletedAt());
+        verify(_allergenRepo, times(1)).save(allergen);
     }
 }

@@ -120,4 +120,54 @@ public class DictionaryHelperTest {
 
         assertEquals("Entity already exists", exception.getMessage());
     }
+
+    @Test
+    @DisplayName("deleteEntity: Should execute cleanup, apply soft delete and save entity")
+    void deleteEntity_ShouldExecuteCleanupAndSoftDelete() {
+        String originalToken = "SOME_TOKEN";
+        String originalPl = "Nazwa PL";
+        String originalEn = "Name EN";
+
+        DummyEntity entity = new DummyEntity(originalToken, originalPl, originalEn);
+
+        boolean[] cleanupCalled = {false};
+        boolean[] saveCalled = {false};
+
+        DictionaryHelper.deleteEntity(
+                originalToken,
+                token -> entity,
+                savedEntity -> {
+                    saveCalled[0] = true;
+                    assertNotNull(savedEntity.getDeletedAt());
+                    assertNotEquals(originalToken, savedEntity.getToken());
+                    assertNotEquals(originalPl, savedEntity.getNamePl());
+                    assertNotEquals(originalEn, savedEntity.getNameEn());
+                },
+                e -> {
+                    cleanupCalled[0] = true;
+                    assertEquals(originalToken, e.getToken());
+                    assertNull(e.getDeletedAt());
+                }
+        );
+
+        assertTrue(cleanupCalled[0], "Cleanup block should be executed");
+        assertTrue(saveCalled[0], "Save block should be executed");
+    }
+
+    @Test
+    @DisplayName("deleteEntity: Should execute soft delete when cleanup block is null")
+    void deleteEntity_ShouldSoftDelete_WhenCleanupIsNull() {
+        DummyEntity entity = new DummyEntity("TOKEN", "PL", "EN");
+        boolean[] saveCalled = {false};
+
+        assertDoesNotThrow(() -> DictionaryHelper.deleteEntity(
+                "TOKEN",
+                token -> entity,
+                savedEntity -> saveCalled[0] = true,
+                null
+        ));
+
+        assertTrue(saveCalled[0], "Save block should be executed");
+        assertNotNull(entity.getDeletedAt());
+    }
 }

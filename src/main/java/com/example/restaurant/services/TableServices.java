@@ -145,4 +145,26 @@ public class TableServices implements ITableServices {
 
         _tableRepo.saveStatus(status);
     }
+
+    @Override
+    @Transactional
+    @Auditable(action = "REMOVE_TABLE_STATUS")
+    public void removeStatus(String token) {
+        DictionaryHelper.deleteEntity(
+                token,
+                _tableRepo::findStatusByToken,
+                _tableRepo::saveStatus,
+                statusToRemove -> {
+                    TableStatus fallbackStatus = _tableRepo.findStatusByToken("AVAILABLE");
+
+                    List<RestaurantTables> affectedTables = _tableRepo.findTablesByStatus(statusToRemove);
+
+                    for (RestaurantTables table : affectedTables) {
+                        table.getTableStatus().remove(statusToRemove);
+                        table.getTableStatus().add(fallbackStatus);
+                        _tableRepo.save(table);
+                    }
+                }
+        );
+    }
 }

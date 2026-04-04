@@ -22,4 +22,6 @@ public interface ITableServices {
     List<EntityResponse> getDictionary();
 
     void addStatus(AddEntityRequest request);
+
+    void removeStatus(String token);
 }

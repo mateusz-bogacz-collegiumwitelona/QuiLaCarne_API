@@ -1,6 +1,7 @@
 package com.example.restaurant.repository.interfaces.jpa;
 
 import com.example.restaurant.models.RestaurantTables;
+import com.example.restaurant.models.lookup.TableStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,4 +32,6 @@ public interface IJpaTableRepository extends JpaRepository<RestaurantTables, UUI
     Optional<RestaurantTables> findByToken(String token);
 
     boolean existsByTableNumber(int tableNumber);
+
+    List<RestaurantTables> findByTableStatusContaining(TableStatus status);
 }

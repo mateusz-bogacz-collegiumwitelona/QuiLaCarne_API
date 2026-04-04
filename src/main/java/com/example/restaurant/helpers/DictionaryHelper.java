@@ -8,6 +8,8 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class DictionaryHelper {
@@ -39,5 +41,23 @@ public class DictionaryHelper {
         entity.setToken(nameEn.toUpperCase().replace(" ", "_"));
 
         return entity;
+    }
+
+    public static <T extends BaseTranslatedEntity> void deleteEntity(
+            String token,
+            Function<String, T> findByToken,
+            Consumer<T> saveEntity,
+            Consumer<T> relatedEntityCleanup
+    ) {
+        T entity = findByToken.apply(token);
+
+        if (relatedEntityCleanup != null) relatedEntityCleanup.accept(entity);
+
+        entity.setToken(SoftDeleteHelpers.markAsDelete(entity.getToken()));
+        entity.setNameEn(SoftDeleteHelpers.markAsDelete(entity.getNameEn()));
+        entity.setNamePl(SoftDeleteHelpers.markAsDelete(entity.getNamePl()));
+        entity.setDeletedAt(java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC));
+
+        saveEntity.accept(entity);
     }
 }

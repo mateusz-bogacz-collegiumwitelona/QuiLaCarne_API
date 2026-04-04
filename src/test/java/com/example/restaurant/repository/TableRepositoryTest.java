@@ -219,4 +219,18 @@ public class TableRepositoryTest {
         _tableRepo.saveStatus(status);
         verify(_jpaTableStatusRepo, times(1)).save(status);
     }
+
+    @Test
+    @DisplayName("findTablesByStatus: Should return list of tables containing given status")
+    void findTablesByStatus_ShouldReturnListOfTables() {
+        TableStatus status = new TableStatus();
+        List<RestaurantTables> expectedTables = List.of(new RestaurantTables(), new RestaurantTables());
+
+        when(_jpaTableRepo.findByTableStatusContaining(status)).thenReturn(expectedTables);
+
+        List<RestaurantTables> result = _tableRepo.findTablesByStatus(status);
+
+        assertEquals(2, result.size());
+        verify(_jpaTableRepo, times(1)).findByTableStatusContaining(status);
+    }
 }

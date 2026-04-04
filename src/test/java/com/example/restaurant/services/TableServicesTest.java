@@ -358,4 +358,29 @@ public class TableServicesTest {
                         status.getToken().equals("NEW_TABLE_STATUS_EN")
         ));
     }
+
+    @Test
+    @DisplayName("removeStatus: Should soft delete table status and reassign tables to AVAILABLE")
+    void removeStatus_ShouldSoftDelete_AndReassignToAvailable() {
+        String tokenToRemove = "CLEANING_TOKEN";
+        TableStatus statusToRemove = new TableStatus();
+        statusToRemove.setToken(tokenToRemove);
+
+        TableStatus fallbackStatus = new TableStatus();
+        fallbackStatus.setToken("AVAILABLE");
+
+        RestaurantTables table = new RestaurantTables();
+        table.getTableStatus().add(statusToRemove);
+
+        when(_tableRepo.findStatusByToken(tokenToRemove)).thenReturn(statusToRemove);
+        when(_tableRepo.findStatusByToken("AVAILABLE")).thenReturn(fallbackStatus);
+        when(_tableRepo.findTablesByStatus(statusToRemove)).thenReturn(List.of(table));
+
+        assertDoesNotThrow(() -> _tableServices.removeStatus(tokenToRemove));
+
+        assertFalse(table.getTableStatus().contains(statusToRemove));
+        assertTrue(table.getTableStatus().contains(fallbackStatus));
+        verify(_tableRepo, times(1)).saveStatus(statusToRemove);
+        verify(_tableRepo, times(1)).save(table);
+    }
 }

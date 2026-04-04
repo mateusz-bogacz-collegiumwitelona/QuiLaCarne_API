@@ -57,7 +57,8 @@ public class DataSeeder implements CommandLineRunner {
                 new TranslatedData("RESERVED", "Zarezerwowany", "Reserved"),
                 new TranslatedData("OCCUPIED", "Zajęty", "Occupied"),
                 new TranslatedData("OUT_OF_SERVICE", "Wyłączony z użytku", "Out of service"),
-                new TranslatedData("CLEANING", "Do sprzątnięcia", "Cleaning")
+                new TranslatedData("CLEANING", "Do sprzątnięcia", "Cleaning"),
+                new TranslatedData("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaOrderItemStatusRepo, OrderItemsStatus::new, List.of(
@@ -66,7 +67,8 @@ public class DataSeeder implements CommandLineRunner {
                 new TranslatedData("READY", "Gotowe do wydania", "Ready"),
                 new TranslatedData("SERVED", "Wydane", "Served"),
                 new TranslatedData("CANCELLED", "Anulowane", "Cancelled"),
-                new TranslatedData("RETURNED", "Zwrócone", "Returned")
+                new TranslatedData("RETURNED", "Zwrócone", "Returned"),
+                new TranslatedData("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaDishesCategoryRepo, DishesCategories::new, List.of(
@@ -74,7 +76,8 @@ public class DataSeeder implements CommandLineRunner {
                 new TranslatedData("SOUP", "Zupy", "Soups"),
                 new TranslatedData("MAIN", "Dania główne", "Main courses"),
                 new TranslatedData("DESSERT", "Desery", "Desserts"),
-                new TranslatedData("DRINK", "Napoje", "Drinks")
+                new TranslatedData("DRINK", "Napoje", "Drinks"),
+                new TranslatedData("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaAllergensRepo, Allergens::new, List.of(
@@ -88,14 +91,16 @@ public class DataSeeder implements CommandLineRunner {
                 new TranslatedData("COMPLETED", "Zakończona", "Completed"),
                 new TranslatedData("IN_PROGRESS", "W trakcie", "In progress"),
                 new TranslatedData("CANCELLED", "Anulowana", "Cancelled"),
-                new TranslatedData("NO_SHOW", "Nieobecność", "No show")
+                new TranslatedData("NO_SHOW", "Nieobecność", "No show"),
+                new TranslatedData("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaOrderStatusRepo, OrderStatus::new, List.of(
                 new TranslatedData("ACTIVE", "Aktywna", "Active"),
                 new TranslatedData("COMPLETED", "Zakończona", "Completed"),
                 new TranslatedData("IN_PROGRESS", "W trakcie", "In progress"),
-                new TranslatedData("CANCELLED", "Anulowana", "Cancelled")
+                new TranslatedData("CANCELLED", "Anulowana", "Cancelled"),
+                new TranslatedData("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaBanStatusRepo, BanStatus::new, List.of(

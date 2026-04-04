@@ -21,4 +21,6 @@ public interface IDishServices {
     List<EntityResponse> getDictionary();
 
     void addCategory(AddEntityRequest request);
+
+    void removeCategory(String token);
 }
