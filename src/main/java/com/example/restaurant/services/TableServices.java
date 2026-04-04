@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.EntityResponse;
@@ -129,5 +130,19 @@ public class TableServices implements ITableServices {
     public List<EntityResponse> getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_tableRepo.findAllStatuses(), lang);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "ADD_TABLE_STATUS")
+    public void addStatus(AddEntityRequest request) {
+        TableStatus status = DictionaryHelper.createEntity(
+                TableStatus::new,
+                request,
+                _tableRepo::isStatusNameTaken,
+                "Table status already exists"
+        );
+
+        _tableRepo.saveStatus(status);
     }
 }

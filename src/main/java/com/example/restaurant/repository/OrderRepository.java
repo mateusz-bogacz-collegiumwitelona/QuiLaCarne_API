@@ -78,4 +78,26 @@ public class OrderRepository implements IOrderRepository {
     public List<OrderItemsStatus> findAllItemStatuses() {
         return _jpaOrderItemStatusRepo.findAll();
     }
+
+    @Override
+    public boolean isStatusNameTaken(String pl, String en) {
+        return _jpaOrderStatusRepo.findByNamePl(pl).isPresent() ||
+                _jpaOrderStatusRepo.findByNameEn(en).isPresent();
+    }
+
+    @Override
+    public void saveStatus(OrderStatus status) {
+        _jpaOrderStatusRepo.save(status);
+    }
+
+    @Override
+    public boolean isItemStatusNameTaken(String pl, String en) {
+        return _jpaOrderItemStatusRepo.findByNamePl(pl).isPresent() ||
+                _jpaOrderItemStatusRepo.findByNameEn(en).isPresent();
+    }
+
+    @Override
+    public void saveItemStatus(OrderItemsStatus status) {
+        _jpaOrderItemStatusRepo.save(status);
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.EntityResponse;
@@ -339,5 +340,22 @@ public class TableServicesTest {
         assertEquals(1, result.size());
         assertEquals(TestConstants.STATUS_CLEANING, result.get(0).getToken());
         assertEquals("Cleaning EN", result.get(0).getName());
+    }
+
+    @Test
+    @DisplayName("addStatus: Should save table status when data is correct")
+    void addStatus_ShouldSaveTableStatus_WhenDataIsCorrect() {
+        AddEntityRequest request = new AddEntityRequest();
+        request.setNamePl("Nowy Status Stolika PL");
+        request.setNameEn("New Table Status EN");
+
+        when(_tableRepo.isStatusNameTaken(anyString(), anyString())).thenReturn(false);
+
+        assertDoesNotThrow(() -> _tableServices.addStatus(request));
+        verify(_tableRepo, times(1)).saveStatus(argThat(status ->
+                status.getNamePl().equals("Nowy Status Stolika PL") &&
+                        status.getNameEn().equals("New Table Status EN") &&
+                        status.getToken().equals("NEW_TABLE_STATUS_EN")
+        ));
     }
 }

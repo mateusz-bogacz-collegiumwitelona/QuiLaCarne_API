@@ -253,4 +253,54 @@ public class DishController {
                 )
         );
     }
+
+    @Operation(
+            summary = "Add a new allergen",
+            description = "Creates a new allergen in the system. The English name is automatically used to generate a unique token. Requires MANAGER role."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Allergen created successful",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Validation error or Ingredient name already exists"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    @PostMapping("/allergens/add")
+    public ResponseEntity<ResultHandler<Void>> add(@RequestBody @Valid AddEntityRequest request) {
+        _allergensServices.add(request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Allergen created successful",
+                HttpStatus.CREATED.value()
+        ));
+    }
+
+    @Operation(
+            summary = "Add a new dish category",
+            description = "Creates a new dish category in the system. The English name is automatically used to generate a unique token. Requires MANAGER role."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Allergen created successful",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Validation error or Ingredient name already exists"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    @PostMapping("/category/add")
+    public ResponseEntity<ResultHandler<Void>> addCategory(@RequestBody @Valid AddEntityRequest request) {
+        _dishServices.addCategory(request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Dish category created successful",
+                HttpStatus.CREATED.value()
+        ));
+    }
 }

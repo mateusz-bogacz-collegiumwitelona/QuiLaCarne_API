@@ -78,4 +78,15 @@ public class DishRepository implements IDishRepository {
     public List<DishesCategories> findAllCategories() {
         return _jpaDishCategoryRepo.findAll();
     }
+
+    @Override
+    public boolean isCategoryNameTaken(String pl, String en) {
+        return _jpaDishCategoryRepo.findByNamePl(pl).isPresent() ||
+                _jpaDishCategoryRepo.findByNameEn(en).isPresent();
+    }
+
+    @Override
+    public void saveCategory(DishesCategories categorie) {
+        _jpaDishCategoryRepo.save(categorie);
+    }
 }

@@ -25,4 +25,8 @@ public interface IDishRepository {
     DishesCategories findCategoryByToken(String token);
 
     List<DishesCategories> findAllCategories();
+
+    boolean isCategoryNameTaken(String pl, String en);
+
+    public void saveCategory(DishesCategories categorie);
 }

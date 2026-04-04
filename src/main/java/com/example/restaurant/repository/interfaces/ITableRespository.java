@@ -23,4 +23,7 @@ public interface ITableRespository {
 
     List<TableStatus> findAllStatuses();
 
+    boolean isStatusNameTaken(String pl, String en);
+
+    void saveStatus(TableStatus status);
 }

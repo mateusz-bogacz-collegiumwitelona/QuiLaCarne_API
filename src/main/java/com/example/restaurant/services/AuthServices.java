@@ -195,5 +195,4 @@ public class AuthServices implements IAuthServices {
         GoogleIdToken idToken = verifier.verify(token);
         return idToken != null ? idToken.getPayload() : null;
     }
-
 }

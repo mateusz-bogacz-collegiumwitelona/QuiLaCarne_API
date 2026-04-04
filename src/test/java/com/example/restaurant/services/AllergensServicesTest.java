@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -17,9 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AllergensServicesTest {
@@ -81,5 +81,25 @@ public class AllergensServicesTest {
         assertEquals(1, result.size());
         assertEquals(TestConstants.TOKEN_NUTS, result.getFirst().getToken());
         assertEquals(TestConstants.FAKE_ALLERGEN_EN, result.getFirst().getName());
+    }
+
+    @Test
+    @DisplayName("Add: Should save allergen when data is correct")
+    void add_ShouldSaveAllergen_WhenDataIsCorrect() {
+        AddEntityRequest request = new AddEntityRequest();
+        request.setNamePl(TestConstants.FAKE_ALLERGEN_PL);
+        request.setNameEn(TestConstants.FAKE_ALLERGEN_EN);
+
+        when(_allergenRepo.isNameTaken(anyString(), anyString())).thenReturn(false);
+
+        assertDoesNotThrow(() -> _allergensServices.add(request));
+
+        verify(_allergenRepo, times(1)).save(argThat(allergen ->
+                allergen.getNamePl().equals(TestConstants.FAKE_ALLERGEN_PL) &&
+                        allergen.getNameEn().equals(TestConstants.FAKE_ALLERGEN_EN) &&
+                        allergen.getToken().equals(
+                                TestConstants.FAKE_ALLERGEN_EN.toUpperCase().replace(" ", "_")
+                        )
+        ));
     }
 }

@@ -3,6 +3,7 @@ package com.example.restaurant.other;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.LogDomain;
+import com.example.restaurant.helpers.AuditAspect;
 import com.example.restaurant.services.interfaces.IAuditLogServices;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;

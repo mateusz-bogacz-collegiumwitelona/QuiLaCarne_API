@@ -175,4 +175,48 @@ public class TableRepositoryTest {
         assertEquals(expectedStatuses, result);
         verify(_jpaTableStatusRepo, times(1)).findAll();
     }
+
+    @Test
+    @DisplayName("isStatusNameTaken: Should return true and short-circuit when PL name exists")
+    void isStatusNameTaken_ShouldReturnTrue_WhenPlNameExists() {
+        when(_jpaTableStatusRepo.findByNamePl(anyString())).thenReturn(Optional.of(new TableStatus()));
+
+        boolean result = _tableRepo.isStatusNameTaken("Status PL", "Status EN");
+
+        assertTrue(result);
+        verify(_jpaTableStatusRepo, times(1)).findByNamePl("Status PL");
+        verify(_jpaTableStatusRepo, never()).findByNameEn(anyString());
+    }
+
+    @Test
+    @DisplayName("isStatusNameTaken: Should return true when EN name exists")
+    void isStatusNameTaken_ShouldReturnTrue_WhenEnNameExists() {
+        when(_jpaTableStatusRepo.findByNamePl(anyString())).thenReturn(Optional.empty());
+        when(_jpaTableStatusRepo.findByNameEn(anyString())).thenReturn(Optional.of(new TableStatus()));
+
+        boolean result = _tableRepo.isStatusNameTaken("Status PL", "Status EN");
+
+        assertTrue(result);
+        verify(_jpaTableStatusRepo, times(1)).findByNamePl("Status PL");
+        verify(_jpaTableStatusRepo, times(1)).findByNameEn("Status EN");
+    }
+
+    @Test
+    @DisplayName("isStatusNameTaken: Should return false when both names are available")
+    void isStatusNameTaken_ShouldReturnFalse_WhenBothAreAvailable() {
+        when(_jpaTableStatusRepo.findByNamePl(anyString())).thenReturn(Optional.empty());
+        when(_jpaTableStatusRepo.findByNameEn(anyString())).thenReturn(Optional.empty());
+
+        boolean result = _tableRepo.isStatusNameTaken("Status PL", "Status EN");
+
+        assertFalse(result);
+    }
+
+    @Test
+    @DisplayName("saveStatus: Should call JPA save")
+    void saveStatus_ShouldCallJpaSave() {
+        TableStatus status = new TableStatus();
+        _tableRepo.saveStatus(status);
+        verify(_jpaTableStatusRepo, times(1)).save(status);
+    }
 }

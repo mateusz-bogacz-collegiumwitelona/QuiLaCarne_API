@@ -8,4 +8,8 @@ public interface IAllergensRepository {
     List<Allergens> findAllergens(List<String> allergenTokens);
 
     List<Allergens> findAll();
+
+    boolean isNameTaken(String pl, String en);
+
+    void save(Allergens allergen);
 }

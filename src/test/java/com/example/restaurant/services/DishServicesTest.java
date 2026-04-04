@@ -436,4 +436,23 @@ public class DishServicesTest {
         assertEquals(TestConstants.TOKEN_DESSERTS, result.getFirst().getToken());
         assertEquals("Desserts EN", result.getFirst().getName());
     }
+
+    @Test
+    @DisplayName("addCategory: Should save category when data is correct")
+    void addCategory_ShouldSaveCategory_WhenDataIsCorrect() {
+        AddEntityRequest request = new AddEntityRequest();
+        request.setNamePl("Przystawki PL");
+        request.setNameEn("Starters EN");
+
+
+        when(_dishRepo.isCategoryNameTaken(anyString(), anyString())).thenReturn(false);
+
+        assertDoesNotThrow(() -> _dishServices.addCategory(request));
+
+        verify(_dishRepo, times(1)).saveCategory(argThat(category ->
+                category.getNamePl().equals("Przystawki PL") &&
+                        category.getNameEn().equals("Starters EN") &&
+                        category.getToken().equals("STARTERS_EN")
+        ));
+    }
 }

@@ -120,4 +120,92 @@ public class OrderRepositoryTest {
         assertEquals(expectedStatuses, result);
         verify(_jpaOrderItemStatusRepo, times(1)).findAll();
     }
+
+    @Test
+    @DisplayName("isStatusNameTaken: Should return true and short-circuit when PL name exists")
+    void isStatusNameTaken_ShouldReturnTrue_WhenPlNameExists() {
+        when(_jpaOrderStatusRepo.findByNamePl(anyString())).thenReturn(Optional.of(new OrderStatus()));
+
+        boolean result = _orderRepo.isStatusNameTaken("Status PL", "Status EN");
+
+        assertTrue(result);
+        verify(_jpaOrderStatusRepo, times(1)).findByNamePl("Status PL");
+        verify(_jpaOrderStatusRepo, never()).findByNameEn(anyString());
+    }
+
+    @Test
+    @DisplayName("isStatusNameTaken: Should return true when EN name exists")
+    void isStatusNameTaken_ShouldReturnTrue_WhenEnNameExists() {
+        when(_jpaOrderStatusRepo.findByNamePl(anyString())).thenReturn(Optional.empty());
+        when(_jpaOrderStatusRepo.findByNameEn(anyString())).thenReturn(Optional.of(new OrderStatus()));
+
+        boolean result = _orderRepo.isStatusNameTaken("Status PL", "Status EN");
+
+        assertTrue(result);
+        verify(_jpaOrderStatusRepo, times(1)).findByNamePl("Status PL");
+        verify(_jpaOrderStatusRepo, times(1)).findByNameEn("Status EN");
+    }
+
+    @Test
+    @DisplayName("isStatusNameTaken: Should return false when both names are available")
+    void isStatusNameTaken_ShouldReturnFalse_WhenBothAreAvailable() {
+        when(_jpaOrderStatusRepo.findByNamePl(anyString())).thenReturn(Optional.empty());
+        when(_jpaOrderStatusRepo.findByNameEn(anyString())).thenReturn(Optional.empty());
+
+        boolean result = _orderRepo.isStatusNameTaken("Status PL", "Status EN");
+
+        assertFalse(result);
+    }
+
+    @Test
+    @DisplayName("saveStatus: Should call JPA save")
+    void saveStatus_ShouldCallJpaSave() {
+        OrderStatus status = new OrderStatus();
+        _orderRepo.saveStatus(status);
+        verify(_jpaOrderStatusRepo, times(1)).save(status);
+    }
+
+    @Test
+    @DisplayName("isItemStatusNameTaken: Should return true and short-circuit when PL name exists")
+    void isItemStatusNameTaken_ShouldReturnTrue_WhenPlNameExists() {
+        when(_jpaOrderItemStatusRepo.findByNamePl(anyString())).thenReturn(Optional.of(new OrderItemsStatus()));
+
+        boolean result = _orderRepo.isItemStatusNameTaken("Item Status PL", "Item Status EN");
+
+        assertTrue(result);
+        verify(_jpaOrderItemStatusRepo, times(1)).findByNamePl("Item Status PL");
+        verify(_jpaOrderItemStatusRepo, never()).findByNameEn(anyString());
+    }
+
+    @Test
+    @DisplayName("isItemStatusNameTaken: Should return true when EN name exists")
+    void isItemStatusNameTaken_ShouldReturnTrue_WhenEnNameExists() {
+        when(_jpaOrderItemStatusRepo.findByNamePl(anyString())).thenReturn(Optional.empty());
+        when(_jpaOrderItemStatusRepo.findByNameEn(anyString())).thenReturn(Optional.of(new OrderItemsStatus()));
+
+        boolean result = _orderRepo.isItemStatusNameTaken("Item Status PL", "Item Status EN");
+
+        assertTrue(result);
+        verify(_jpaOrderItemStatusRepo, times(1)).findByNamePl("Item Status PL");
+        verify(_jpaOrderItemStatusRepo, times(1)).findByNameEn("Item Status EN");
+    }
+
+    @Test
+    @DisplayName("isItemStatusNameTaken: Should return false when both names are available")
+    void isItemStatusNameTaken_ShouldReturnFalse_WhenBothAreAvailable() {
+        when(_jpaOrderItemStatusRepo.findByNamePl(anyString())).thenReturn(Optional.empty());
+        when(_jpaOrderItemStatusRepo.findByNameEn(anyString())).thenReturn(Optional.empty());
+
+        boolean result = _orderRepo.isItemStatusNameTaken("Item Status PL", "Item Status EN");
+
+        assertFalse(result);
+    }
+
+    @Test
+    @DisplayName("saveItemStatus: Should call JPA save")
+    void saveItemStatus_ShouldCallJpaSave() {
+        OrderItemsStatus status = new OrderItemsStatus();
+        _orderRepo.saveItemStatus(status);
+        verify(_jpaOrderItemStatusRepo, times(1)).save(status);
+    }
 }

@@ -12,8 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,5 +69,56 @@ public class AllergensRepositoryTest {
 
         assertEquals(expectedAllergens, result);
         verify(_jpaAllergensRepo).findAll();
+    }
+
+    @Test
+    @DisplayName("isNameTaken: Should return true and short-circuit when PL name exists")
+    void isNameTaken_ShouldReturnTrue_WhenPlNameExists() {
+        when(_jpaAllergensRepo.findByNamePl(TestConstants.FAKE_ALLERGEN_PL))
+                .thenReturn(java.util.Optional.of(new Allergens()));
+
+        boolean result = _allergensRepo.isNameTaken(TestConstants.FAKE_ALLERGEN_PL, TestConstants.FAKE_ALLERGEN_EN);
+
+        assertTrue(result);
+        verify(_jpaAllergensRepo, times(1)).findByNamePl(TestConstants.FAKE_ALLERGEN_PL);
+        verify(_jpaAllergensRepo, never()).findByNameEn(anyString());
+    }
+
+    @Test
+    @DisplayName("isNameTaken: Should return true when EN name exists")
+    void isNameTaken_ShouldReturnTrue_WhenEnNameExists() {
+        when(_jpaAllergensRepo.findByNamePl(TestConstants.FAKE_ALLERGEN_PL))
+                .thenReturn(java.util.Optional.empty());
+        when(_jpaAllergensRepo.findByNameEn(TestConstants.FAKE_ALLERGEN_EN))
+                .thenReturn(java.util.Optional.of(new Allergens()));
+
+        boolean result = _allergensRepo.isNameTaken(TestConstants.FAKE_ALLERGEN_PL, TestConstants.FAKE_ALLERGEN_EN);
+
+        assertTrue(result);
+        verify(_jpaAllergensRepo, times(1)).findByNamePl(TestConstants.FAKE_ALLERGEN_PL);
+        verify(_jpaAllergensRepo, times(1)).findByNameEn(TestConstants.FAKE_ALLERGEN_EN);
+    }
+
+    @Test
+    @DisplayName("isNameTaken: Should return false when both names are available")
+    void isNameTaken_ShouldReturnFalse_WhenBothNamesAreAvailable() {
+        when(_jpaAllergensRepo.findByNamePl(TestConstants.FAKE_ALLERGEN_PL))
+                .thenReturn(java.util.Optional.empty());
+        when(_jpaAllergensRepo.findByNameEn(TestConstants.FAKE_ALLERGEN_EN))
+                .thenReturn(java.util.Optional.empty());
+
+        boolean result = _allergensRepo.isNameTaken(TestConstants.FAKE_ALLERGEN_PL, TestConstants.FAKE_ALLERGEN_EN);
+
+        assertFalse(result);
+    }
+
+    @Test
+    @DisplayName("save: Should call JPA save")
+    void save_ShouldCallJpaSave() {
+        Allergens allergen = new Allergens();
+
+        _allergensRepo.save(allergen);
+
+        verify(_jpaAllergensRepo, times(1)).save(allergen);
     }
 }

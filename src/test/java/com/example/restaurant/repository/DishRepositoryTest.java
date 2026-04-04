@@ -218,4 +218,52 @@ public class DishRepositoryTest {
         assertEquals(expectedCategories, result);
         verify(_jpaDishCategoryRepo, times(1)).findAll();
     }
+
+    @Test
+    @DisplayName("isCategoryNameTaken: Should return true and short-circuit when PL name exists")
+    void isCategoryNameTaken_ShouldReturnTrue_WhenPlNameExists() {
+        when(_jpaDishCategoryRepo.findByNamePl(anyString()))
+                .thenReturn(Optional.of(new DishesCategories()));
+
+        boolean result = _dishRepo.isCategoryNameTaken("Zupy PL", "Soups EN");
+
+        assertTrue(result);
+        verify(_jpaDishCategoryRepo, times(1)).findByNamePl("Zupy PL");
+        verify(_jpaDishCategoryRepo, never()).findByNameEn(anyString());
+    }
+
+    @Test
+    @DisplayName("isCategoryNameTaken: Should return true when EN name exists")
+    void isCategoryNameTaken_ShouldReturnTrue_WhenEnNameExists() {
+        when(_jpaDishCategoryRepo.findByNamePl(anyString())).thenReturn(Optional.empty());
+        when(_jpaDishCategoryRepo.findByNameEn(anyString()))
+                .thenReturn(Optional.of(new DishesCategories()));
+
+        boolean result = _dishRepo.isCategoryNameTaken("Zupy PL", "Soups EN");
+
+        assertTrue(result);
+        verify(_jpaDishCategoryRepo, times(1)).findByNamePl("Zupy PL");
+        verify(_jpaDishCategoryRepo, times(1)).findByNameEn("Soups EN");
+    }
+
+    @Test
+    @DisplayName("isCategoryNameTaken: Should return false when both names are available")
+    void isCategoryNameTaken_ShouldReturnFalse_WhenBothNamesAreAvailable() {
+        when(_jpaDishCategoryRepo.findByNamePl(anyString())).thenReturn(Optional.empty());
+        when(_jpaDishCategoryRepo.findByNameEn(anyString())).thenReturn(Optional.empty());
+
+        boolean result = _dishRepo.isCategoryNameTaken("Zupy PL", "Soups EN");
+
+        assertFalse(result);
+    }
+
+    @Test
+    @DisplayName("saveCategory: Should call JPA save")
+    void saveCategory_ShouldCallJpaSave() {
+        DishesCategories category = new DishesCategories();
+
+        _dishRepo.saveCategory(category);
+
+        verify(_jpaDishCategoryRepo, times(1)).save(category);
+    }
 }

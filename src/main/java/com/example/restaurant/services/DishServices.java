@@ -180,4 +180,18 @@ public class DishServices implements IDishServices {
             }
         }
     }
+
+    @Override
+    @Transactional
+    @Auditable(action = "ADD_DISH_CATEGORY")
+    public void addCategory(AddEntityRequest request) {
+        DishesCategories category = DictionaryHelper.createEntity(
+                DishesCategories::new,
+                request,
+                _dishRepo::isCategoryNameTaken,
+                "Dish category already exits"
+        );
+
+        _dishRepo.saveCategory(category);
+    }
 }

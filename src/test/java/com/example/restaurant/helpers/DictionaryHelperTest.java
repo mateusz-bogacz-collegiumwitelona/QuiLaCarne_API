@@ -1,7 +1,9 @@
 package com.example.restaurant.helpers;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,11 +11,13 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DictionaryHelperTest {
     private static class DummyEntity extends BaseTranslatedEntity {
+        public DummyEntity() {
+        }
+
         public DummyEntity(String token, String namePl, String nameEn) {
             this.setToken(token);
             this.setNamePl(namePl);
@@ -75,5 +79,45 @@ public class DictionaryHelperTest {
         assertEquals("Polski", DictionaryHelper.map(entities, "PL").getFirst().getName());
         assertEquals("Polski", DictionaryHelper.map(entities, "Pl").getFirst().getName());
         assertEquals("Polski", DictionaryHelper.map(entities, "pl").getFirst().getName());
+    }
+
+    @Test
+    @DisplayName("createEntity: Should return mapped entity with trimmed names and correct token")
+    void createEntity_ShouldReturnMappedEntity() {
+        AddEntityRequest request = new AddEntityRequest();
+        request.setNameEn("Peanuts And Nuts  ");
+        request.setNamePl(" Orzechy         ");
+
+        DummyEntity result = DictionaryHelper.createEntity(
+                DummyEntity::new,
+                request,
+                (pl, en) -> false,
+                "Error"
+        );
+
+        assertNotNull(result);
+        assertEquals("Orzechy", result.getNamePl());
+        assertEquals("Peanuts And Nuts", result.getNameEn());
+        assertEquals("PEANUTS_AND_NUTS", result.getToken());
+    }
+
+    @Test
+    @DisplayName("createEntity: Should throw EntityAlreadyExistsException when name is taken")
+    void createEntity_ShouldThrowException_WhenNameTaken() {
+        AddEntityRequest request = new AddEntityRequest();
+        request.setNamePl("Orzechy");
+        request.setNameEn("Peanuts");
+
+        EntityAlreadyExistsException exception = assertThrows(
+                EntityAlreadyExistsException.class,
+                () -> DictionaryHelper.createEntity(
+                        DummyEntity::new,
+                        request,
+                        (pl, en) -> true,
+                        "Entity already exists"
+                )
+        );
+
+        assertEquals("Entity already exists", exception.getMessage());
     }
 }

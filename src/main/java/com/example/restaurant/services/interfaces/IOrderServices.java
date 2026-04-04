@@ -3,6 +3,7 @@ package com.example.restaurant.services.interfaces;
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
+import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.EntityResponse;
 
@@ -30,4 +31,8 @@ public interface IOrderServices {
     List<EntityResponse> getDictionary();
 
     List<EntityResponse> getItemStatusesDictionary();
+
+    void addStatus(AddEntityRequest request);
+
+    void addItemStatus(AddEntityRequest request);
 }

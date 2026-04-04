@@ -1,4 +1,4 @@
-package com.example.restaurant.other;
+package com.example.restaurant.helpers;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.LogDomain;

@@ -4,6 +4,7 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
+import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
@@ -641,5 +642,41 @@ public class OrderServicesTest {
         assertEquals(1, result.size());
         assertEquals(TestConstants.STATUS_READY, result.get(0).getToken());
         assertEquals("Ready EN", result.get(0).getName());
+    }
+
+    @Test
+    @DisplayName("addStatus: Should save order status when data is correct")
+    void addStatus_ShouldSaveOrderStatus_WhenDataIsCorrect() {
+        AddEntityRequest request = new AddEntityRequest();
+        request.setNamePl("Nowy Status PL");
+        request.setNameEn("New Status EN");
+
+        when(_orderRepo.isStatusNameTaken(anyString(), anyString())).thenReturn(false);
+
+        assertDoesNotThrow(() -> _orderServices.addStatus(request));
+
+        verify(_orderRepo, times(1)).saveStatus(argThat(status ->
+                status.getNamePl().equals("Nowy Status PL") &&
+                        status.getNameEn().equals("New Status EN") &&
+                        status.getToken().equals("NEW_STATUS_EN")
+        ));
+    }
+
+    @Test
+    @DisplayName("addItemStatus: Should save order item status when data is correct")
+    void addItemStatus_ShouldSaveOrderItemStatus_WhenDataIsCorrect() {
+        AddEntityRequest request = new AddEntityRequest();
+        request.setNamePl("Nowy Status Elementu PL");
+        request.setNameEn("New Item Status EN");
+
+        when(_orderRepo.isItemStatusNameTaken(anyString(), anyString())).thenReturn(false);
+
+        assertDoesNotThrow(() -> _orderServices.addItemStatus(request));
+
+        verify(_orderRepo, times(1)).saveItemStatus(argThat(status ->
+                status.getNamePl().equals("Nowy Status Elementu PL") &&
+                        status.getNameEn().equals("New Item Status EN") &&
+                        status.getToken().equals("NEW_ITEM_STATUS_EN")
+        ));
     }
 }

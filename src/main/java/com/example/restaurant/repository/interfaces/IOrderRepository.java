@@ -29,4 +29,12 @@ public interface IOrderRepository {
     List<OrderStatus> findAllStatuses();
 
     List<OrderItemsStatus> findAllItemStatuses();
+
+    boolean isStatusNameTaken(String pl, String en);
+
+    void saveStatus(OrderStatus status);
+
+    boolean isItemStatusNameTaken(String pl, String en);
+
+    void saveItemStatus(OrderItemsStatus status);
 }

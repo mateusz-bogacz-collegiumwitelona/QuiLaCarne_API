@@ -1,9 +1,11 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
+import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.ReservationDishResponse;
@@ -13,6 +15,8 @@ import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
+import com.example.restaurant.models.lookup.OrderItemsStatus;
+import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.*;
 import com.example.restaurant.services.interfaces.IOrderServices;
 import jakarta.transaction.Transactional;
@@ -322,6 +326,34 @@ public class OrderServices implements IOrderServices {
     public List<EntityResponse> getItemStatusesDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return DictionaryHelper.map(_orderRepo.findAllItemStatuses(), lang);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "ADD_ORDER_STATUS")
+    public void addStatus(AddEntityRequest request) {
+        OrderStatus status = DictionaryHelper.createEntity(
+                OrderStatus::new,
+                request,
+                _orderRepo::isStatusNameTaken,
+                "Order status already exists"
+        );
+
+        _orderRepo.saveStatus(status);
+    }
+
+    @Override
+    @Transactional
+    @Auditable(action = "ADD_ORDER_ITEM_STATUS")
+    public void addItemStatus(AddEntityRequest request) {
+        OrderItemsStatus status = DictionaryHelper.createEntity(
+                OrderItemsStatus::new,
+                request,
+                _orderRepo::isItemStatusNameTaken,
+                "Order item status already exists"
+        );
+
+        _orderRepo.saveItemStatus(status);
     }
 
     private String normalizeNote(String note) {

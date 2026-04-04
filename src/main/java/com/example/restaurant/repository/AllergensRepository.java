@@ -25,4 +25,15 @@ public class AllergensRepository implements IAllergensRepository {
     public List<Allergens> findAll() {
         return _jpaAllergensRepo.findAll();
     }
+
+    @Override
+    public boolean isNameTaken(String pl, String en) {
+        return _jpaAllergensRepo.findByNamePl(pl).isPresent() ||
+                _jpaAllergensRepo.findByNameEn(en).isPresent();
+    }
+
+    @Override
+    public void save(Allergens allergen) {
+        _jpaAllergensRepo.save(allergen);
+    }
 }

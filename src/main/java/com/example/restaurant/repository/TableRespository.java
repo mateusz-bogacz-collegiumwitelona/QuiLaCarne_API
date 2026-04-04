@@ -63,4 +63,15 @@ public class TableRespository implements ITableRespository {
     public List<TableStatus> findAllStatuses() {
         return _jpaTableStatusRepo.findAll();
     }
+
+    @Override
+    public boolean isStatusNameTaken(String pl, String en) {
+        return _jpaTableStatusRepo.findByNamePl(pl).isPresent() ||
+                _jpaTableStatusRepo.findByNameEn(en).isPresent();
+    }
+
+    @Override
+    public void saveStatus(TableStatus status) {
+        _jpaTableStatusRepo.save(status);
+    }
 }

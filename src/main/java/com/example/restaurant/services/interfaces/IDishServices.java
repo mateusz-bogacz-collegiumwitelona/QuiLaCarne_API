@@ -19,4 +19,6 @@ public interface IDishServices {
     void add(AddDishRequest request);
 
     List<EntityResponse> getDictionary();
+
+    void addCategory(AddEntityRequest request);
 }

@@ -1,5 +1,6 @@
 package com.example.restaurant.services.interfaces;
 
+import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.EntityResponse;
@@ -19,4 +20,6 @@ public interface ITableServices {
     void delete(String token);
 
     List<EntityResponse> getDictionary();
+
+    void addStatus(AddEntityRequest request);
 }

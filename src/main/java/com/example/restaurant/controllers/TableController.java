@@ -1,5 +1,6 @@
 package com.example.restaurant.controllers;
 
+import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.EntityResponse;
@@ -182,5 +183,30 @@ public class TableController {
                         result
                 )
         );
+    }
+
+    @Operation(
+            summary = "Add a new table status",
+            description = "Creates a new table status in the system. The English name is automatically used to generate a unique token. Requires MANAGER role."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Table status created successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Validation error or table status already exists"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token is required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
+    @PostMapping("/status/add")
+    public ResponseEntity<ResultHandler<Void>> addStatus(@RequestBody @Valid AddEntityRequest request) {
+        _tableServices.addStatus(request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Table status created successfully",
+                HttpStatus.CREATED.value()
+        ));
     }
 }
