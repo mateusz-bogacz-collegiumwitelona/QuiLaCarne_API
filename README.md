@@ -27,6 +27,13 @@ docker compose run --rm test
 
 ---
 
+## Dodawanie admin bez dostępu do jakiego kolwiek forntendu
+
+1. Zatrzymaj kontener
+2. Wykonaj tą komende `docker compose run --rm -it api --create-admin`
+3. Uzupełij dane
+4. Włącz na nowo kontener
+
 ## Przydatne adresy
 
 | Usługa  | Adres                                       |
