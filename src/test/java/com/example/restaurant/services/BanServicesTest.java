@@ -29,13 +29,17 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BanServicesTest {
-
     @Mock
     private IBanRepository _banRepo;
+
     @Mock
     private EmailServices _emailServices;
+
     @Mock
     private IUserRepository _userRepo;
+
+    @Mock
+    private NotificationServices _notification;
 
     @InjectMocks
     private BanServices _banServices;
@@ -81,6 +85,7 @@ class BanServicesTest {
         verify(_banRepo).save(any(Bans.class));
         verify(_userRepo).save(client);
         verify(_emailServices).sendEmailSetBan(anyString(), anyString(), eq("Violation"));
+        verify(_notification, times(1)).sendToTopic(eq("security/bans"), anyString());
     }
 
     @Test

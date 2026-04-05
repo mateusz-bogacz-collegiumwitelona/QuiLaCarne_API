@@ -45,6 +45,7 @@ public class UserServices implements IUserServices {
     private final PasswordEncoder _passwordEncoder;
     private final IVerificationTokenServices _tokenServices;
     private final TwoFactorServices _2faServices;
+    private final NotificationServices _notification;
 
     private final String ROLE_MANAGER = "ROLE_MANAGER";
     private final String ROLE_WAITER = "ROLE_WAITER";
@@ -189,6 +190,8 @@ public class UserServices implements IUserServices {
         } else {
             buildAndSaveUser(request.getRegister(), ROLE_WAITER, true);
         }
+
+        _notification.sendToTopic("personnel/updates", "Personnel list changed");
     }
 
     @Override
@@ -225,6 +228,7 @@ public class UserServices implements IUserServices {
         }
 
         _userRepo.save(employee);
+        _notification.sendToTopic("personnel/updates", "Personnel list changed");
     }
 
     @Override
@@ -271,6 +275,7 @@ public class UserServices implements IUserServices {
         user.setRoles(Set.of(role));
 
         _userRepo.save(user);
+        _notification.sendToTopic("personnel/updates", "Personnel list changed");
     }
 
     @Override
@@ -289,6 +294,7 @@ public class UserServices implements IUserServices {
         user.setIsActive(request.isAvailable());
 
         _userRepo.save(user);
+        _notification.sendToTopic("personnel/updates", "Personnel list changed");
     }
 
     @Override
@@ -300,6 +306,7 @@ public class UserServices implements IUserServices {
             throw new IllegalStateException("You can't delete yourself");
 
         delete(employeeToken);
+        _notification.sendToTopic("personnel/updates", "Personnel list changed");
     }
 
     @Override

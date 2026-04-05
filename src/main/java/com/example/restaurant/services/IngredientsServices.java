@@ -28,6 +28,7 @@ public class IngredientsServices implements IIngredientsServices {
     private final IIngredientsRepository _ingredientsRepo;
     private final IAllergensRepository _allergensRepo;
     private final IDishRepository _dishRepo;
+    private final NotificationServices _notification;
 
     @Transactional
     @Override
@@ -54,6 +55,8 @@ public class IngredientsServices implements IIngredientsServices {
         ingredient.setAllergens(new HashSet<>(allergens));
 
         _ingredientsRepo.save(ingredient);
+
+        _notification.sendToTopic("dictionary/sync", "ingredients");
     }
 
     @Transactional
@@ -79,6 +82,9 @@ public class IngredientsServices implements IIngredientsServices {
                         _dishRepo.save(dish);
                     }
                 }
+        );
+        _notification.sendToTopic("menu/availability",
+                "Multiple dishes disabled due to ingredient removal: " + token
         );
     }
 

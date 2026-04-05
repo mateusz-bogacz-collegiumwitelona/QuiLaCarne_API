@@ -37,6 +37,8 @@ public class OrderServices implements IOrderServices {
     private final IReservationRepository _reservationRepo;
     private final ITableRespository _tableRepo;
     private final IUserRepository _userRepo;
+    private final NotificationServices _notification;
+
 
     @Override
     @Transactional
@@ -100,6 +102,8 @@ public class OrderServices implements IOrderServices {
         order.setTotalPrice(totalPrice);
 
         _orderRepo.saveOrderWithItems(order, orderItems);
+        _notification.sendToTopic("orders", "New order for table: " + tableToken);
+
         return new ReservationDomain(reservationDishes, totalPrice);
     }
 
@@ -214,8 +218,9 @@ public class OrderServices implements IOrderServices {
 
             _orderRepo.saveItem(cancelledItem);
         }
-
         _orderRepo.save(order);
+
+        _notification.sendToTopic("orders/updates", "Item removed from order: " + reservationToken);
     }
 
     @Override
@@ -267,6 +272,7 @@ public class OrderServices implements IOrderServices {
 
         order.setTotalPrice(order.getTotalPrice() + addToPrice);
         _orderRepo.save(order);
+        _notification.sendToTopic("orders/updates", "Item added to order: " + reservationToken);
     }
 
     @Transactional
@@ -315,6 +321,8 @@ public class OrderServices implements IOrderServices {
 
             _orderRepo.saveAllItems(items);
             _orderRepo.save(order);
+
+            _notification.sendToTopic("orders/updates", "Order cancelled (No Show): " + reservationToken);
         }
     }
 

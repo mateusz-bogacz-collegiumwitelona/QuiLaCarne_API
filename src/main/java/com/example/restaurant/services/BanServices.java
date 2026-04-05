@@ -28,6 +28,7 @@ public class BanServices implements IBanServices {
     private final IBanRepository _banRepo;
     private final EmailServices _emailServices;
     private final IUserRepository _userRepo;
+    private final NotificationServices _notification;
 
     private static final String ROLE_CLIENT = "ROLE_CLIENT";
     private static final String ROLE_MANAGER = "ROLE_MANAGER";
@@ -82,6 +83,8 @@ public class BanServices implements IBanServices {
                 domain.client().getUsername(),
                 domain.reason()
         );
+
+        _notification.sendToTopic("security/bans", "User banned: " + domain.client().getToken());
     }
 
     @Override
@@ -113,6 +116,7 @@ public class BanServices implements IBanServices {
 
             _banRepo.save(ban);
             _userRepo.save(user);
+            _notification.sendToTopic("security/bans", "User unbanned: " + user.getToken());
             log.info("User {} has been automatically unbanned.", user.getUsername());
         }
     }

@@ -82,7 +82,11 @@ dependencies {
     implementation 'com.bucket4j:bucket4j-redis:8.10.1'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // 2fa
     implementation 'com.warrenstrange:googleauth:1.5.0'
+
+    // STOMP/Websockets
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 }
 
 tasks.named('test') {

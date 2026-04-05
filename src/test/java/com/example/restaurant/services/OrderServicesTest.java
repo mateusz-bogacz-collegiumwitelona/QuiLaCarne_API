@@ -45,6 +45,9 @@ public class OrderServicesTest {
     @Mock
     private IUserRepository _userRepo;
 
+    @Mock
+    private NotificationServices _notification;
+
     @InjectMocks
     private OrderServices _orderServices;
 
@@ -54,6 +57,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Create order for reservation: Should Calculate price and return domain when success")
     void createOrderForReservation_ShouldCalculatePriceAndReturnDomain_WhenSuccessful() {
         ReservationDishRequest dishReq = new ReservationDishRequest();
         dishReq.setDishToken(TestConstants.FAKE_DISH_TOKEN);
@@ -86,9 +90,11 @@ public class OrderServicesTest {
         assertEquals(50, result.dishes().get(0).price());
 
         verify(_orderRepo, times(1)).saveOrderWithItems(any(Orders.class), anyList());
+        verify(_notification, times(1)).sendToTopic(eq("orders"), anyString());
     }
 
     @Test
+    @DisplayName("Create order for reservation: Should return empty domain when no dishes requested")
     void createOrderForReservation_ShouldReturnEmptyDomain_WhenNoDishesRequested() {
         ReservationDomain result = _orderServices.createOrderForReservation(
                 TestConstants.FAKE_RESERVATION_TOKEN,
@@ -103,6 +109,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Create order for reservation: Should throw exception when dish not found in map")
     void createOrderForReservation_ShouldThrowException_WhenDishNotFoundInMap() {
         ReservationDishRequest dishReq = new ReservationDishRequest();
         dishReq.setDishToken(TestConstants.FAKE_DISH_TOKEN);
@@ -127,6 +134,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Get order summary for reservation: should return empty  when order not exist")
     void getOrderSummaryForReservation_ShouldReturnEmpty_WhenNoOrderExists() {
         when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.empty());
@@ -140,6 +148,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Get order summary for reservation: should return mapped dishes when order exist")
     void getOrderSummaryForReservation_ShouldReturnMappedDishes_WhenOrderExists() {
         Orders mockOrder = new Orders();
         mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
@@ -169,6 +178,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Today order details: should return empty when order not foudn")
     void todayOrderDetails_ShouldReturnEmptyDomain_WhenOrderNotFound() {
         when(_orderRepo.findByReservationToken("fake-res-token"))
                 .thenReturn(Optional.empty());
@@ -182,6 +192,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Today order details: should return list when order found")
     void todayOrderDetails_ShouldReturnMappedData() {
         Orders mockOrder = new Orders();
         mockOrder.setToken("fake-order-token");
@@ -235,6 +246,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Today order details: should return empty when ingredients not found")
     void todayOrderDetails_ShouldReturnEmptyLists_WhenDishHasNoIngredients() {
         Orders mockOrder = new Orders();
         mockOrder.setToken("fake-order-token");
@@ -257,6 +269,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Remove item form reservation: should throw exception when dish in order not found")
     void removeItemFromReservation_ShouldThrowException_WhenDishNotFoundInOrder() {
         Orders mockOrder = new Orders();
         Users waiter = new Users();
@@ -273,6 +286,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Remove item form reservation: should decrease quantity and create cancelled when partial remove")
     void removeItemFromReservation_ShouldDecreaseQuantityAndCreateCancelled_WhenPartialRemoval() {
         ReservationDishRequest request = new ReservationDishRequest();
         request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
@@ -318,9 +332,11 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(2)).saveItem(any(OrderItems.class));
         verify(_orderRepo, times(1)).save(mockOrder);
+        verify(_notification, times(1)).sendToTopic(eq("orders/updates"), anyString());
     }
 
     @Test
+    @DisplayName("Remove item form reservation: should set status to cancelled when every dish is remove")
     void removeItemFromReservation_ShouldSetStatusToCancelled_WhenFullRemoval() {
         String note = "Bez soli";
         ReservationDishRequest request = new ReservationDishRequest();
@@ -367,9 +383,11 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(1)).saveItem(mockItem);
         verify(_orderRepo, times(1)).save(mockOrder);
+        verify(_notification, times(1)).sendToTopic(eq("orders/updates"), anyString());
     }
 
     @Test
+    @DisplayName("Add item from reservation: should increase quantiti and add new item with corrcet price")
     void addItemFromReservation_ShouldIncreaseQuantityAndAddNewItem_WithCorrectPrices() {
         ReservationDishRequest existingDishRequest = new ReservationDishRequest();
         existingDishRequest.setDishToken(TestConstants.FAKE_DISH_TOKEN);
@@ -424,9 +442,11 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(2)).saveItem(any(OrderItems.class));
         verify(_orderRepo, times(1)).save(mockOrder);
+        verify(_notification, times(1)).sendToTopic(eq("orders/updates"), anyString());
     }
 
     @Test
+    @DisplayName("Add item from reservation: should throw exception when waiter is not assigned")
     void addItemFromReservation_ShouldThrowException_WhenWaiterIsNotAssignedToOrder() {
         String assignedWaiterToken = "waiterA";
         String intruderWaiterToken = "waiterB";
@@ -451,6 +471,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("Assign waiter to order: should assign waiter and only change pending time")
     void assignWaiterToOrders_ShouldAssignWaiterAndOnlyChangePendingItems() {
         String inProgressStatus = "IN_PROGRESS";
 
@@ -509,6 +530,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("is Absent: should do nothing when order dosen't exist")
     void isAbsent_ShouldDoNothing_WhenOrderDoesNotExist() {
         when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.empty());
@@ -520,6 +542,7 @@ public class OrderServicesTest {
     }
 
     @Test
+    @DisplayName("is Absent: should cancel order and items when order exists")
     void isAbsent_ShouldCancelOrderAndItems_WhenOrderExists() {
         Orders mockOrder = new Orders();
         mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
@@ -554,6 +577,7 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(1)).saveAllItems(orderItems);
         verify(_orderRepo, times(1)).save(mockOrder);
+        verify(_notification, times(1)).sendToTopic(eq("orders/updates"), anyString());
     }
 
     @Test

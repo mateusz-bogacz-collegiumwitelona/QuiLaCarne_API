@@ -50,6 +50,9 @@ public class DishServicesTest {
     @Mock
     private S3StorageService _s3Services;
 
+    @Mock
+    private NotificationServices _notification;
+
     @InjectMocks
     private DishServices _dishServices;
 
@@ -125,6 +128,7 @@ public class DishServicesTest {
 
         verify(_dishRepo, times(1)).findByToken(TestConstants.FAKE_DISH_TOKEN);
         verify(_dishRepo, times(1)).save(dish);
+        verify(_notification, times(1)).sendToTopic(eq("menu/updates"), anyString());
     }
 
     @Test
@@ -148,6 +152,7 @@ public class DishServicesTest {
 
         verify(_dishRepo, times(1)).findByToken(TestConstants.FAKE_DISH_TOKEN);
         verify(_dishRepo, times(1)).save(dish);
+        verify(_notification, times(1)).sendToTopic(eq("menu"), anyString());
     }
 
     @Test
@@ -169,6 +174,7 @@ public class DishServicesTest {
         assertEquals("Brak świeżej bazylii", dish.getUnavailableReason());
 
         verify(_dishRepo, times(1)).save(dish);
+        verify(_notification, times(1)).sendToTopic(eq("menu"), anyString());
     }
 
     @Test
@@ -190,6 +196,7 @@ public class DishServicesTest {
         assertEquals("Brak składników", dish.getUnavailableReason());
 
         verify(_dishRepo, times(1)).save(dish);
+        verify(_notification, times(1)).sendToTopic(eq("menu"), anyString());
     }
 
     @Test
@@ -213,6 +220,7 @@ public class DishServicesTest {
         verify(_dishRepo, times(1)).save(dish);
         verifyNoInteractions(_s3Services);
         verifyNoInteractions(_ingredientsRepo);
+        verify(_notification, times(1)).sendToTopic(eq("menu/updates"), anyString());
     }
 
     @Test
@@ -237,6 +245,7 @@ public class DishServicesTest {
         assertEquals(1, dish.getIngredients().size());
         assertTrue(dish.getIngredients().contains(ingredient));
         verify(_dishRepo, times(1)).save(dish);
+        verify(_notification, times(1)).sendToTopic(eq("menu/updates"), anyString());
     }
 
     @Test
@@ -269,6 +278,7 @@ public class DishServicesTest {
         verify(_s3Services, times(1)).deleteFile("old_steak_image.jpg");
         assertEquals("new_uuid_steak.png", dish.getImageUrl(), "Image URL should be updated");
         verify(_dishRepo, times(1)).save(dish);
+        verify(_notification, times(1)).sendToTopic(eq("menu/updates"), anyString());
     }
 
     @Test
@@ -320,6 +330,8 @@ public class DishServicesTest {
 
         verifyNoInteractions(_s3Services);
         verifyNoInteractions(_ingredientsRepo);
+        verify(_notification, times(1)).sendToTopic(eq("menu/updates"), anyString());
+
     }
 
     @Test
@@ -363,6 +375,7 @@ public class DishServicesTest {
         assertEquals("uuid_pizza.png", savedDish.getImageUrl());
 
         verify(_s3Services, never()).deleteFile(any());
+        verify(_notification, times(1)).sendToTopic(eq("menu/updates"), anyString());
     }
 
     @Test
@@ -454,6 +467,7 @@ public class DishServicesTest {
                         category.getNameEn().equals("Starters EN") &&
                         category.getToken().equals("STARTERS_EN")
         ));
+        verify(_notification, times(1)).sendToTopic(eq("dictionary/sync"), anyString());
     }
 
     @Test
@@ -495,5 +509,6 @@ public class DishServicesTest {
         assertTrue(categoryToRemove.getNameEn().startsWith("DELETED_"));
         assertNotNull(categoryToRemove.getDeletedAt());
         verify(_dishRepo, times(1)).saveCategory(categoryToRemove);
+        verify(_notification, times(1)).sendToTopic(eq("dictionary/sync"), anyString());
     }
 }

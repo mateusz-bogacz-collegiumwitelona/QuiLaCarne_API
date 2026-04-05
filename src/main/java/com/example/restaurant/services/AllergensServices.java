@@ -24,6 +24,7 @@ import java.util.List;
 public class AllergensServices implements IAllergensServices {
     private final IAllergensRepository _allergenRepo;
     private final IIngredientsRepository _ingredientsRepo;
+    private final NotificationServices _notification;
 
     @Override
     @Cacheable(
@@ -45,6 +46,7 @@ public class AllergensServices implements IAllergensServices {
                 _allergenRepo::isNameTaken,
                 "Allergen already exist"
         );
+        _notification.sendToTopic("dictionary/allergens", "Allergen list updated");
         _allergenRepo.save(allergen);
     }
 
@@ -68,5 +70,6 @@ public class AllergensServices implements IAllergensServices {
                     }
                 }
         );
+        _notification.sendToTopic("dictionary/allergens", "Allergen list updated");
     }
 }

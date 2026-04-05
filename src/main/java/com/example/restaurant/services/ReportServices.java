@@ -33,13 +33,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-
 @Service
 @RequiredArgsConstructor
 public class ReportServices implements IReportServices {
     private final IReportRepository _reportRepo;
     private final IUserRepository _userRepo;
     private final IBanServices _banServices;
+    private final NotificationServices _notification;
+
 
     @Override
     @Transactional
@@ -58,6 +59,8 @@ public class ReportServices implements IReportServices {
         report.setReporter(waiter);
         report.setReason(request.getReason().trim());
         report.setStatuses(Set.of(status));
+
+        _notification.sendToTopic("reports", "New report from waiter: " + waiterToken);
 
         _reportRepo.save(report);
     }
@@ -156,6 +159,8 @@ public class ReportServices implements IReportServices {
         }
 
         _reportRepo.save(report);
+
+        _notification.sendToTopic("reports/updates", "Report resolved: " + request.getReportToken());
     }
 
     @Override

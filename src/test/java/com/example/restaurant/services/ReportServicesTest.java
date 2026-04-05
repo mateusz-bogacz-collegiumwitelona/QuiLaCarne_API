@@ -46,6 +46,9 @@ public class ReportServicesTest {
     @Mock
     private IBanServices _banServices;
 
+    @Mock
+    private NotificationServices _notification;
+
     @InjectMocks
     private ReportServices _reportServices;
 
@@ -78,6 +81,7 @@ public class ReportServicesTest {
         assertDoesNotThrow(() -> _reportServices.add(waiterToken, request));
 
         verify(_reportRepo, times(1)).save(any(GuestReports.class));
+        verify(_notification, times(1)).sendToTopic(eq("reports"), anyString());
     }
 
     @Test
@@ -143,6 +147,7 @@ public class ReportServicesTest {
 
         verify(_banServices, times(1)).create(any());
         verify(_reportRepo, times(1)).save(report);
+        verify(_notification, times(1)).sendToTopic(eq("reports/updates"), anyString());
     }
 
     @Test
@@ -174,6 +179,7 @@ public class ReportServicesTest {
 
         verify(_banServices, never()).create(any());
         verify(_reportRepo, times(1)).save(report);
+        verify(_notification, times(1)).sendToTopic(eq("reports/updates"), anyString());
     }
 
     @Test

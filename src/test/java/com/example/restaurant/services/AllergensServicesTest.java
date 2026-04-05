@@ -31,6 +31,9 @@ public class AllergensServicesTest {
     @Mock
     private IIngredientsRepository _ingredientsRepo;
 
+    @Mock
+    private NotificationServices _notification;
+
     @InjectMocks
     private AllergensServices _allergensServices;
 
@@ -105,18 +108,19 @@ public class AllergensServicesTest {
                                 TestConstants.FAKE_ALLERGEN_EN.toUpperCase().replace(" ", "_")
                         )
         ));
+
+        verify(_notification, times(1)).sendToTopic(eq("dictionary/allergens"), anyString());
     }
 
     @Test
     @DisplayName("Remove: Should soft delete allergen and remove it from associated ingredients")
     void remove_ShouldSoftDeleteAllergen_AndRemoveFromIngredients() {
-        // Arrange
         String token = TestConstants.TOKEN_GLUTEN;
         Allergens allergen = new Allergens();
         allergen.setToken(token);
         allergen.setNameEn(TestConstants.FAKE_ALLERGEN_EN);
         allergen.setNamePl(TestConstants.FAKE_ALLERGEN_PL);
-        
+
         com.example.restaurant.models.Ingredients ingredient1 = new com.example.restaurant.models.Ingredients();
         ingredient1.getAllergens().add(allergen);
 
@@ -138,5 +142,6 @@ public class AllergensServicesTest {
         assertTrue(allergen.getNameEn().startsWith("DELETED_"));
         assertNotNull(allergen.getDeletedAt());
         verify(_allergenRepo, times(1)).save(allergen);
+        verify(_notification, times(1)).sendToTopic(eq("dictionary/allergens"), anyString());
     }
 }

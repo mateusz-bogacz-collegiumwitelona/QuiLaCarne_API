@@ -36,6 +36,9 @@ public class IngredientsServicesTest {
     @Mock
     private IDishRepository _dishRepo;
 
+    @Mock
+    private NotificationServices _notification;
+
     @InjectMocks
     private IngredientsServices _ingredientsServices;
 
@@ -67,6 +70,7 @@ public class IngredientsServicesTest {
                         ingredient.getNameEn().equals(TestConstants.INGREDIENT_EN) &&
                         ingredient.getToken().equals(TestConstants.INGREDIENT_EN.toUpperCase())
         ));
+        verify(_notification, times(1)).sendToTopic(eq("dictionary/sync"), anyString());
     }
 
     @Test
@@ -129,6 +133,7 @@ public class IngredientsServicesTest {
         assertFalse(dish.isAvailable());
         assertEquals(TestConstants.INGREDIENT_EN + " is deleted", dish.getUnavailableReason());
         verify(_dishRepo).save(dish);
+        verify(_notification, times(1)).sendToTopic(eq("menu/availability"), anyString());
     }
 
     @Test

@@ -40,6 +40,7 @@ public class DishServices implements IDishServices {
     private final DishMapper _dishMapper;
     private final IIngredientsRepository _ingredientsRepo;
     private final S3StorageService _s3Services;
+    private final NotificationServices _notification;
 
     @Value("${application.storage.s3.public-endpoint}")
     private String s3Endpoint;
@@ -89,6 +90,8 @@ public class DishServices implements IDishServices {
 
         dish.setImageUrl(null);
 
+        _notification.sendToTopic("menu/updates", "Dish removed: " + dishToken);
+
         _dishRepo.save(dish);
     }
 
@@ -108,6 +111,11 @@ public class DishServices implements IDishServices {
             dish.setUnavailableReason(reason != null && !reason.isBlank() ? reason.trim() : "Brak składników");
         }
 
+        _notification.sendToTopic(
+                "menu",
+                "Dish " + request.getToken() + " is now " +
+                        (request.isAvailable() ? "available" : "unavailable")
+        );
         _dishRepo.save(dish);
     }
 
@@ -130,6 +138,9 @@ public class DishServices implements IDishServices {
 
         updateDishIngredients(dish, request.getIngredientTokens());
         updateDishPhoto(dish, request.getPhoto());
+
+        _notification.sendToTopic("menu/updates", "Dish updated: " + request.getDishToken());
+
         _dishRepo.save(dish);
     }
 
@@ -149,6 +160,8 @@ public class DishServices implements IDishServices {
         dish.setAvailable(true);
         updateDishIngredients(dish, request.getIngredientTokens());
         updateDishPhoto(dish, request.getPhoto());
+
+        _notification.sendToTopic("menu/updates", "New dish added");
 
         _dishRepo.save(dish);
     }
@@ -175,6 +188,7 @@ public class DishServices implements IDishServices {
         );
 
         _dishRepo.saveCategory(category);
+        _notification.sendToTopic("dictionary/sync", "dish_categories");
     }
 
     @Override
@@ -200,6 +214,8 @@ public class DishServices implements IDishServices {
                     }
                 }
         );
+
+        _notification.sendToTopic("dictionary/sync", "dish_categories");
     }
 
     private void updateDishIngredients(Dishes dish, List<String> tokens) {

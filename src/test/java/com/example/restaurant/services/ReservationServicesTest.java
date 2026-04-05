@@ -46,17 +46,23 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReservationServices Unit Tests")
 public class ReservationServicesTest {
-
     @Mock
     private ITableRespository _tableRepo;
+
     @Mock
     private IReservationRepository _reservationRepo;
+
     @Mock
     private IUserRepository _userRepo;
+
     @Mock
     private IOrderServices _orderServices;
+
     @Mock
     private ReservationMapper _reservationMapper;
+
+    @Mock
+    private NotificationServices _notification;
 
     @InjectMocks
     private ReservationServices _reservationServices;
@@ -109,6 +115,7 @@ public class ReservationServicesTest {
         assertTrue(response.isActive());
         assertEquals(80, response.getTotalPrice());
         verify(_reservationRepo, times(1)).save(any(Reservations.class));
+        verify(_notification, times(1)).sendToTopic(eq("reservations/updates"), anyString());
     }
 
     @Test
@@ -152,6 +159,7 @@ public class ReservationServicesTest {
 
         assertDoesNotThrow(() -> _reservationServices.cancel("res-token", "user-token"));
         verify(_reservationRepo).save(mockReservation);
+        verify(_notification, times(1)).sendToTopic(eq("reservations/updates"), anyString());
     }
 
     @Test
@@ -164,6 +172,7 @@ public class ReservationServicesTest {
 
         assertDoesNotThrow(() -> _reservationServices.assignWaiter("res-token", "waiter-token"));
         verify(_orderServices).assignWaiterToOrders("res-token", "waiter-token");
+        verify(_notification, times(1)).sendToTopic(eq("reservations/updates"), any());
     }
 
     @Test
@@ -201,15 +210,6 @@ public class ReservationServicesTest {
         when(_reservationRepo.findByToken(anyString())).thenReturn(Optional.of(mockRes));
 
         assertThrows(IllegalStateException.class, () -> _reservationServices.isAbsent("res-token"));
-    }
-
-    private ReservationRequest createValidRequest() {
-        ReservationRequest request = new ReservationRequest();
-        request.setTableToken("TABLE_1");
-        request.setStartTime(OffsetDateTime.now().plusHours(1));
-        request.setEndTime(OffsetDateTime.now().plusHours(2));
-        request.setDishes(new ArrayList<>());
-        return request;
     }
 
     @Test
@@ -254,5 +254,14 @@ public class ReservationServicesTest {
         assertEquals(1, result.size());
         assertEquals(TestConstants.STATUS_CANCELLED, result.getFirst().getToken());
         assertEquals("Cancelled EN", result.getFirst().getName());
+    }
+
+    private ReservationRequest createValidRequest() {
+        ReservationRequest request = new ReservationRequest();
+        request.setTableToken("TABLE_1");
+        request.setStartTime(OffsetDateTime.now().plusHours(1));
+        request.setEndTime(OffsetDateTime.now().plusHours(2));
+        request.setDishes(new ArrayList<>());
+        return request;
     }
 }

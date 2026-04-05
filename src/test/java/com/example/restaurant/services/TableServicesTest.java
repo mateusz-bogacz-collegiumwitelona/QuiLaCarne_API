@@ -35,6 +35,9 @@ public class TableServicesTest {
     @Mock
     private ITableRespository _tableRepo;
 
+    @Mock
+    private NotificationServices _notification;
+
     @InjectMocks
     private TableServices _tableServices;
 
@@ -141,6 +144,7 @@ public class TableServicesTest {
         // Assert
         verify(_tableRepo).save(mockTable);
         assertTrue(mockTable.getTableStatus().contains(mockStatus));
+        verify(_notification, times(1)).sendToTopic(eq("tables"), anyString());
     }
 
     @Test
@@ -180,6 +184,7 @@ public class TableServicesTest {
 
         assertTrue(table.getTableStatus().contains(outOfServiceStatus));
         verify(_tableRepo, times(1)).save(table);
+        verify(_notification, times(1)).sendToTopic(eq("tables"), anyString());
     }
 
     @Test
@@ -232,6 +237,7 @@ public class TableServicesTest {
                         table.getCapacity() == 4 &&
                         table.getTableStatus().contains(availableStatus)
         ));
+        verify(_notification, times(1)).sendToTopic(eq("tables/layout"), anyString());
     }
 
     @Test
@@ -280,6 +286,7 @@ public class TableServicesTest {
 
         assertNotNull(table.getDeletedAt());
         verify(_tableRepo, times(1)).save(table);
+        verify(_notification, times(1)).sendToTopic(eq("tables/layout"), anyString());
     }
 
     @Test

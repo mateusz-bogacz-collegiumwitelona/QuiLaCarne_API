@@ -30,6 +30,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class TableServices implements ITableServices {
     private final ITableRespository _tableRepo;
+    private final NotificationServices _notification;
 
     @Override
     @Cacheable(
@@ -110,6 +111,7 @@ public class TableServices implements ITableServices {
         table.setTableStatus(Set.of(status));
 
         _tableRepo.save(table);
+        _notification.sendToTopic("tables/layout", "Table layout changed");
     }
 
     @Override
@@ -120,6 +122,7 @@ public class TableServices implements ITableServices {
         RestaurantTables table = _tableRepo.findByToken(token);
         table.setDeletedAt(OffsetDateTime.now());
         _tableRepo.save(table);
+        _notification.sendToTopic("tables/layout", "Table layout changed");
     }
 
     private void changeStatus(String token, String statusToken) {
@@ -134,6 +137,7 @@ public class TableServices implements ITableServices {
         }
 
         table.setTableStatus(new HashSet<>(Set.of(cleanStatus)));
+        _notification.sendToTopic("tables", "Table " + token + " status changed to " + statusToken);
         _tableRepo.save(table);
     }
 

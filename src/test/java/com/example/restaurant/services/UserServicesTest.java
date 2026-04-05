@@ -49,6 +49,9 @@ public class UserServicesTest {
     @Mock
     private TwoFactorServices _2faServices;
 
+    @Mock
+    private NotificationServices _notification;
+
     @InjectMocks
     private UserServices _userServices;
 
@@ -244,6 +247,7 @@ public class UserServicesTest {
 
         verify(_roleRepository).setRole("ROLE_MANAGER");
         verify(_userRepo).save(any(Users.class));
+        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
     }
 
     @Test
@@ -265,6 +269,7 @@ public class UserServicesTest {
 
         verify(_roleRepository).setRole("ROLE_WAITER");
         verify(_userRepo).save(any(Users.class));
+        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
     }
 
     @Test
@@ -292,6 +297,7 @@ public class UserServicesTest {
         assertEquals("NewEmployeeName", employee.getUsername());
         assertEquals("NEWEMPLOYEENAME", employee.getNormalizedUsername());
         verify(_userRepo).save(employee);
+        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
     }
 
     @Test
@@ -315,6 +321,7 @@ public class UserServicesTest {
         assertEquals("new_employee@test.pl", employee.getEmail());
         assertEquals("OldName", employee.getUsername(), "Username should not change");
         verify(_userRepo).save(employee);
+        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
     }
 
     @Test
@@ -480,7 +487,6 @@ public class UserServicesTest {
     @Test
     @DisplayName("Change Employee Role: Throws Exception when user is already a Waiter")
     void changeEmployeeRole_ShouldThrowException_WhenAlreadyWaiter() {
-        // Arrange
         ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest();
         request.setEmployeeToken("employee-token");
         request.setAdmin(false);
@@ -524,6 +530,7 @@ public class UserServicesTest {
         assertTrue(employee.getRoles().contains(newManagerRole));
         verify(_roleRepository).setRole("ROLE_MANAGER");
         verify(_userRepo).save(employee);
+        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
     }
 
     @Test
@@ -550,6 +557,7 @@ public class UserServicesTest {
         assertTrue(employee.getRoles().contains(newWaiterRole));
         verify(_roleRepository).setRole("ROLE_WAITER");
         verify(_userRepo).save(employee);
+        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
     }
 
     @Test
@@ -601,6 +609,7 @@ public class UserServicesTest {
 
         assertFalse(employee.getIsActive());
         verify(_userRepo).save(employee);
+        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
     }
 
     @Test
@@ -619,6 +628,7 @@ public class UserServicesTest {
 
         assertTrue(employee.getIsActive());
         verify(_userRepo).save(employee);
+        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
     }
 
     @Test
@@ -655,6 +665,7 @@ public class UserServicesTest {
         assertTrue(employee.getEmail().startsWith("DELETED_"));
         assertNotNull(employee.getDeletedAt());
         verify(_userRepo).save(employee);
+        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
     }
 
     @Test

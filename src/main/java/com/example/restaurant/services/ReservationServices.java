@@ -46,6 +46,7 @@ public class ReservationServices implements IReservationServices {
     private final IUserRepository _userRepo;
     private final IOrderServices _orderServices;
     private final ReservationMapper _reservationMapper;
+    private final NotificationServices _notification;
 
     private static final String STATUS_ACTIVE = "ACTIVE";
     private static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
@@ -101,6 +102,8 @@ public class ReservationServices implements IReservationServices {
         }).toList());
         response.setTotalPrice(orderCreate.totalPrice());
 
+        _notification.sendToTopic("reservations/updates", "Reservation changed");
+
         return response;
     }
 
@@ -152,6 +155,7 @@ public class ReservationServices implements IReservationServices {
         reservation.setReservationStatus(new HashSet<>(Set.of(cancelledStatus)));
 
         _reservationRepo.save(reservation);
+        _notification.sendToTopic("reservations/updates", "Reservation changed");
     }
 
     @Override
@@ -212,6 +216,7 @@ public class ReservationServices implements IReservationServices {
         _reservationRepo.save(reservation);
 
         _orderServices.assignWaiterToOrders(reservationToken, waiterToken);
+        _notification.sendToTopic("reservations/updates", "Reservation changed"); //
     }
 
     @Transactional
