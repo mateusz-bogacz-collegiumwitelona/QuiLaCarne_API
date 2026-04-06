@@ -312,7 +312,17 @@ public class UserServices implements IUserServices {
     @Override
     @Cacheable(value = "usersList", key = "#filter.toString() + '-' + #pagged.toString()")
     public PagedResult<UserListResponse> getUserList(UserFilterRequest filter, PaggedRequest pagged) {
-        Sort sort = Sort.by(Sort.Direction.fromString(filter.getSortDirection()), filter.getSortBy());
+        String directionStr = (filter.getSortDirection() != null && !filter.getSortDirection().isBlank())
+                ? filter.getSortDirection() : "ASC";
+        Sort.Direction direction = Sort.Direction.fromString(directionStr);
+
+        String sortByField = filter.getSortBy();
+        if (sortByField == null || sortByField.isBlank() ||
+                sortByField.equalsIgnoreCase("ASC") || sortByField.equalsIgnoreCase("DESC")) {
+            sortByField = "createdAt";
+        }
+
+        Sort sort = Sort.by(direction, sortByField);
 
         PageRequest pageRequest = PageRequest.of(pagged.getPage() - 1, pagged.getSize(), sort);
 
