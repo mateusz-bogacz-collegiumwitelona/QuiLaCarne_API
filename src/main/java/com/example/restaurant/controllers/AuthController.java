@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -72,6 +73,33 @@ public class AuthController {
                 "Login processed successfully",
                 HttpStatus.OK.value(),
                 response
+        ));
+    }
+
+    @Operation(
+            summary = "Logout user",
+            description = "Logs out the authenticated user by revoking their refresh token. " +
+                    "The client application must also delete the JWT and Refresh Token locally."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Logged out successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    @PostMapping("/logout")
+    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResultHandler<Void>> logout(
+            @AuthenticationPrincipal(expression = "token") String userToken
+    ) {
+        _authServices.logout(userToken);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Logged out successfully",
+                HttpStatus.OK.value()
         ));
     }
 

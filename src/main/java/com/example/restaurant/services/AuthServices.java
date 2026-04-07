@@ -75,6 +75,13 @@ public class AuthServices implements IAuthServices {
         return buildSuccessAuthResponse(user);
     }
 
+    @Auditable(action = "USER_LOGOUT")
+    @Transactional
+    @Override
+    public void logout(String userToken) {
+        _tokenServices.revokeTokensForUser(userToken, TokenTypeEnum.REFRESH_TOKEN);
+    }
+
     @Auditable(action = "USER_REGISTERED")
     @Transactional
     public void register(RegisterRequest request) {

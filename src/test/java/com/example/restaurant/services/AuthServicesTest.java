@@ -148,6 +148,17 @@ public class AuthServicesTest {
     }
 
     @Test
+    @DisplayName("Logout: Success")
+    void logout_ShouldRevokeRefreshToken() {
+        _authServices.logout(TestConstants.FAKE_USER_TOKEN);
+
+        verify(_tokenServices, times(1)).revokeTokensForUser(
+                TestConstants.FAKE_USER_TOKEN,
+                TokenTypeEnum.REFRESH_TOKEN
+        );
+    }
+
+    @Test
     @DisplayName("Verify 2FA Login: Success")
     void verify2faLogin_ShouldReturnJwtToken_WhenCodeIsValid() {
         Verify2faLoginRequest request = new Verify2faLoginRequest();

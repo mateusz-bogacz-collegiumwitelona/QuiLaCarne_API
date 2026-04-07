@@ -7,6 +7,8 @@ import com.example.restaurant.dto.response.Verify2faLoginRequest;
 public interface IAuthServices {
     AuthResponse authenticate(LoginRequest request);
 
+    void logout(String userToken);
+
     void register(RegisterRequest request);
 
     Boolean registerConfirm(String token);
