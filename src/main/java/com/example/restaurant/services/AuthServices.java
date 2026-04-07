@@ -2,10 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
-import com.example.restaurant.dto.request.GoogleLoginRequest;
-import com.example.restaurant.dto.request.LoginRequest;
-import com.example.restaurant.dto.request.RegisterRequest;
-import com.example.restaurant.dto.request.ResetPasswordRequest;
+import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
@@ -208,6 +205,26 @@ public class AuthServices implements IAuthServices {
         return buildSuccessAuthResponse(user);
     }
 
+    @Auditable(action = "USER_REFRESH_TOKEN")
+    @Transactional
+    @Override
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        var userTokenOpt = _tokenServices.validateToken(request.getRefreshToken(), TokenTypeEnum.REFRESH_TOKEN);
+
+        if (userTokenOpt.isEmpty())
+            throw new AuthenticationException("Refresh token is invalid or expired") {
+                @Override
+                public String getMessage() {
+                    return super.getMessage();
+                }
+            };
+
+        Users user = _userRepo.findByToken(userTokenOpt.get());
+        UserDetails userDetails = _userDetailsService.loadUserByUsername(user.getUsername());
+
+        return buildSuccessAuthResponse(userDetails);
+    }
+
     private AuthResponse buildSuccessAuthResponse(UserDetails userDetails) {
         if (!userDetails.isEnabled())
             throw new AuthenticationException("User not enabled") {
@@ -217,14 +234,23 @@ public class AuthServices implements IAuthServices {
                 }
             };
 
-
         String jwtToken = _jwtServices.generateToken(userDetails);
 
         if (jwtToken == null)
             throw new RuntimeException("Jwt Token not generated");
 
+        Users user = _userRepo.findByNormalizedUsername(userDetails.getUsername().trim().toUpperCase()).get();
+
+        _tokenServices.revokeTokensForUser(user.getToken(), TokenTypeEnum.REFRESH_TOKEN);
+
+        String refreshToken = _tokenServices.createToken(user.getToken(),
+                TokenTypeEnum.REFRESH_TOKEN,
+                60 * 24 * 7 // 7 days
+                );
+
         return AuthResponse.builder()
                 .token(jwtToken)
+                .refreshToken(refreshToken)
                 .username(userDetails.getUsername())
                 .requires2fa(false)
                 .build();

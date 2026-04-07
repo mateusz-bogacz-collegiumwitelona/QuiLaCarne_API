@@ -11,4 +11,6 @@ public interface IVerificationTokenRepository {
     void delete(VerificationToken token);
 
     Optional<VerificationToken> findByTokenAndType(String tokenValue, TokenTypeEnum type);
+
+    void deleteByUserTokenAndType(String userToken, TokenTypeEnum type);
 }

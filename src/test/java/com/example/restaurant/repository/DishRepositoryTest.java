@@ -85,7 +85,8 @@ public class DishRepositoryTest {
         assertEquals(1, result.getContent().size());
         assertEquals("Salad", result.getContent().get(0).getName());
 
-        verify(_jpaDishRepo, times(1)).findWithoutAllergens(List.of("GLUTEN"), expectedPageable);
+        verify(_jpaDishRepo, times(1))
+                .findWithoutAllergens(List.of("GLUTEN"), expectedPageable);
         verify(_jpaDishRepo, never()).findAll(any(Pageable.class));
     }
 

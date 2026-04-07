@@ -118,7 +118,8 @@ public class UserServicesTest {
         when(_userRepo.findByToken(anyString())).thenReturn(user);
         when(_passwordEncoder.matches("wrong", "hashed_old")).thenReturn(false);
 
-        assertThrows(BadCredentialsException.class, () -> _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request));
+        assertThrows(BadCredentialsException.class, () -> _userServices
+                .updatePassword(TestConstants.FAKE_USER_TOKEN, request));
     }
 
     @Test
@@ -143,7 +144,8 @@ public class UserServicesTest {
 
         when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.of(otherUser));
 
-        assertThrows(EntityAlreadyExistsException.class, () -> _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, "taken@test.pl"));
+        assertThrows(EntityAlreadyExistsException.class, () -> _userServices
+                .updateEmail(TestConstants.FAKE_USER_TOKEN, "taken@test.pl"));
     }
 
     @Test
@@ -151,7 +153,8 @@ public class UserServicesTest {
     void confirmEmailChange_ShouldThrowException_WhenTokenInvalid() {
         when(_tokenServices.validateToken(anyString(), anyString(), any())).thenReturn(false);
 
-        assertThrows(InvalidDateException.class, () -> _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "bad_token"));
+        assertThrows(InvalidDateException.class, () -> _userServices
+                .confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "bad_token"));
     }
 
 
@@ -209,7 +212,8 @@ public class UserServicesTest {
 
         when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.of(new Users()));
 
-        assertThrows(EntityAlreadyExistsException.class, () -> _userServices.create(request, "ROLE_CLIENT", false));
+        assertThrows(EntityAlreadyExistsException.class, () -> _userServices
+                .create(request, "ROLE_CLIENT", false));
         verify(_userRepo, never()).save(any());
     }
 
@@ -224,7 +228,8 @@ public class UserServicesTest {
         when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.empty());
         when(_userRepo.existsByUsername(anyString())).thenReturn(true);
 
-        assertThrows(EntityAlreadyExistsException.class, () -> _userServices.create(request, "ROLE_CLIENT", false));
+        assertThrows(EntityAlreadyExistsException.class, () -> _userServices
+                .create(request, "ROLE_CLIENT", false));
         verify(_userRepo, never()).save(any());
     }
 
@@ -336,7 +341,8 @@ public class UserServicesTest {
 
         when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> _userServices.editEmployee(request));
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> _userServices
+                .editEmployee(request));
         assertEquals("Email must be different", exception.getMessage());
         verify(_userRepo, never()).save(any());
     }
@@ -370,7 +376,8 @@ public class UserServicesTest {
 
         when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> _userServices.editEmployee(request));
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> _userServices
+                .editEmployee(request));
         assertEquals("User name must be different", exception.getMessage());
         verify(_userRepo, never()).save(any());
     }
@@ -827,6 +834,7 @@ public class UserServicesTest {
 
         when(_userRepo.findByToken(userToken)).thenReturn(user);
 
-        assertThrows(IllegalStateException.class, () -> _userServices.verifyAndEnable2fa(userToken, new Verify2faRequest()));
+        assertThrows(IllegalStateException.class, () -> _userServices
+                .verifyAndEnable2fa(userToken, new Verify2faRequest()));
     }
 }

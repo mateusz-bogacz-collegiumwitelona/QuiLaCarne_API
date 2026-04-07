@@ -81,7 +81,8 @@ public class ReservationRepositoryTest {
     @Test
     @DisplayName("Find status by token: should throw exeception if not found")
     void findStatusByToken_ShouldThrowException_WhenNotFound() {
-        when(_jpaReservationStatusRepo.findByToken(TestConstants.TOKEN_NON_EXISTENT)).thenReturn(Optional.empty());
+        when(_jpaReservationStatusRepo.findByToken(TestConstants.TOKEN_NON_EXISTENT))
+                .thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () ->
                 _reservationRepo.findStatusByToken(TestConstants.TOKEN_NON_EXISTENT)

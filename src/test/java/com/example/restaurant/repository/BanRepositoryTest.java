@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class BanRepositoryTest {
+public class BanRepositoryTest {
 
     @Mock
     private IJpaBanStatusRepository _jpaStatusRepo;
@@ -49,7 +49,8 @@ class BanRepositoryTest {
         String token = TestConstants.TOKEN_NON_EXISTENT;
         when(_jpaStatusRepo.findByToken(token)).thenReturn(Optional.empty());
 
-        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> _banRepository.findStatusByToken(token));
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> _banRepository.findStatusByToken(token));
 
         assertEquals("Ban status not found", exception.getMessage());
         verify(_jpaStatusRepo, times(1)).findByToken(token);

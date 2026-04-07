@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class BanServicesTest {
+public class BanServicesTest {
     @Mock
     private IBanRepository _banRepo;
 

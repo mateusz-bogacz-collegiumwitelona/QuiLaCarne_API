@@ -16,7 +16,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ReservationDatesValidatorTest {
+public class ReservationDatesValidatorTest {
 
     private ReservationDatesValidator validator;
 

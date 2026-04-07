@@ -15,7 +15,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class ReservationMapperTest {
+public class ReservationMapperTest {
 
     private ReservationMapper _reservationMapper;
 

@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
-class TwoFactorServicesTest {
+public class TwoFactorServicesTest {
 
     @InjectMocks
     private TwoFactorServices twoFactorServices;

@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.LoginRequest;
+import com.example.restaurant.dto.request.RefreshTokenRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
@@ -26,6 +27,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.Optional;
 
@@ -66,6 +68,9 @@ public class AuthServicesTest {
     @Mock
     private Users _user;
 
+    @Mock
+    private UserDetailsService _userDetailsServices;
+
     private RegisterRequest _registerRequest;
 
     @BeforeEach
@@ -91,11 +96,16 @@ public class AuthServicesTest {
         when(_user.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
         when(_jwtServices.generateToken(any(UserDetails.class))).thenReturn(TestConstants.FAKE_ACTION_TOKEN);
 
+        when(_userRepo.findByNormalizedUsername(anyString())).thenReturn(Optional.of(_user));
+        when(_tokenServices.createToken(any(), eq(TokenTypeEnum.REFRESH_TOKEN), anyInt()))
+                .thenReturn("fake-refresh-token");
+
         AuthResponse result = _authServices.authenticate(loginRequest);
 
         assertNotNull(result);
         assertFalse(result.isRequires2fa());
         assertEquals(TestConstants.FAKE_ACTION_TOKEN, result.getToken());
+        assertEquals("fake-refresh-token", result.getRefreshToken());
         assertEquals(TestConstants.FAKE_USERNAME, result.getUsername());
     }
 
@@ -113,7 +123,8 @@ public class AuthServicesTest {
         when(_user.getIsTwoFactorEnabled()).thenReturn(true);
         when(_user.getToken()).thenReturn(TestConstants.FAKE_USER_TOKEN);
         when(_user.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
-        when(_tokenServices.createToken(TestConstants.FAKE_USER_TOKEN, TokenTypeEnum.PRE_AUTH_2FA, 5)).thenReturn(preAuthToken);
+        when(_tokenServices.createToken(TestConstants.FAKE_USER_TOKEN, TokenTypeEnum.PRE_AUTH_2FA, 5))
+                .thenReturn(preAuthToken);
 
         AuthResponse result = _authServices.authenticate(loginRequest);
 
@@ -145,7 +156,8 @@ public class AuthServicesTest {
 
         String fakeSecret = "SUPER_SECRET_KEY";
 
-        when(_tokenServices.validateToken("valid-pre-auth-token", TokenTypeEnum.PRE_AUTH_2FA)).thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
+        when(_tokenServices.validateToken("valid-pre-auth-token", TokenTypeEnum.PRE_AUTH_2FA))
+                .thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
         when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(_user);
         when(_user.getMfaSecret()).thenReturn(fakeSecret);
         when(_2faServices.isOptValid(fakeSecret, 123456)).thenReturn(true);
@@ -153,11 +165,16 @@ public class AuthServicesTest {
         when(_user.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
         when(_jwtServices.generateToken(_user)).thenReturn(TestConstants.FAKE_ACTION_TOKEN);
 
+        when(_userRepo.findByNormalizedUsername(anyString())).thenReturn(Optional.of(_user));
+        when(_tokenServices.createToken(any(), eq(TokenTypeEnum.REFRESH_TOKEN), anyInt()))
+                .thenReturn("fake-refresh-token");
+
         AuthResponse result = _authServices.verify2faLogin(request);
 
         assertNotNull(result);
         assertFalse(result.isRequires2fa());
         assertEquals(TestConstants.FAKE_ACTION_TOKEN, result.getToken());
+        assertEquals("fake-refresh-token", result.getRefreshToken());
         assertEquals(TestConstants.FAKE_USERNAME, result.getUsername());
     }
 
@@ -167,7 +184,8 @@ public class AuthServicesTest {
         Verify2faLoginRequest request = new Verify2faLoginRequest();
         request.setPreAuthToken("invalid-pre-auth-token");
 
-        when(_tokenServices.validateToken("invalid-pre-auth-token", TokenTypeEnum.PRE_AUTH_2FA)).thenReturn(Optional.empty());
+        when(_tokenServices.validateToken("invalid-pre-auth-token", TokenTypeEnum.PRE_AUTH_2FA))
+                .thenReturn(Optional.empty());
 
         assertThrows(AuthenticationException.class, () -> _authServices.verify2faLogin(request));
     }
@@ -181,7 +199,8 @@ public class AuthServicesTest {
 
         String fakeSecret = "SUPER_SECRET_KEY";
 
-        when(_tokenServices.validateToken("valid-pre-auth-token", TokenTypeEnum.PRE_AUTH_2FA)).thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
+        when(_tokenServices.validateToken("valid-pre-auth-token", TokenTypeEnum.PRE_AUTH_2FA))
+                .thenReturn(Optional.of(TestConstants.FAKE_USER_TOKEN));
         when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(_user);
         when(_user.getMfaSecret()).thenReturn(fakeSecret);
         when(_2faServices.isOptValid(fakeSecret, 999999)).thenReturn(false);
@@ -220,7 +239,11 @@ public class AuthServicesTest {
 
         _authServices.register(_registerRequest);
 
-        verify(_emailServices).sendActivationEmail(TestConstants.FAKE_EMAIL, TestConstants.FAKE_USERNAME, TestConstants.FAKE_ACTION_TOKEN);
+        verify(_emailServices).sendActivationEmail(
+                TestConstants.FAKE_EMAIL,
+                TestConstants.FAKE_USERNAME,
+                TestConstants.FAKE_ACTION_TOKEN
+        );
     }
 
     @Test
@@ -290,6 +313,45 @@ public class AuthServicesTest {
                 TestConstants.FAKE_EMAIL,
                 TestConstants.FAKE_USERNAME,
                 TestConstants.FAKE_VERIFICATION_TOKEN
+        );
+    }
+
+    @Test
+    @DisplayName("Refresh Token: Success")
+    void refreshToken_Success() {
+        RefreshTokenRequest request = new RefreshTokenRequest();
+        request.setRefreshToken("valid-refresh-token");
+
+        Users mockUser = new Users();
+        mockUser.setUsername("client");
+        mockUser.setToken("user-token-123");
+
+        UserDetails mockUserDetails = mock(UserDetails.class);
+        when(mockUserDetails.getUsername()).thenReturn("client");
+        when(mockUserDetails.isEnabled()).thenReturn(true);
+
+        when(_tokenServices.validateToken("valid-refresh-token", TokenTypeEnum.REFRESH_TOKEN))
+                .thenReturn(Optional.of("user-token-123"));
+
+        when(_userRepo.findByToken("user-token-123")).thenReturn(mockUser);
+        when(_userDetailsServices.loadUserByUsername("client")).thenReturn(mockUserDetails);
+
+        when(_jwtServices.generateToken(mockUserDetails)).thenReturn("new-jwt-token");
+        when(_userRepo.findByNormalizedUsername(anyString())).thenReturn(Optional.of(mockUser));
+        when(_tokenServices.createToken(anyString(), eq(TokenTypeEnum.REFRESH_TOKEN), anyInt()))
+                .thenReturn("new-refresh-token");
+
+        AuthResponse response = _authServices.refreshToken(request);
+
+        assertNotNull(response);
+        assertEquals("new-jwt-token", response.getToken());
+        assertEquals("new-refresh-token", response.getRefreshToken());
+        assertEquals("client", response.getUsername());
+        assertFalse(response.isRequires2fa());
+
+        verify(_tokenServices, times(1)).revokeTokensForUser(
+                "user-token-123",
+                TokenTypeEnum.REFRESH_TOKEN
         );
     }
 }

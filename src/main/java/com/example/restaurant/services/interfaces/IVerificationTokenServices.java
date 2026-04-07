@@ -10,4 +10,6 @@ public interface IVerificationTokenServices {
     boolean validateToken(String userToken, String tokenValue, TokenTypeEnum type);
 
     Optional<String> validateToken(String tokenValue, TokenTypeEnum type);
+
+    void revokeTokensForUser(String userToken, TokenTypeEnum type);
 }

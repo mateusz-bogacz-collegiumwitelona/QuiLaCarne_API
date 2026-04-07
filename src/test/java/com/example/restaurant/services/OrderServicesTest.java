@@ -9,6 +9,7 @@ import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.models.*;
+import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.*;
@@ -115,7 +116,8 @@ public class OrderServicesTest {
         dishReq.setDishToken(TestConstants.FAKE_DISH_TOKEN);
         dishReq.setQuantity(2);
 
-        when(_reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(Optional.of(new Reservations()));
+        when(_reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(new Reservations()));
         when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(new RestaurantTables());
         when(_orderRepo.findStatusByToken("PENDING")).thenReturn(new OrderStatus());
 
@@ -198,10 +200,10 @@ public class OrderServicesTest {
         mockOrder.setToken("fake-order-token");
         mockOrder.setTotalPrice(120);
 
-        com.example.restaurant.models.lookup.Allergens gluten = new com.example.restaurant.models.lookup.Allergens();
+        Allergens gluten = new Allergens();
         gluten.setNamePl("Gluten");
 
-        com.example.restaurant.models.lookup.Allergens lactose = new com.example.restaurant.models.lookup.Allergens();
+        Allergens lactose = new Allergens();
         lactose.setNamePl("Laktoza");
 
         Ingredients pasta = new Ingredients();
@@ -311,7 +313,7 @@ public class OrderServicesTest {
         mockItem.setNote(null);
         mockItem.setStatuses(new HashSet<>());
 
-        com.example.restaurant.models.lookup.OrderItemsStatus cancelledStatus = new com.example.restaurant.models.lookup.OrderItemsStatus();
+        OrderItemsStatus cancelledStatus = new OrderItemsStatus();
         cancelledStatus.setToken("CANCELLED");
 
         when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
@@ -362,7 +364,7 @@ public class OrderServicesTest {
         mockItem.setNote(note);
         mockItem.setStatuses(new HashSet<>());
 
-        com.example.restaurant.models.lookup.OrderItemsStatus cancelledStatus = new com.example.restaurant.models.lookup.OrderItemsStatus();
+        OrderItemsStatus cancelledStatus = new OrderItemsStatus();
         cancelledStatus.setToken("CANCELLED");
 
         when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))

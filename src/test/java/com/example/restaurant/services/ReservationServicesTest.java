@@ -115,7 +115,8 @@ public class ReservationServicesTest {
         assertTrue(response.isActive());
         assertEquals(80, response.getTotalPrice());
         verify(_reservationRepo, times(1)).save(any(Reservations.class));
-        verify(_notification, times(1)).sendToTopic(eq("reservations/updates"), anyString());
+        verify(_notification, times(1))
+                .sendToTopic(eq("reservations/updates"), anyString());
     }
 
     @Test
@@ -128,7 +129,8 @@ public class ReservationServicesTest {
         when(_reservationRepo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(entityPage);
         when(_reservationMapper.toClientReservationResponse(any(), eq("en"))).thenReturn(new ClientReservationResponse());
 
-        PagedResult<ClientReservationResponse> result = _reservationServices.history(new ClientReservationRequest(), pagged, "token");
+        PagedResult<ClientReservationResponse> result = _reservationServices
+                .history(new ClientReservationRequest(), pagged, "token");
 
         assertNotNull(result);
         assertEquals(1, result.getItems().size());
@@ -144,7 +146,8 @@ public class ReservationServicesTest {
         when(_reservationRepo.findByTokenAndUserToken(anyString(), anyString())).thenReturn(Optional.of(mockEntity));
         when(_reservationMapper.toReservationDetailsResponse(any(), anyString())).thenReturn(mockDetails);
 
-        ReservationDetailsResponse result = _reservationServices.details("res-token", "user-token");
+        ReservationDetailsResponse result = _reservationServices
+                .details("res-token", "user-token");
 
         assertNotNull(result);
         assertEquals("Active", result.getStatus());
@@ -154,12 +157,14 @@ public class ReservationServicesTest {
     @DisplayName("Cancel: Success - Should change status to CANCELLED")
     void cancel_Successful() {
         Reservations mockReservation = new Reservations();
-        when(_reservationRepo.findByTokenAndUserToken(anyString(), anyString())).thenReturn(Optional.of(mockReservation));
+        when(_reservationRepo.findByTokenAndUserToken(anyString(), anyString()))
+                .thenReturn(Optional.of(mockReservation));
         when(_reservationRepo.findStatusByToken("CANCELLED")).thenReturn(new ReservationStatus());
 
         assertDoesNotThrow(() -> _reservationServices.cancel("res-token", "user-token"));
         verify(_reservationRepo).save(mockReservation);
-        verify(_notification, times(1)).sendToTopic(eq("reservations/updates"), anyString());
+        verify(_notification, times(1))
+                .sendToTopic(eq("reservations/updates"), anyString());
     }
 
     @Test
@@ -170,7 +175,8 @@ public class ReservationServicesTest {
         when(_reservationRepo.findByToken(anyString())).thenReturn(Optional.of(mockReservation));
         when(_reservationRepo.findStatusByToken("IN_PROGRESS")).thenReturn(new ReservationStatus());
 
-        assertDoesNotThrow(() -> _reservationServices.assignWaiter("res-token", "waiter-token"));
+        assertDoesNotThrow(() -> _reservationServices
+                .assignWaiter("res-token", "waiter-token"));
         verify(_orderServices).assignWaiterToOrders("res-token", "waiter-token");
         verify(_notification, times(1)).sendToTopic(eq("reservations/updates"), any());
     }

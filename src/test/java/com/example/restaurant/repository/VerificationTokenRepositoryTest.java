@@ -69,4 +69,16 @@ public class VerificationTokenRepositoryTest {
 
         assertTrue(result.isEmpty());
     }
+    @Test
+    @DisplayName("delete By User Token And Type: Should Call Jpa")
+    void deleteByUserTokenAndType_ShouldCallJpaMethod() {
+        _tokenRepo.deleteByUserTokenAndType("user-token-123", TokenTypeEnum.REFRESH_TOKEN);
+
+        verify(_jpaTokenRepo, times(1))
+                .deleteByUserTokenAndType(
+                        "user-token-123",
+                        TokenTypeEnum.REFRESH_TOKEN
+                );
+    }
+
 }

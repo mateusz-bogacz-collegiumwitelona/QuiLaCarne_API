@@ -62,4 +62,9 @@ public class VerificationTokenServices implements IVerificationTokenServices {
                 });
     }
 
+    @Override
+    @Transactional
+    public void revokeTokensForUser(String userToken, TokenTypeEnum type) {
+        _tokenRepo.deleteByUserTokenAndType(userToken, type);
+    }
 }

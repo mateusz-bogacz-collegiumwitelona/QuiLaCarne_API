@@ -1,9 +1,6 @@
 package com.example.restaurant.controllers;
 
-import com.example.restaurant.dto.request.GoogleLoginRequest;
-import com.example.restaurant.dto.request.LoginRequest;
-import com.example.restaurant.dto.request.RegisterRequest;
-import com.example.restaurant.dto.request.ResetPasswordRequest;
+import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.helpers.ResultHandler;
@@ -218,6 +215,32 @@ public class AuthController {
         var response = _authServices.verify2faLogin(request);
         return ResponseEntity.ok(ResultHandler.success(
                 "2FA verification successful",
+                HttpStatus.OK.value(),
+                response
+        ));
+    }
+
+    @Operation(
+            summary = "Refresh Access Token",
+            description = "Exchanges a valid Refresh Token for a new pair of Access and Refresh tokens."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Token refreshed successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid request format"),
+            @ApiResponse(responseCode = "401", description = "Refresh token is invalid or expired"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/refresh")
+    public ResponseEntity<ResultHandler<AuthResponse>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+        var response = _authServices.refreshToken(request);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Token refreshed successfully",
                 HttpStatus.OK.value(),
                 response
         ));

@@ -78,7 +78,9 @@ public class DishServicesTest {
         PagedResult<DishListResponse> result = _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
 
         assertNotNull(result);
-        assertEquals("http://localhost:9000/restaurant-images/steak.jpg", result.getItems().get(0).getImageUrl());
+        assertEquals("http://localhost:9000/restaurant-images/steak.jpg",
+                result.getItems().get(0).getImageUrl()
+        );
         LocaleContextHolder.resetLocaleContext();
     }
 
@@ -107,7 +109,8 @@ public class DishServicesTest {
     }
 
     @Test
-    @DisplayName("remove: should disable the availability of the dish, add the reason and date of deletion (soft delete)")
+    @DisplayName("remove: should disable the availability of the dish, " +
+            "add the reason and date of deletion (soft delete)")
     void remove_ShouldMarkDishAsDeleted_AndSaveToRepository() {
         Dishes dish = new Dishes();
         dish.setToken(TestConstants.FAKE_DISH_TOKEN);
@@ -132,7 +135,8 @@ public class DishServicesTest {
     }
 
     @Test
-    @DisplayName("changeAvailable: should restore the availability of the dish and remove the reason for its unavailability")
+    @DisplayName("changeAvailable: should restore the availability of the dish " +
+            "and remove the reason for its unavailability")
     void changeAvailable_ShouldSetAvailable_AndClearReason() {
         Dishes dish = new Dishes();
         dish.setAvailable(false);
@@ -270,8 +274,12 @@ public class DishServicesTest {
 
         when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
         when(_s3Services.generateUniqFileName("steak.png")).thenReturn("new_uuid_steak.png");
-        when(_s3Services.uploadFromStream(mockInputStream, "new_uuid_steak.png", "image/png", 1024L))
-                .thenReturn("new_uuid_steak.png");
+        when(_s3Services.uploadFromStream(
+                mockInputStream,
+                "new_uuid_steak.png",
+                "image/png",
+                1024L)
+        ).thenReturn("new_uuid_steak.png");
 
         _dishServices.edit(request);
 
@@ -359,8 +367,13 @@ public class DishServicesTest {
         when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY)).thenReturn(category);
         when(_ingredientsRepo.findByToken(TestConstants.INGREDIENT_EN)).thenReturn(cheese);
         when(_s3Services.generateUniqFileName("pizza.png")).thenReturn("uuid_pizza.png");
-        when(_s3Services.uploadFromStream(mockInputStream, "uuid_pizza.png", "image/png", 2048L))
-                .thenReturn("uuid_pizza.png");
+        when(_s3Services.uploadFromStream(
+                mockInputStream,
+                "uuid_pizza.png",
+                "image/png",
+                2048L
+                )
+        ).thenReturn("uuid_pizza.png");
 
         _dishServices.add(request);
 

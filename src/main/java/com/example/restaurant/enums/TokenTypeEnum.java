@@ -4,5 +4,6 @@ public enum TokenTypeEnum {
     ACTIVATION,
     PASSWORD_RESET,
     EMAIL_UPDATE,
-    PRE_AUTH_2FA
+    PRE_AUTH_2FA,
+    REFRESH_TOKEN
 }

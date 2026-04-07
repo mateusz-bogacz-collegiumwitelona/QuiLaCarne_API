@@ -16,7 +16,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class DishMapperTest {
+public class DishMapperTest {
 
     private DishMapper _dishMapper;
 

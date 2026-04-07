@@ -142,6 +142,7 @@ public class AllergensServicesTest {
         assertTrue(allergen.getNameEn().startsWith("DELETED_"));
         assertNotNull(allergen.getDeletedAt());
         verify(_allergenRepo, times(1)).save(allergen);
-        verify(_notification, times(1)).sendToTopic(eq("dictionary/allergens"), anyString());
+        verify(_notification, times(1))
+                .sendToTopic(eq("dictionary/allergens"), anyString());
     }
 }

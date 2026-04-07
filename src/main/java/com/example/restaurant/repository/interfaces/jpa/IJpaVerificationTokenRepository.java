@@ -9,4 +9,6 @@ import java.util.UUID;
 
 public interface IJpaVerificationTokenRepository extends JpaRepository<VerificationToken, UUID> {
     Optional<VerificationToken> findByTokenAndType(String token,  TokenTypeEnum type);
+
+    void deleteByUserTokenAndType(String userToken, TokenTypeEnum type);
 }

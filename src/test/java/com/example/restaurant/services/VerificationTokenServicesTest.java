@@ -59,7 +59,8 @@ public class VerificationTokenServicesTest {
         when(_tokenRepo.findByTokenAndType("valid-token", TokenTypeEnum.ACTIVATION))
                 .thenReturn(Optional.of(vt));
 
-        boolean result = _tokenServices.validateToken("user-token-123", "valid-token", TokenTypeEnum.ACTIVATION);
+        boolean result = _tokenServices
+                .validateToken("user-token-123", "valid-token", TokenTypeEnum.ACTIVATION);
 
         assertTrue(result);
         verify(_tokenRepo, times(1)).delete(vt);
@@ -94,7 +95,8 @@ public class VerificationTokenServicesTest {
         when(_tokenRepo.findByTokenAndType("expired-token", TokenTypeEnum.ACTIVATION))
                 .thenReturn(Optional.of(vt));
 
-        boolean result = _tokenServices.validateToken("user-token-123", "expired-token", TokenTypeEnum.ACTIVATION);
+        boolean result = _tokenServices
+                .validateToken("user-token-123", "expired-token", TokenTypeEnum.ACTIVATION);
 
         assertFalse(result);
         verify(_tokenRepo, never()).delete(any());
@@ -111,7 +113,8 @@ public class VerificationTokenServicesTest {
 
         when(_tokenRepo.findByTokenAndType("token", TokenTypeEnum.ACTIVATION)).thenReturn(Optional.of(vt));
 
-        boolean result = _tokenServices.validateToken("correct-user", "token", TokenTypeEnum.ACTIVATION);
+        boolean result = _tokenServices
+                .validateToken("correct-user", "token", TokenTypeEnum.ACTIVATION);
 
         assertFalse(result);
         verify(_tokenRepo, never()).delete(any());
@@ -123,8 +126,18 @@ public class VerificationTokenServicesTest {
         when(_tokenRepo.findByTokenAndType(TestConstants.TOKEN_NON_EXISTENT, TokenTypeEnum.ACTIVATION)).
                 thenReturn(Optional.empty());
 
-        Optional<String> result = _tokenServices.validateToken(TestConstants.TOKEN_NON_EXISTENT, TokenTypeEnum.ACTIVATION);
+        Optional<String> result = _tokenServices.validateToken(
+                TestConstants.TOKEN_NON_EXISTENT, TokenTypeEnum.ACTIVATION);
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("revoke Tokens For User: Should Call Repository Delete")
+    void revokeTokensForUser_ShouldCallRepositoryDelete() {
+        _tokenServices.revokeTokensForUser("user-token-123", TokenTypeEnum.REFRESH_TOKEN);
+
+        verify(_tokenRepo, times(1))
+                .deleteByUserTokenAndType("user-token-123", TokenTypeEnum.REFRESH_TOKEN);
     }
 }

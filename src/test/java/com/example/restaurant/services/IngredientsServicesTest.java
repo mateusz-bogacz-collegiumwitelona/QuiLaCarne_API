@@ -106,7 +106,8 @@ public class IngredientsServicesTest {
     }
 
     @Test
-    @DisplayName("Removing an ingredient: Success - should anonymize data (Soft Delete) and deactivate associated dishes")
+    @DisplayName("Removing an ingredient: Success - should anonymize data " +
+            "(Soft Delete) and deactivate associated dishes")
     void remove_ShouldSoftDeleteIngredient_AndDeactivateDishes() {
         String token = TestConstants.TOKEN_INGREDIENT;
         UUID ingredientId = UUID.randomUUID();
