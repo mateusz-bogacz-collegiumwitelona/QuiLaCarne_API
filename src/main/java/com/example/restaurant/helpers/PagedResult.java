@@ -1,11 +1,15 @@
 package com.example.restaurant.helpers;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PagedResult<T> {
     private List<T> items;
     private int pageNumber;
