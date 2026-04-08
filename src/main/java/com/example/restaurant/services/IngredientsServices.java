@@ -2,7 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddIngredientRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
@@ -93,8 +93,8 @@ public class IngredientsServices implements IIngredientsServices {
             value = "ingredientsDictionary",
             key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
     )
-    public List<EntityResponse> getDictionary() {
+    public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryHelper.map(_ingredientsRepo.findAll(), lang);
+        return new DictionaryResponse(DictionaryHelper.map(_ingredientsRepo.findAll(), lang));
     }
 }

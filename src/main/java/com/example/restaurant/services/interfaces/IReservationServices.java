@@ -28,5 +28,5 @@ public interface IReservationServices {
 
     void isAbsent(String reservationToken);
 
-    List<EntityResponse> getDictionary();
+    DictionaryResponse getDictionary();
 }

@@ -3,7 +3,7 @@ package com.example.restaurant.controllers;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
@@ -24,8 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/report", produces = "application/json")
@@ -215,7 +213,7 @@ public class ReportController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @GetMapping("/dictionary")
-    public ResponseEntity<ResultHandler<List<EntityResponse>>> getDictionary() {
+    public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
         var result = _reportServices.getDictionary();
         return ResponseEntity.ok(
                 ResultHandler.success(

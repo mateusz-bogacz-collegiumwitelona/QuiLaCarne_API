@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.CreateBanRequest;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.models.Bans;
@@ -91,9 +92,9 @@ public class BanServices implements IBanServices {
     @Cacheable(
             value = "banStatuses",
             key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
-    public List<EntityResponse> getDictionary() {
+    public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryHelper.map(_banRepo.findAllStatuses(), lang);
+        return new DictionaryResponse(DictionaryHelper.map(_banRepo.findAllStatuses(), lang));
     }
 
     @Override

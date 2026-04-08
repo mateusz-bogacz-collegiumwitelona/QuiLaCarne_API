@@ -2,8 +2,8 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.*;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
-import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.models.Dishes;
@@ -368,10 +368,10 @@ public class DishServicesTest {
         when(_ingredientsRepo.findByToken(TestConstants.INGREDIENT_EN)).thenReturn(cheese);
         when(_s3Services.generateUniqFileName("pizza.png")).thenReturn("uuid_pizza.png");
         when(_s3Services.uploadFromStream(
-                mockInputStream,
-                "uuid_pizza.png",
-                "image/png",
-                2048L
+                        mockInputStream,
+                        "uuid_pizza.png",
+                        "image/png",
+                        2048L
                 )
         ).thenReturn("uuid_pizza.png");
 
@@ -420,9 +420,9 @@ public class DishServicesTest {
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
         when(_dishRepo.findAllCategories()).thenReturn(new java.util.ArrayList<>());
 
-        List<EntityResponse> result = _dishServices.getDictionary();
+        DictionaryResponse result = _dishServices.getDictionary();
 
-        assertTrue(result.isEmpty());
+        assertTrue(result.getItem().isEmpty());
     }
 
     @Test
@@ -437,11 +437,11 @@ public class DishServicesTest {
 
         when(_dishRepo.findAllCategories()).thenReturn(java.util.List.of(category));
 
-        java.util.List<EntityResponse> result = _dishServices.getDictionary();
+        DictionaryResponse result = _dishServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.TOKEN_SOUPS, result.getFirst().getToken());
-        assertEquals("Zupy PL", result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.TOKEN_SOUPS, result.getItem().getFirst().getToken());
+        assertEquals("Zupy PL", result.getItem().getFirst().getName());
     }
 
     @Test
@@ -456,11 +456,11 @@ public class DishServicesTest {
 
         when(_dishRepo.findAllCategories()).thenReturn(java.util.List.of(category));
 
-        java.util.List<EntityResponse> result = _dishServices.getDictionary();
+        DictionaryResponse result = _dishServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.TOKEN_DESSERTS, result.getFirst().getToken());
-        assertEquals("Desserts EN", result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.TOKEN_DESSERTS, result.getItem().getFirst().getToken());
+        assertEquals("Desserts EN", result.getItem().getFirst().getName());
     }
 
     @Test

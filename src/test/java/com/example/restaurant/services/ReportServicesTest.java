@@ -5,7 +5,7 @@ import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.models.GuestReports;
@@ -187,9 +187,9 @@ public class ReportServicesTest {
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
         when(_reportRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
 
-        List<EntityResponse> result = _reportServices.getDictionary();
+        DictionaryResponse result = _reportServices.getDictionary();
 
-        assertTrue(result.isEmpty());
+        assertTrue(result.getItem().isEmpty());
     }
 
     @Test
@@ -204,11 +204,11 @@ public class ReportServicesTest {
 
         when(_reportRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _reportServices.getDictionary();
+        DictionaryResponse result = _reportServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_IN_PROGRESS, result.getFirst().getToken());
-        assertEquals("W trakcie PL", result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_IN_PROGRESS, result.getItem().getFirst().getToken());
+        assertEquals("W trakcie PL", result.getItem().getFirst().getName());
     }
 
     @Test
@@ -222,10 +222,10 @@ public class ReportServicesTest {
 
         when(_reportRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _reportServices.getDictionary();
+        DictionaryResponse result = _reportServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_ACCEPTED, result.getFirst().getToken());
-        assertEquals("Accepted EN", result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_ACCEPTED, result.getItem().getFirst().getToken());
+        assertEquals("Accepted EN", result.getItem().getFirst().getName());
     }
 }

@@ -318,7 +318,7 @@ public class ReservationController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @GetMapping("/dictionary")
-    public ResponseEntity<ResultHandler<List<EntityResponse>>> getDictionary() {
+    public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
         var result = _reservationServices.getDictionary();
         return ResponseEntity.ok(
                 ResultHandler.success(

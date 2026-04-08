@@ -7,7 +7,7 @@ import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
@@ -38,7 +38,6 @@ public class OrderServices implements IOrderServices {
     private final ITableRespository _tableRepo;
     private final IUserRepository _userRepo;
     private final NotificationServices _notification;
-
 
     @Override
     @Transactional
@@ -331,9 +330,9 @@ public class OrderServices implements IOrderServices {
             value = "orderStatuses",
             key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
     )
-    public List<EntityResponse> getDictionary() {
+    public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryHelper.map(_orderRepo.findAllStatuses(), lang);
+        return new DictionaryResponse(DictionaryHelper.map(_orderRepo.findAllStatuses(), lang));
     }
 
     @Override
@@ -341,9 +340,9 @@ public class OrderServices implements IOrderServices {
             value = "orderItemStatuses",
             key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
     )
-    public List<EntityResponse> getItemStatusesDictionary() {
+    public DictionaryResponse getItemStatusesDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryHelper.map(_orderRepo.findAllItemStatuses(), lang);
+        return new DictionaryResponse(DictionaryHelper.map(_orderRepo.findAllItemStatuses(), lang));
     }
 
     @Override

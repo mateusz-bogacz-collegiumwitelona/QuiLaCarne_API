@@ -2,7 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.CreateBanRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.BanStatus;
@@ -116,9 +116,9 @@ public class BanServicesTest {
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
         when(_banRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
 
-        List<EntityResponse> result = _banServices.getDictionary();
+        DictionaryResponse result = _banServices.getDictionary();
 
-        assertTrue(result.isEmpty());
+        assertTrue(result.getItem().isEmpty());
     }
 
     @Test
@@ -133,11 +133,11 @@ public class BanServicesTest {
 
         when(_banRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        java.util.List<EntityResponse> result = _banServices.getDictionary();
+        DictionaryResponse result = _banServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_ACTIVE, result.getFirst().getToken());
-        assertEquals("Aktywny PL", result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_ACTIVE, result.getItem().getFirst().getToken());
+        assertEquals("Aktywny PL", result.getItem().getFirst().getName());
     }
 
     @Test
@@ -152,11 +152,11 @@ public class BanServicesTest {
 
         when(_banRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        java.util.List<EntityResponse> result = _banServices.getDictionary();
+        DictionaryResponse result = _banServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_EXPIRED, result.getFirst().getToken());
-        assertEquals("Expired EN", result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_EXPIRED, result.getItem().getFirst().getToken());
+        assertEquals("Expired EN", result.getItem().getFirst().getName());
     }
 
     private Roles createRole(String roleName) {

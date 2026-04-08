@@ -4,8 +4,8 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
-import com.example.restaurant.dto.response.EntityResponse;
-import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.TableListWrapperResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.RestaurantTables;
@@ -62,11 +62,11 @@ public class TableServicesTest {
         when(_tableRepo.findAllTables(request.getStartTime(), request.getEndTime()))
                 .thenReturn(List.of(mockTable));
 
-        List<TableListResponse> result = _tableServices.getTables(request);
+        TableListWrapperResponse result = _tableServices.getTables(request);
 
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("Available", result.get(0).getStatus());
+        assertEquals(1, result.getTables().size());
+        assertEquals("Available", result.getTables().getFirst().getStatus());
         verify(_tableRepo).findAllTables(request.getStartTime(), request.getEndTime());
     }
 
@@ -84,9 +84,9 @@ public class TableServicesTest {
         when(_tableRepo.findAllTables(request.getStartTime(), request.getEndTime()))
                 .thenReturn(List.of(mockTable));
 
-        List<TableListResponse> result = _tableServices.getTables(request);
+        TableListWrapperResponse result = _tableServices.getTables(request);
 
-        assertEquals("Wolny", result.get(0).getStatus());
+        assertEquals("Wolny", result.getTables().getFirst().getStatus());
     }
 
     @Test
@@ -115,9 +115,9 @@ public class TableServicesTest {
 
         when(_tableRepo.findAllTables(null, null)).thenReturn(List.of(mockTable));
 
-        List<TableListResponse> result = _tableServices.getTables(request);
+        TableListWrapperResponse result = _tableServices.getTables(request);
 
-        assertEquals("Occupied", result.get(0).getStatus());
+        assertEquals("Occupied", result.getTables().getFirst().getStatus());
     }
 
     @Test
@@ -125,9 +125,9 @@ public class TableServicesTest {
     void getTables_ShouldReturnEmptyList_WhenNoResults() {
         when(_tableRepo.findAllTables(any(), any())).thenReturn(List.of());
 
-        List<TableListResponse> result = _tableServices.getTables(new TableFilterRequest());
+        TableListWrapperResponse result = _tableServices.getTables(new TableFilterRequest());
 
-        assertTrue(result.isEmpty());
+        assertTrue(result.getTables().isEmpty());
     }
 
     @Test
@@ -309,8 +309,8 @@ public class TableServicesTest {
     @DisplayName("getDictionary: Returns empty list when repository returns empty")
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
         when(_tableRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
-        List<EntityResponse> result = _tableServices.getDictionary();
-        assertTrue(result.isEmpty());
+        DictionaryResponse result = _tableServices.getDictionary();
+        assertTrue(result.getItem().isEmpty());
     }
 
     @Test
@@ -324,11 +324,11 @@ public class TableServicesTest {
 
         when(_tableRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _tableServices.getDictionary();
+        DictionaryResponse result = _tableServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_AVAILABLE, result.get(0).getToken());
-        assertEquals("Wolny PL", result.get(0).getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_AVAILABLE, result.getItem().getFirst().getToken());
+        assertEquals("Wolny PL", result.getItem().getFirst().getName());
     }
 
     @Test
@@ -342,11 +342,11 @@ public class TableServicesTest {
 
         when(_tableRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _tableServices.getDictionary();
+        DictionaryResponse result = _tableServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_CLEANING, result.get(0).getToken());
-        assertEquals("Cleaning EN", result.get(0).getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_CLEANING, result.getItem().getFirst().getToken());
+        assertEquals("Cleaning EN", result.getItem().getFirst().getName());
     }
 
     @Test

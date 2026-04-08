@@ -24,6 +24,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -711,7 +712,7 @@ public class UserServicesTest {
         assertNotNull(result);
         assertEquals(1, result.getItems().size());
 
-        UserListResponse mappedUser = result.getItems().get(0);
+        UserListResponse mappedUser = result.getItems().getFirst();
         assertEquals(TestConstants.FAKE_USER_TOKEN, mappedUser.getToken());
         assertEquals(TestConstants.FAKE_USERNAME, mappedUser.getUsername());
         assertEquals(TestConstants.FAKE_EMAIL, mappedUser.getEmail());
@@ -721,7 +722,7 @@ public class UserServicesTest {
         verify(_userRepo).findAllUsers(any(Specification.class), argThat(pageRequest ->
                 pageRequest.getPageNumber() == 1 &&
                         pageRequest.getPageSize() == 5 &&
-                        pageRequest.getSort().getOrderFor("username").isAscending()
+                        Objects.requireNonNull(pageRequest.getSort().getOrderFor("username")).isAscending()
         ));
     }
 

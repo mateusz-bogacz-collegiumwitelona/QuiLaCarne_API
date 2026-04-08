@@ -1,7 +1,7 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.AddEntityRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IOrderServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,8 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/order", produces = "application/json")
@@ -47,7 +45,7 @@ public class OrderController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @GetMapping("/dictionary")
-    public ResponseEntity<ResultHandler<List<EntityResponse>>> getDictionary() {
+    public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
         var result = _orderServices.getDictionary();
         return ResponseEntity.ok(
                 ResultHandler.success(
@@ -79,7 +77,7 @@ public class OrderController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @GetMapping("/item/dictionary")
-    public ResponseEntity<ResultHandler<List<EntityResponse>>> getItemStatusesDictionary() {
+    public ResponseEntity<ResultHandler<DictionaryResponse>> getItemStatusesDictionary() {
         var result = _orderServices.getItemStatusesDictionary();
         return ResponseEntity.ok(
                 ResultHandler.success(

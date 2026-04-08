@@ -1,12 +1,10 @@
 package com.example.restaurant.services.interfaces;
 
 import com.example.restaurant.dto.request.AddEntityRequest;
-import com.example.restaurant.dto.response.EntityResponse;
-
-import java.util.List;
+import com.example.restaurant.dto.response.DictionaryResponse;
 
 public interface IAllergensServices {
-    List<EntityResponse> getDictionary();
+    DictionaryResponse getDictionary();
 
     void add(AddEntityRequest request);
 

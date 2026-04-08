@@ -391,8 +391,12 @@ public class UserController {
     @DeleteMapping("/employee/{employeeToken}/delete")
     @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
     public ResponseEntity<ResultHandler<Void>> deleteEmployee(
-            @AuthenticationPrincipal(expression = "token") String adminToken,
-            @PathVariable("employeeToken") @Parameter(description = "Token of the employee to delete") String employeeToken
+            @AuthenticationPrincipal(expression = "token")
+            String adminToken,
+
+            @PathVariable("employeeToken")
+            @Parameter(description = "Token of the employee to delete")
+            String employeeToken
     ) {
         _userServices.deleteEmployee(adminToken, employeeToken);
 

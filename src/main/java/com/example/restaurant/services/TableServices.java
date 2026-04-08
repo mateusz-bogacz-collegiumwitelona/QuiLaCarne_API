@@ -4,8 +4,9 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.dto.response.TableListWrapperResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.DictionaryHelper;
@@ -38,7 +39,7 @@ public class TableServices implements ITableServices {
             key = "#request.toString() + '-' + " +
                     "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
     )
-    public List<TableListResponse> getTables(TableFilterRequest request) {
+    public TableListWrapperResponse getTables(TableFilterRequest request) {
         if (request.getStartTime() != null && request.getEndTime() != null) {
             if (request.getStartTime().isAfter(request.getEndTime())) {
                 throw new IllegalStateException("Start time cannot be after end time");
@@ -51,10 +52,10 @@ public class TableServices implements ITableServices {
         List<RestaurantTables> tables = _tableRepo.findAllTables(request.getStartTime(), request.getEndTime());
 
         if (tables == null || tables.isEmpty()) {
-            return new ArrayList<>();
+            return new TableListWrapperResponse(new ArrayList<>());
         }
 
-        return tables.stream().map(table -> {
+        List<TableListResponse> response = tables.stream().map(table -> {
             String statusName = "UNKNOWN";
             if (table.getTableStatus() != null && !table.getTableStatus().isEmpty()) {
                 var status = table.getTableStatus().iterator().next();
@@ -72,6 +73,8 @@ public class TableServices implements ITableServices {
                     .updatedAt(table.getUpdatedAt())
                     .build();
         }).toList();
+
+        return new TableListWrapperResponse(response);
     }
 
     @Override
@@ -146,9 +149,9 @@ public class TableServices implements ITableServices {
             value = "tableStatuses",
             key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
     )
-    public List<EntityResponse> getDictionary() {
+    public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryHelper.map(_tableRepo.findAllStatuses(), lang);
+        return new DictionaryResponse(DictionaryHelper.map(_tableRepo.findAllStatuses(), lang));
     }
 
     @Override

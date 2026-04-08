@@ -2,7 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddEntityRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
@@ -47,9 +47,9 @@ public class AllergensServicesTest {
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
         when(_allergenRepo.findAll()).thenReturn(new ArrayList<>());
 
-        List<EntityResponse> result = _allergensServices.getDictionary();
+        DictionaryResponse result = _allergensServices.getDictionary();
 
-        assertTrue(result.isEmpty());
+        assertTrue(result.getItem().isEmpty());
     }
 
     @Test
@@ -64,11 +64,11 @@ public class AllergensServicesTest {
 
         when(_allergenRepo.findAll()).thenReturn(List.of(allergen));
 
-        List<EntityResponse> result = _allergensServices.getDictionary();
+        DictionaryResponse result = _allergensServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.TOKEN_GLUTEN, result.getFirst().getToken());
-        assertEquals(TestConstants.FAKE_ALLERGEN_PL, result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.TOKEN_GLUTEN, result.getItem().getFirst().getToken());
+        assertEquals(TestConstants.FAKE_ALLERGEN_PL, result.getItem().getFirst().getName());
     }
 
     @Test
@@ -83,11 +83,11 @@ public class AllergensServicesTest {
 
         when(_allergenRepo.findAll()).thenReturn(List.of(allergen));
 
-        List<EntityResponse> result = _allergensServices.getDictionary();
+        DictionaryResponse result = _allergensServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.TOKEN_NUTS, result.getFirst().getToken());
-        assertEquals(TestConstants.FAKE_ALLERGEN_EN, result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.TOKEN_NUTS, result.getItem().getFirst().getToken());
+        assertEquals(TestConstants.FAKE_ALLERGEN_EN, result.getItem().getFirst().getName());
     }
 
     @Test

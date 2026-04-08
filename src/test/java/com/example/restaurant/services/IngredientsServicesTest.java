@@ -3,7 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddIngredientRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
@@ -141,8 +141,8 @@ public class IngredientsServicesTest {
     @DisplayName("getDictionary: Returns empty list when repository returns empty")
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
         when(_ingredientsRepo.findAll()).thenReturn(new ArrayList<>());
-        List<EntityResponse> result = _ingredientsServices.getDictionary();
-        assertTrue(result.isEmpty());
+        DictionaryResponse result = _ingredientsServices.getDictionary();
+        assertTrue(result.getItem().isEmpty());
     }
 
     @Test
@@ -156,11 +156,11 @@ public class IngredientsServicesTest {
 
         when(_ingredientsRepo.findAll()).thenReturn(List.of(ingredient));
 
-        List<EntityResponse> result = _ingredientsServices.getDictionary();
+        DictionaryResponse result = _ingredientsServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.TOKEN_INGREDIENT, result.getFirst().getToken());
-        assertEquals(TestConstants.INGREDIENT_PL, result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.TOKEN_INGREDIENT, result.getItem().getFirst().getToken());
+        assertEquals(TestConstants.INGREDIENT_PL, result.getItem().getFirst().getName());
     }
 
     @Test
@@ -174,10 +174,10 @@ public class IngredientsServicesTest {
 
         when(_ingredientsRepo.findAll()).thenReturn(List.of(ingredient));
 
-        List<EntityResponse> result = _ingredientsServices.getDictionary();
+        DictionaryResponse result = _ingredientsServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.TOKEN_INGREDIENT, result.getFirst().getToken());
-        assertEquals(TestConstants.INGREDIENT_EN, result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.TOKEN_INGREDIENT, result.getItem().getFirst().getToken());
+        assertEquals(TestConstants.INGREDIENT_EN, result.getItem().getFirst().getName());
     }
 }

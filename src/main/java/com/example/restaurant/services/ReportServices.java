@@ -5,7 +5,7 @@ import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
@@ -168,8 +168,8 @@ public class ReportServices implements IReportServices {
             value = "reportStatuses",
             key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
     )
-    public List<EntityResponse> getDictionary() {
+    public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryHelper.map(_reportRepo.findAllStatuses(), lang);
+        return new DictionaryResponse(DictionaryHelper.map(_reportRepo.findAllStatuses(), lang));
     }
 }

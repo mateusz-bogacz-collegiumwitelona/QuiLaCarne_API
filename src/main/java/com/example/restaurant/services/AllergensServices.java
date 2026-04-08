@@ -2,7 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddEntityRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.Allergens;
@@ -17,8 +17,6 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class AllergensServices implements IAllergensServices {
@@ -30,9 +28,9 @@ public class AllergensServices implements IAllergensServices {
     @Cacheable(
             value = "allergensDictionary",
             key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
-    public List<EntityResponse> getDictionary() {
+    public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryHelper.map(_allergenRepo.findAll(), lang);
+        return new DictionaryResponse(DictionaryHelper.map(_allergenRepo.findAll(), lang));
     }
 
     @Override

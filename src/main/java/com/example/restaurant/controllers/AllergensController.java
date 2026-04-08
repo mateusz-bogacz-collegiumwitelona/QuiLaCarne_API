@@ -1,7 +1,7 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.AddEntityRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IAllergensServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,14 +18,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping(value = "/api/dishes", produces = "application/json")
 @RequiredArgsConstructor
 public class AllergensController {
     private final IAllergensServices _allergensServices;
-    
+
     @Operation(
             summary = "Get list of allergens",
             description = "Retrieves a dictionary list of all allergens available in the system. " +
@@ -47,7 +45,7 @@ public class AllergensController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @GetMapping("/allergens/dictionary")
-    public ResponseEntity<ResultHandler<List<EntityResponse>>> getAllergensDictionary() {
+    public ResponseEntity<ResultHandler<DictionaryResponse>> getAllergensDictionary() {
         var result = _allergensServices.getDictionary();
         return ResponseEntity.ok(
                 ResultHandler.success(

@@ -241,8 +241,8 @@ public class ReservationServices implements IReservationServices {
             value = "reservationStatuses",
             key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
     )
-    public List<EntityResponse> getDictionary() {
+    public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryHelper.map(_reservationRepo.findAllStatuses(), lang);
+        return new DictionaryResponse(DictionaryHelper.map(_reservationRepo.findAllStatuses(), lang));
     }
 }

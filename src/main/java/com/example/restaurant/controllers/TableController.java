@@ -3,8 +3,8 @@ package com.example.restaurant.controllers;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
-import com.example.restaurant.dto.response.EntityResponse;
-import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.TableListWrapperResponse;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.ITableServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,8 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/tables", produces = "application/json")
@@ -50,7 +48,7 @@ public class TableController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping
-    public ResponseEntity<ResultHandler<List<TableListResponse>>> getTables(@Valid TableFilterRequest request) {
+    public ResponseEntity<ResultHandler<TableListWrapperResponse>> getTables(@Valid TableFilterRequest request) {
         var result = _tableServices.getTables(request);
         return ResponseEntity.ok(
                 ResultHandler.success("Tables reviewed sucessfully",
@@ -207,7 +205,7 @@ public class TableController {
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     @GetMapping("/dictionary")
-    public ResponseEntity<ResultHandler<List<EntityResponse>>> getDictionary() {
+    public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
         var result = _tableServices.getDictionary();
         return ResponseEntity.ok(
                 ResultHandler.success(

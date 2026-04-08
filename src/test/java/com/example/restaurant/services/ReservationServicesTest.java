@@ -8,7 +8,7 @@ import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ClientReservationResponse;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
@@ -127,7 +127,8 @@ public class ReservationServicesTest {
         Page<Reservations> entityPage = new PageImpl<>(List.of(mockEntity));
 
         when(_reservationRepo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(entityPage);
-        when(_reservationMapper.toClientReservationResponse(any(), eq("en"))).thenReturn(new ClientReservationResponse());
+        when(_reservationMapper.toClientReservationResponse(any(), eq("en")))
+                .thenReturn(new ClientReservationResponse());
 
         PagedResult<ClientReservationResponse> result = _reservationServices
                 .history(new ClientReservationRequest(), pagged, "token");
@@ -222,8 +223,8 @@ public class ReservationServicesTest {
     @DisplayName("getDictionary: Returns empty list when repository returns empty")
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
         when(_reservationRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
-        List<EntityResponse> result = _reservationServices.getDictionary();
-        assertTrue(result.isEmpty());
+        DictionaryResponse result = _reservationServices.getDictionary();
+        assertTrue(result.getItem().isEmpty());
     }
 
     @Test
@@ -237,11 +238,11 @@ public class ReservationServicesTest {
 
         when(_reservationRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _reservationServices.getDictionary();
+        DictionaryResponse result = _reservationServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_ACTIVE, result.getFirst().getToken());
-        assertEquals("Aktywna PL", result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_ACTIVE, result.getItem().getFirst().getToken());
+        assertEquals("Aktywna PL", result.getItem().getFirst().getName());
     }
 
     @Test
@@ -255,11 +256,11 @@ public class ReservationServicesTest {
 
         when(_reservationRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _reservationServices.getDictionary();
+        DictionaryResponse result = _reservationServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_CANCELLED, result.getFirst().getToken());
-        assertEquals("Cancelled EN", result.getFirst().getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_CANCELLED, result.getItem().getFirst().getToken());
+        assertEquals("Cancelled EN", result.getItem().getFirst().getName());
     }
 
     private ReservationRequest createValidRequest() {

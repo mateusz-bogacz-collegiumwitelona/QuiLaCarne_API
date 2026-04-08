@@ -6,7 +6,7 @@ import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
-import com.example.restaurant.dto.response.EntityResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.lookup.Allergens;
@@ -87,8 +87,8 @@ public class OrderServicesTest {
         assertNotNull(result);
         assertEquals(100, result.totalPrice());
         assertEquals(1, result.dishes().size());
-        assertEquals("Pizza", result.dishes().get(0).dishName());
-        assertEquals(50, result.dishes().get(0).price());
+        assertEquals("Pizza", result.dishes().getFirst().dishName());
+        assertEquals(50, result.dishes().getFirst().price());
 
         verify(_orderRepo, times(1)).saveOrderWithItems(any(Orders.class), anyList());
         verify(_notification, times(1)).sendToTopic(eq("orders"), anyString());
@@ -174,9 +174,9 @@ public class OrderServicesTest {
         assertNotNull(result);
         assertEquals(150, result.totalPrice());
         assertEquals(1, result.dishes().size());
-        assertEquals("Pizza", result.dishes().get(0).getDishName());
-        assertEquals(50, result.dishes().get(0).getPrice());
-        assertEquals(3, result.dishes().get(0).getQuantity());
+        assertEquals("Pizza", result.dishes().getFirst().getDishName());
+        assertEquals(50, result.dishes().getFirst().getPrice());
+        assertEquals(3, result.dishes().getFirst().getQuantity());
     }
 
     @Test
@@ -236,7 +236,7 @@ public class OrderServicesTest {
         assertEquals(120, result.totalPrice());
         assertEquals(1, result.dishes().size());
 
-        TodayReservationDishResponse dishRes = result.dishes().get(0);
+        TodayReservationDishResponse dishRes = result.dishes().getFirst();
         assertEquals("Spaghetti", dishRes.getDishName());
         assertEquals(60, dishRes.getPrice());
         assertEquals(2, dishRes.getQuantity());
@@ -266,8 +266,8 @@ public class OrderServicesTest {
 
         TodayOrderSummaryDomain result = _orderServices.todayOrderDetails("res-token", "pl");
 
-        assertTrue(result.dishes().get(0).getIngredient().isEmpty());
-        assertTrue(result.dishes().get(0).getAllergens().isEmpty());
+        assertTrue(result.dishes().getFirst().getIngredient().isEmpty());
+        assertTrue(result.dishes().getFirst().getAllergens().isEmpty());
     }
 
     @Test
@@ -586,8 +586,8 @@ public class OrderServicesTest {
     @DisplayName("getDictionary: Returns empty list when repository returns empty")
     void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
         when(_orderRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
-        List<EntityResponse> result = _orderServices.getDictionary();
-        assertTrue(result.isEmpty());
+        DictionaryResponse result = _orderServices.getDictionary();
+        assertTrue(result.getItem().isEmpty());
     }
 
     @Test
@@ -601,11 +601,11 @@ public class OrderServicesTest {
 
         when(_orderRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _orderServices.getDictionary();
+        DictionaryResponse result = _orderServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals("PENDING", result.get(0).getToken());
-        assertEquals("Oczekujące PL", result.get(0).getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals("PENDING", result.getItem().getFirst().getToken());
+        assertEquals("Oczekujące PL", result.getItem().getFirst().getName());
     }
 
     @Test
@@ -619,19 +619,19 @@ public class OrderServicesTest {
 
         when(_orderRepo.findAllStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _orderServices.getDictionary();
+        DictionaryResponse result = _orderServices.getDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals("COMPLETED", result.get(0).getToken());
-        assertEquals("Completed EN", result.get(0).getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals("COMPLETED", result.getItem().getFirst().getToken());
+        assertEquals("Completed EN", result.getItem().getFirst().getName());
     }
 
     @Test
     @DisplayName("getItemStatusesDictionary: Returns empty list when repository returns empty")
     void getItemStatusesDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
         when(_orderRepo.findAllItemStatuses()).thenReturn(new java.util.ArrayList<>());
-        List<EntityResponse> result = _orderServices.getItemStatusesDictionary();
-        assertTrue(result.isEmpty());
+        DictionaryResponse result = _orderServices.getItemStatusesDictionary();
+        assertTrue(result.getItem().isEmpty());
     }
 
     @Test
@@ -645,11 +645,11 @@ public class OrderServicesTest {
 
         when(_orderRepo.findAllItemStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _orderServices.getItemStatusesDictionary();
+        DictionaryResponse result = _orderServices.getItemStatusesDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_READY, result.get(0).getToken());
-        assertEquals("Gotowe PL", result.get(0).getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_READY, result.getItem().getFirst().getToken());
+        assertEquals("Gotowe PL", result.getItem().getFirst().getName());
     }
 
     @Test
@@ -663,11 +663,11 @@ public class OrderServicesTest {
 
         when(_orderRepo.findAllItemStatuses()).thenReturn(List.of(status));
 
-        List<EntityResponse> result = _orderServices.getItemStatusesDictionary();
+        DictionaryResponse result = _orderServices.getItemStatusesDictionary();
 
-        assertEquals(1, result.size());
-        assertEquals(TestConstants.STATUS_READY, result.get(0).getToken());
-        assertEquals("Ready EN", result.get(0).getName());
+        assertEquals(1, result.getItem().size());
+        assertEquals(TestConstants.STATUS_READY, result.getItem().getFirst().getToken());
+        assertEquals("Ready EN", result.getItem().getFirst().getName());
     }
 
     @Test

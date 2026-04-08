@@ -2,8 +2,8 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.*;
+import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
-import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
@@ -169,9 +169,9 @@ public class DishServices implements IDishServices {
     @Override
     @Cacheable(value = "dishCategories",
             key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
-    public List<EntityResponse> getDictionary() {
+    public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        return DictionaryHelper.map(_dishRepo.findAllCategories(), lang);
+        return new DictionaryResponse(DictionaryHelper.map(_dishRepo.findAllCategories(), lang));
     }
 
 
