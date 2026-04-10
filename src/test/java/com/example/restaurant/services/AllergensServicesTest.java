@@ -109,7 +109,14 @@ public class AllergensServicesTest {
                         )
         ));
 
-        verify(_notification, times(1)).sendToTopic(eq("dictionary/allergens"), anyString());
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/dictionary/allergens"),
+                argThat(event ->
+                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("ALLERGEN") &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -142,7 +149,15 @@ public class AllergensServicesTest {
         assertTrue(allergen.getNameEn().startsWith("DELETED_"));
         assertNotNull(allergen.getDeletedAt());
         verify(_allergenRepo, times(1)).save(allergen);
-        verify(_notification, times(1))
-                .sendToTopic(eq("dictionary/allergens"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/dictionary/allergens"),
+                argThat(event ->
+                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.DELETED &&
+                                event.getEntityType().equals("ALLERGEN") &&
+                                event.getToken().equals(token) &&
+                                event.getPayload() == null
+                )
+        );
     }
 }

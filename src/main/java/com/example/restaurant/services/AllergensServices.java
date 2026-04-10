@@ -1,9 +1,11 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.dto.event.DictionaryEvent;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
+import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -23,6 +25,8 @@ public class AllergensServices implements IAllergensServices {
     private final IAllergensRepository _allergenRepo;
     private final IIngredientsRepository _ingredientsRepo;
     private final NotificationServices _notification;
+
+    private final String entityType = "ALLERGEN";
 
     @Override
     @Cacheable(
@@ -44,8 +48,13 @@ public class AllergensServices implements IAllergensServices {
                 _allergenRepo::isNameTaken,
                 "Allergen already exist"
         );
-        _notification.sendToTopic("dictionary/allergens", "Allergen list updated");
+
         _allergenRepo.save(allergen);
+
+        DictionaryEvent payload = DictionaryEvent.fromEntity(allergen);
+        WebSocketEvent<DictionaryEvent> event = WebSocketEvent.created(entityType, allergen.getToken(), payload);
+
+        _notification.sendEventToTopic("/dictionary/allergens", event);
     }
 
     @Override
@@ -68,6 +77,9 @@ public class AllergensServices implements IAllergensServices {
                     }
                 }
         );
-        _notification.sendToTopic("dictionary/allergens", "Allergen list updated");
+
+        WebSocketEvent<Void> event = WebSocketEvent.deleted(entityType, token);
+
+        _notification.sendEventToTopic("/dictionary/allergens", event);
     }
 }
