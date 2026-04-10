@@ -4,10 +4,13 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
+import com.example.restaurant.dto.payload.DictionaryPayload;
+import com.example.restaurant.dto.payload.OrderPayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
+import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
@@ -66,8 +69,11 @@ public class OrderServicesTest {
         dishReq.setNote("No onion");
 
         Reservations reservation = new Reservations();
+        reservation.setToken(TestConstants.FAKE_RESERVATION_TOKEN);
         RestaurantTables table = new RestaurantTables();
+        table.setToken(TestConstants.FAKE_TABLE_TOKEN);
         OrderStatus status = new OrderStatus();
+        status.setToken("PENDING");
 
         Dishes dishEntity = new Dishes();
         dishEntity.setToken(TestConstants.FAKE_DISH_TOKEN);
@@ -78,6 +84,12 @@ public class OrderServicesTest {
         when(_reservationRepo.findByToken(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(Optional.of(reservation));
         when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
         when(_orderRepo.findStatusByToken("PENDING")).thenReturn(status);
+
+        doAnswer(invocation -> {
+            Orders o = invocation.getArgument(0);
+            o.setToken("NEW_ORDER_TOKEN");
+            return null;
+        }).when(_orderRepo).saveOrderWithItems(any(Orders.class), anyList());
 
         ReservationDomain result = _orderServices.createOrderForReservation(
                 TestConstants.FAKE_RESERVATION_TOKEN,
@@ -91,7 +103,18 @@ public class OrderServicesTest {
         assertEquals(50, result.dishes().getFirst().price());
 
         verify(_orderRepo, times(1)).saveOrderWithItems(any(Orders.class), anyList());
-        verify(_notification, times(1)).sendToTopic(eq("orders"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/orders/updates"),
+                argThat(event ->
+                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("ORDER") &&
+                                "NEW_ORDER_TOKEN".equals(event.getToken()) &&
+                                event.getPayload() != null &&
+                                TestConstants.FAKE_RESERVATION_TOKEN
+                                        .equals(((OrderPayload) event.getPayload()).getReservationToken())
+                )
+        );
     }
 
     @Test
@@ -334,7 +357,16 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(2)).saveItem(any(OrderItems.class));
         verify(_orderRepo, times(1)).save(mockOrder);
-        verify(_notification, times(1)).sendToTopic(eq("orders/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/orders/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("ORDER") &&
+                                event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -385,7 +417,16 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(1)).saveItem(mockItem);
         verify(_orderRepo, times(1)).save(mockOrder);
-        verify(_notification, times(1)).sendToTopic(eq("orders/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/orders/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("ORDER") &&
+                                event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -444,7 +485,16 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(2)).saveItem(any(OrderItems.class));
         verify(_orderRepo, times(1)).save(mockOrder);
-        verify(_notification, times(1)).sendToTopic(eq("orders/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/orders/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("ORDER") &&
+                                event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -504,7 +554,8 @@ public class OrderServicesTest {
         OrderItems cancelledDish = new OrderItems();
         cancelledDish.setStatuses(new HashSet<>(Set.of(cancelledItemStatus)));
 
-        when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN)).thenReturn(Optional.of(mockOrder));
+        when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(Optional.of(mockOrder));
         when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(mockWaiter);
 
         when(_orderRepo.findStatusByToken(inProgressStatus)).thenReturn(inProgressOrder);
@@ -529,6 +580,18 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(1)).saveAllItems(anyList());
         verify(_orderRepo, times(1)).save(mockOrder);
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/orders/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("ORDER") &&
+                                event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN) &&
+                                event.getPayload() != null &&
+                                TestConstants.FAKE_USER_TOKEN
+                                        .equals(((OrderPayload) event.getPayload()).getWaiterToken())
+                )
+        );
     }
 
     @Test
@@ -579,7 +642,16 @@ public class OrderServicesTest {
 
         verify(_orderRepo, times(1)).saveAllItems(orderItems);
         verify(_orderRepo, times(1)).save(mockOrder);
-        verify(_notification, times(1)).sendToTopic(eq("orders/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/orders/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("ORDER") &&
+                                event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -679,6 +751,12 @@ public class OrderServicesTest {
 
         when(_orderRepo.isStatusNameTaken(anyString(), anyString())).thenReturn(false);
 
+        doAnswer(invocation -> {
+            OrderStatus status = invocation.getArgument(0);
+            status.setToken("NEW_STATUS_EN");
+            return null;
+        }).when(_orderRepo).saveStatus(any(OrderStatus.class));
+
         assertDoesNotThrow(() -> _orderServices.addStatus(request));
 
         verify(_orderRepo, times(1)).saveStatus(argThat(status ->
@@ -686,6 +764,16 @@ public class OrderServicesTest {
                         status.getNameEn().equals("New Status EN") &&
                         status.getToken().equals("NEW_STATUS_EN")
         ));
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/dictionary/order-statuses"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("ORDER_STATUS") &&
+                                event.getPayload() != null &&
+                                "Nowy Status PL".equals(((DictionaryPayload) event.getPayload()).getNamePl())
+                )
+        );
     }
 
     @Test
@@ -697,6 +785,12 @@ public class OrderServicesTest {
 
         when(_orderRepo.isItemStatusNameTaken(anyString(), anyString())).thenReturn(false);
 
+        doAnswer(invocation -> {
+            OrderItemsStatus status = invocation.getArgument(0);
+            status.setToken("NEW_ITEM_STATUS_EN");
+            return null;
+        }).when(_orderRepo).saveItemStatus(any(OrderItemsStatus.class));
+
         assertDoesNotThrow(() -> _orderServices.addItemStatus(request));
 
         verify(_orderRepo, times(1)).saveItemStatus(argThat(status ->
@@ -704,6 +798,16 @@ public class OrderServicesTest {
                         status.getNameEn().equals("New Item Status EN") &&
                         status.getToken().equals("NEW_ITEM_STATUS_EN")
         ));
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/dictionary/order-item-statuses"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("ORDER_ITEM_STATUS") &&
+                                event.getPayload() != null &&
+                                "Nowy Status Elementu PL".equals(((DictionaryPayload) event.getPayload()).getNamePl())
+                )
+        );
     }
 
     @Test
@@ -747,6 +851,16 @@ public class OrderServicesTest {
         assertTrue(statusToRemove.getNameEn().startsWith("DELETED_"));
         assertNotNull(statusToRemove.getDeletedAt());
         verify(_orderRepo, times(1)).saveStatus(statusToRemove);
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/dictionary/order-statuses"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.DELETED &&
+                                event.getEntityType().equals("ORDER_STATUS") &&
+                                event.getToken().equals(tokenToRemove) &&
+                                event.getPayload() == null
+                )
+        );
     }
 
     @Test
@@ -790,5 +904,15 @@ public class OrderServicesTest {
         assertTrue(statusToRemove.getNameEn().startsWith("DELETED_"));
         assertNotNull(statusToRemove.getDeletedAt());
         verify(_orderRepo, times(1)).saveItemStatus(statusToRemove);
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/dictionary/order-item-statuses"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.DELETED &&
+                                event.getEntityType().equals("ORDER_ITEM_STATUS") &&
+                                event.getToken().equals(tokenToRemove) &&
+                                event.getPayload() == null
+                )
+        );
     }
 }

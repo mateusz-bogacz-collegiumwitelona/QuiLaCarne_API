@@ -5,6 +5,9 @@ import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
+import com.example.restaurant.dto.payload.DictionaryPayload;
+import com.example.restaurant.dto.payload.OrderItemPayload;
+import com.example.restaurant.dto.payload.OrderPayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
@@ -12,9 +15,11 @@ import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.DictionaryHelper;
+import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
+import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.*;
@@ -38,6 +43,10 @@ public class OrderServices implements IOrderServices {
     private final ITableRespository _tableRepo;
     private final IUserRepository _userRepo;
     private final NotificationServices _notification;
+
+    private static final String ORDER_ENTITY_TYPE = "ORDER";
+    private static final String ORDER_STATUS_ENTITY_TYPE = "ORDER_STATUS";
+    private static final String ORDER_ITEM_STATUS_ENTITY_TYPE = "ORDER_ITEM_STATUS";
 
     @Override
     @Transactional
@@ -101,7 +110,13 @@ public class OrderServices implements IOrderServices {
         order.setTotalPrice(totalPrice);
 
         _orderRepo.saveOrderWithItems(order, orderItems);
-        _notification.sendToTopic("orders", "New order for table: " + tableToken);
+
+        WebSocketEvent<OrderPayload> event = WebSocketEvent.created(
+                ORDER_ENTITY_TYPE,
+                order.getToken(),
+                createOrderPayload(order, orderItems)
+        );
+        _notification.sendEventToTopic("/orders/updates", event);
 
         return new ReservationDomain(reservationDishes, totalPrice);
     }
@@ -219,12 +234,22 @@ public class OrderServices implements IOrderServices {
         }
         _orderRepo.save(order);
 
-        _notification.sendToTopic("orders/updates", "Item removed from order: " + reservationToken);
+        List<OrderItems> updatedItems = _orderRepo.findItemsByOrderToken(order.getToken());
+        WebSocketEvent<OrderPayload> event = WebSocketEvent.updated(
+                ORDER_ENTITY_TYPE,
+                order.getToken(),
+                createOrderPayload(order, updatedItems)
+        );
+        _notification.sendEventToTopic("/orders/updates", event);
     }
 
     @Override
     @Transactional
-    public void addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
+    public void addItemFromReservation(
+            String waiterToken,
+            String reservationToken,
+            List<ReservationDishRequest> request
+    ) {
         Orders order = _orderRepo.findByReservationToken(reservationToken)
                 .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
                 .orElseThrow(() -> new RuntimeException("Order not found or you are not the assigned waiter"));
@@ -246,7 +271,9 @@ public class OrderServices implements IOrderServices {
             Optional<OrderItems> existingItemOpt = existingItems.stream()
                     .filter(i -> i.getProduct().getToken().equals(dish.getToken()) &&
                             java.util.Objects.equals(reqNote, normalizeNote(i.getNote())))
-                    .filter(i -> i.getStatuses().stream().noneMatch(s -> "CANCELLED".equals(s.getToken())))
+                    .filter(i -> i.getStatuses().stream()
+                            .noneMatch(s -> "CANCELLED".equals(s.getToken()))
+                    )
                     .findFirst();
 
             if (existingItemOpt.isPresent()) {
@@ -271,7 +298,14 @@ public class OrderServices implements IOrderServices {
 
         order.setTotalPrice(order.getTotalPrice() + addToPrice);
         _orderRepo.save(order);
-        _notification.sendToTopic("orders/updates", "Item added to order: " + reservationToken);
+
+        List<OrderItems> updatedItems = _orderRepo.findItemsByOrderToken(order.getToken());
+        WebSocketEvent<OrderPayload> event = WebSocketEvent.updated(
+                ORDER_ENTITY_TYPE,
+                order.getToken(),
+                createOrderPayload(order, updatedItems)
+        );
+        _notification.sendEventToTopic("/orders/updates", event);
     }
 
     @Transactional
@@ -300,6 +334,13 @@ public class OrderServices implements IOrderServices {
 
         _orderRepo.saveAllItems(items);
         _orderRepo.save(order);
+
+        WebSocketEvent<OrderPayload> event = WebSocketEvent.updated(
+                ORDER_ENTITY_TYPE,
+                order.getToken(),
+                createOrderPayload(order, items)
+        );
+        _notification.sendEventToTopic("/orders/updates", event);
     }
 
     @Override
@@ -321,7 +362,12 @@ public class OrderServices implements IOrderServices {
             _orderRepo.saveAllItems(items);
             _orderRepo.save(order);
 
-            _notification.sendToTopic("orders/updates", "Order cancelled (No Show): " + reservationToken);
+            WebSocketEvent<OrderPayload> event = WebSocketEvent.updated(
+                    ORDER_ENTITY_TYPE,
+                    order.getToken(),
+                    createOrderPayload(order, items)
+            );
+            _notification.sendEventToTopic("/orders/updates", event);
         }
     }
 
@@ -358,6 +404,14 @@ public class OrderServices implements IOrderServices {
         );
 
         _orderRepo.saveStatus(status);
+
+        DictionaryPayload payload = DictionaryPayload.fromEntity(status);
+        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(
+                ORDER_STATUS_ENTITY_TYPE,
+                status.getToken(),
+                payload
+        );
+        _notification.sendEventToTopic("/dictionary/order-statuses", event);
     }
 
     @Override
@@ -373,6 +427,14 @@ public class OrderServices implements IOrderServices {
         );
 
         _orderRepo.saveItemStatus(status);
+
+        DictionaryPayload payload = DictionaryPayload.fromEntity(status);
+        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(
+                ORDER_ITEM_STATUS_ENTITY_TYPE,
+                status.getToken(),
+                payload
+        );
+        _notification.sendEventToTopic("/dictionary/order-item-statuses", event);
     }
 
     @Override
@@ -396,6 +458,9 @@ public class OrderServices implements IOrderServices {
                     }
                 }
         );
+
+        WebSocketEvent<Void> event = WebSocketEvent.deleted(ORDER_STATUS_ENTITY_TYPE, token);
+        _notification.sendEventToTopic("/dictionary/order-statuses", event);
     }
 
     @Override
@@ -419,10 +484,39 @@ public class OrderServices implements IOrderServices {
                     }
                 }
         );
+
+        WebSocketEvent<Void> event = WebSocketEvent.deleted(ORDER_ITEM_STATUS_ENTITY_TYPE, token);
+        _notification.sendEventToTopic("/dictionary/order-item-statuses", event);
     }
 
     private String normalizeNote(String note) {
         if (note == null || note.trim().isEmpty()) return note;
         return note.trim();
+    }
+
+    private OrderPayload createOrderPayload(Orders order, List<OrderItems> items) {
+        List<OrderItemPayload> itemPayloads = items.stream().map(i -> OrderItemPayload.builder()
+                .token(i.getToken())
+                .dishToken(i.getProduct() != null ? i.getProduct().getToken() : null)
+                .quantity(i.getQuantity())
+                .priceAtTimeOfOrder(i.getPriceAtTimeOfOrder())
+                .note(i.getNote())
+                .statusTokens(i.getStatuses() != null ? i.getStatuses().stream().map(
+                        BaseEntity::getToken).toList() : List.of()
+                )
+                .build()
+        ).toList();
+
+        return OrderPayload.builder()
+                .token(order.getToken())
+                .totalPrice(order.getTotalPrice())
+                .reservationToken(order.getReservation() != null ? order.getReservation().getToken() : null)
+                .tableToken(order.getTable() != null ? order.getTable().getToken() : null)
+                .waiterToken(order.getWaiter() != null ? order.getWaiter().getToken() : null)
+                .statusTokens(order.getStatuses() != null ? order.getStatuses().stream().map(
+                        BaseEntity::getToken).toList() : List.of()
+                )
+                .items(itemPayloads)
+                .build();
     }
 }

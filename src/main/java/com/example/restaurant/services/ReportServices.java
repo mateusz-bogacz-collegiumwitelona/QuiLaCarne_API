@@ -40,8 +40,7 @@ public class ReportServices implements IReportServices {
     private final IUserRepository _userRepo;
     private final IBanServices _banServices;
     private final NotificationServices _notification;
-
-
+    
     @Override
     @Transactional
     @Auditable(action = "ADD_REPORT")
