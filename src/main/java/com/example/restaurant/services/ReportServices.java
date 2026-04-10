@@ -2,6 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
+import com.example.restaurant.dto.payload.ReportPayload;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
@@ -9,6 +10,7 @@ import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.IReportRepository;
@@ -40,7 +42,9 @@ public class ReportServices implements IReportServices {
     private final IUserRepository _userRepo;
     private final IBanServices _banServices;
     private final NotificationServices _notification;
-    
+
+    private static final String REPORT_ENTITY_TYPE = "REPORT";
+
     @Override
     @Transactional
     @Auditable(action = "ADD_REPORT")
@@ -59,9 +63,14 @@ public class ReportServices implements IReportServices {
         report.setReason(request.getReason().trim());
         report.setStatuses(Set.of(status));
 
-        _notification.sendToTopic("reports", "New report from waiter: " + waiterToken);
-
         _reportRepo.save(report);
+
+        WebSocketEvent<ReportPayload> event = WebSocketEvent.created(
+                REPORT_ENTITY_TYPE,
+                report.getToken(),
+                createPayload(report)
+        );
+        _notification.sendEventToTopic("/reports/updates", event);
     }
 
     @Override
@@ -159,7 +168,12 @@ public class ReportServices implements IReportServices {
 
         _reportRepo.save(report);
 
-        _notification.sendToTopic("reports/updates", "Report resolved: " + request.getReportToken());
+        WebSocketEvent<ReportPayload> event = WebSocketEvent.updated(
+                REPORT_ENTITY_TYPE,
+                report.getToken(),
+                createPayload(report)
+        );
+        _notification.sendEventToTopic("/reports/updates", event);
     }
 
     @Override
@@ -170,5 +184,21 @@ public class ReportServices implements IReportServices {
     public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return new DictionaryResponse(DictionaryHelper.map(_reportRepo.findAllStatuses(), lang));
+    }
+
+    private ReportPayload createPayload(GuestReports report) {
+        String statusToken = null;
+        if (report.getStatuses() != null && !report.getStatuses().isEmpty()) {
+            statusToken = report.getStatuses().iterator().next().getToken();
+        }
+
+        return ReportPayload.builder()
+                .token(report.getToken())
+                .guestToken(report.getGuest() != null ? report.getGuest().getToken() : null)
+                .reporterToken(report.getReporter() != null ? report.getReporter().getToken() : null)
+                .reason(report.getReason())
+                .statusToken(statusToken)
+                .createdAt(report.getCreatedAt())
+                .build();
     }
 }

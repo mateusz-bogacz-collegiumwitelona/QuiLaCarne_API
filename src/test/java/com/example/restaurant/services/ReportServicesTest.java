@@ -1,12 +1,14 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.payload.ReportPayload;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReportFilterRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReportListResponse;
+import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.Users;
@@ -78,10 +80,26 @@ public class ReportServicesTest {
         when(_userRepo.findByToken(waiterToken)).thenReturn(new Users());
         when(_reportRepo.findStatusByToken("IN_PROGRESS")).thenReturn(new GuestReportStatus());
 
+        doAnswer(invocation -> {
+            GuestReports r = invocation.getArgument(0);
+            r.setToken("NEW_REPORT_TOKEN");
+            return null;
+        }).when(_reportRepo).save(any(GuestReports.class));
+
         assertDoesNotThrow(() -> _reportServices.add(waiterToken, request));
 
         verify(_reportRepo, times(1)).save(any(GuestReports.class));
-        verify(_notification, times(1)).sendToTopic(eq("reports"), anyString());
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/reports/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("REPORT") &&
+                                "NEW_REPORT_TOKEN".equals(event.getToken()) &&
+                                event.getPayload() != null &&
+                                "Inappropriate behavior at the table."
+                                        .equals(((ReportPayload) event.getPayload()).getReason())
+                )
+        );
     }
 
     @Test
@@ -137,6 +155,7 @@ public class ReportServicesTest {
 
         GuestReports report = new GuestReports();
         report.setGuest(new Users());
+        report.setToken("REPORT_TOKEN");
         report.setReason("Toxic behavior");
 
         when(_reportRepo.findByToken("REPORT_TOKEN")).thenReturn(report);
@@ -147,7 +166,16 @@ public class ReportServicesTest {
 
         verify(_banServices, times(1)).add(any());
         verify(_reportRepo, times(1)).save(report);
-        verify(_notification, times(1)).sendToTopic(eq("reports/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/reports/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("REPORT") &&
+                                "REPORT_TOKEN".equals(event.getToken()) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -171,6 +199,8 @@ public class ReportServicesTest {
         request.setAccepted(false);
 
         GuestReports report = new GuestReports();
+        report.setToken("REPORT_TOKEN");
+
         when(_reportRepo.findByToken("REPORT_TOKEN")).thenReturn(report);
         when(_userRepo.findByToken(adminToken)).thenReturn(new Users());
         when(_reportRepo.findStatusByToken("REJECTED")).thenReturn(new GuestReportStatus());
@@ -179,7 +209,16 @@ public class ReportServicesTest {
 
         verify(_banServices, never()).add(any());
         verify(_reportRepo, times(1)).save(report);
-        verify(_notification, times(1)).sendToTopic(eq("reports/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/reports/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("REPORT") &&
+                                "REPORT_TOKEN".equals(event.getToken()) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
