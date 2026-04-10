@@ -1,11 +1,14 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.payload.DictionaryPayload;
+import com.example.restaurant.dto.payload.TablePayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.TableListWrapperResponse;
+import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.RestaurantTables;
@@ -95,7 +98,6 @@ public class TableServicesTest {
         TableFilterRequest request = new TableFilterRequest();
         request.setStartTime(OffsetDateTime.now().plusHours(2));
         request.setEndTime(OffsetDateTime.now().plusHours(1));
-
         assertThrows(IllegalStateException.class, () -> _tableServices.getTables(request));
     }
 
@@ -124,9 +126,7 @@ public class TableServicesTest {
     @DisplayName("Get Tables: Success - Should return empty list when no tables are found")
     void getTables_ShouldReturnEmptyList_WhenNoResults() {
         when(_tableRepo.findAllTables(any(), any())).thenReturn(List.of());
-
         TableListWrapperResponse result = _tableServices.getTables(new TableFilterRequest());
-
         assertTrue(result.getTables().isEmpty());
     }
 
@@ -134,6 +134,7 @@ public class TableServicesTest {
     @DisplayName("Change Status: Success - Should update table status to CLEANING")
     void changeStatusToClean_Successful() {
         RestaurantTables mockTable = new RestaurantTables();
+        mockTable.setToken(TestConstants.FAKE_TABLE_TOKEN);
         TableStatus mockStatus = new TableStatus();
 
         when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(mockTable);
@@ -141,10 +142,18 @@ public class TableServicesTest {
 
         assertDoesNotThrow(() -> _tableServices.changeStatusToClean(TestConstants.FAKE_TABLE_TOKEN));
 
-        // Assert
         verify(_tableRepo).save(mockTable);
         assertTrue(mockTable.getTableStatus().contains(mockStatus));
-        verify(_notification, times(1)).sendToTopic(eq("tables"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/tables/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("TABLE") &&
+                                event.getToken().equals(TestConstants.FAKE_TABLE_TOKEN) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -170,48 +179,56 @@ public class TableServicesTest {
     @Test
     @DisplayName("Change Status To Out Of Service: Success when table and status exist")
     void changeStatusToOutOfService_ShouldChangeStatus_WhenValid() {
-        String tableToken = "table-123";
         RestaurantTables table = new RestaurantTables();
+        table.setToken(TestConstants.FAKE_TABLE_TOKEN);
 
         TableStatus outOfServiceStatus = new TableStatus();
         outOfServiceStatus.setToken("OUT_OF_SERVICE");
         outOfServiceStatus.setNameEn("Out of service");
 
-        when(_tableRepo.findByToken(tableToken)).thenReturn(table);
+        when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
         when(_tableRepo.findStatusByToken("OUT_OF_SERVICE")).thenReturn(outOfServiceStatus);
 
-        _tableServices.changeStatusToOutOfService(tableToken);
+        _tableServices.changeStatusToOutOfService(TestConstants.FAKE_TABLE_TOKEN);
 
         assertTrue(table.getTableStatus().contains(outOfServiceStatus));
         verify(_tableRepo, times(1)).save(table);
-        verify(_notification, times(1)).sendToTopic(eq("tables"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/tables/updates"),
+                argThat(event ->
+                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("TABLE") &&
+                                event.getToken().equals(TestConstants.FAKE_TABLE_TOKEN) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
     @DisplayName("Change Status To Out Of Service: Throws Exception when table is not found")
     void changeStatusToOutOfService_ShouldThrowException_WhenTableNotFound() {
-        String tableToken = "invalid-token";
 
-        when(_tableRepo.findByToken(tableToken)).thenReturn(null);
+        when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(null);
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> _tableServices.changeStatusToOutOfService(tableToken));
+                () -> _tableServices.changeStatusToOutOfService(TestConstants.FAKE_TABLE_TOKEN));
 
-        assertEquals("Table with token " + tableToken + " not found", exception.getMessage());
+        assertEquals("Table with token " + TestConstants.FAKE_TABLE_TOKEN
+                + " not found", exception.getMessage());
         verify(_tableRepo, never()).save(any());
     }
 
     @Test
     @DisplayName("Change Status To Out Of Service: Throws Exception when status is not found in DB")
     void changeStatusToOutOfService_ShouldThrowException_WhenStatusNotFound() {
-        String tableToken = "table-123";
         RestaurantTables table = new RestaurantTables();
 
-        when(_tableRepo.findByToken(tableToken)).thenReturn(table);
-        when(_tableRepo.findStatusByToken("OUT_OF_SERVICE")).thenReturn(null); // Brak statusu w bazie
+        when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
+        when(_tableRepo.findStatusByToken("OUT_OF_SERVICE")).thenReturn(null);
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> _tableServices.changeStatusToOutOfService(tableToken));
+                () -> _tableServices.changeStatusToOutOfService(TestConstants.FAKE_TABLE_TOKEN));
 
         assertEquals("Table status 'OUT_OF_SERVICE' not found", exception.getMessage());
         verify(_tableRepo, never()).save(any());
@@ -230,6 +247,12 @@ public class TableServicesTest {
         when(_tableRepo.existsByTableNumber(5)).thenReturn(false);
         when(_tableRepo.findStatusByToken("AVAILABLE")).thenReturn(availableStatus);
 
+        doAnswer(invocation -> {
+            RestaurantTables t = invocation.getArgument(0);
+            t.setToken("NEW_TABLE_TOKEN");
+            return null;
+        }).when(_tableRepo).save(any(RestaurantTables.class));
+
         _tableServices.add(request);
 
         verify(_tableRepo, times(1)).save(argThat(table ->
@@ -237,7 +260,17 @@ public class TableServicesTest {
                         table.getCapacity() == 4 &&
                         table.getTableStatus().contains(availableStatus)
         ));
-        verify(_notification, times(1)).sendToTopic(eq("tables/layout"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/tables/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("TABLE") &&
+                                "NEW_TABLE_TOKEN".equals(event.getToken()) &&
+                                event.getPayload() != null &&
+                                ((TablePayload) event.getPayload()).getTableNumber() == 5
+                )
+        );
     }
 
     @Test
@@ -259,7 +292,6 @@ public class TableServicesTest {
     @Test
     @DisplayName("Add Table: Throws EntityNotFoundException when AVAILABLE status is missing")
     void add_ShouldThrowException_WhenStatusNotFound() {
-
         AddTableRequest request = new AddTableRequest();
         request.setTableNumber(5);
         request.setCapacity(4);
@@ -277,28 +309,35 @@ public class TableServicesTest {
     @Test
     @DisplayName("Delete Table: Success with Soft Delete")
     void delete_ShouldSetDeletedAt_WhenTableExists() {
-        String tableToken = "table-123";
         RestaurantTables table = new RestaurantTables();
+        table.setToken(TestConstants.FAKE_TABLE_TOKEN);
 
-        when(_tableRepo.findByToken(tableToken)).thenReturn(table);
+        when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
 
-        _tableServices.delete(tableToken);
+        _tableServices.delete(TestConstants.FAKE_TABLE_TOKEN);
 
         assertNotNull(table.getDeletedAt());
         verify(_tableRepo, times(1)).save(table);
-        verify(_notification, times(1)).sendToTopic(eq("tables/layout"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/tables/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.DELETED &&
+                                event.getEntityType().equals("TABLE") &&
+                                event.getToken().equals(TestConstants.FAKE_TABLE_TOKEN) &&
+                                event.getPayload() == null
+                )
+        );
     }
 
     @Test
     @DisplayName("Delete Table: Throws Exception when table not found")
     void delete_ShouldThrowException_WhenTableNotFound() {
-        String tableToken = "invalid-token";
-
-        when(_tableRepo.findByToken(tableToken))
+        when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN))
                 .thenThrow(new EntityNotFoundException("Table not found"));
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> _tableServices.delete(tableToken));
+                () -> _tableServices.delete(TestConstants.FAKE_TABLE_TOKEN));
 
         assertEquals("Table not found", exception.getMessage());
         verify(_tableRepo, never()).save(any());
@@ -358,12 +397,29 @@ public class TableServicesTest {
 
         when(_tableRepo.isStatusNameTaken(anyString(), anyString())).thenReturn(false);
 
+        doAnswer(invocation -> {
+            TableStatus s = invocation.getArgument(0);
+            s.setToken("NEW_TABLE_STATUS_EN");
+            return null;
+        }).when(_tableRepo).saveStatus(any(TableStatus.class));
+
         assertDoesNotThrow(() -> _tableServices.addStatus(request));
+
         verify(_tableRepo, times(1)).saveStatus(argThat(status ->
                 status.getNamePl().equals("Nowy Status Stolika PL") &&
                         status.getNameEn().equals("New Table Status EN") &&
                         status.getToken().equals("NEW_TABLE_STATUS_EN")
         ));
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/dictionary/table-statuses"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("TABLE_STATUS") &&
+                                event.getPayload() != null &&
+                                "Nowy Status Stolika PL".equals(((DictionaryPayload) event.getPayload()).getNamePl())
+                )
+        );
     }
 
     @Test
@@ -389,5 +445,15 @@ public class TableServicesTest {
         assertTrue(table.getTableStatus().contains(fallbackStatus));
         verify(_tableRepo, times(1)).saveStatus(statusToRemove);
         verify(_tableRepo, times(1)).save(table);
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/dictionary/table-statuses"),
+                argThat(event ->
+                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.DELETED &&
+                                event.getEntityType().equals("TABLE_STATUS") &&
+                                event.getToken().equals(tokenToRemove) &&
+                                event.getPayload() == null
+                )
+        );
     }
 }
