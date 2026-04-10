@@ -116,12 +116,7 @@ public class DishServices implements IDishServices {
             String reason = request.getUnavailableReason();
             dish.setUnavailableReason(reason != null && !reason.isBlank() ? reason.trim() : "Brak składników");
         }
-
-        _notification.sendToTopic(
-                "menu",
-                "Dish " + request.getToken() + " is now " +
-                        (request.isAvailable() ? "available" : "unavailable")
-        );
+        
         _dishRepo.save(dish);
 
         WebSocketEvent<DishPayload> event = WebSocketEvent.updated(

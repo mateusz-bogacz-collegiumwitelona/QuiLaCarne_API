@@ -1,9 +1,11 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
@@ -70,7 +72,16 @@ public class IngredientsServicesTest {
                         ingredient.getNameEn().equals(TestConstants.INGREDIENT_EN) &&
                         ingredient.getToken().equals(TestConstants.INGREDIENT_EN.toUpperCase())
         ));
-        verify(_notification, times(1)).sendToTopic(eq("dictionary/sync"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("dictionary/sync"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("INGREDIENT") &&
+                                event.getPayload() != null &&
+                                TestConstants.INGREDIENT_PL.equals(((DictionaryPayload) event.getPayload()).getNamePl())
+                )
+        );
     }
 
     @Test
@@ -134,7 +145,16 @@ public class IngredientsServicesTest {
         assertFalse(dish.isAvailable());
         assertEquals(TestConstants.INGREDIENT_EN + " is deleted", dish.getUnavailableReason());
         verify(_dishRepo).save(dish);
-        verify(_notification, times(1)).sendToTopic(eq("menu/availability"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("menu/availability"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.DELETED &&
+                                event.getEntityType().equals("INGREDIENT") &&
+                                event.getToken().equals(token) &&
+                                event.getPayload() == null
+                )
+        );
     }
 
     @Test

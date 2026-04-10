@@ -1,9 +1,11 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
+import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -29,6 +31,8 @@ public class IngredientsServices implements IIngredientsServices {
     private final IAllergensRepository _allergensRepo;
     private final IDishRepository _dishRepo;
     private final NotificationServices _notification;
+
+    private final String ENTITY_TYPE = "INGREDIENT";
 
     @Transactional
     @Override
@@ -56,7 +60,10 @@ public class IngredientsServices implements IIngredientsServices {
 
         _ingredientsRepo.save(ingredient);
 
-        _notification.sendToTopic("dictionary/sync", "ingredients");
+        DictionaryPayload payload = DictionaryPayload.fromEntity(ingredient);
+        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(ENTITY_TYPE, ingredient.getToken(), payload);
+
+        _notification.sendEventToTopic("dictionary/sync", event);
     }
 
     @Transactional
@@ -83,9 +90,9 @@ public class IngredientsServices implements IIngredientsServices {
                     }
                 }
         );
-        _notification.sendToTopic("menu/availability",
-                "Multiple dishes disabled due to ingredient removal: " + token
-        );
+        WebSocketEvent<Void> event = WebSocketEvent.deleted(ENTITY_TYPE, token);
+
+        _notification.sendEventToTopic("menu/availability", event);
     }
 
     @Override

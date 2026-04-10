@@ -26,7 +26,7 @@ public class AllergensServices implements IAllergensServices {
     private final IIngredientsRepository _ingredientsRepo;
     private final NotificationServices _notification;
 
-    private final String entityType = "ALLERGEN";
+    private final String ENTITY_TYPE = "ALLERGEN";
 
     @Override
     @Cacheable(
@@ -52,7 +52,7 @@ public class AllergensServices implements IAllergensServices {
         _allergenRepo.save(allergen);
 
         DictionaryPayload payload = DictionaryPayload.fromEntity(allergen);
-        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(entityType, allergen.getToken(), payload);
+        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(ENTITY_TYPE, allergen.getToken(), payload);
 
         _notification.sendEventToTopic("/dictionary/allergens", event);
     }
@@ -78,7 +78,7 @@ public class AllergensServices implements IAllergensServices {
                 }
         );
 
-        WebSocketEvent<Void> event = WebSocketEvent.deleted(entityType, token);
+        WebSocketEvent<Void> event = WebSocketEvent.deleted(ENTITY_TYPE, token);
 
         _notification.sendEventToTopic("/dictionary/allergens", event);
     }
