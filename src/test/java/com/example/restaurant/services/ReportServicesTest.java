@@ -145,7 +145,7 @@ public class ReportServicesTest {
 
         assertDoesNotThrow(() -> _reportServices.changeStatus(adminToken, request));
 
-        verify(_banServices, times(1)).create(any());
+        verify(_banServices, times(1)).add(any());
         verify(_reportRepo, times(1)).save(report);
         verify(_notification, times(1)).sendToTopic(eq("reports/updates"), anyString());
     }
@@ -177,7 +177,7 @@ public class ReportServicesTest {
 
         assertDoesNotThrow(() -> _reportServices.changeStatus(adminToken, request));
 
-        verify(_banServices, never()).create(any());
+        verify(_banServices, never()).add(any());
         verify(_reportRepo, times(1)).save(report);
         verify(_notification, times(1)).sendToTopic(eq("reports/updates"), anyString());
     }

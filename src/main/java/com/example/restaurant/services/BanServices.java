@@ -4,8 +4,8 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.response.EntityResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
+import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IBanRepository;
@@ -30,6 +30,8 @@ public class BanServices implements IBanServices {
     private final EmailServices _emailServices;
     private final IUserRepository _userRepo;
     private final NotificationServices _notification;
+
+    private static final String ENTITY_TYPE = "BAN";
 
     private static final String ROLE_CLIENT = "ROLE_CLIENT";
     private static final String ROLE_MANAGER = "ROLE_MANAGER";
@@ -58,12 +60,12 @@ public class BanServices implements IBanServices {
                 request.getExpiresAt()
         );
 
-        create(banDomain);
+        add(banDomain);
     }
 
     @Override
     @Transactional
-    public void create(CreateBanDomain domain) {
+    public void add(CreateBanDomain domain) {
         var status = _banRepo.findStatusByToken(STATUS_ACTIVE);
 
         Bans ban = new Bans();
@@ -85,7 +87,8 @@ public class BanServices implements IBanServices {
                 domain.reason()
         );
 
-        _notification.sendToTopic("security/bans", "User banned: " + domain.client().getToken());
+        WebSocketEvent<Void> event = WebSocketEvent.created(ENTITY_TYPE, ban.getToken(), null);
+        _notification.sendEventToTopic("/security/bans", event);
     }
 
     @Override
@@ -117,7 +120,10 @@ public class BanServices implements IBanServices {
 
             _banRepo.save(ban);
             _userRepo.save(user);
-            _notification.sendToTopic("security/bans", "User unbanned: " + user.getToken());
+
+            WebSocketEvent<Void> event = WebSocketEvent.updated(ENTITY_TYPE, ban.getToken(), null);
+            _notification.sendEventToTopic("/security/bans", event);
+
             log.info("User {} has been automatically unbanned.", user.getUsername());
         }
     }

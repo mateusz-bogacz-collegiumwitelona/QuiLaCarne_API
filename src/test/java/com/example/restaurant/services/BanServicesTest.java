@@ -85,7 +85,15 @@ public class BanServicesTest {
         verify(_banRepo).save(any(Bans.class));
         verify(_userRepo).save(client);
         verify(_emailServices).sendEmailSetBan(anyString(), anyString(), eq("Violation"));
-        verify(_notification, times(1)).sendToTopic(eq("security/bans"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/security/bans"),
+                argThat(event ->
+                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("BAN") &&
+                                event.getPayload() == null
+                )
+        );
     }
 
     @Test

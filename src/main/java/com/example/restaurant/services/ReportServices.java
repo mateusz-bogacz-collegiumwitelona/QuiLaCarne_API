@@ -148,7 +148,7 @@ public class ReportServices implements IReportServices {
                     request.getExpiresAt()
             );
 
-            _banServices.create(banDomain);
+            _banServices.add(banDomain);
 
             var status = _reportRepo.findStatusByToken("ACCEPTED");
             report.setStatuses(Set.of(status));

@@ -7,7 +7,7 @@ import com.example.restaurant.dto.response.DictionaryResponse;
 public interface IBanServices {
     void create(String adminToken, CreateBanRequest request);
 
-    void create(CreateBanDomain domain);
+    void add(CreateBanDomain domain);
 
     DictionaryResponse getDictionary();
 
