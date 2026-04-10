@@ -1,11 +1,14 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.dto.payload.DictionaryPayload;
+import com.example.restaurant.dto.payload.DishPayload;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
@@ -41,6 +44,9 @@ public class DishServices implements IDishServices {
     private final IIngredientsRepository _ingredientsRepo;
     private final S3StorageService _s3Services;
     private final NotificationServices _notification;
+
+    private static final String CATEGORY_ENTITY_TYPE = "DISH_CATEGORY";
+    private static final String DISH_ENTITY_TYPE = "DISH";
 
     @Value("${application.storage.s3.public-endpoint}")
     private String s3Endpoint;
@@ -87,12 +93,12 @@ public class DishServices implements IDishServices {
         dish.setDeletedAt(OffsetDateTime.now());
 
         _s3Services.deleteFile(dish.getImageUrl());
-
         dish.setImageUrl(null);
 
-        _notification.sendToTopic("menu/updates", "Dish removed: " + dishToken);
-
         _dishRepo.save(dish);
+
+        WebSocketEvent<Void> event = WebSocketEvent.deleted(DISH_ENTITY_TYPE, dishToken);
+        _notification.sendEventToTopic("/menu/dishes", event);
     }
 
     @Override
@@ -117,6 +123,14 @@ public class DishServices implements IDishServices {
                         (request.isAvailable() ? "available" : "unavailable")
         );
         _dishRepo.save(dish);
+
+        WebSocketEvent<DishPayload> event = WebSocketEvent.updated(
+                DISH_ENTITY_TYPE,
+                dish.getToken(),
+                createPayload(dish)
+        );
+
+        _notification.sendEventToTopic("/menu/dishes", event);
     }
 
     @Override
@@ -139,9 +153,14 @@ public class DishServices implements IDishServices {
         updateDishIngredients(dish, request.getIngredientTokens());
         updateDishPhoto(dish, request.getPhoto());
 
-        _notification.sendToTopic("menu/updates", "Dish updated: " + request.getDishToken());
-
         _dishRepo.save(dish);
+
+        WebSocketEvent<DishPayload> event = WebSocketEvent.updated(
+                DISH_ENTITY_TYPE,
+                dish.getToken(),
+                createPayload(dish)
+        );
+        _notification.sendEventToTopic("/menu/dishes", event);
     }
 
     @Override
@@ -161,9 +180,14 @@ public class DishServices implements IDishServices {
         updateDishIngredients(dish, request.getIngredientTokens());
         updateDishPhoto(dish, request.getPhoto());
 
-        _notification.sendToTopic("menu/updates", "New dish added");
-
         _dishRepo.save(dish);
+
+        WebSocketEvent<DishPayload> event = WebSocketEvent.created(
+                DISH_ENTITY_TYPE,
+                dish.getToken(),
+                createPayload(dish)
+        );
+        _notification.sendEventToTopic("/menu/dishes", event);
     }
 
     @Override
@@ -188,7 +212,9 @@ public class DishServices implements IDishServices {
         );
 
         _dishRepo.saveCategory(category);
-        _notification.sendToTopic("dictionary/sync", "dish_categories");
+        DictionaryPayload payload = DictionaryPayload.fromEntity(category);
+        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(CATEGORY_ENTITY_TYPE, category.getToken(), payload);
+        _notification.sendEventToTopic("/dictionary/dish-categories", event);
     }
 
     @Override
@@ -215,7 +241,8 @@ public class DishServices implements IDishServices {
                 }
         );
 
-        _notification.sendToTopic("dictionary/sync", "dish_categories");
+        WebSocketEvent<Void> event = WebSocketEvent.deleted(CATEGORY_ENTITY_TYPE, token);
+        _notification.sendEventToTopic("/dictionary/dish-categories", event);
     }
 
     private void updateDishIngredients(Dishes dish, List<String> tokens) {
@@ -249,5 +276,25 @@ public class DishServices implements IDishServices {
                 throw new RuntimeException("Could not process photo file", e);
             }
         }
+    }
+
+    private DishPayload createPayload(Dishes dish) {
+        String fullUrl = dish.getImageUrl();
+        if (fullUrl != null && !fullUrl.startsWith("http")) {
+            fullUrl = String.format("%s/%s/%s", s3Endpoint.trim(), s3BucketName, dish.getImageUrl());
+        }
+
+        return DishPayload.builder()
+                .token(dish.getToken())
+                .name(dish.getName())
+                .price(dish.getPrice())
+                .isAvailable(dish.isAvailable())
+                .unavailableReason(dish.getUnavailableReason())
+                .imageUrl(fullUrl)
+                .categoryToken(dish.getCategory() != null ? dish.getCategory().getToken() : null)
+                .ingredientTokens(dish.getIngredients() != null
+                        ? dish.getIngredients().stream().map(i -> i.getToken()).toList()
+                        : List.of())
+                .build();
     }
 }

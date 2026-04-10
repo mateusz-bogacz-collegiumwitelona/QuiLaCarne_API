@@ -1,4 +1,4 @@
-package com.example.restaurant.dto.event;
+package com.example.restaurant.dto.payload;
 
 import com.example.restaurant.models.base.BaseTranslatedEntity;
 import lombok.AllArgsConstructor;
@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DictionaryEvent {
+public class DictionaryPayload {
     private String token;
     private String namePl;
     private String nameEn;
 
-    public static DictionaryEvent fromEntity(BaseTranslatedEntity entity) {
-        return new DictionaryEvent(
+    public static DictionaryPayload fromEntity(BaseTranslatedEntity entity) {
+        return new DictionaryPayload(
                 entity.getToken(),
                 entity.getNamePl(),
                 entity.getNameEn()

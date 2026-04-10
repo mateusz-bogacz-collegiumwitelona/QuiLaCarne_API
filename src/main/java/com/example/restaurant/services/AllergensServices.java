@@ -1,7 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.event.DictionaryEvent;
+import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
@@ -51,8 +51,8 @@ public class AllergensServices implements IAllergensServices {
 
         _allergenRepo.save(allergen);
 
-        DictionaryEvent payload = DictionaryEvent.fromEntity(allergen);
-        WebSocketEvent<DictionaryEvent> event = WebSocketEvent.created(entityType, allergen.getToken(), payload);
+        DictionaryPayload payload = DictionaryPayload.fromEntity(allergen);
+        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(entityType, allergen.getToken(), payload);
 
         _notification.sendEventToTopic("/dictionary/allergens", event);
     }
