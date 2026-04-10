@@ -10,6 +10,7 @@ import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.SoftDeleteHelpers;
+import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.lookup.Roles;
@@ -50,12 +51,13 @@ public class UserServices implements IUserServices {
     private final String ROLE_MANAGER = "ROLE_MANAGER";
     private final String ROLE_WAITER = "ROLE_WAITER";
 
+    private static final String EMPLOYEE_ENTITY_TYPE = "EMPLOYEE";
 
     @Override
     @Transactional
     @CacheEvict(value = "usersList", allEntries = true)
     public String create(RegisterRequest request, String userRole, boolean isActive) {
-        return buildAndSaveUser(request, userRole, isActive);
+        return buildAndSaveUser(request, userRole, isActive).getToken();
     }
 
     @Override
@@ -185,13 +187,19 @@ public class UserServices implements IUserServices {
     @Auditable(action = "ADD_NEW_EMPLOYEE")
     @CacheEvict(value = "usersList", allEntries = true)
     public void createEmployee(AddEmployeeRequest request) {
+        Users employee;
         if (request.isAdmin()) {
-            buildAndSaveUser(request.getRegister(), ROLE_MANAGER, true);
+            employee = buildAndSaveUser(request.getRegister(), ROLE_MANAGER, true);
         } else {
-            buildAndSaveUser(request.getRegister(), ROLE_WAITER, true);
+            employee = buildAndSaveUser(request.getRegister(), ROLE_WAITER, true);
         }
 
-        _notification.sendToTopic("personnel/updates", "Personnel list changed");
+        WebSocketEvent<UserListResponse> event = WebSocketEvent.created(
+                EMPLOYEE_ENTITY_TYPE,
+                employee.getToken(),
+                createPayload(employee)
+        );
+        _notification.sendEventToTopic("/personnel/updates", event);
     }
 
     @Override
@@ -228,7 +236,13 @@ public class UserServices implements IUserServices {
         }
 
         _userRepo.save(employee);
-        _notification.sendToTopic("personnel/updates", "Personnel list changed");
+
+        WebSocketEvent<UserListResponse> event = WebSocketEvent.updated(
+                EMPLOYEE_ENTITY_TYPE,
+                employee.getToken(),
+                createPayload(employee)
+        );
+        _notification.sendEventToTopic("/personnel/updates", event);
     }
 
     @Override
@@ -275,7 +289,13 @@ public class UserServices implements IUserServices {
         user.setRoles(Set.of(role));
 
         _userRepo.save(user);
-        _notification.sendToTopic("personnel/updates", "Personnel list changed");
+
+        WebSocketEvent<UserListResponse> event = WebSocketEvent.updated(
+                EMPLOYEE_ENTITY_TYPE,
+                user.getToken(),
+                createPayload(user)
+        );
+        _notification.sendEventToTopic("/personnel/updates", event);
     }
 
     @Override
@@ -294,7 +314,13 @@ public class UserServices implements IUserServices {
         user.setIsActive(request.isAvailable());
 
         _userRepo.save(user);
-        _notification.sendToTopic("personnel/updates", "Personnel list changed");
+
+        WebSocketEvent<UserListResponse> event = WebSocketEvent.updated(
+                EMPLOYEE_ENTITY_TYPE,
+                user.getToken(),
+                createPayload(user)
+        );
+        _notification.sendEventToTopic("/personnel/updates", event);
     }
 
     @Override
@@ -306,7 +332,9 @@ public class UserServices implements IUserServices {
             throw new IllegalStateException("You can't delete yourself");
 
         delete(employeeToken);
-        _notification.sendToTopic("personnel/updates", "Personnel list changed");
+
+        WebSocketEvent<Void> event = WebSocketEvent.deleted(EMPLOYEE_ENTITY_TYPE, employeeToken);
+        _notification.sendEventToTopic("/personnel/updates", event);
     }
 
     @Override
@@ -457,7 +485,7 @@ public class UserServices implements IUserServices {
         _userRepo.save(user);
     }
 
-    private String buildAndSaveUser(RegisterRequest request, String userRole, boolean isActive) {
+    private Users buildAndSaveUser(RegisterRequest request, String userRole, boolean isActive) {
         if (_userRepo.findByNormalizedEmail(request.getEmail().toUpperCase().trim()).isPresent())
             throw new EntityAlreadyExistsException("User with this email already exists");
 
@@ -476,6 +504,17 @@ public class UserServices implements IUserServices {
         user.setRoles(Set.of(role));
 
         _userRepo.save(user);
-        return user.getToken();
+        return user;
+    }
+
+    private UserListResponse createPayload(Users user) {
+        return UserListResponse.builder()
+                .token(user.getToken())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .isActive(user.getIsActive())
+                .roles(user.getRoles().stream().map(BaseNamedEntity::getName).toList())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }

@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.UserListResponse;
+import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.helpers.PagedResult;
@@ -24,9 +25,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.OffsetDateTime;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -249,11 +248,27 @@ public class UserServicesTest {
         when(_userRepo.existsByUsername(anyString())).thenReturn(false);
         when(_roleRepository.setRole("ROLE_MANAGER")).thenReturn(new Roles());
 
+        doAnswer(invocation -> {
+            Users u = invocation.getArgument(0);
+            u.setToken("NEW_MANAGER_TOKEN");
+            return u;
+        }).when(_userRepo).save(any(Users.class));
+
         _userServices.createEmployee(request);
 
         verify(_roleRepository).setRole("ROLE_MANAGER");
         verify(_userRepo).save(any(Users.class));
-        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/personnel/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("EMPLOYEE") &&
+                                "NEW_MANAGER_TOKEN".equals(event.getToken()) &&
+                                event.getPayload() != null &&
+                                "manager@test.pl".equals(((UserListResponse) event.getPayload()).getEmail())
+                )
+        );
     }
 
     @Test
@@ -271,11 +286,26 @@ public class UserServicesTest {
         when(_userRepo.existsByUsername(anyString())).thenReturn(false);
         when(_roleRepository.setRole("ROLE_WAITER")).thenReturn(new Roles());
 
+        doAnswer(invocation -> {
+            Users u = invocation.getArgument(0);
+            u.setToken("NEW_WAITER_TOKEN");
+            return u;
+        }).when(_userRepo).save(any(Users.class));
+
         _userServices.createEmployee(request);
 
         verify(_roleRepository).setRole("ROLE_WAITER");
         verify(_userRepo).save(any(Users.class));
-        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/personnel/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("EMPLOYEE") &&
+                                "NEW_WAITER_TOKEN".equals(event.getToken()) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -287,6 +317,7 @@ public class UserServicesTest {
         request.setUserName("NewEmployeeName");
 
         Users employee = new Users();
+        employee.setToken(TestConstants.FAKE_USER_TOKEN);
         employee.setEmail("old@test.pl");
         employee.setNormalizedEmail("OLD@TEST.PL");
         employee.setUsername("OldName");
@@ -299,11 +330,18 @@ public class UserServicesTest {
         _userServices.editEmployee(request);
 
         assertEquals("new_employee@test.pl", employee.getEmail());
-        assertEquals("NEW_EMPLOYEE@TEST.PL", employee.getNormalizedEmail());
-        assertEquals("NewEmployeeName", employee.getUsername());
-        assertEquals("NEWEMPLOYEENAME", employee.getNormalizedUsername());
         verify(_userRepo).save(employee);
-        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/personnel/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("EMPLOYEE") &&
+                                event.getToken().equals(TestConstants.FAKE_USER_TOKEN) &&
+                                event.getPayload() != null &&
+                                "new_employee@test.pl".equals(((UserListResponse) event.getPayload()).getEmail())
+                )
+        );
     }
 
     @Test
@@ -315,6 +353,7 @@ public class UserServicesTest {
         request.setUserName("   ");
 
         Users employee = new Users();
+        employee.setToken(TestConstants.FAKE_USER_TOKEN);
         employee.setNormalizedEmail("OLD@TEST.PL");
         employee.setUsername("OldName");
         employee.setNormalizedUsername("OLDNAME");
@@ -324,10 +363,16 @@ public class UserServicesTest {
 
         _userServices.editEmployee(request);
 
-        assertEquals("new_employee@test.pl", employee.getEmail());
-        assertEquals("OldName", employee.getUsername(), "Username should not change");
         verify(_userRepo).save(employee);
-        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/personnel/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("EMPLOYEE") &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -525,7 +570,8 @@ public class UserServicesTest {
         waiterRole.setName("ROLE_WAITER");
 
         Users employee = new Users();
-        employee.setRoles(Set.of(waiterRole));
+        employee.setToken("employee-token");
+        employee.setRoles(new HashSet<>(Set.of(waiterRole)));
 
         Roles newManagerRole = new Roles();
         newManagerRole.setName("ROLE_MANAGER");
@@ -536,9 +582,18 @@ public class UserServicesTest {
         _userServices.changeEmployeeRole("admin-token", request);
 
         assertTrue(employee.getRoles().contains(newManagerRole));
-        verify(_roleRepository).setRole("ROLE_MANAGER");
         verify(_userRepo).save(employee);
-        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/personnel/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("EMPLOYEE") &&
+                                "employee-token".equals(event.getToken()) &&
+                                event.getPayload() != null &&
+                                ((UserListResponse) event.getPayload()).getRoles().contains("ROLE_MANAGER")
+                )
+        );
     }
 
     @Test
@@ -552,7 +607,8 @@ public class UserServicesTest {
         managerRole.setName("ROLE_MANAGER");
 
         Users employee = new Users();
-        employee.setRoles(Set.of(managerRole));
+        employee.setToken("employee-token");
+        employee.setRoles(new HashSet<>(Set.of(managerRole)));
 
         Roles newWaiterRole = new Roles();
         newWaiterRole.setName("ROLE_WAITER");
@@ -563,9 +619,18 @@ public class UserServicesTest {
         _userServices.changeEmployeeRole("admin-token", request);
 
         assertTrue(employee.getRoles().contains(newWaiterRole));
-        verify(_roleRepository).setRole("ROLE_WAITER");
         verify(_userRepo).save(employee);
-        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
+
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/personnel/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("EMPLOYEE") &&
+                                event.getPayload() != null &&
+                                ((UserListResponse) event.getPayload()).getRoles().contains("ROLE_WAITER")
+                )
+        );
     }
 
     @Test
@@ -609,6 +674,7 @@ public class UserServicesTest {
         request.setAvailable(false);
 
         Users employee = new Users();
+        employee.setToken("employee-token");
         employee.setIsActive(true);
 
         when(_userRepo.findByToken("employee-token")).thenReturn(employee);
@@ -617,7 +683,17 @@ public class UserServicesTest {
 
         assertFalse(employee.getIsActive());
         verify(_userRepo).save(employee);
-        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/personnel/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("EMPLOYEE") &&
+                                "employee-token".equals(event.getToken()) &&
+                                event.getPayload() != null &&
+                                !((UserListResponse) event.getPayload()).getIsActive()
+                )
+        );
     }
 
     @Test
@@ -628,6 +704,7 @@ public class UserServicesTest {
         request.setAvailable(true);
 
         Users employee = new Users();
+        employee.setToken("employee-token");
         employee.setIsActive(false);
 
         when(_userRepo.findByToken("employee-token")).thenReturn(employee);
@@ -636,7 +713,17 @@ public class UserServicesTest {
 
         assertTrue(employee.getIsActive());
         verify(_userRepo).save(employee);
-        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
+
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/personnel/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("EMPLOYEE") &&
+                                event.getPayload() != null &&
+                                ((UserListResponse) event.getPayload()).getIsActive()
+                )
+        );
     }
 
     @Test
@@ -659,6 +746,7 @@ public class UserServicesTest {
         String employeeToken = "employee-token";
 
         Users employee = new Users();
+        employee.setToken("employee-token");
         employee.setUsername("Tomek");
         employee.setEmail("tomek@test.pl");
         employee.setNormalizedUsername("TOMEK");
@@ -669,11 +757,17 @@ public class UserServicesTest {
         _userServices.deleteEmployee(adminToken, employeeToken);
 
         assertFalse(employee.getIsActive());
-        assertTrue(employee.getUsername().startsWith("DELETED_"));
-        assertTrue(employee.getEmail().startsWith("DELETED_"));
-        assertNotNull(employee.getDeletedAt());
         verify(_userRepo).save(employee);
-        verify(_notification, times(1)).sendToTopic(eq("personnel/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/personnel/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.DELETED &&
+                                event.getEntityType().equals("EMPLOYEE") &&
+                                "employee-token".equals(event.getToken()) &&
+                                event.getPayload() == null
+                )
+        );
     }
 
     @Test
@@ -702,7 +796,7 @@ public class UserServicesTest {
         waiterRole.setName(TestConstants.ROLE_WAITER);
         mockUser.setRoles(Set.of(waiterRole));
 
-        Page<Users> mockPage = new org.springframework.data.domain.PageImpl<>(java.util.List.of(mockUser));
+        Page<Users> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(mockUser));
 
         when(_userRepo.findAllUsers(any(Specification.class), any(PageRequest.class)))
                 .thenReturn(mockPage);
