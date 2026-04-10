@@ -11,6 +11,7 @@ import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
+import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.ReservationMapper;
@@ -105,6 +106,12 @@ public class ReservationServicesTest {
         when(_tableRepo.findByToken(anyString())).thenReturn(new RestaurantTables());
         when(_reservationRepo.findStatusByToken(anyString())).thenReturn(new ReservationStatus());
 
+        doAnswer(invocation -> {
+            Reservations r = invocation.getArgument(0);
+            r.setToken("NEW_RESERVATION_TOKEN");
+            return null;
+        }).when(_reservationRepo).save(any(Reservations.class));
+
         ReservationDishDoamin dishDomain = new ReservationDishDoamin("Burger", 40, 2);
         when(_orderServices.createOrderForReservation(any(), any(), any()))
                 .thenReturn(new ReservationDomain(List.of(dishDomain), 80));
@@ -115,8 +122,16 @@ public class ReservationServicesTest {
         assertTrue(response.isActive());
         assertEquals(80, response.getTotalPrice());
         verify(_reservationRepo, times(1)).save(any(Reservations.class));
-        verify(_notification, times(1))
-                .sendToTopic(eq("reservations/updates"), anyString());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/reservations/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.CREATED &&
+                                event.getEntityType().equals("RESERVATION") &&
+                                "NEW_RESERVATION_TOKEN".equals(event.getToken()) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -158,20 +173,31 @@ public class ReservationServicesTest {
     @DisplayName("Cancel: Success - Should change status to CANCELLED")
     void cancel_Successful() {
         Reservations mockReservation = new Reservations();
+        mockReservation.setToken("RES_TOKEN_TO_CANCEL");
+
         when(_reservationRepo.findByTokenAndUserToken(anyString(), anyString()))
                 .thenReturn(Optional.of(mockReservation));
         when(_reservationRepo.findStatusByToken("CANCELLED")).thenReturn(new ReservationStatus());
 
         assertDoesNotThrow(() -> _reservationServices.cancel("res-token", "user-token"));
         verify(_reservationRepo).save(mockReservation);
-        verify(_notification, times(1))
-                .sendToTopic(eq("reservations/updates"), anyString());
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/reservations/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("RESERVATION") &&
+                                "RES_TOKEN_TO_CANCEL".equals(event.getToken()) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
     @DisplayName("Assign Waiter: Success - Should set status to IN_PROGRESS and delegate to OrderServices")
     void assignWaiter_Successful() {
         Reservations mockReservation = new Reservations();
+        mockReservation.setToken("RES_TOKEN_ASSIGN_WAITER");
+
         when(_userRepo.isInRole(anyString(), anyString())).thenReturn(true);
         when(_reservationRepo.findByToken(anyString())).thenReturn(Optional.of(mockReservation));
         when(_reservationRepo.findStatusByToken("IN_PROGRESS")).thenReturn(new ReservationStatus());
@@ -179,7 +205,16 @@ public class ReservationServicesTest {
         assertDoesNotThrow(() -> _reservationServices
                 .assignWaiter("res-token", "waiter-token"));
         verify(_orderServices).assignWaiterToOrders("res-token", "waiter-token");
-        verify(_notification, times(1)).sendToTopic(eq("reservations/updates"), any());
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/reservations/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("RESERVATION") &&
+                                "RES_TOKEN_ASSIGN_WAITER".equals(event.getToken()) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test
@@ -195,6 +230,8 @@ public class ReservationServicesTest {
     @DisplayName("Is Absent: Success - Should set status to NO_SHOW when reservation is ACTIVE")
     void isAbsent_Successful() {
         Reservations mockRes = new Reservations();
+        mockRes.setToken("RES_TOKEN_NO_SHOW");
+
         ReservationStatus activeStatus = new ReservationStatus();
         activeStatus.setToken("ACTIVE");
         mockRes.setReservationStatus(Set.of(activeStatus));
@@ -204,6 +241,16 @@ public class ReservationServicesTest {
 
         assertDoesNotThrow(() -> _reservationServices.isAbsent("res-token"));
         verify(_orderServices).isAbsent("res-token");
+
+        verify(_notification, times(1)).sendEventToTopic(
+                eq("/reservations/updates"),
+                argThat(event ->
+                        event.getEventType() == WebSocketEventType.UPDATED &&
+                                event.getEntityType().equals("RESERVATION") &&
+                                "RES_TOKEN_NO_SHOW".equals(event.getToken()) &&
+                                event.getPayload() != null
+                )
+        );
     }
 
     @Test

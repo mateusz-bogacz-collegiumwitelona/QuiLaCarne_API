@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.dto.payload.ReservationPayload;
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
@@ -9,8 +10,10 @@ import com.example.restaurant.dto.response.*;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.models.Reservations;
+import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
@@ -52,6 +55,8 @@ public class ReservationServices implements IReservationServices {
     private static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
     private static final String STATUS_NO_SHOW = "NO_SHOW";
     private static final String ROLE_WAITER = "ROLE_WAITER";
+
+    private static final String RESERVATION_ENTITY_TYPE = "RESERVATION";
 
     @Override
     @Transactional
@@ -102,17 +107,33 @@ public class ReservationServices implements IReservationServices {
         }).toList());
         response.setTotalPrice(orderCreate.totalPrice());
 
-        _notification.sendToTopic("reservations/updates", "Reservation changed");
+        WebSocketEvent<ReservationPayload> event = WebSocketEvent.created(
+                RESERVATION_ENTITY_TYPE,
+                reservation.getToken(),
+                createPayload(reservation)
+        );
+        _notification.sendEventToTopic("/reservations/updates", event);
 
         return response;
     }
 
     @Override
-    public PagedResult<ClientReservationResponse> history(ClientReservationRequest request, PaggedRequest pagged, String userToken) {
+    public PagedResult<ClientReservationResponse> history(
+            ClientReservationRequest request,
+            PaggedRequest pagged, String
+                    userToken) {
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        Pageable pageable = PageRequest.of(Math.max(0, pagged.getPage() - 1), pagged.getSize(), Sort.by(Sort.Direction.ASC, "startTime"));
+        Pageable pageable = PageRequest.of(
+                Math.max(0, pagged.getPage() - 1),
+                pagged.getSize(),
+                Sort.by(Sort.Direction.ASC, "startTime")
+        );
 
-        Specification<Reservations> spec = (root, query, criteriaBuilder) -> {
+        Specification<Reservations> spec = (
+                root,
+                query,
+                criteriaBuilder
+        ) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(criteriaBuilder.equal(root.get("user").get("token"), userToken));
@@ -141,7 +162,10 @@ public class ReservationServices implements IReservationServices {
     @Override
     public ReservationDetailsResponse details(String reservationToken, String userToken) {
         return _reservationRepo.findByTokenAndUserToken(reservationToken, userToken)
-                .map(r -> _reservationMapper.toReservationDetailsResponse(r, LocaleContextHolder.getLocale().getLanguage()))
+                .map(
+                        r -> _reservationMapper
+                                .toReservationDetailsResponse(r, LocaleContextHolder.getLocale().getLanguage())
+                )
                 .orElse(null);
     }
 
@@ -155,7 +179,13 @@ public class ReservationServices implements IReservationServices {
         reservation.setReservationStatus(new HashSet<>(Set.of(cancelledStatus)));
 
         _reservationRepo.save(reservation);
-        _notification.sendToTopic("reservations/updates", "Reservation changed");
+
+        WebSocketEvent<ReservationPayload> event = WebSocketEvent.updated(
+                RESERVATION_ENTITY_TYPE,
+                reservation.getToken(),
+                createPayload(reservation)
+        );
+        _notification.sendEventToTopic("/reservations/updates", event);
     }
 
     @Override
@@ -169,8 +199,11 @@ public class ReservationServices implements IReservationServices {
 
         OffsetDateTime startOfDay = OffsetDateTime.now().with(LocalTime.MIN);
         OffsetDateTime endOfDay = OffsetDateTime.now().with(LocalTime.MAX);
-        Specification<Reservations> spec = (root, query, criteriaBuilder) ->
-                criteriaBuilder.between(root.get("startTime"), startOfDay, endOfDay);
+        Specification<Reservations> spec = (
+                root,
+                query,
+                criteriaBuilder
+        ) -> criteriaBuilder.between(root.get("startTime"), startOfDay, endOfDay);
 
         Page<Reservations> reservationPage = _reservationRepo.findAll(spec, pageable);
 
@@ -191,13 +224,21 @@ public class ReservationServices implements IReservationServices {
 
     @Auditable(action = "REMOVE_ITEM_FROM_RESERVATION")
     @Override
-    public void removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
+    public void removeItemFromReservation(
+            String waiterToken,
+            String reservationToken,
+            ReservationDishRequest request
+    ) {
         _orderServices.removeItemFromReservation(waiterToken, reservationToken, request);
     }
 
     @Auditable(action = "ADD_ITEM_TO_RESERVATION")
     @Override
-    public void addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
+    public void addItemFromReservation(
+            String waiterToken,
+            String reservationToken,
+            List<ReservationDishRequest> request
+    ) {
         _orderServices.addItemFromReservation(waiterToken, reservationToken, request);
     }
 
@@ -216,7 +257,13 @@ public class ReservationServices implements IReservationServices {
         _reservationRepo.save(reservation);
 
         _orderServices.assignWaiterToOrders(reservationToken, waiterToken);
-        _notification.sendToTopic("reservations/updates", "Reservation changed"); //
+
+        WebSocketEvent<ReservationPayload> event = WebSocketEvent.updated(
+                RESERVATION_ENTITY_TYPE,
+                reservation.getToken(),
+                createPayload(reservation)
+        );
+        _notification.sendEventToTopic("/reservations/updates", event);
     }
 
     @Transactional
@@ -234,6 +281,13 @@ public class ReservationServices implements IReservationServices {
         reservation.setReservationStatus(Set.of(_reservationRepo.findStatusByToken(STATUS_NO_SHOW)));
         _reservationRepo.save(reservation);
         _orderServices.isAbsent(reservationToken);
+
+        WebSocketEvent<ReservationPayload> event = WebSocketEvent.updated(
+                RESERVATION_ENTITY_TYPE,
+                reservation.getToken(),
+                createPayload(reservation)
+        );
+        _notification.sendEventToTopic("/reservations/updates", event);
     }
 
     @Override
@@ -244,5 +298,18 @@ public class ReservationServices implements IReservationServices {
     public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return new DictionaryResponse(DictionaryHelper.map(_reservationRepo.findAllStatuses(), lang));
+    }
+
+    private ReservationPayload createPayload(Reservations reservation) {
+        return ReservationPayload.builder()
+                .token(reservation.getToken())
+                .userToken(reservation.getUser() != null ? reservation.getUser().getToken() : null)
+                .tableToken(reservation.getTableId() != null ? reservation.getTableId().getToken() : null)
+                .startTime(reservation.getStartTime())
+                .endTime(reservation.getEndTime())
+                .statusTokens(reservation.getReservationStatus() != null
+                        ? reservation.getReservationStatus().stream().map(BaseEntity::getToken).toList()
+                        : List.of())
+                .build();
     }
 }
