@@ -45,4 +45,9 @@ public class AllergensRepository implements IAllergensRepository {
                         () -> new EntityNotFoundException("Allergen not found")
                 );
     }
+
+    @Override
+    public long count() {
+        return _jpaAllergensRepo.count();
+    }
 }

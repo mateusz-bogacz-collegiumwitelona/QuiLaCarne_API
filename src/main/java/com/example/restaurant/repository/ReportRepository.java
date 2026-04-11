@@ -47,4 +47,14 @@ public class ReportRepository implements IReportRepository {
     public List<GuestReportStatus> findAllStatuses() {
         return _jpaReportStatusRepo.findAll();
     }
+
+    @Override
+    public long countStatuses() {
+        return _jpaReportStatusRepo.count();
+    }
+
+    @Override
+    public long count() {
+        return _jpaRepostRepo.count();
+    }
 }

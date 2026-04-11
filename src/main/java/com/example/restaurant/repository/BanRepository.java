@@ -38,4 +38,14 @@ public class BanRepository implements IBanRepository {
     public List<Bans> findExpiredActiveBans(OffsetDateTime time) {
         return _jpaBanRepo.findByIsActiveTrueAndExpiresAtBefore(time);
     }
+
+    @Override
+    public long countStatuses() {
+        return _jpaStatusRepo.count();
+    }
+
+    @Override
+    public long count() {
+        return _jpaBanRepo.count();
+    }
 }

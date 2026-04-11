@@ -12,4 +12,6 @@ public interface IIngredientsRepository {
     Ingredients findByToken(String token);
 
     List<Ingredients> findAll();
+
+    long count();
 }

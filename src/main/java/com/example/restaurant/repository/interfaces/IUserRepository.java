@@ -25,4 +25,6 @@ public interface IUserRepository {
     Optional<Users> findByNormalizedEmail(String email);
 
     Page<Users> findAllUsers(Specification<Users> spec, Pageable pageable);
+
+    long count();
 }

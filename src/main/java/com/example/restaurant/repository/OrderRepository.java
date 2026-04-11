@@ -110,4 +110,24 @@ public class OrderRepository implements IOrderRepository {
     public List<OrderItems> findOrderItemsByStatus(OrderItemsStatus status) {
         return _jpaOrderItemRepo.findByStatusesContaining(status);
     }
+
+    @Override
+    public long countOrderItemsStatuses() {
+        return _jpaOrderItemStatusRepo.count();
+    }
+
+    @Override
+    public long countStatuses() {
+        return _jpaOrderStatusRepo.count();
+    }
+
+    @Override
+    public long countItems() {
+        return _jpaOrderItemRepo.count();
+    }
+
+    @Override
+    public long count() {
+        return _jpaOrderRepo.count();
+    }
 }

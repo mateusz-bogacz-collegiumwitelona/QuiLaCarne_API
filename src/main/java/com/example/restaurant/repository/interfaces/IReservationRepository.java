@@ -22,4 +22,8 @@ public interface IReservationRepository {
     Optional<Reservations> findByTokenAndUserToken(String resToken, String userToken);
 
     List<ReservationStatus> findAllStatuses();
+
+    long countStatuses();
+
+    long count();
 }

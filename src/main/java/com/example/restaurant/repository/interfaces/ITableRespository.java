@@ -28,4 +28,8 @@ public interface ITableRespository {
     void saveStatus(TableStatus status);
 
     List<RestaurantTables> findTablesByStatus(TableStatus status);
+
+    long countStatuses();
+
+    long count();
 }

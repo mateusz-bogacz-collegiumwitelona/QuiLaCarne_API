@@ -37,4 +37,9 @@ public class IngredientsRepository implements IIngredientsRepository {
     public List<Ingredients> findAll() {
         return _jpaIngredientsRepo.findAll();
     }
+
+    @Override
+    public long count() {
+        return _jpaIngredientsRepo.count();
+    }
 }

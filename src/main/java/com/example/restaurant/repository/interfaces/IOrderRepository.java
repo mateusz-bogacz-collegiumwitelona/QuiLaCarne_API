@@ -41,4 +41,12 @@ public interface IOrderRepository {
     List<Orders> findOrdersByStatus(OrderStatus status);
 
     List<OrderItems> findOrderItemsByStatus(OrderItemsStatus status);
+
+    long countOrderItemsStatuses();
+
+    long countStatuses();
+
+    long countItems();
+
+    long count();
 }

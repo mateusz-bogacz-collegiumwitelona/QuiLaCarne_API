@@ -79,4 +79,14 @@ public class TableRespository implements ITableRespository {
     public List<RestaurantTables> findTablesByStatus(TableStatus status) {
         return _jpaTableRepo.findByTableStatusContaining(status);
     }
+
+    @Override
+    public long countStatuses() {
+        return _jpaTableStatusRepo.count();
+    }
+
+    @Override
+    public long count() {
+        return _jpaTableRepo.count();
+    }
 }

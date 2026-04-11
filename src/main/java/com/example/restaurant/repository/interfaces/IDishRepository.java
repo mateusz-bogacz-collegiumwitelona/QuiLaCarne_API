@@ -28,7 +28,11 @@ public interface IDishRepository {
 
     boolean isCategoryNameTaken(String pl, String en);
 
-    public void saveCategory(DishesCategories categorie);
+    void saveCategory(DishesCategories categorie);
 
     List<Dishes> findByCategoryId(UUID id);
+
+    long countCategories();
+
+    long count();
 }

@@ -20,4 +20,8 @@ public class RoleRepository implements IRoleRepository {
     public boolean isRoleExists(String role) {
         return _jpaRoleRepository.findByName(role).isPresent();
     }
+
+    public long count() {
+        return _jpaRoleRepository.count();
+    }
 }

@@ -1,0 +1,74 @@
+package com.example.restaurant.services;
+
+import com.example.restaurant.dto.response.SyncBootstrapResponse;
+import com.example.restaurant.repository.interfaces.*;
+import com.example.restaurant.services.interfaces.ISyncServices;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+public class SyncServices implements ISyncServices {
+    private final IUserRepository _userRepo;
+    private final IAllergensRepository _allergenRepo;
+    private final IBanRepository _banRepo;
+    private final IDishRepository _dishRepo;
+    private final IReportRepository _reportRepo;
+    private final IOrderRepository _orderRepo;
+    private final IReservationRepository _reservationRepo;
+    private final IRoleRepository _roleRepo;
+    private final ITableRespository _tableRepo;
+    private final IIngredientsRepository _ingredientsRepo;
+
+    private final int DEFAULT_PAGE_SIZE = 20;
+
+    public SyncBootstrapResponse getBootstrapManifest() {
+        Map<String, SyncBootstrapResponse.EntityMetadata> modules = new HashMap<>();
+
+        addModuleMetadata(modules, "roles", _roleRepo.count());
+        addModuleMetadata(modules, "allergens", _allergenRepo.count());
+        addModuleMetadata(modules, "ingredients", _ingredientsRepo.count());
+        addModuleMetadata(modules, "dishCategories", _dishRepo.countCategories());
+
+        addModuleMetadata(modules, "banStatuses", _banRepo.countStatuses());
+        addModuleMetadata(modules, "reportStatuses", _reportRepo.countStatuses());
+        addModuleMetadata(modules, "orderStatuses", _orderRepo.countStatuses());
+        addModuleMetadata(modules, "orderItemStatuses", _orderRepo.countOrderItemsStatuses());
+        addModuleMetadata(modules, "reservationStatuses", _reservationRepo.countStatuses());
+        addModuleMetadata(modules, "tableStatuses", _tableRepo.countStatuses());
+
+        addModuleMetadata(modules, "users", _userRepo.count());
+        addModuleMetadata(modules, "dishes", _dishRepo.count());
+        addModuleMetadata(modules, "tables", _tableRepo.count());
+
+        addModuleMetadata(modules, "bans", _banRepo.count());
+        addModuleMetadata(modules, "reports", _reportRepo.count());
+        addModuleMetadata(modules, "orders", _orderRepo.count());
+        addModuleMetadata(modules, "orderItems", _orderRepo.countItems());
+        addModuleMetadata(modules, "reservations", _reservationRepo.count());
+
+        return SyncBootstrapResponse.builder()
+                .modules(modules)
+                .serverTime(OffsetDateTime.now())
+                .build();
+    }
+
+    private void addModuleMetadata(
+            Map<String, SyncBootstrapResponse.EntityMetadata> modules,
+            String key,
+            long count
+    ) {
+        modules.put(key, new SyncBootstrapResponse.EntityMetadata(
+                count,
+                calculatePage(count)
+        ));
+    }
+
+    private int calculatePage(long count) {
+        return (int) Math.ceil((double) count / DEFAULT_PAGE_SIZE);
+    }
+}

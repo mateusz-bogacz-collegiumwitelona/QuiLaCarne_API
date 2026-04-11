@@ -94,4 +94,14 @@ public class DishRepository implements IDishRepository {
     public List<Dishes> findByCategoryId(UUID id) {
         return _jpaDishRepo.findByCategoryId(id);
     }
+
+    @Override
+    public long countCategories() {
+        return _jpaDishCategoryRepo.count();
+    }
+
+    @Override
+    public long count() {
+        return _jpaDishRepo.count();
+    }
 }

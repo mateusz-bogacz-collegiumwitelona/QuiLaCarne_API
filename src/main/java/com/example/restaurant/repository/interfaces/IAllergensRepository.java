@@ -14,4 +14,6 @@ public interface IAllergensRepository {
     void save(Allergens allergen);
 
     Allergens findByToken(String token);
+
+    long count();
 }

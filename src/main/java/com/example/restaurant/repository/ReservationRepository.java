@@ -51,4 +51,14 @@ public class ReservationRepository implements IReservationRepository {
     public List<ReservationStatus> findAllStatuses() {
         return _jpaReservationStatusRepo.findAll();
     }
+
+    @Override
+    public long countStatuses() {
+        return _jpaReservationStatusRepo.count();
+    }
+
+    @Override
+    public long count() {
+        return _jpaReservationsRepo.count();
+    }
 }

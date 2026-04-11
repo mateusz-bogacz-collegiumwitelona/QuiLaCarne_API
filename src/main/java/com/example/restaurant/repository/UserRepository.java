@@ -71,4 +71,9 @@ public class UserRepository implements IUserRepository {
     public Page<Users> findAllUsers(Specification<Users> spec, Pageable pageable) {
         return _jpaUserRepository.findAll(spec, pageable);
     }
+
+    @Override
+    public long count() {
+        return _jpaUserRepository.count();
+    }
 }

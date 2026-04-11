@@ -14,4 +14,8 @@ public interface IBanRepository {
     List<BanStatus> findAllStatuses();
 
     List<Bans> findExpiredActiveBans(OffsetDateTime time);
+
+    long countStatuses();
+
+    long count();
 }

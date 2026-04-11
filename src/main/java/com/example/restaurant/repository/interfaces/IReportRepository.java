@@ -18,4 +18,8 @@ public interface IReportRepository {
     GuestReports findByToken(String token);
 
     List<GuestReportStatus> findAllStatuses();
+
+    long countStatuses();
+
+    long count();
 }
