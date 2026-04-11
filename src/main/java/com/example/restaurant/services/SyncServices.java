@@ -1,6 +1,12 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.response.SyncBootstrapResponse;
+import com.example.restaurant.dto.response.SyncDictionariesResponse;
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
+import com.example.restaurant.models.base.BaseEntity;
+import com.example.restaurant.models.base.BaseNamedEntity;
+import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.repository.interfaces.*;
 import com.example.restaurant.services.interfaces.ISyncServices;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -26,6 +33,8 @@ public class SyncServices implements ISyncServices {
 
     private final int DEFAULT_PAGE_SIZE = 20;
 
+    @Override
+    @Auditable(action = "BOOTSTRAP_MANIFEST")
     public SyncBootstrapResponse getBootstrapManifest() {
         Map<String, SyncBootstrapResponse.EntityMetadata> modules = new HashMap<>();
 
@@ -57,6 +66,22 @@ public class SyncServices implements ISyncServices {
                 .build();
     }
 
+    @Override
+    @Auditable(action = "GET_DICTIONARIES")
+    public SyncDictionariesResponse getDictionaries() {
+        return SyncDictionariesResponse.builder()
+                .allergens(mapToSync(_allergenRepo.findAll()))
+                .ingredients(mapToSync(_ingredientsRepo.findAll()))
+                .dishCategories(mapToSync(_dishRepo.findAllCategories()))
+                .banStatuses(mapToSync(_banRepo.findAllStatuses()))
+                .reportStatuses(mapToSync(_reportRepo.findAllStatuses()))
+                .orderStatuses(mapToSync(_orderRepo.findAllStatuses()))
+                .orderItemStatuses(mapToSync(_orderRepo.findAllItemStatuses()))
+                .reservationStatuses(mapToSync(_reservationRepo.findAllStatuses()))
+                .tableStatuses(mapToSync(_tableRepo.findAllStatuses()))
+                .build();
+    }
+
     private void addModuleMetadata(
             Map<String, SyncBootstrapResponse.EntityMetadata> modules,
             String key,
@@ -70,5 +95,26 @@ public class SyncServices implements ISyncServices {
 
     private int calculatePage(long count) {
         return (int) Math.ceil((double) count / DEFAULT_PAGE_SIZE);
+    }
+
+    private <T extends BaseEntity> List<SyncDictionaryResponse> mapToSync(List<T> entities) {
+        return entities.stream().map(entity -> {
+            if (entity instanceof BaseTranslatedEntity translated) {
+                return new SyncDictionaryResponse(
+                        translated.getToken(),
+                        translated.getNameEn(),
+                        translated.getNamePl()
+                );
+            } else if (entity instanceof BaseNamedEntity named) {
+                return new SyncDictionaryResponse(
+                        named.getToken(),
+                        named.getName(),
+                        named.getName()
+                );
+            } else {
+                throw new IllegalArgumentException("Entity type not supported for dictionary mapping: "
+                        + entity.getClass().getSimpleName());
+            }
+        }).toList();
     }
 }
