@@ -1,6 +1,7 @@
 package com.example.restaurant.services.interfaces;
 
 import com.example.restaurant.dto.request.SyncRoleResponse;
+import com.example.restaurant.dto.response.SyncBanResponse;
 import com.example.restaurant.dto.response.SyncBootstrapResponse;
 import com.example.restaurant.dto.response.SyncDictionariesResponse;
 import com.example.restaurant.dto.response.SyncDishResponse;
@@ -16,4 +17,6 @@ public interface ISyncServices {
     List<SyncRoleResponse> getRoles();
 
     PagedResult<SyncDishResponse> getDishesSync(int page);
+
+    PagedResult<SyncBanResponse> getBansSync(int page);
 }

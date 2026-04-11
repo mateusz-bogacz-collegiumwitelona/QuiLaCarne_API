@@ -1,14 +1,18 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.dto.request.SyncRoleResponse;
+import com.example.restaurant.dto.response.SyncBanResponse;
 import com.example.restaurant.dto.response.SyncBootstrapResponse;
 import com.example.restaurant.dto.response.SyncDictionariesResponse;
 import com.example.restaurant.dto.response.SyncDishResponse;
 import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
+import com.example.restaurant.models.Users;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
+import com.example.restaurant.models.lookup.BanStatus;
 import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.*;
@@ -26,6 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -245,5 +250,76 @@ public class SyncServicesTest {
         assertTrue(response.getIngredientTokens().isEmpty());
 
         assertEquals("http://external-domain.com/image.png", response.getImageUrl());
+    }
+
+    @Test
+    @DisplayName("Get Bans Sync: Should correctly map bans and extract foreign keys")
+    void getBansSync_ShouldReturnMappedBans() {
+        Users user = new Users();
+        user.setToken("USER_123");
+
+        Users admin = new Users();
+        admin.setToken("ADMIN_456");
+
+        BanStatus status = new BanStatus();
+        status.setToken("STATUS_ACTIVE");
+
+        Bans ban = new Bans();
+        ban.setToken("BAN_789");
+        ban.setUser(user);
+        ban.setBannedBy(admin);
+        ban.setReason("Złamanie regulaminu");
+        ban.setIsActive(true);
+        ban.setBanStatuses(Set.of(status));
+
+        Page<Bans> mockPage =
+                new PageImpl<>(
+                        List.of(ban),
+                        PageRequest.of(0, 20),
+                        1
+                );
+        when(_banRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncBanResponse> result =
+                _syncServices.getBansSync(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+
+        SyncBanResponse response = result.getItems().getFirst();
+        assertEquals("BAN_789", response.getToken());
+        assertEquals("Złamanie regulaminu", response.getReason());
+        assertTrue(response.getIsActive());
+
+        assertEquals("USER_123", response.getUserToken());
+        assertEquals("ADMIN_456", response.getBannedByToken());
+        assertEquals(1, response.getStatusTokens().size());
+        assertEquals("STATUS_ACTIVE", response.getStatusTokens().getFirst());
+    }
+
+    @Test
+    @DisplayName("Get Bans Sync: Should handle missing relations gracefully")
+    void getBansSync_ShouldHandleNullRelations() {
+        Bans ban = new Bans();
+        ban.setToken("BAN_NULL_TEST");
+
+        Page<Bans> mockPage =
+                new PageImpl<>(
+                        List.of(ban),
+                        PageRequest.of(0, 20),
+                        1
+                );
+        when(_banRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncBanResponse> result =
+                _syncServices.getBansSync(1);
+
+        assertNotNull(result);
+        SyncBanResponse response = result.getItems().getFirst();
+
+        assertNull(response.getUserToken());
+        assertNull(response.getBannedByToken());
+        assertNotNull(response.getStatusTokens());
+        assertTrue(response.getStatusTokens().isEmpty());
     }
 }

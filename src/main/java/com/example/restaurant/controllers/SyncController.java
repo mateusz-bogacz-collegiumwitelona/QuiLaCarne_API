@@ -1,6 +1,7 @@
 package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.SyncRoleResponse;
+import com.example.restaurant.dto.response.SyncBanResponse;
 import com.example.restaurant.dto.response.SyncBootstrapResponse;
 import com.example.restaurant.dto.response.SyncDictionariesResponse;
 import com.example.restaurant.dto.response.SyncDishResponse;
@@ -87,10 +88,7 @@ public class SyncController {
                     "Used to synchronize the roles dictionary on client devices."
     )
     @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Roles fetched successfully"
-            ),
+            @ApiResponse(responseCode = "200", description = "Roles fetched successfully"),
             @ApiResponse(responseCode = "401", description = "No authorization"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
@@ -112,10 +110,7 @@ public class SyncController {
                     "Page size is strictly fixed by the server."
     )
     @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Dishes sync page fetched successfully"
-            ),
+            @ApiResponse(responseCode = "200", description = "Dishes sync page fetched successfully"),
             @ApiResponse(responseCode = "401", description = "No authorization"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
@@ -129,6 +124,31 @@ public class SyncController {
 
         return ResponseEntity.ok(ResultHandler.success(
                 "Dishes sync page fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
+
+    @Operation(
+            summary = "Fetch flat list of bans",
+            description = "Returns a paginated, flat list of bans with foreign key tokens (user, bannedBy, statuses). " +
+                    "Page size is strictly fixed by the server."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Bans sync page fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/bans")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<SyncBanResponse>>> getBansSync(
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        var result = _syncServices.getBansSync(page);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Bans sync page fetched successfully",
                 HttpStatus.OK.value(),
                 result
         ));

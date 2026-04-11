@@ -2,6 +2,8 @@ package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.lookup.BanStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -18,4 +20,6 @@ public interface IBanRepository {
     long countStatuses();
 
     long count();
+
+    Page<Bans> findAll(Pageable pageable);
 }

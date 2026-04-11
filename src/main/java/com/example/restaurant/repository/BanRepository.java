@@ -7,6 +7,8 @@ import com.example.restaurant.repository.interfaces.IBanRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaBanRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaBanStatusRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
@@ -47,5 +49,10 @@ public class BanRepository implements IBanRepository {
     @Override
     public long count() {
         return _jpaBanRepo.count();
+    }
+
+    @Override
+    public Page<Bans> findAll(Pageable pageable) {
+        return _jpaBanRepo.findAll(pageable);
     }
 }

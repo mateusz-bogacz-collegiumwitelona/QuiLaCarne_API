@@ -2,11 +2,9 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.SyncRoleResponse;
-import com.example.restaurant.dto.response.SyncBootstrapResponse;
-import com.example.restaurant.dto.response.SyncDictionariesResponse;
-import com.example.restaurant.dto.response.SyncDictionaryResponse;
-import com.example.restaurant.dto.response.SyncDishResponse;
+import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseNamedEntity;
@@ -121,10 +119,7 @@ public class SyncServices implements ISyncServices {
     @Override
     @Auditable(action = "SYNC_DISHES")
     public PagedResult<SyncDishResponse> getDishesSync(int page) {
-        int pageIndex = Math.max(0, page - 1);
-        Pageable pageable = PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);
-
-        Page<Dishes> dishesPage = _dishRepo.findAll(pageable);
+        Page<Dishes> dishesPage = _dishRepo.findAll(calculatePageable(page));
 
         Page<SyncDishResponse> response = dishesPage.map(d -> {
             String categoryToken = d.getCategory() != null ? d.getCategory().getToken() : null;
@@ -156,6 +151,42 @@ public class SyncServices implements ISyncServices {
         });
 
         return new PagedResult<>(response);
+    }
+
+    @Override
+    @Auditable(action = "SYNC_BANS")
+    public PagedResult<SyncBanResponse> getBansSync(int page) {
+        Page<Bans> bansPage = _banRepo.findAll(calculatePageable(page));
+
+        Page<SyncBanResponse> response = bansPage.map(b -> {
+            String userToken = b.getUser() != null ? b.getUser().getToken() : null;
+            String bannedByToken = b.getBannedBy() != null ? b.getBannedBy().getToken() : null;
+
+            List<String> statusToken = b.getBanStatuses() != null
+                    ? b.getBanStatuses().stream()
+                      .map(BaseEntity::getToken)
+                      .toList()
+                    : List.of();
+
+            return SyncBanResponse.builder()
+                    .token(b.getToken())
+                    .userToken(userToken)
+                    .bannedByToken(bannedByToken)
+                    .statusTokens(statusToken)
+                    .reason(b.getReason())
+                    .expiresAt(b.getExpiresAt())
+                    .isActive(b.getIsActive())
+                    .createdAt(b.getCreatedAt())
+                    .updatedAt(b.getUpdatedAt())
+                    .build();
+        });
+
+        return new PagedResult<>(response);
+    }
+
+    private Pageable calculatePageable(int page) {
+        int pageIndex = Math.max(0, page - 1);
+        return PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);
     }
 
     private int calculatePage(long count) {
