@@ -1,5 +1,6 @@
 package com.example.restaurant.controllers;
 
+import com.example.restaurant.dto.request.SyncRoleResponse;
 import com.example.restaurant.dto.response.SyncBootstrapResponse;
 import com.example.restaurant.dto.response.SyncDictionariesResponse;
 import com.example.restaurant.helpers.ResultHandler;
@@ -16,6 +17,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/sync", produces = "application/json")
@@ -35,7 +38,7 @@ public class SyncController {
                     content = @Content(schema = @Schema(implementation = SyncBootstrapResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "No authorization"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER or ROLE_WAITER role"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/bootstrap")
@@ -61,7 +64,7 @@ public class SyncController {
                     content = @Content(schema = @Schema(implementation = SyncDictionariesResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "No authorization"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER or ROLE_WAITER role"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @GetMapping("/dictionaries")
@@ -70,6 +73,31 @@ public class SyncController {
         var result = _syncServices.getDictionaries();
         return ResponseEntity.ok(ResultHandler.success(
                 "Dictionaries fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
+
+    @Operation(
+            summary = "Fetch system roles",
+            description = "Returns a flat list of all available roles in the system. " +
+                    "Used to synchronize the roles dictionary on client devices."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Roles fetched successfully"
+            ),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/roles")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<List<SyncRoleResponse>>> getRoles() {
+        var result = _syncServices.getRoles();
+        return ResponseEntity.ok(ResultHandler.success(
+                "Roles fetched successfully",
                 HttpStatus.OK.value(),
                 result
         ));

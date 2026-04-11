@@ -1,9 +1,11 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.dto.request.SyncRoleResponse;
 import com.example.restaurant.dto.response.SyncBootstrapResponse;
 import com.example.restaurant.dto.response.SyncDictionariesResponse;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
+import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -135,5 +137,39 @@ public class SyncServicesTest {
         });
 
         assertTrue(exception.getMessage().contains("Entity type not supported for dictionary mapping"));
+    }
+
+    @Test
+    @DisplayName("Get Roles: Should return mapped list of roles")
+    void getRoles_ShouldReturnMappedRoles() {
+        Roles role1 = mock(Roles.class);
+        when(role1.getToken()).thenReturn("TOKEN_WAITER");
+        when(role1.getName()).thenReturn("ROLE_WAITER");
+
+        Roles role2 = mock(Roles.class);
+        when(role2.getToken()).thenReturn("TOKEN_MANAGER");
+        when(role2.getName()).thenReturn("ROLE_MANAGER");
+
+        when(_roleRepo.findAll()).thenReturn(List.of(role1, role2));
+
+        List<SyncRoleResponse> result = _syncServices.getRoles();
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("TOKEN_WAITER", result.get(0).getToken());
+        assertEquals("ROLE_WAITER", result.get(0).getName());
+        assertEquals("TOKEN_MANAGER", result.get(1).getToken());
+        assertEquals("ROLE_MANAGER", result.get(1).getName());
+    }
+
+    @Test
+    @DisplayName("Get Roles: Should return empty list when no roles exist")
+    void getRoles_ShouldReturnEmptyList() {
+        when(_roleRepo.findAll()).thenReturn(List.of());
+
+        List<SyncRoleResponse> result = _syncServices.getRoles();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 }

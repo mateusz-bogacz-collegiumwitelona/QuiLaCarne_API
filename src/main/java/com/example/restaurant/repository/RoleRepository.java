@@ -7,6 +7,8 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class RoleRepository implements IRoleRepository {
@@ -23,5 +25,9 @@ public class RoleRepository implements IRoleRepository {
 
     public long count() {
         return _jpaRoleRepository.count();
+    }
+
+    public List<Roles> findAll() {
+        return _jpaRoleRepository.findAll();
     }
 }

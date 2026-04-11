@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.dto.request.SyncRoleResponse;
 import com.example.restaurant.dto.response.SyncBootstrapResponse;
 import com.example.restaurant.dto.response.SyncDictionariesResponse;
 import com.example.restaurant.dto.response.SyncDictionaryResponse;
@@ -91,6 +92,17 @@ public class SyncServices implements ISyncServices {
                 count,
                 calculatePage(count)
         ));
+    }
+
+    @Override
+    @Auditable(action = "GET_ROLES")
+    public List<SyncRoleResponse> getRoles() {
+        return _roleRepo.findAll().stream().map(
+                r -> SyncRoleResponse.builder()
+                        .token(r.getToken())
+                        .name(r.getName())
+                        .build()
+        ).toList();
     }
 
     private int calculatePage(long count) {
