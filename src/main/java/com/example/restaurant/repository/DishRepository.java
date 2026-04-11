@@ -1,7 +1,5 @@
 package com.example.restaurant.repository;
 
-import com.example.restaurant.dto.request.DishFilterRequest;
-import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.lookup.DishesCategories;
@@ -10,7 +8,6 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaDishRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaDishesCategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -23,18 +20,12 @@ public class DishRepository implements IDishRepository {
     private final IJpaDishRepository _jpaDishRepo;
     private final IJpaDishesCategoryRepository _jpaDishCategoryRepo;
 
-    @Override
-    public Page<Dishes> findAllDishes(DishFilterRequest request, PaggedRequest pagged) {
-        int pageIndex = Math.max(0, pagged.getPage() - 1);
-        Pageable pageable = PageRequest.of(pageIndex, pagged.getSize());
+    public Page<Dishes> findAll(Pageable pageable) {
+        return _jpaDishRepo.findAll(pageable);
+    }
 
-        var excludedAllergens = request.getExcludedAllergens();
-
-        if (excludedAllergens != null && !excludedAllergens.isEmpty()) {
-            return _jpaDishRepo.findWithoutAllergens(excludedAllergens, pageable);
-        } else {
-            return _jpaDishRepo.findAll(pageable);
-        }
+    public Page<Dishes> findWithoutAllergens(List<String> excludedAllergens, Pageable pageable) {
+        return _jpaDishRepo.findWithoutAllergens(excludedAllergens, pageable);
     }
 
     @Override

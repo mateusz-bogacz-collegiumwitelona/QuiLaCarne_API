@@ -12,6 +12,7 @@ import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
+import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
@@ -25,6 +26,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,7 +64,17 @@ public class DishServices implements IDishServices {
     public PagedResult<DishListResponse> getMenu(DishFilterRequest request, PaggedRequest pagged) {
         String lang = LocaleContextHolder.getLocale().getLanguage();
 
-        var dishPage = _dishRepo.findAllDishes(request, pagged);
+        int pageIndex = Math.max(0, pagged.getPage() - 1);
+        Pageable pageable = PageRequest.of(pageIndex, pagged.getSize());
+
+        Page<Dishes> dishPage;
+        var excludedAllergens = request.getExcludedAllergens();
+
+        if (excludedAllergens != null && !excludedAllergens.isEmpty()) {
+            dishPage = _dishRepo.findWithoutAllergens(excludedAllergens, pageable);
+        } else {
+            dishPage = _dishRepo.findAll(pageable);
+        }
 
         Page<DishListResponse> result = dishPage.map(d -> {
             DishListResponse dto = _dishMapper.toDishListResponse(d, lang);
@@ -116,7 +129,7 @@ public class DishServices implements IDishServices {
             String reason = request.getUnavailableReason();
             dish.setUnavailableReason(reason != null && !reason.isBlank() ? reason.trim() : "Brak składników");
         }
-        
+
         _dishRepo.save(dish);
 
         WebSocketEvent<DishPayload> event = WebSocketEvent.updated(
@@ -288,7 +301,7 @@ public class DishServices implements IDishServices {
                 .imageUrl(fullUrl)
                 .categoryToken(dish.getCategory() != null ? dish.getCategory().getToken() : null)
                 .ingredientTokens(dish.getIngredients() != null
-                        ? dish.getIngredients().stream().map(i -> i.getToken()).toList()
+                        ? dish.getIngredients().stream().map(BaseEntity::getToken).toList()
                         : List.of())
                 .build();
     }

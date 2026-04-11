@@ -182,12 +182,12 @@ public class DataSeeder implements CommandLineRunner {
         Allergens lactose = _jpaAllergensRepo.findByToken("LACTOSE").orElseThrow();
         Allergens nuts = _jpaAllergensRepo.findByToken("NUTS").orElseThrow();
 
-        Ingredients beef = createIngredient("Wołowina Chianina", "Chianina Beef", "beef-chianina", Set.of());
-        Ingredients tomato = createIngredient("Pomidory San Marzano", "San Marzano Tomatoes", "tomatoes-sm", Set.of());
-        Ingredients mozzarella = createIngredient("Mozzarella di Bufala", "Buffalo Mozzarella", "mozzarella-bufala", Set.of(lactose));
-        Ingredients pasta = createIngredient("Makaron Tagliatelle", "Tagliatelle Pasta", "tagliatelle-pasta", Set.of(gluten));
-        Ingredients parmesan = createIngredient("Ser Grana Padano", "Grana Padano Cheese", "grana-padano", Set.of(lactose));
-        Ingredients oliveOil = createIngredient("Oliwa z oliwek", "Olive Oil", "olive-oil", Set.of());
+        Ingredients beef = createIngredient("Wołowina Chianina", "Chianina Beef", "BEEF_CHIANINA", Set.of());
+        Ingredients tomato = createIngredient("Pomidory San Marzano", "San Marzano Tomatoes", "TOMATOES-SM", Set.of());
+        Ingredients mozzarella = createIngredient("Mozzarella di Bufala", "Buffalo Mozzarella", "MOZZARELLA-BUFFALA", Set.of(lactose));
+        Ingredients pasta = createIngredient("Makaron Tagliatelle", "Tagliatelle Pasta", "TAGLIATELLE-PASTA", Set.of(gluten));
+        Ingredients parmesan = createIngredient("Ser Grana Padano", "Grana Padano Cheese", "GRANA-PADANO", Set.of(lactose));
+        Ingredients oliveOil = createIngredient("Oliwa z oliwek", "Olive Oil", "OLIVE-OLI", Set.of());
 
         DishesCategories mainCat = _jpaDishesCategoryRepo.findByToken("MAIN").orElseThrow();
 

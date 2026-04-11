@@ -1,8 +1,6 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.dto.request.DishFilterRequest;
-import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.lookup.DishesCategories;
@@ -14,17 +12,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,58 +30,6 @@ public class DishRepositoryTest {
 
     @InjectMocks
     private DishRepository _dishRepo;
-
-    @Test
-    @DisplayName("Find all dishes: should return full if no allergens excluded")
-    void findAllDishes_ShouldCallJpaFindAll_WhenNoAllergensExcluded() {
-        Dishes dishes = new Dishes();
-        dishes.setName("Pizza");
-
-        DishFilterRequest filterRequest = new DishFilterRequest();
-        PaggedRequest paggedRequest = new PaggedRequest();
-        paggedRequest.setPage(1);
-        paggedRequest.setSize(10);
-
-        Pageable expectedPageable = PageRequest.of(0, 10);
-        Page<Dishes> mockPage = new PageImpl<>(List.of(dishes), expectedPageable, 1);
-
-        when(_jpaDishRepo.findAll(expectedPageable)).thenReturn(mockPage);
-
-        Page<Dishes> result = _dishRepo.findAllDishes(filterRequest, paggedRequest);
-
-        assertEquals(1, result.getContent().size());
-        assertEquals("Pizza", result.getContent().get(0).getName());
-
-        verify(_jpaDishRepo, times(1)).findAll(expectedPageable);
-    }
-
-    @Test
-    @DisplayName("Find all dishes: should return list without excluded allergens")
-    void findAllDishes_ShouldCallJpaFindWithoutAllergens_WhenAllergensAreExcluded() {
-        Dishes dishes = new Dishes();
-        dishes.setName("Salad");
-
-        DishFilterRequest filter = new DishFilterRequest();
-        filter.setExcludedAllergens(List.of("GLUTEN"));
-
-        PaggedRequest pagged = new PaggedRequest();
-        pagged.setPage(2);
-        pagged.setSize(5);
-
-        Pageable expectedPageable = PageRequest.of(1, 5);
-        Page<Dishes> mockPage = new PageImpl<>(List.of(dishes), expectedPageable, 10);
-
-        when(_jpaDishRepo.findWithoutAllergens(List.of("GLUTEN"), expectedPageable)).thenReturn(mockPage);
-
-        Page<Dishes> result = _dishRepo.findAllDishes(filter, pagged);
-
-        assertEquals(1, result.getContent().size());
-        assertEquals("Salad", result.getContent().get(0).getName());
-
-        verify(_jpaDishRepo, times(1))
-                .findWithoutAllergens(List.of("GLUTEN"), expectedPageable);
-        verify(_jpaDishRepo, never()).findAll(any(Pageable.class));
-    }
 
     @Test
     @DisplayName("List for orders: return list of dishes")

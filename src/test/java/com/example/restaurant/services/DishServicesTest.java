@@ -80,7 +80,7 @@ public class DishServicesTest {
         Page<Dishes> mockPage = new PageImpl<>(List.of(mockDish), PageRequest.of(0, 10), 1);
         DishListResponse dishResponse = DishListResponse.builder().imageUrl("steak.jpg").build();
 
-        when(_dishRepo.findAllDishes(any(), any())).thenReturn(mockPage);
+        when(_dishRepo.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(mockPage);
         when(_dishMapper.toDishListResponse(mockDish, "en")).thenReturn(dishResponse);
 
         PagedResult<DishListResponse> result = _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
@@ -97,7 +97,7 @@ public class DishServicesTest {
         Page<Dishes> mockPage = new PageImpl<>(List.of(new Dishes()));
         DishListResponse dishResponse = DishListResponse.builder().imageUrl("https://external.com/img.jpg").build();
 
-        when(_dishRepo.findAllDishes(any(), any())).thenReturn(mockPage);
+        when(_dishRepo.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(mockPage);
         when(_dishMapper.toDishListResponse(any(), anyString())).thenReturn(dishResponse);
 
         PagedResult<DishListResponse> result = _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
@@ -108,7 +108,7 @@ public class DishServicesTest {
     @Test
     @DisplayName("Get Menu: It should handle a blank results page correctly")
     void getMenu_ShouldHandleEmptyPage() {
-        when(_dishRepo.findAllDishes(any(), any())).thenReturn(Page.empty());
+        when(_dishRepo.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(Page.empty());
 
         PagedResult<DishListResponse> result = _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
 

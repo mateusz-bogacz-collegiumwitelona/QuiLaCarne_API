@@ -3,6 +3,8 @@ package com.example.restaurant.controllers;
 import com.example.restaurant.dto.request.SyncRoleResponse;
 import com.example.restaurant.dto.response.SyncBootstrapResponse;
 import com.example.restaurant.dto.response.SyncDictionariesResponse;
+import com.example.restaurant.dto.response.SyncDishResponse;
+import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.ISyncServices;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -98,6 +101,34 @@ public class SyncController {
         var result = _syncServices.getRoles();
         return ResponseEntity.ok(ResultHandler.success(
                 "Roles fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
+
+    @Operation(
+            summary = "Fetch flat list of dishes",
+            description = "Returns a paginated, flat list of dishes with foreign key tokens. " +
+                    "Page size is strictly fixed by the server."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Dishes sync page fetched successfully"
+            ),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/dishes")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<SyncDishResponse>>> getDishesSync(
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        var result = _syncServices.getDishesSync(page);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Dishes sync page fetched successfully",
                 HttpStatus.OK.value(),
                 result
         ));
