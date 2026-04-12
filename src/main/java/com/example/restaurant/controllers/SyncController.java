@@ -288,4 +288,27 @@ public class SyncController {
                 result
         ));
     }
+
+    @Operation(
+            summary = "Fetch flat list of users (Sync)",
+            description = "Returns a paginated, flat list of users (both staff and guests) " +
+                    "with their role tokens and a convenient isStaff flag."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Users sync page fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role")
+    })
+    @GetMapping("/users")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<SyncUserResponse>>> getUsersSync(
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        var result = _syncServices.getUsersSync(page);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Users sync page fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
 }

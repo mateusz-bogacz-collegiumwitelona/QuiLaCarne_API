@@ -51,7 +51,6 @@ public class UserRepository implements IUserRepository {
         return _jpaUserRepository.findByNormalizedUsername(username);
     }
 
-
     @Override
     public void save(Users user) {
         _jpaUserRepository.saveAndFlush(user);

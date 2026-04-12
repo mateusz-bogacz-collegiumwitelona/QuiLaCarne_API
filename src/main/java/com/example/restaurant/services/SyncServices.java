@@ -342,6 +342,36 @@ public class SyncServices implements ISyncServices {
         return new PagedResult<>(response);
     }
 
+    @Override
+    @Auditable(action = "SYNC_USERS")
+    public PagedResult<SyncUserResponse> getUsersSync(int page) {
+        Page<Users> usersPage = _userRepo.findAllUsers(null, calculatePageable(page));
+
+        Page<SyncUserResponse> response = usersPage.map(u -> {
+            List<String> roleTokens = u.getRoles() != null
+                    ? u.getRoles().stream().map(BaseEntity::getToken).toList()
+                    : List.of();
+
+            boolean isStaff = u.getRoles() != null && u.getRoles().stream()
+                    .anyMatch(r -> r.getName().equals("ROLE_WAITER")
+                            || r.getName().equals("ROLE_MANAGER")
+                            || r.getName().equals("ROLE_ADMIN"));
+
+            return SyncUserResponse.builder()
+                    .token(u.getToken())
+                    .username(u.getUsername())
+                    .email(u.getEmail())
+                    .isActive(u.getIsActive())
+                    .isStaff(isStaff)
+                    .roleTokens(roleTokens)
+                    .createdAt(u.getCreatedAt())
+                    .updatedAt(u.getUpdatedAt())
+                    .build();
+        });
+
+        return new PagedResult<>(response);
+    }
+
     private Pageable calculatePageable(int page) {
         int pageIndex = Math.max(0, page - 1);
         return PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);

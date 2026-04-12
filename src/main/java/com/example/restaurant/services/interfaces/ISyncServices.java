@@ -27,4 +27,6 @@ public interface ISyncServices {
     PagedResult<SyncReservationResponse> getReservationsSync(int page);
 
     PagedResult<SyncTableResponse> getTablesSync(int page);
+
+    PagedResult<SyncUserResponse> getUsersSync(int page);
 }

@@ -204,12 +204,12 @@ public class SyncServicesTest {
         Page<Dishes> mockPage = new PageImpl<>(List.of(dish), PageRequest.of(0, 20), 1);
         when(_dishRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
 
-        PagedResult<com.example.restaurant.dto.response.SyncDishResponse> result = _syncServices.getDishesSync(1);
+        PagedResult<SyncDishResponse> result = _syncServices.getDishesSync(1);
 
         assertNotNull(result);
         assertEquals(1, result.getItems().size());
 
-        com.example.restaurant.dto.response.SyncDishResponse response = result.getItems().getFirst();
+        SyncDishResponse response = result.getItems().getFirst();
         assertEquals("DISH_789", response.getToken());
         assertEquals("Margherita", response.getName());
         assertEquals(3500, response.getPrice());
@@ -724,5 +724,70 @@ public class SyncServicesTest {
 
         assertNotNull(response.getStatusTokens());
         assertTrue(response.getStatusTokens().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Get Users Sync: Should correctly map users, evaluate isStaff flag, and extract role tokens")
+    void getUsersSync_ShouldReturnMappedUsers() {
+        Roles waiterRole = new Roles();
+        waiterRole.setToken("ROLE_WAITER_TOKEN");
+        waiterRole.setName("ROLE_WAITER");
+
+        Users user = new Users();
+        user.setToken("USER_1");
+        user.setUsername("jankowalski");
+        user.setEmail("jan@example.com");
+        user.setIsActive(true);
+        user.setRoles(Set.of(waiterRole));
+
+        Page<Users> mockPage = new PageImpl<>(
+                List.of(user),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_userRepo.findAllUsers(ArgumentMatchers.isNull(), any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncUserResponse> result = _syncServices.getUsersSync(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+
+        SyncUserResponse response = result.getItems().getFirst();
+        assertEquals("USER_1", response.getToken());
+        assertEquals("jankowalski", response.getUsername());
+        assertEquals("jan@example.com", response.getEmail());
+        assertTrue(response.getIsActive());
+        assertTrue(response.isStaff());
+
+        assertEquals(1, response.getRoleTokens().size());
+        assertEquals("ROLE_WAITER_TOKEN", response.getRoleTokens().getFirst());
+    }
+
+    @Test
+    @DisplayName("Get Users Sync: Should set isStaff to false for pure guests and handle missing relations")
+    void getUsersSync_ShouldHandleGuestsAndNullRelations() {
+        Roles guestRole = new Roles();
+        guestRole.setToken("ROLE_GUEST_TOKEN");
+        guestRole.setName("ROLE_GUEST");
+
+        Users user = new Users();
+        user.setToken("GUEST_USER");
+        user.setRoles(Set.of(guestRole));
+
+        Page<Users> mockPage = new PageImpl<>(
+                List.of(user),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_userRepo.findAllUsers(ArgumentMatchers.isNull(), any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncUserResponse> result = _syncServices.getUsersSync(1);
+
+        assertNotNull(result);
+        SyncUserResponse response = result.getItems().getFirst();
+
+        assertFalse(response.isStaff());
+        assertNotNull(response.getRoleTokens());
+        assertFalse(response.getRoleTokens().isEmpty());
     }
 }
