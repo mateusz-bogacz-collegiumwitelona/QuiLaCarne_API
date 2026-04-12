@@ -1,7 +1,6 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.payload.ReservationPayload;
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
@@ -12,8 +11,8 @@ import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.mappers.ReservationMapper;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Reservations;
-import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
@@ -48,6 +47,8 @@ public class ReservationServices implements IReservationServices {
     private final IOrderServices _orderServices;
     private final ReservationMapper _reservationMapper;
     private final NotificationServices _notification;
+
+    private final SyncMapper _syncMapper;
 
     private static final String STATUS_ACTIVE = "ACTIVE";
     private static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
@@ -105,10 +106,10 @@ public class ReservationServices implements IReservationServices {
         }).toList());
         response.setTotalPrice(orderCreate.totalPrice());
 
-        WebSocketEvent<ReservationPayload> event = WebSocketEvent.created(
+        WebSocketEvent<SyncReservationResponse> event = WebSocketEvent.created(
                 RESERVATION_ENTITY_TYPE,
                 reservation.getToken(),
-                createPayload(reservation)
+                _syncMapper.toSyncReservationResponse(reservation)
         );
         _notification.sendEventToTopic("/reservations/updates", event);
 
@@ -178,10 +179,10 @@ public class ReservationServices implements IReservationServices {
 
         _reservationRepo.save(reservation);
 
-        WebSocketEvent<ReservationPayload> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncReservationResponse> event = WebSocketEvent.updated(
                 RESERVATION_ENTITY_TYPE,
                 reservation.getToken(),
-                createPayload(reservation)
+                _syncMapper.toSyncReservationResponse(reservation)
         );
         _notification.sendEventToTopic("/reservations/updates", event);
     }
@@ -222,10 +223,10 @@ public class ReservationServices implements IReservationServices {
 
         _orderServices.assignWaiterToOrders(reservationToken, waiterToken);
 
-        WebSocketEvent<ReservationPayload> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncReservationResponse> event = WebSocketEvent.updated(
                 RESERVATION_ENTITY_TYPE,
                 reservation.getToken(),
-                createPayload(reservation)
+                _syncMapper.toSyncReservationResponse(reservation)
         );
         _notification.sendEventToTopic("/reservations/updates", event);
     }
@@ -246,10 +247,10 @@ public class ReservationServices implements IReservationServices {
         _reservationRepo.save(reservation);
         _orderServices.isAbsent(reservationToken);
 
-        WebSocketEvent<ReservationPayload> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncReservationResponse> event = WebSocketEvent.updated(
                 RESERVATION_ENTITY_TYPE,
                 reservation.getToken(),
-                createPayload(reservation)
+                _syncMapper.toSyncReservationResponse(reservation)
         );
         _notification.sendEventToTopic("/reservations/updates", event);
     }
@@ -262,18 +263,5 @@ public class ReservationServices implements IReservationServices {
     public DictionaryResponse getDictionary() {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         return new DictionaryResponse(DictionaryHelper.map(_reservationRepo.findAllStatuses(), lang));
-    }
-
-    private ReservationPayload createPayload(Reservations reservation) {
-        return ReservationPayload.builder()
-                .token(reservation.getToken())
-                .userToken(reservation.getUser() != null ? reservation.getUser().getToken() : null)
-                .tableToken(reservation.getTableId() != null ? reservation.getTableId().getToken() : null)
-                .startTime(reservation.getStartTime())
-                .endTime(reservation.getEndTime())
-                .statusTokens(reservation.getReservationStatus() != null
-                        ? reservation.getReservationStatus().stream().map(BaseEntity::getToken).toList()
-                        : List.of())
-                .build();
     }
 }

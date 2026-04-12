@@ -161,25 +161,7 @@ public class SyncServices implements ISyncServices {
     public PagedResult<SyncReservationResponse> getReservationsSync(int page) {
         Page<Reservations> reservationsPage = _reservationRepo.findAll(null, calculatePageable(page));
 
-        Page<SyncReservationResponse> response = reservationsPage.map(r -> {
-            String userToken = r.getUser() != null ? r.getUser().getToken() : null;
-            String tableToken = r.getTableId() != null ? r.getTableId().getToken() : null;
-
-            List<String> statusTokens = r.getReservationStatus() != null
-                    ? r.getReservationStatus().stream().map(BaseEntity::getToken).toList()
-                    : List.of();
-
-            return SyncReservationResponse.builder()
-                    .token(r.getToken())
-                    .userToken(userToken)
-                    .tableToken(tableToken)
-                    .statusTokens(statusTokens)
-                    .startTime(r.getStartTime())
-                    .endTime(r.getEndTime())
-                    .createdAt(r.getCreatedAt())
-                    .updatedAt(r.getUpdatedAt())
-                    .build();
-        });
+        Page<SyncReservationResponse> response = reservationsPage.map(_syncMapper::toSyncReservationResponse);
 
         return new PagedResult<>(response);
     }

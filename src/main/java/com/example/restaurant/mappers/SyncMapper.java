@@ -3,7 +3,6 @@ package com.example.restaurant.mappers;
 import com.example.restaurant.dto.response.*;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
-import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.*;
 import org.mapstruct.Mapper;
@@ -48,15 +47,6 @@ public abstract class SyncMapper {
                 entity.getToken(),
                 entity.getNameEn(),
                 entity.getNamePl()
-        );
-    }
-
-    public SyncDictionaryResponse toSyncDictionaryResponse(BaseNamedEntity entity) {
-        if (entity == null) return null;
-        return new SyncDictionaryResponse(
-                entity.getToken(),
-                entity.getName(),
-                entity.getName()
         );
     }
 
@@ -171,5 +161,17 @@ public abstract class SyncMapper {
     @Named("mapReservation")
     public String mapReservation(Reservations reservation) {
         return reservation != null ? reservation.getToken() : null;
+    }
+
+    @Mapping(target = "userToken", source = "user", qualifiedByName = "mapUserToken")
+    @Mapping(target = "tableToken", source = "tableId", qualifiedByName = "mapTableToken")
+    @Mapping(target = "statusTokens", source = "reservationStatus", qualifiedByName = "mapReservationStatus")
+    public abstract SyncReservationResponse toSyncReservationResponse(Reservations reservation);
+
+    @Named("mapReservationStatus")
+    public List<String> mapReservationStatus(Set<ReservationStatus> statuses) {
+        return statuses != null
+                ? statuses.stream().map(BaseEntity::getToken).toList()
+                : List.of();
     }
 }
