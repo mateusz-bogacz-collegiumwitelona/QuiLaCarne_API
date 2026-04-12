@@ -98,18 +98,6 @@ public class SyncServicesTest {
     }
 
     @Test
-    @DisplayName("Calculate Page: Boundary Conditions")
-    void calculatePage_InternalLogicCheck() {
-        when(_roleRepo.count()).thenReturn(20L);
-        SyncBootstrapResponse result = _syncServices.getBootstrapManifest();
-        assertEquals(1, result.getModules().get("roles").getTotalPages());
-
-        when(_ingredientsRepo.count()).thenReturn(21L);
-        result = _syncServices.getBootstrapManifest();
-        assertEquals(2, result.getModules().get("ingredients").getTotalPages());
-    }
-
-    @Test
     @DisplayName("Get Dictionaries: Should correctly map and return all dictionary lists")
     void getDictionaries_ShouldReturnMappedDictionaries() {
         Allergens allergen = new Allergens();

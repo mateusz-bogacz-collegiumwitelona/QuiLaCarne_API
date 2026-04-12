@@ -4,7 +4,7 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.response.SyncDictionaryResponse;
+import com.example.restaurant.dto.response.SyncIngredientResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.mappers.SyncMapper;
@@ -85,7 +85,9 @@ public class IngredientsServicesTest {
                         event.getEventType() == WebSocketEventType.CREATED &&
                                 event.getEntityType().equals("INGREDIENT") &&
                                 event.getPayload() != null &&
-                                TestConstants.INGREDIENT_PL.equals(((SyncDictionaryResponse) event.getPayload()).getNamePl())
+                                TestConstants.INGREDIENT_PL.equals((
+                                        (SyncIngredientResponse) event.getPayload()).getNamePl()
+                                )
                 )
         );
     }
@@ -157,7 +159,7 @@ public class IngredientsServicesTest {
                 argThat(event ->
                         event.getEventType() == WebSocketEventType.DELETED &&
                                 event.getEntityType().equals("INGREDIENT") &&
-                                event.getToken().equals(token) &&
+                                token.equals(event.getToken()) &&
                                 event.getPayload() == null
                 )
         );

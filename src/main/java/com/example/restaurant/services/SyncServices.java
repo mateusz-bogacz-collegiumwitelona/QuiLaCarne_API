@@ -44,7 +44,6 @@ public class SyncServices implements ISyncServices {
 
         addModuleMetadata(modules, "roles", _roleRepo.count());
         addModuleMetadata(modules, "allergens", _allergenRepo.count());
-        addModuleMetadata(modules, "ingredients", _ingredientsRepo.count());
         addModuleMetadata(modules, "dishCategories", _dishRepo.countCategories());
 
         addModuleMetadata(modules, "banStatuses", _banRepo.countStatuses());
@@ -132,20 +131,7 @@ public class SyncServices implements ISyncServices {
     public PagedResult<SyncIngredientResponse> getIngredientsSync(int page) {
         Page<Ingredients> ingredientsPage = _ingredientsRepo.findAll(calculatePageable(page));
 
-        Page<SyncIngredientResponse> response = ingredientsPage.map(i -> {
-            List<String> allergenTokens = i.getAllergens() != null
-                    ? i.getAllergens().stream()
-                      .map(BaseEntity::getToken)
-                      .toList()
-                    : List.of();
-
-            return SyncIngredientResponse.builder()
-                    .token(i.getToken())
-                    .nameEn(i.getNameEn())
-                    .namePl(i.getNamePl())
-                    .allergenTokens(allergenTokens)
-                    .build();
-        });
+        Page<SyncIngredientResponse> response = ingredientsPage.map(_syncMapper::toSyncIngredientResponse);
 
         return new PagedResult<>(response);
     }

@@ -3,7 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.response.SyncDictionaryResponse;
+import com.example.restaurant.dto.response.SyncIngredientResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.mappers.SyncMapper;
@@ -63,11 +63,10 @@ public class IngredientsServices implements IIngredientsServices {
 
         _ingredientsRepo.save(ingredient);
 
-        SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(ingredient);
-        WebSocketEvent<SyncDictionaryResponse> event = WebSocketEvent.created(
+        WebSocketEvent<SyncIngredientResponse> event = WebSocketEvent.created(
                 ENTITY_TYPE,
                 ingredient.getToken(),
-                payload
+                _syncMapper.toSyncIngredientResponse(ingredient)
         );
         _notification.sendEventToTopic("dictionary/sync", event);
     }

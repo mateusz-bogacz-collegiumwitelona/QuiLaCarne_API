@@ -5,10 +5,7 @@ import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
-import com.example.restaurant.models.lookup.BanStatus;
-import com.example.restaurant.models.lookup.DishesCategories;
-import com.example.restaurant.models.lookup.GuestReportStatus;
-import com.example.restaurant.models.lookup.Roles;
+import com.example.restaurant.models.lookup.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -118,6 +115,16 @@ public abstract class SyncMapper {
     public List<String> mapReportStatuses(Set<GuestReportStatus> statuses) {
         return statuses != null
                 ? statuses.stream().map(BaseEntity::getToken).toList()
+                : List.of();
+    }
+
+    @Mapping(target = "allergenTokens", source = "allergens", qualifiedByName = "mapAllergens")
+    public abstract SyncIngredientResponse toSyncIngredientResponse(Ingredients ingredient);
+
+    @Named("mapAllergens")
+    public List<String> mapAllergens(Set<Allergens> allergens) {
+        return allergens != null
+                ? allergens.stream().map(BaseEntity::getToken).toList()
                 : List.of();
     }
 }
