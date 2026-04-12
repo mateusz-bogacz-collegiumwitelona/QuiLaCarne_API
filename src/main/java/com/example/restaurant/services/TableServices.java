@@ -56,7 +56,12 @@ public class TableServices implements ITableServices {
         String lang = LocaleContextHolder.getLocale().getLanguage();
         boolean isAvailabilityCheck = (request.getStartTime() != null && request.getEndTime() != null);
 
-        List<RestaurantTables> tables = _tableRepo.findAllTables(request.getStartTime(), request.getEndTime());
+        List<RestaurantTables> tables;
+        if (isAvailabilityCheck) {
+            tables = _tableRepo.findAvailableTablesInTimeframe(request.getStartTime(), request.getEndTime());
+        } else {
+            tables = _tableRepo.findAll();
+        }
 
         if (tables == null || tables.isEmpty()) {
             return new TableListWrapperResponse(new ArrayList<>());
@@ -121,7 +126,7 @@ public class TableServices implements ITableServices {
         table.setTableStatus(Set.of(status));
 
         _tableRepo.save(table);
-        
+
         WebSocketEvent<TablePayload> event = WebSocketEvent.created(
                 TABLE_ENTITY_TYPE, table.getToken(),
                 createTablePayload(table)

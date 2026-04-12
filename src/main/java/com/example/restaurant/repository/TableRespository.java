@@ -7,6 +7,8 @@ import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableStatusRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
@@ -30,13 +32,6 @@ public class TableRespository implements ITableRespository {
     }
 
     @Override
-    public List<RestaurantTables> findAllTables(OffsetDateTime startTime, OffsetDateTime endTime) {
-        if (startTime != null && endTime != null)
-            return _jpaTableRepo.findAvailableTablesInTimeframe(startTime, endTime);
-        return _jpaTableRepo.findAll();
-    }
-
-    @Override
     public TableStatus findStatusByToken(String token) {
         return _jpaTableStatusRepo.findByToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("Table status not found"));
@@ -52,6 +47,21 @@ public class TableRespository implements ITableRespository {
         return _jpaTableRepo.findAvailableTablesInTimeframe(startTime, endTime)
                 .stream()
                 .anyMatch(table -> table.getToken().equals(tableToken));
+    }
+
+    @Override
+    public List<RestaurantTables> findAll() {
+        return _jpaTableRepo.findAll();
+    }
+
+    @Override
+    public Page<RestaurantTables> findAll(Pageable pageable) {
+        return _jpaTableRepo.findAll(pageable);
+    }
+
+    @Override
+    public List<RestaurantTables> findAvailableTablesInTimeframe(OffsetDateTime startTime, OffsetDateTime endTime) {
+        return _jpaTableRepo.findAvailableTablesInTimeframe(startTime, endTime);
     }
 
     @Override

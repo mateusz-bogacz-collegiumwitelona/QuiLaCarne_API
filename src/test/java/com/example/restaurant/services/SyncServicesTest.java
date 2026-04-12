@@ -670,4 +670,59 @@ public class SyncServicesTest {
         order.setStatuses(Set.of(status));
         return order;
     }
+
+    @Test
+    @DisplayName("Get Tables Sync: Should correctly map tables and extract foreign keys")
+    void getTablesSync_ShouldReturnMappedTables() {
+        TableStatus status = new TableStatus();
+        status.setToken("TABLE_STATUS_FREE");
+
+        RestaurantTables table = new RestaurantTables();
+        table.setToken("TABLE_1");
+        table.setTableNumber(5);
+        table.setCapacity(4);
+        table.setTableStatus(Set.of(status));
+
+        Page<RestaurantTables> mockPage = new PageImpl<>(
+                List.of(table),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_tableRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncTableResponse> result = _syncServices.getTablesSync(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+
+        SyncTableResponse response = result.getItems().getFirst();
+        assertEquals("TABLE_1", response.getToken());
+        assertEquals(5, response.getTableNumber());
+        assertEquals(4, response.getCapacity());
+
+        assertEquals(1, response.getStatusTokens().size());
+        assertEquals("TABLE_STATUS_FREE", response.getStatusTokens().getFirst());
+    }
+
+    @Test
+    @DisplayName("Get Tables Sync: Should handle missing relations gracefully")
+    void getTablesSync_ShouldHandleNullRelations() {
+        RestaurantTables table = new RestaurantTables();
+        table.setToken("TABLE_NULL");
+
+        Page<RestaurantTables> mockPage = new PageImpl<>(
+                List.of(table),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_tableRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncTableResponse> result = _syncServices.getTablesSync(1);
+
+        assertNotNull(result);
+        SyncTableResponse response = result.getItems().getFirst();
+
+        assertNotNull(response.getStatusTokens());
+        assertTrue(response.getStatusTokens().isEmpty());
+    }
 }

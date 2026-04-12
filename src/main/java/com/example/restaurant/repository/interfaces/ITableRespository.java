@@ -2,6 +2,8 @@ package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -11,13 +13,17 @@ public interface ITableRespository {
 
     RestaurantTables findByToken(String token);
 
-    List<RestaurantTables> findAllTables(OffsetDateTime startTime, OffsetDateTime endTime);
-
     TableStatus findStatusByToken(String token);
 
     void save(RestaurantTables table);
 
     boolean isTableAvailable(String tableToken, OffsetDateTime startTime, OffsetDateTime endTime);
+
+    List<RestaurantTables> findAll();
+
+    Page<RestaurantTables> findAll(Pageable pageable);
+
+    List<RestaurantTables> findAvailableTablesInTimeframe(OffsetDateTime startTime, OffsetDateTime endTime);
 
     boolean existsByTableNumber(int tableNumber);
 
@@ -32,4 +38,6 @@ public interface ITableRespository {
     long countStatuses();
 
     long count();
+
+
 }

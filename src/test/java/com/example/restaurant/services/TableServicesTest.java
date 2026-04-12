@@ -62,7 +62,7 @@ public class TableServicesTest {
         mockTable.setTableNumber(1);
         mockTable.setCapacity(4);
 
-        when(_tableRepo.findAllTables(request.getStartTime(), request.getEndTime()))
+        when(_tableRepo.findAvailableTablesInTimeframe(request.getStartTime(), request.getEndTime()))
                 .thenReturn(List.of(mockTable));
 
         TableListWrapperResponse result = _tableServices.getTables(request);
@@ -70,7 +70,7 @@ public class TableServicesTest {
         assertNotNull(result);
         assertEquals(1, result.getTables().size());
         assertEquals("Available", result.getTables().getFirst().getStatus());
-        verify(_tableRepo).findAllTables(request.getStartTime(), request.getEndTime());
+        verify(_tableRepo).findAvailableTablesInTimeframe(request.getStartTime(), request.getEndTime());
     }
 
     @Test
@@ -84,7 +84,7 @@ public class TableServicesTest {
         RestaurantTables mockTable = new RestaurantTables();
         mockTable.setToken(TestConstants.FAKE_TABLE_TOKEN);
 
-        when(_tableRepo.findAllTables(request.getStartTime(), request.getEndTime()))
+        when(_tableRepo.findAvailableTablesInTimeframe(request.getStartTime(), request.getEndTime()))
                 .thenReturn(List.of(mockTable));
 
         TableListWrapperResponse result = _tableServices.getTables(request);
@@ -115,7 +115,7 @@ public class TableServicesTest {
         mockTable.setToken(TestConstants.FAKE_TABLE_TOKEN);
         mockTable.setTableStatus(Set.of(mockStatus));
 
-        when(_tableRepo.findAllTables(null, null)).thenReturn(List.of(mockTable));
+        when(_tableRepo.findAll()).thenReturn(List.of(mockTable));
 
         TableListWrapperResponse result = _tableServices.getTables(request);
 
@@ -125,8 +125,10 @@ public class TableServicesTest {
     @Test
     @DisplayName("Get Tables: Success - Should return empty list when no tables are found")
     void getTables_ShouldReturnEmptyList_WhenNoResults() {
-        when(_tableRepo.findAllTables(any(), any())).thenReturn(List.of());
+        when(_tableRepo.findAll()).thenReturn(List.of());
+
         TableListWrapperResponse result = _tableServices.getTables(new TableFilterRequest());
+
         assertTrue(result.getTables().isEmpty());
     }
 

@@ -266,4 +266,26 @@ public class SyncController {
                 result
         ));
     }
+
+    @Operation(
+            summary = "Fetch flat list of tables (Sync)",
+            description = "Returns a paginated, flat list of tables with their statuses."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Tables sync page fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role")
+    })
+    @GetMapping("/tables")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<SyncTableResponse>>> getTablesSync(
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        var result = _syncServices.getTablesSync(page);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Tables sync page fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
 }

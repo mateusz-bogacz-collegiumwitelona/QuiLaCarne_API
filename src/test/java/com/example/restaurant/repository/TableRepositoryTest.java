@@ -33,34 +33,6 @@ public class TableRepositoryTest {
     private TableRespository _tableRepo;
 
     @Test
-    @DisplayName("find all table: should call find all if dates are null")
-    void findAllTables_ShouldCallFindAll_WhenDatesAreNull() {
-        when(_jpaTableRepo.findAll()).thenReturn(List.of(new RestaurantTables()));
-
-        List<RestaurantTables> result = _tableRepo.findAllTables(null, null);
-
-        assertEquals(1, result.size());
-        verify(_jpaTableRepo).findAll();
-        verify(_jpaTableRepo, never()).findAvailableTablesInTimeframe(any(), any());
-    }
-
-    @Test
-    @DisplayName("find all table: should call find avalible in time frame  if dates aren't null")
-    void findAllTables_ShouldCallFindAvailableInTimeframe_WhenDatesProvided() {
-        OffsetDateTime start = OffsetDateTime.now();
-        OffsetDateTime end = start.plusHours(2);
-
-        when(_jpaTableRepo.findAvailableTablesInTimeframe(start, end))
-                .thenReturn(List.of(new RestaurantTables()));
-
-        List<RestaurantTables> result = _tableRepo.findAllTables(start, end);
-
-        assertEquals(1, result.size());
-        verify(_jpaTableRepo).findAvailableTablesInTimeframe(start, end);
-        verify(_jpaTableRepo, never()).findAll();
-    }
-
-    @Test
     @DisplayName("find table: should return table when found")
     void findByToken_ShouldReturnTable_WhenFound() {
         RestaurantTables mockTable = new RestaurantTables();

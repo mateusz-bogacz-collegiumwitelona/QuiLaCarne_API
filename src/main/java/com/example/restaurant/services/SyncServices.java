@@ -319,6 +319,29 @@ public class SyncServices implements ISyncServices {
         return new PagedResult<>(response);
     }
 
+    @Override
+    @Auditable(action = "SYNC_TABLES")
+    public PagedResult<SyncTableResponse> getTablesSync(int page) {
+        Page<RestaurantTables> tablesPage = _tableRepo.findAll(calculatePageable(page));
+
+        Page<SyncTableResponse> response = tablesPage.map(t -> {
+            List<String> statusTokens = t.getTableStatus() != null
+                    ? t.getTableStatus().stream().map(BaseEntity::getToken).toList()
+                    : List.of();
+
+            return SyncTableResponse.builder()
+                    .token(t.getToken())
+                    .tableNumber(t.getTableNumber())
+                    .capacity(t.getCapacity())
+                    .statusTokens(statusTokens)
+                    .createdAt(t.getCreatedAt())
+                    .updatedAt(t.getUpdatedAt())
+                    .build();
+        });
+
+        return new PagedResult<>(response);
+    }
+
     private Pageable calculatePageable(int page) {
         int pageIndex = Math.max(0, page - 1);
         return PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);
