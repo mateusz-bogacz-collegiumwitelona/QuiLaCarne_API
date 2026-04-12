@@ -152,4 +152,13 @@ public class AllergensRepositoryTest {
         assertEquals("Allergen not found", exception.getMessage());
         verify(_jpaAllergensRepo, times(1)).findByToken(token);
     }
+
+    @Test
+    @DisplayName("count: Should return total number of allergens")
+    void count_ShouldReturnTotalCount() {
+        when(_jpaAllergensRepo.count()).thenReturn(15L);
+        long result = _allergensRepo.count();
+        assertEquals(15L, result);
+        verify(_jpaAllergensRepo, times(1)).count();
+    }
 }
