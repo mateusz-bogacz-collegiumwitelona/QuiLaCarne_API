@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.13'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com.example'
@@ -89,6 +90,38 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 }
 
+
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacoco {
+    toolVersion = "0.8.14"
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.required = false
+        html.required = true
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    'com/example/restaurant/models/**',
+                    'com/example/restaurant/dto/**',
+                    'com/example/restaurant/exceptions/**',
+                    'com/example/restaurant/mappers/**',
+                    'com/example/restaurant/config/**',
+                    'com/example/restaurant/controllers/**',
+                    'com/example/restaurant/commands/**',
+                    'com/example/restaurant/enums/**',
+                    'com/example/restaurant/seeder/**',
+                    'com/example/restaurant/services/S3StorageService'
+            ])
+        }))
+    }
 }

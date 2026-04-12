@@ -1,6 +1,6 @@
 package com.example.restaurant.seeder;
 
-import com.example.restaurant.helpers.TranslatedData;
+import com.example.restaurant.dto.domain.TranslatedDomain;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.RestaurantTables;
@@ -53,66 +53,66 @@ public class DataSeeder implements CommandLineRunner {
         seedNamedEntity(_jpaRoleRepo, Roles::new, List.of("ROLE_MANAGER", "ROLE_WAITER", "ROLE_CLIENT"));
 
         seedTranslatedEntity(_jpaTableStatusRepo, TableStatus::new, List.of(
-                new TranslatedData("AVAILABLE", "Wolny", "Available"),
-                new TranslatedData("RESERVED", "Zarezerwowany", "Reserved"),
-                new TranslatedData("OCCUPIED", "Zajęty", "Occupied"),
-                new TranslatedData("OUT_OF_SERVICE", "Wyłączony z użytku", "Out of service"),
-                new TranslatedData("CLEANING", "Do sprzątnięcia", "Cleaning"),
-                new TranslatedData("OTHER", "Inne", "Other")
+                new TranslatedDomain("AVAILABLE", "Wolny", "Available"),
+                new TranslatedDomain("RESERVED", "Zarezerwowany", "Reserved"),
+                new TranslatedDomain("OCCUPIED", "Zajęty", "Occupied"),
+                new TranslatedDomain("OUT_OF_SERVICE", "Wyłączony z użytku", "Out of service"),
+                new TranslatedDomain("CLEANING", "Do sprzątnięcia", "Cleaning"),
+                new TranslatedDomain("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaOrderItemStatusRepo, OrderItemsStatus::new, List.of(
-                new TranslatedData("PENDING", "Oczekujące", "Pending"),
-                new TranslatedData("IN_PROGRESS", "W przygotowaniu", "In progress"),
-                new TranslatedData("READY", "Gotowe do wydania", "Ready"),
-                new TranslatedData("SERVED", "Wydane", "Served"),
-                new TranslatedData("CANCELLED", "Anulowane", "Cancelled"),
-                new TranslatedData("RETURNED", "Zwrócone", "Returned"),
-                new TranslatedData("OTHER", "Inne", "Other")
+                new TranslatedDomain("PENDING", "Oczekujące", "Pending"),
+                new TranslatedDomain("IN_PROGRESS", "W przygotowaniu", "In progress"),
+                new TranslatedDomain("READY", "Gotowe do wydania", "Ready"),
+                new TranslatedDomain("SERVED", "Wydane", "Served"),
+                new TranslatedDomain("CANCELLED", "Anulowane", "Cancelled"),
+                new TranslatedDomain("RETURNED", "Zwrócone", "Returned"),
+                new TranslatedDomain("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaDishesCategoryRepo, DishesCategories::new, List.of(
-                new TranslatedData("STARTER", "Przystawki", "Starters"),
-                new TranslatedData("SOUP", "Zupy", "Soups"),
-                new TranslatedData("MAIN", "Dania główne", "Main courses"),
-                new TranslatedData("DESSERT", "Desery", "Desserts"),
-                new TranslatedData("DRINK", "Napoje", "Drinks"),
-                new TranslatedData("OTHER", "Inne", "Other")
+                new TranslatedDomain("STARTER", "Przystawki", "Starters"),
+                new TranslatedDomain("SOUP", "Zupy", "Soups"),
+                new TranslatedDomain("MAIN", "Dania główne", "Main courses"),
+                new TranslatedDomain("DESSERT", "Desery", "Desserts"),
+                new TranslatedDomain("DRINK", "Napoje", "Drinks"),
+                new TranslatedDomain("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaAllergensRepo, Allergens::new, List.of(
-                new TranslatedData("GLUTEN", "Gluten", "Gluten"),
-                new TranslatedData("LACTOSE", "Laktoza", "Lactose"),
-                new TranslatedData("NUTS", "Orzechy", "Nuts")
+                new TranslatedDomain("GLUTEN", "Gluten", "Gluten"),
+                new TranslatedDomain("LACTOSE", "Laktoza", "Lactose"),
+                new TranslatedDomain("NUTS", "Orzechy", "Nuts")
         ));
 
         seedTranslatedEntity(_jpaReservationStatusRepo, ReservationStatus::new, List.of(
-                new TranslatedData("ACTIVE", "Aktywna", "Active"),
-                new TranslatedData("COMPLETED", "Zakończona", "Completed"),
-                new TranslatedData("IN_PROGRESS", "W trakcie", "In progress"),
-                new TranslatedData("CANCELLED", "Anulowana", "Cancelled"),
-                new TranslatedData("NO_SHOW", "Nieobecność", "No show"),
-                new TranslatedData("OTHER", "Inne", "Other")
+                new TranslatedDomain("ACTIVE", "Aktywna", "Active"),
+                new TranslatedDomain("COMPLETED", "Zakończona", "Completed"),
+                new TranslatedDomain("IN_PROGRESS", "W trakcie", "In progress"),
+                new TranslatedDomain("CANCELLED", "Anulowana", "Cancelled"),
+                new TranslatedDomain("NO_SHOW", "Nieobecność", "No show"),
+                new TranslatedDomain("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaOrderStatusRepo, OrderStatus::new, List.of(
-                new TranslatedData("ACTIVE", "Aktywna", "Active"),
-                new TranslatedData("COMPLETED", "Zakończona", "Completed"),
-                new TranslatedData("IN_PROGRESS", "W trakcie", "In progress"),
-                new TranslatedData("CANCELLED", "Anulowana", "Cancelled"),
-                new TranslatedData("OTHER", "Inne", "Other")
+                new TranslatedDomain("ACTIVE", "Aktywna", "Active"),
+                new TranslatedDomain("COMPLETED", "Zakończona", "Completed"),
+                new TranslatedDomain("IN_PROGRESS", "W trakcie", "In progress"),
+                new TranslatedDomain("CANCELLED", "Anulowana", "Cancelled"),
+                new TranslatedDomain("OTHER", "Inne", "Other")
         ));
 
         seedTranslatedEntity(_jpaBanStatusRepo, BanStatus::new, List.of(
-                new TranslatedData("ACTIVE", "Aktywny", "ACTIVE"),
-                new TranslatedData("EXPIRED", "Wygasły", "Expired"),
-                new TranslatedData("REVOKED", "Cofinęty", "Revoked")
+                new TranslatedDomain("ACTIVE", "Aktywny", "ACTIVE"),
+                new TranslatedDomain("EXPIRED", "Wygasły", "Expired"),
+                new TranslatedDomain("REVOKED", "Cofinęty", "Revoked")
         ));
 
         seedTranslatedEntity(_jpaGuestReportStatusRepo, GuestReportStatus::new, List.of(
-                new TranslatedData("IN_PROGRESS", "W trakcie", "In progress"),
-                new TranslatedData("ACCEPTED", "Zaakceptowane", "Accepted"),
-                new TranslatedData("REJECTED", "Odrzucone", "Rejected")
+                new TranslatedDomain("IN_PROGRESS", "W trakcie", "In progress"),
+                new TranslatedDomain("ACCEPTED", "Zaakceptowane", "Accepted"),
+                new TranslatedDomain("REJECTED", "Odrzucone", "Rejected")
         ));
 
         createMenu();
@@ -141,7 +141,7 @@ public class DataSeeder implements CommandLineRunner {
     private <T extends BaseTranslatedEntity> void seedTranslatedEntity(
             IJpaTranslatedRepository<T> repo,
             Supplier<T> factory,
-            List<TranslatedData> data
+            List<TranslatedDomain> data
     ) {
         if (repo.count() == 0) {
             data.forEach(item -> {
