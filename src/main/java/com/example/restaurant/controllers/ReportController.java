@@ -2,23 +2,15 @@ package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
-import com.example.restaurant.dto.request.ReportFilterRequest;
-import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.response.ReportListResponse;
-import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IReportServices;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -59,83 +51,6 @@ public class ReportController {
         return ResponseEntity.ok(ResultHandler.success(
                 "Report created successfully",
                 HttpStatus.CREATED.value()
-        ));
-    }
-
-
-    @Operation(
-            summary = "List guest reports",
-            description = "Retrieves a paginated and filtered list of guest reports. " +
-                    "Supports filtering by date range, status, and sorting by creation date. " +
-                    "Requires MANAGER role."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Reports retrieved successfully",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Success Response",
-                                    value = "{\n  \"isSuccess\": true,\n  " +
-                                            "\"message\": \"Reports retrieved successfully\"," +
-                                            "\n  \"statusCode\": 200," +
-                                            "\n  \"data\": " +
-                                            "{\n    " +
-                                            "\"items\": " +
-                                            "[\n      " +
-                                            "{\n        " +
-                                            "\"token\": \"550e8400-e29b-41d4-a716-446655440000\"," +
-                                            "\n        \"guestUsername\": \"john_doe\",\n" +
-                                            "        \"guestToken\": \"330e8400-e29b-41d4-a716-116655440000\",\n" +
-                                            "        \"reporterUsername\": \"waiter_anna\",\n        " +
-                                            "\"reporterToken\": \"110e8400-e29b-41d4-a716-226655440000\",\n" +
-                                            "        \"reason\": \"Guest was extremely rude and broke a glass.\",\n" +
-                                            "        \"createdAt\": \"2024-03-29T18:30:00Z\",\n" +
-                                            "        \"status\": \"In progress\"\n" +
-                                            "      }\n    ]," +
-                                            "\n    " +
-                                            "\"pageNumber\": 1,\n" +
-                                            "    \"pageSize\": 10,\n" +
-                                            "    \"totalPages\": 1,\n" +
-                                            "    \"totalElements\": 1,\n" +
-                                            "    \"isFirst\": true,\n" +
-                                            "    \"isLast\": true\n" +
-                                            "  }" +
-                                            "\n}"
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid filter parameters (e.g., wrong date format)",
-                    content = @Content
-            ),
-            @ApiResponse(responseCode = "401",
-                    description = "Unauthorized - Valid JWT token is required",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Forbidden - Requires ROLE_MANAGER role",
-                    content = @Content
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Internal server error",
-                    content = @Content
-            )
-    })
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
-    public ResponseEntity<ResultHandler<PagedResult<ReportListResponse>>> list(
-            @ParameterObject @ModelAttribute @Valid ReportFilterRequest request
-    ) {
-        var result = _reportServices.list(request);
-        return ResponseEntity.ok(ResultHandler.success(
-                "Reports retrieved successfully",
-                HttpStatus.OK.value(),
-                result
         ));
     }
 
@@ -190,37 +105,5 @@ public class ReportController {
                 "Report status changed successfuly",
                 HttpStatus.OK.value()
         ));
-    }
-
-    @Operation(
-            summary = "Get list of report categories",
-            description = "Retrieves a dictionary list of all report categories available in the system. " +
-                    "The names are translated based on the 'Accept-Language' header."
-    )
-    @Parameter(
-            name = "Accept-Language",
-            in = ParameterIn.HEADER,
-            description = "Preferred language (e.g., 'pl' or 'en')",
-            required = false,
-            schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Dictionary review successfully",
-                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
-            ),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
-    })
-    @GetMapping("/dictionary")
-    public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
-        var result = _reportServices.getDictionary();
-        return ResponseEntity.ok(
-                ResultHandler.success(
-                        "Dictionary review successfully",
-                        HttpStatus.OK.value(),
-                        result
-                )
-        );
     }
 }

@@ -1,15 +1,9 @@
 package com.example.restaurant.services;
 
-import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.payload.ReportPayload;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
-import com.example.restaurant.dto.request.PaggedRequest;
-import com.example.restaurant.dto.request.ReportFilterRequest;
-import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.response.ReportListResponse;
 import com.example.restaurant.enums.WebSocketEventType;
-import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.GuestReportStatus;
@@ -21,20 +15,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -118,31 +108,6 @@ public class ReportServicesTest {
         verify(_reportRepo, never()).save(any());
     }
 
-    @Test
-    @DisplayName("List Reports: Should return PagedResult with mapped data")
-    void list_ReturnsPagedResult() {
-        ReportFilterRequest filter = new ReportFilterRequest();
-        filter.setPagged(new PaggedRequest());
-
-        GuestReportStatus status = new GuestReportStatus();
-        status.setNameEn("Pending Review");
-
-        GuestReports report = new GuestReports();
-        report.setGuest(new Users());
-        report.setReporter(new Users());
-        report.setStatuses(Set.of(status));
-        report.setReason("Test reason");
-
-        when(_reportRepo.findAll(ArgumentMatchers.any(), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(report)));
-
-        PagedResult<ReportListResponse> result = _reportServices.list(filter);
-
-        assertNotNull(result);
-        assertEquals(1, result.getItems().size());
-        assertEquals("Pending Review", result.getItems().getFirst().getStatus());
-        assertEquals("Test reason", result.getItems().getFirst().getReason());
-    }
 
     @Test
     @DisplayName("Change Status: Should create ban and set status to ACCEPTED")
@@ -219,52 +184,5 @@ public class ReportServicesTest {
                                 event.getPayload() != null
                 )
         );
-    }
-
-    @Test
-    @DisplayName("getDictionary: Returns empty list when repository returns empty")
-    void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
-        when(_reportRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
-
-        DictionaryResponse result = _reportServices.getDictionary();
-
-        assertTrue(result.getItem().isEmpty());
-    }
-
-    @Test
-    @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
-    void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
-
-        GuestReportStatus status = new GuestReportStatus();
-        status.setToken(TestConstants.STATUS_IN_PROGRESS);
-        status.setNamePl("W trakcie PL");
-        status.setNameEn("In Progress EN");
-
-        when(_reportRepo.findAllStatuses()).thenReturn(List.of(status));
-
-        DictionaryResponse result = _reportServices.getDictionary();
-
-        assertEquals(1, result.getItem().size());
-        assertEquals(TestConstants.STATUS_IN_PROGRESS, result.getItem().getFirst().getToken());
-        assertEquals("W trakcie PL", result.getItem().getFirst().getName());
-    }
-
-    @Test
-    @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
-    void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
-        GuestReportStatus status = new GuestReportStatus();
-        status.setToken(TestConstants.STATUS_ACCEPTED);
-        status.setNamePl("Zaakceptowane PL");
-        status.setNameEn("Accepted EN");
-
-        when(_reportRepo.findAllStatuses()).thenReturn(List.of(status));
-
-        DictionaryResponse result = _reportServices.getDictionary();
-
-        assertEquals(1, result.getItem().size());
-        assertEquals(TestConstants.STATUS_ACCEPTED, result.getItem().getFirst().getToken());
-        assertEquals("Accepted EN", result.getItem().getFirst().getName());
     }
 }

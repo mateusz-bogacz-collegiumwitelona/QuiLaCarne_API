@@ -34,8 +34,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -186,40 +184,6 @@ public class ReservationServices implements IReservationServices {
                 createPayload(reservation)
         );
         _notification.sendEventToTopic("/reservations/updates", event);
-    }
-
-    @Override
-    public PagedResult<TodayReservationsResponse> today(PaggedRequest request) {
-        String lang = LocaleContextHolder.getLocale().getLanguage();
-        Pageable pageable = PageRequest.of(
-                Math.max(0, request.getPage() - 1),
-                request.getSize(),
-                Sort.by(Sort.Direction.ASC, "startTime")
-        );
-
-        OffsetDateTime startOfDay = OffsetDateTime.now().with(LocalTime.MIN);
-        OffsetDateTime endOfDay = OffsetDateTime.now().with(LocalTime.MAX);
-        Specification<Reservations> spec = (
-                root,
-                query,
-                criteriaBuilder
-        ) -> criteriaBuilder.between(root.get("startTime"), startOfDay, endOfDay);
-
-        Page<Reservations> reservationPage = _reservationRepo.findAll(spec, pageable);
-
-        Page<TodayReservationsResponse> dtoPage = reservationPage.map(
-                res -> _reservationMapper.toTodayReservationsResponse(res, lang)
-        );
-
-        PagedResult<TodayReservationsResponse> pagedResult = new PagedResult<>(dtoPage);
-
-        for (TodayReservationsResponse res : pagedResult.getItems()) {
-            var orderDetails = _orderServices.todayOrderDetails(res.getToken(), lang);
-            res.setTotalPrice(orderDetails.totalPrice());
-            res.setDishes(orderDetails.dishes());
-        }
-
-        return pagedResult;
     }
 
     @Auditable(action = "REMOVE_ITEM_FROM_RESERVATION")

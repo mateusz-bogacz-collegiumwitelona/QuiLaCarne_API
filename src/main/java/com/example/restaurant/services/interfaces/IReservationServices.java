@@ -4,7 +4,10 @@ import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
-import com.example.restaurant.dto.response.*;
+import com.example.restaurant.dto.response.ClientReservationResponse;
+import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.ReservationDetailsResponse;
+import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.helpers.PagedResult;
 
 import java.util.List;
@@ -17,8 +20,6 @@ public interface IReservationServices {
     ReservationDetailsResponse details(String reservationToken, String userToken);
 
     void cancel(String reservationToken, String userToken);
-
-    PagedResult<TodayReservationsResponse> today(PaggedRequest request);
 
     void removeItemFromReservation(String userToken, String reservationToken, ReservationDishRequest request);
 

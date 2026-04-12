@@ -3,8 +3,6 @@ package com.example.restaurant.services.interfaces;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.Generate2faResponse;
-import com.example.restaurant.dto.response.UserListResponse;
-import com.example.restaurant.helpers.PagedResult;
 
 import java.util.Optional;
 
@@ -38,8 +36,6 @@ public interface IUserServices {
     void blockEmployee(String adminToken, BlockEmployeeRequest request);
 
     void deleteEmployee(String adminToken, String employeeToken);
-
-    PagedResult<UserListResponse> getUserList(UserFilterRequest filter, PaggedRequest pagged);
 
     String createOAuthUser(String email);
 

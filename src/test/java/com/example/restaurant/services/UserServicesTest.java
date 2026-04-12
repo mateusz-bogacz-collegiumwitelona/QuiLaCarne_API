@@ -6,7 +6,6 @@ import com.example.restaurant.dto.response.UserListResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
-import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
@@ -18,14 +17,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -768,56 +765,6 @@ public class UserServicesTest {
                                 event.getPayload() == null
                 )
         );
-    }
-
-    @Test
-    @DisplayName("Get User List: Success with filters, sorting, and correct page offset")
-    @SuppressWarnings("unchecked")
-    void getUserList_ShouldReturnPagedResult_AndCalculatePaginationCorrectly() {
-        UserFilterRequest filter = new UserFilterRequest();
-        filter.setSearch("test");
-        filter.setRole("ROLE_WAITER");
-        filter.setIsActive(true);
-        filter.setSortBy("username");
-        filter.setSortDirection("ASC");
-
-        PaggedRequest pagged = new PaggedRequest();
-        pagged.setPage(2);
-        pagged.setSize(5);
-
-        Users mockUser = new Users();
-        mockUser.setToken(TestConstants.FAKE_USER_TOKEN);
-        mockUser.setUsername(TestConstants.FAKE_USERNAME);
-        mockUser.setEmail(TestConstants.FAKE_EMAIL);
-        mockUser.setIsActive(true);
-        mockUser.setCreatedAt(OffsetDateTime.now());
-
-        Roles waiterRole = new Roles();
-        waiterRole.setName(TestConstants.ROLE_WAITER);
-        mockUser.setRoles(Set.of(waiterRole));
-
-        Page<Users> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(mockUser));
-
-        when(_userRepo.findAllUsers(any(Specification.class), any(PageRequest.class)))
-                .thenReturn(mockPage);
-
-        PagedResult<UserListResponse> result = _userServices.getUserList(filter, pagged);
-
-        assertNotNull(result);
-        assertEquals(1, result.getItems().size());
-
-        UserListResponse mappedUser = result.getItems().getFirst();
-        assertEquals(TestConstants.FAKE_USER_TOKEN, mappedUser.getToken());
-        assertEquals(TestConstants.FAKE_USERNAME, mappedUser.getUsername());
-        assertEquals(TestConstants.FAKE_EMAIL, mappedUser.getEmail());
-        assertTrue(mappedUser.getIsActive());
-        assertTrue(mappedUser.getRoles().contains(TestConstants.ROLE_WAITER));
-
-        verify(_userRepo).findAllUsers(any(Specification.class), argThat(pageRequest ->
-                pageRequest.getPageNumber() == 1 &&
-                        pageRequest.getPageSize() == 5 &&
-                        Objects.requireNonNull(pageRequest.getSort().getOrderFor("username")).isAscending()
-        ));
     }
 
     @Test

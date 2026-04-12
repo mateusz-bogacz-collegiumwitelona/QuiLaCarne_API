@@ -8,7 +8,6 @@ import com.example.restaurant.dto.response.UserListResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
-import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.SoftDeleteHelpers;
 import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.models.Users;
@@ -18,15 +17,9 @@ import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IUserServices;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -337,66 +330,6 @@ public class UserServices implements IUserServices {
         _notification.sendEventToTopic("/personnel/updates", event);
     }
 
-    @Override
-    @Cacheable(value = "usersList", key = "#filter.toString() + '-' + #pagged.toString()")
-    public PagedResult<UserListResponse> getUserList(UserFilterRequest filter, PaggedRequest pagged) {
-        String directionStr = (filter.getSortDirection() != null && !filter.getSortDirection().isBlank())
-                ? filter.getSortDirection() : "ASC";
-        Sort.Direction direction = Sort.Direction.fromString(directionStr);
-
-        String sortByField = filter.getSortBy();
-        if (sortByField == null || sortByField.isBlank() ||
-                sortByField.equalsIgnoreCase("ASC") || sortByField.equalsIgnoreCase("DESC")) {
-            sortByField = "createdAt";
-        }
-
-        Sort sort = Sort.by(direction, sortByField);
-
-        PageRequest pageRequest = PageRequest.of(pagged.getPage() - 1, pagged.getSize(), sort);
-
-        Specification<Users> spec = (root, query, criteriaBuilder) -> {
-            var predicates = criteriaBuilder.conjunction();
-
-            if (filter.getSearch() != null && !filter.getSearch().isBlank()) {
-                String searchPattern = "%" + filter.getSearch().toUpperCase().trim() + "%";
-                predicates = criteriaBuilder.and(predicates, criteriaBuilder.or(
-                        criteriaBuilder.like(criteriaBuilder.upper(root.get("username")), searchPattern),
-                        criteriaBuilder.like(criteriaBuilder.upper(root.get("email")), searchPattern)
-                ));
-            }
-
-            if (filter.getIsActive() != null)
-                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(
-                        root.get("isActive"),
-                        filter.getIsActive()
-                ));
-
-            if (filter.getRole() != null && !filter.getRole().isBlank()) {
-                var joinRole = root.join("roles", JoinType.INNER);
-                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(
-                        joinRole.get("name"),
-                        filter.getRole().trim()
-                ));
-            }
-
-            return predicates;
-        };
-
-        Page<Users> usersPage = _userRepo.findAllUsers(spec, pageRequest);
-
-        Page<UserListResponse> response = usersPage.map(u -> UserListResponse
-                .builder()
-                .token(u.getToken())
-                .username(u.getUsername())
-                .email(u.getEmail())
-                .isActive(u.getIsActive())
-                .roles(u.getRoles().stream().map(BaseNamedEntity::getName).toList())
-                .createdAt(u.getCreatedAt())
-                .build()
-        );
-
-        return new PagedResult<>(response);
-    }
 
     @Override
     @Transactional
