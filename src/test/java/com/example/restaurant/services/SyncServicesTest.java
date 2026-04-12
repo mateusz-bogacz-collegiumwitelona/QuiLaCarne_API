@@ -1,24 +1,19 @@
 package com.example.restaurant.services;
 
-import com.example.restaurant.dto.request.SyncRoleResponse;
-import com.example.restaurant.dto.response.SyncBanResponse;
-import com.example.restaurant.dto.response.SyncBootstrapResponse;
-import com.example.restaurant.dto.response.SyncDictionariesResponse;
-import com.example.restaurant.dto.response.SyncDishResponse;
+import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
-import com.example.restaurant.models.Bans;
-import com.example.restaurant.models.Dishes;
-import com.example.restaurant.models.Ingredients;
-import com.example.restaurant.models.Users;
+import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.BanStatus;
 import com.example.restaurant.models.lookup.DishesCategories;
+import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -319,6 +314,78 @@ public class SyncServicesTest {
 
         assertNull(response.getUserToken());
         assertNull(response.getBannedByToken());
+        assertNotNull(response.getStatusTokens());
+        assertTrue(response.getStatusTokens().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Get Reports Sync: Should correctly map reports and extract foreign keys")
+    void getReportsSync_ShouldReturnMappedReports() {
+        Users guest = new Users();
+        guest.setToken("GUEST_123");
+
+        Users reporter = new Users();
+        reporter.setToken("REPORTER_456");
+
+        GuestReportStatus status = new GuestReportStatus();
+        status.setToken("STATUS_IN_PROGRESS");
+
+        GuestReports report = new GuestReports();
+        report.setToken("REPORT_789");
+        report.setGuest(guest);
+        report.setReporter(reporter);
+        report.setReason("Głośne zachowanie");
+        report.setStatuses(Set.of(status));
+
+        Page<GuestReports> mockPage =
+                new PageImpl<>(
+                        List.of(report),
+                        PageRequest.of(0, 20),
+                        1
+                );
+
+        when(_reportRepo.findAll(ArgumentMatchers.isNull(), any(Pageable.class)))
+                .thenReturn(mockPage);
+
+        PagedResult<SyncReportResponse> result =
+                _syncServices.getReportsSync(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+
+        SyncReportResponse response = result.getItems().getFirst();
+        assertEquals("REPORT_789", response.getToken());
+        assertEquals("Głośne zachowanie", response.getReason());
+        assertEquals("GUEST_123", response.getGuestToken());
+        assertEquals("REPORTER_456", response.getReporterToken());
+        assertEquals(1, response.getStatusTokens().size());
+        assertEquals("STATUS_IN_PROGRESS", response.getStatusTokens().getFirst());
+    }
+
+    @Test
+    @DisplayName("Get Reports Sync: Should handle missing relations gracefully")
+    void getReportsSync_ShouldHandleNullRelations() {
+        GuestReports report = new GuestReports();
+        report.setToken("REPORT_NULL_TEST");
+
+        Page<GuestReports> mockPage =
+                new PageImpl<>(
+                        List.of(report),
+                        PageRequest.of(0, 20),
+                        1
+                );
+
+        when(_reportRepo.findAll(ArgumentMatchers.isNull(), any(Pageable.class)))
+                .thenReturn(mockPage);
+
+        PagedResult<SyncReportResponse> result =
+                _syncServices.getReportsSync(1);
+
+        assertNotNull(result);
+        SyncReportResponse response = result.getItems().getFirst();
+
+        assertNull(response.getGuestToken());
+        assertNull(response.getReporterToken());
         assertNotNull(response.getStatusTokens());
         assertTrue(response.getStatusTokens().isEmpty());
     }

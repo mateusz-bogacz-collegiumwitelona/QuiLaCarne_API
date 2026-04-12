@@ -1,10 +1,6 @@
 package com.example.restaurant.controllers;
 
-import com.example.restaurant.dto.request.SyncRoleResponse;
-import com.example.restaurant.dto.response.SyncBanResponse;
-import com.example.restaurant.dto.response.SyncBootstrapResponse;
-import com.example.restaurant.dto.response.SyncDictionariesResponse;
-import com.example.restaurant.dto.response.SyncDishResponse;
+import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.ISyncServices;
@@ -149,6 +145,31 @@ public class SyncController {
 
         return ResponseEntity.ok(ResultHandler.success(
                 "Bans sync page fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
+
+    @Operation(
+            summary = "Fetch flat list of reports",
+            description = "Returns a paginated, " +
+                    "flat list of guest reports with foreign key tokens (guest, reporter, statuses). " +
+                    "Page size is strictly fixed by the server."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Reports sync page fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role")
+    })
+    @GetMapping("/reports")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<SyncReportResponse>>> getReportsSync(
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        var result = _syncServices.getReportsSync(page);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Reports sync page fetched successfully",
                 HttpStatus.OK.value(),
                 result
         ));

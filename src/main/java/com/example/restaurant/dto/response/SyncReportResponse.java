@@ -12,14 +12,12 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SyncBanResponse {
+public class SyncReportResponse {
     private String token;
-    private String userToken;
-    private String bannedByToken;
+    private String guestToken;
+    private String reporterToken;
     private List<String> statusTokens;
     private String reason;
-    private OffsetDateTime expiresAt;
-    private Boolean isActive;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

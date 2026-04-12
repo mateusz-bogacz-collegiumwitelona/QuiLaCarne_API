@@ -1,4 +1,4 @@
-package com.example.restaurant.dto.request;
+package com.example.restaurant.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

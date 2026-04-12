@@ -1,11 +1,11 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.request.SyncRoleResponse;
 import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Dishes;
+import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
@@ -178,6 +178,35 @@ public class SyncServices implements ISyncServices {
                     .isActive(b.getIsActive())
                     .createdAt(b.getCreatedAt())
                     .updatedAt(b.getUpdatedAt())
+                    .build();
+        });
+
+        return new PagedResult<>(response);
+    }
+
+    @Override
+    @Auditable(action = "SYNC_REPORTS")
+    public PagedResult<SyncReportResponse> getReportsSync(int page) {
+        Page<GuestReports> reportsPage = _reportRepo.findAll(null, calculatePageable(page));
+
+        Page<SyncReportResponse> response = reportsPage.map(r -> {
+            String guestToken = r.getGuest() != null ? r.getGuest().getToken() : null;
+            String reporterToken = r.getReporter() != null ? r.getReporter().getToken() : null;
+
+            List<String> statusTokens = r.getStatuses() != null
+                    ? r.getStatuses().stream()
+                      .map(BaseEntity::getToken)
+                      .toList()
+                    : List.of();
+
+            return SyncReportResponse.builder()
+                    .token(r.getToken())
+                    .guestToken(guestToken)
+                    .reporterToken(reporterToken)
+                    .statusTokens(statusTokens)
+                    .reason(r.getReason())
+                    .createdAt(r.getCreatedAt())
+                    .updatedAt(r.getUpdatedAt())
                     .build();
         });
 
