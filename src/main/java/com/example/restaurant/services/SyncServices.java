@@ -91,16 +91,6 @@ public class SyncServices implements ISyncServices {
                 .build();
     }
 
-    private void addModuleMetadata(
-            Map<String, SyncBootstrapResponse.EntityMetadata> modules,
-            String key,
-            long count
-    ) {
-        modules.put(key, new SyncBootstrapResponse.EntityMetadata(
-                count,
-                calculatePage(count)
-        ));
-    }
 
     @Override
     @Auditable(action = "GET_ROLES")
@@ -370,6 +360,17 @@ public class SyncServices implements ISyncServices {
         });
 
         return new PagedResult<>(response);
+    }
+
+    private void addModuleMetadata(
+            Map<String, SyncBootstrapResponse.EntityMetadata> modules,
+            String key,
+            long count
+    ) {
+        modules.put(key, new SyncBootstrapResponse.EntityMetadata(
+                count,
+                calculatePage(count)
+        ));
     }
 
     private Pageable calculatePageable(int page) {
