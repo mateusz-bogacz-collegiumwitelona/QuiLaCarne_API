@@ -1,11 +1,12 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -31,6 +32,8 @@ public class IngredientsServices implements IIngredientsServices {
     private final IAllergensRepository _allergensRepo;
     private final IDishRepository _dishRepo;
     private final NotificationServices _notification;
+
+    private final SyncMapper _syncMapper;
 
     private final String ENTITY_TYPE = "INGREDIENT";
 
@@ -60,9 +63,12 @@ public class IngredientsServices implements IIngredientsServices {
 
         _ingredientsRepo.save(ingredient);
 
-        DictionaryPayload payload = DictionaryPayload.fromEntity(ingredient);
-        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(ENTITY_TYPE, ingredient.getToken(), payload);
-
+        SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(ingredient);
+        WebSocketEvent<SyncDictionaryResponse> event = WebSocketEvent.created(
+                ENTITY_TYPE,
+                ingredient.getToken(),
+                payload
+        );
         _notification.sendEventToTopic("dictionary/sync", event);
     }
 

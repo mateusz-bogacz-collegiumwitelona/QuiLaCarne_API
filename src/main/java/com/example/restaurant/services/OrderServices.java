@@ -5,17 +5,18 @@ import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
-import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.payload.OrderItemPayload;
 import com.example.restaurant.dto.payload.OrderPayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReservationDishResponse;
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
@@ -43,6 +44,8 @@ public class OrderServices implements IOrderServices {
     private final ITableRespository _tableRepo;
     private final IUserRepository _userRepo;
     private final NotificationServices _notification;
+
+    private final SyncMapper _syncMapper;
 
     private static final String ORDER_ENTITY_TYPE = "ORDER";
     private static final String ORDER_STATUS_ENTITY_TYPE = "ORDER_STATUS";
@@ -405,8 +408,8 @@ public class OrderServices implements IOrderServices {
 
         _orderRepo.saveStatus(status);
 
-        DictionaryPayload payload = DictionaryPayload.fromEntity(status);
-        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(
+        SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(status);
+        WebSocketEvent<SyncDictionaryResponse> event = WebSocketEvent.created(
                 ORDER_STATUS_ENTITY_TYPE,
                 status.getToken(),
                 payload
@@ -428,8 +431,8 @@ public class OrderServices implements IOrderServices {
 
         _orderRepo.saveItemStatus(status);
 
-        DictionaryPayload payload = DictionaryPayload.fromEntity(status);
-        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(
+        SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(status);
+        WebSocketEvent<SyncDictionaryResponse> event = WebSocketEvent.created(
                 ORDER_ITEM_STATUS_ENTITY_TYPE,
                 status.getToken(),
                 payload

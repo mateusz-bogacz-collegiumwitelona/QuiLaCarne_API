@@ -1,11 +1,12 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -25,6 +26,8 @@ public class AllergensServices implements IAllergensServices {
     private final IAllergensRepository _allergenRepo;
     private final IIngredientsRepository _ingredientsRepo;
     private final NotificationServices _notification;
+
+    private final SyncMapper _syncMapper;
 
     private final String ENTITY_TYPE = "ALLERGEN";
 
@@ -51,9 +54,12 @@ public class AllergensServices implements IAllergensServices {
 
         _allergenRepo.save(allergen);
 
-        DictionaryPayload payload = DictionaryPayload.fromEntity(allergen);
-        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(ENTITY_TYPE, allergen.getToken(), payload);
-
+        SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(allergen);
+        WebSocketEvent<SyncDictionaryResponse> event = WebSocketEvent.created(
+                ENTITY_TYPE,
+                allergen.getToken(),
+                payload
+        );
         _notification.sendEventToTopic("/dictionary/allergens", event);
     }
 

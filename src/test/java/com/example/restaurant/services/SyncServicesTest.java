@@ -4,8 +4,6 @@ import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.*;
-import com.example.restaurant.models.base.BaseEntity;
-import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.*;
 import com.example.restaurant.repository.interfaces.*;
 import org.jspecify.annotations.NonNull;
@@ -113,14 +111,13 @@ public class SyncServicesTest {
 
     @Test
     @DisplayName("Get Dictionaries: Should correctly map and return all dictionary lists")
-    @SuppressWarnings({"unchecked", "rawtypes"})
     void getDictionaries_ShouldReturnMappedDictionaries() {
-        BaseTranslatedEntity translatedEntity = mock(BaseTranslatedEntity.class);
-        when(translatedEntity.getToken()).thenReturn("TOKEN_1");
-        when(translatedEntity.getNameEn()).thenReturn("Apple");
-        when(translatedEntity.getNamePl()).thenReturn("Jabłko");
+        Allergens allergen = new Allergens();
+        allergen.setToken("TOKEN_1");
+        allergen.setNameEn("Apple");
+        allergen.setNamePl("Jabłko");
 
-        when(_allergenRepo.findAll()).thenReturn((List) List.of(translatedEntity));
+        when(_allergenRepo.findAll()).thenReturn(List.of(allergen));
         when(_dishRepo.findAllCategories()).thenReturn(List.of());
         when(_banRepo.findAllStatuses()).thenReturn(List.of());
         when(_reportRepo.findAllStatuses()).thenReturn(List.of());
@@ -138,19 +135,6 @@ public class SyncServicesTest {
         assertEquals("Jabłko", response.getAllergens().getFirst().getNamePl());
     }
 
-    @Test
-    @DisplayName("Get Dictionaries: Should throw exception for unsupported entity type")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    void getDictionaries_WhenUnsupportedEntity_ShouldThrowException() {
-        BaseEntity unsupportedEntity = mock(BaseEntity.class);
-
-        when(_allergenRepo.findAll()).thenReturn((List) List.of(unsupportedEntity));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> _syncServices.getDictionaries());
-
-        assertTrue(exception.getMessage().contains("Entity type not supported for dictionary mapping"));
-    }
 
     @Test
     @DisplayName("Get Roles: Should return mapped list of roles")

@@ -1,15 +1,16 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.payload.DishPayload;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.mappers.DishMapper;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.base.BaseEntity;
@@ -47,6 +48,8 @@ public class DishServices implements IDishServices {
     private final IIngredientsRepository _ingredientsRepo;
     private final S3StorageService _s3Services;
     private final NotificationServices _notification;
+
+    private final SyncMapper _syncMapper;
 
     private static final String CATEGORY_ENTITY_TYPE = "DISH_CATEGORY";
     private static final String DISH_ENTITY_TYPE = "DISH";
@@ -220,8 +223,8 @@ public class DishServices implements IDishServices {
         );
 
         _dishRepo.saveCategory(category);
-        DictionaryPayload payload = DictionaryPayload.fromEntity(category);
-        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(CATEGORY_ENTITY_TYPE, category.getToken(), payload);
+        SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(category);
+        WebSocketEvent<SyncDictionaryResponse> event = WebSocketEvent.created(CATEGORY_ENTITY_TYPE, category.getToken(), payload);
         _notification.sendEventToTopic("/dictionary/dish-categories", event);
     }
 

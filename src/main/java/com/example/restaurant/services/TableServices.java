@@ -1,18 +1,19 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.payload.TablePayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.dto.response.TableListWrapperResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.lookup.TableStatus;
@@ -36,6 +37,8 @@ import java.util.Set;
 public class TableServices implements ITableServices {
     private final ITableRespository _tableRepo;
     private final NotificationServices _notification;
+
+    private final SyncMapper _syncMapper;
 
     private static final String TABLE_ENTITY_TYPE = "TABLE";
     private static final String TABLE_STATUS_ENTITY_TYPE = "TABLE_STATUS";
@@ -173,8 +176,8 @@ public class TableServices implements ITableServices {
 
         _tableRepo.saveStatus(status);
 
-        DictionaryPayload payload = DictionaryPayload.fromEntity(status);
-        WebSocketEvent<DictionaryPayload> event = WebSocketEvent.created(
+        SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(status);
+        WebSocketEvent<SyncDictionaryResponse> event = WebSocketEvent.created(
                 TABLE_STATUS_ENTITY_TYPE,
                 status.getToken(),
                 payload

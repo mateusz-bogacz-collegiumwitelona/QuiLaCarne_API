@@ -1,14 +1,15 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.payload.DishPayload;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.DishesCategories;
@@ -19,9 +20,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -59,6 +62,9 @@ public class DishServicesTest {
 
     @InjectMocks
     private DishServices _dishServices;
+
+    @Spy
+    private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
     @BeforeEach
     void setUp() {
@@ -611,7 +617,7 @@ public class DishServicesTest {
                         event.getEventType() == WebSocketEventType.CREATED &&
                                 event.getEntityType().equals("DISH_CATEGORY") &&
                                 event.getPayload() != null &&
-                                "Przystawki PL".equals(((DictionaryPayload) event.getPayload()).getNamePl())
+                                "Przystawki PL".equals(((SyncDictionaryResponse) event.getPayload()).getNamePl())
                 )
         );
     }

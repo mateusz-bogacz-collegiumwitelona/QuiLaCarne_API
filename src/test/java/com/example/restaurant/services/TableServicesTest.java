@@ -1,16 +1,17 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.payload.TablePayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
 import com.example.restaurant.dto.response.TableListWrapperResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
@@ -18,8 +19,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -43,6 +46,9 @@ public class TableServicesTest {
 
     @InjectMocks
     private TableServices _tableServices;
+
+    @Spy
+    private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
     @AfterEach
     public void tearDown() {
@@ -419,7 +425,9 @@ public class TableServicesTest {
                         event.getEventType() == WebSocketEventType.CREATED &&
                                 event.getEntityType().equals("TABLE_STATUS") &&
                                 event.getPayload() != null &&
-                                "Nowy Status Stolika PL".equals(((DictionaryPayload) event.getPayload()).getNamePl())
+                                "Nowy Status Stolika PL".equals(
+                                        ((SyncDictionaryResponse) event.getPayload()).getNamePl()
+                                )
                 )
         );
     }

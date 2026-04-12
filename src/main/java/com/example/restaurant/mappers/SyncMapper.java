@@ -1,8 +1,11 @@
 package com.example.restaurant.mappers;
 
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
 import com.example.restaurant.dto.response.SyncUserResponse;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.base.BaseEntity;
+import com.example.restaurant.models.base.BaseNamedEntity;
+import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.Roles;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -32,5 +35,23 @@ public interface SyncMapper {
                 .anyMatch(r -> r.getName().equals("ROLE_WAITER")
                         || r.getName().equals("ROLE_MANAGER")
                         || r.getName().equals("ROLE_ADMIN"));
+    }
+
+    default SyncDictionaryResponse toSyncDictionaryResponse(BaseTranslatedEntity entity) {
+        if (entity == null) return null;
+        return new SyncDictionaryResponse(
+                entity.getToken(),
+                entity.getNameEn(),
+                entity.getNamePl()
+        );
+    }
+
+    default SyncDictionaryResponse toSyncDictionaryResponse(BaseNamedEntity entity) {
+        if (entity == null) return null;
+        return new SyncDictionaryResponse(
+                entity.getToken(),
+                entity.getName(),
+                entity.getName()
+        );
     }
 }

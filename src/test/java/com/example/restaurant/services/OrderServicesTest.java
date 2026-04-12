@@ -4,13 +4,14 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
-import com.example.restaurant.dto.payload.DictionaryPayload;
 import com.example.restaurant.dto.payload.OrderPayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.SyncDictionaryResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.enums.WebSocketEventType;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
@@ -20,8 +21,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -54,6 +57,9 @@ public class OrderServicesTest {
 
     @InjectMocks
     private OrderServices _orderServices;
+
+    @Spy
+    private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
     @AfterEach
     void tearDown() {
@@ -771,7 +777,7 @@ public class OrderServicesTest {
                         event.getEventType() == WebSocketEventType.CREATED &&
                                 event.getEntityType().equals("ORDER_STATUS") &&
                                 event.getPayload() != null &&
-                                "Nowy Status PL".equals(((DictionaryPayload) event.getPayload()).getNamePl())
+                                "Nowy Status PL".equals(((SyncDictionaryResponse) event.getPayload()).getNamePl())
                 )
         );
     }
@@ -805,7 +811,10 @@ public class OrderServicesTest {
                         event.getEventType() == WebSocketEventType.CREATED &&
                                 event.getEntityType().equals("ORDER_ITEM_STATUS") &&
                                 event.getPayload() != null &&
-                                "Nowy Status Elementu PL".equals(((DictionaryPayload) event.getPayload()).getNamePl())
+                                "Nowy Status Elementu PL".equals(
+                                        ((SyncDictionaryResponse) event.getPayload()).getNamePl()
+                                )
+
                 )
         );
     }

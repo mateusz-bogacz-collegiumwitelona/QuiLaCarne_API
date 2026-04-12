@@ -3,6 +3,8 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.enums.WebSocketEventType;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
@@ -10,8 +12,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -36,6 +40,9 @@ public class AllergensServicesTest {
 
     @InjectMocks
     private AllergensServices _allergensServices;
+
+    @Spy
+    private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
     @AfterEach
     void tearDown() {
@@ -112,8 +119,9 @@ public class AllergensServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/dictionary/allergens"),
                 argThat(event ->
-                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.CREATED &&
-                                event.getEntityType().equals("ALLERGEN") &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.CREATED &&
+                                "ALLERGEN".equals(event.getEntityType()) &&
                                 event.getPayload() != null
                 )
         );
@@ -153,9 +161,10 @@ public class AllergensServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/dictionary/allergens"),
                 argThat(event ->
-                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.DELETED &&
-                                event.getEntityType().equals("ALLERGEN") &&
-                                event.getToken().equals(token) &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.DELETED &&
+                                "ALLERGEN".equals(event.getEntityType()) &&
+                                token.equals(event.getToken()) &&
                                 event.getPayload() == null
                 )
         );

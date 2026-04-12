@@ -6,8 +6,6 @@ import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
-import com.example.restaurant.models.base.BaseNamedEntity;
-import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.repository.interfaces.*;
 import com.example.restaurant.services.interfaces.ISyncServices;
 import lombok.RequiredArgsConstructor;
@@ -83,14 +81,14 @@ public class SyncServices implements ISyncServices {
     @Auditable(action = "GET_DICTIONARIES")
     public SyncDictionariesResponse getDictionaries() {
         return SyncDictionariesResponse.builder()
-                .allergens(mapToSync(_allergenRepo.findAll()))
-                .dishCategories(mapToSync(_dishRepo.findAllCategories()))
-                .banStatuses(mapToSync(_banRepo.findAllStatuses()))
-                .reportStatuses(mapToSync(_reportRepo.findAllStatuses()))
-                .orderStatuses(mapToSync(_orderRepo.findAllStatuses()))
-                .orderItemStatuses(mapToSync(_orderRepo.findAllItemStatuses()))
-                .reservationStatuses(mapToSync(_reservationRepo.findAllStatuses()))
-                .tableStatuses(mapToSync(_tableRepo.findAllStatuses()))
+                .allergens(_allergenRepo.findAll().stream().map(_syncMapper::toSyncDictionaryResponse).toList())
+                .dishCategories(_dishRepo.findAllCategories().stream().map(_syncMapper::toSyncDictionaryResponse).toList())
+                .banStatuses(_banRepo.findAllStatuses().stream().map(_syncMapper::toSyncDictionaryResponse).toList())
+                .reportStatuses(_reportRepo.findAllStatuses().stream().map(_syncMapper::toSyncDictionaryResponse).toList())
+                .orderStatuses(_orderRepo.findAllStatuses().stream().map(_syncMapper::toSyncDictionaryResponse).toList())
+                .orderItemStatuses(_orderRepo.findAllItemStatuses().stream().map(_syncMapper::toSyncDictionaryResponse).toList())
+                .reservationStatuses(_reservationRepo.findAllStatuses().stream().map(_syncMapper::toSyncDictionaryResponse).toList())
+                .tableStatuses(_tableRepo.findAllStatuses().stream().map(_syncMapper::toSyncDictionaryResponse).toList())
                 .build();
     }
 
@@ -363,26 +361,5 @@ public class SyncServices implements ISyncServices {
 
     private int calculatePage(long count) {
         return (int) Math.ceil((double) count / DEFAULT_PAGE_SIZE);
-    }
-
-    private <T extends BaseEntity> List<SyncDictionaryResponse> mapToSync(List<T> entities) {
-        return entities.stream().map(entity -> {
-            if (entity instanceof BaseTranslatedEntity translated) {
-                return new SyncDictionaryResponse(
-                        translated.getToken(),
-                        translated.getNameEn(),
-                        translated.getNamePl()
-                );
-            } else if (entity instanceof BaseNamedEntity named) {
-                return new SyncDictionaryResponse(
-                        named.getToken(),
-                        named.getName(),
-                        named.getName()
-                );
-            } else {
-                throw new IllegalArgumentException("Entity type not supported for dictionary mapping: "
-                        + entity.getClass().getSimpleName());
-            }
-        }).toList();
     }
 }
