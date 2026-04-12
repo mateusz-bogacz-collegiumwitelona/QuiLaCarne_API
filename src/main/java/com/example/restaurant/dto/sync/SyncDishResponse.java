@@ -1,4 +1,4 @@
-package com.example.restaurant.dto.response;
+package com.example.restaurant.dto.sync;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

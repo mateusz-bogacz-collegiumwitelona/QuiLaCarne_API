@@ -1,6 +1,6 @@
 package com.example.restaurant.services.interfaces;
 
-import com.example.restaurant.dto.response.*;
+import com.example.restaurant.dto.sync.*;
 import com.example.restaurant.helpers.PagedResult;
 
 import java.util.List;

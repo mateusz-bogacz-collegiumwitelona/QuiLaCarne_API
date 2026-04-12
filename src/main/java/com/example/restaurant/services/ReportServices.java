@@ -4,7 +4,7 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
-import com.example.restaurant.dto.response.SyncReportResponse;
+import com.example.restaurant.dto.sync.SyncReportResponse;
 import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.GuestReports;

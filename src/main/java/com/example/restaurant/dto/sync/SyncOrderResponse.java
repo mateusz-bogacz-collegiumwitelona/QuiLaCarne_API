@@ -1,4 +1,4 @@
-package com.example.restaurant.dto.response;
+package com.example.restaurant.dto.sync;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,14 +12,13 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SyncOrderItemResponse {
+public class SyncOrderResponse {
     private String token;
-    private String orderToken;
-    private String productToken;
+    private String reservationToken;
+    private String tableToken;
+    private String waiterToken;
     private List<String> statusTokens;
-    private int quantity;
-    private int priceAtTimeOfOrder;
-    private String note;
+    private int totalPrice;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

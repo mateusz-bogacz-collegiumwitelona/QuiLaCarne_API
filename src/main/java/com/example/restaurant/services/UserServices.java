@@ -4,7 +4,7 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.Generate2faResponse;
-import com.example.restaurant.dto.response.SyncUserResponse;
+import com.example.restaurant.dto.sync.SyncUserResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;

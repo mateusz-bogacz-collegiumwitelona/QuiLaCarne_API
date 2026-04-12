@@ -1,19 +1,22 @@
-package com.example.restaurant.dto.payload;
+package com.example.restaurant.dto.sync;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TablePayload {
+public class SyncTableResponse {
     private String token;
-    private Integer tableNumber;
-    private Integer capacity;
+    private int tableNumber;
+    private int capacity;
     private List<String> statusTokens;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 }

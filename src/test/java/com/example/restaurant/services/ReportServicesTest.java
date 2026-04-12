@@ -2,7 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
-import com.example.restaurant.dto.response.SyncReportResponse;
+import com.example.restaurant.dto.sync.SyncReportResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.GuestReports;

@@ -2,7 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.*;
-import com.example.restaurant.dto.response.SyncUserResponse;
+import com.example.restaurant.dto.sync.SyncUserResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;

@@ -1,6 +1,6 @@
 package com.example.restaurant.services;
 
-import com.example.restaurant.dto.response.*;
+import com.example.restaurant.dto.sync.*;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.*;

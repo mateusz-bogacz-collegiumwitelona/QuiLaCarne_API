@@ -1,21 +1,18 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.payload.TablePayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
-import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.response.SyncDictionaryResponse;
-import com.example.restaurant.dto.response.TableListResponse;
-import com.example.restaurant.dto.response.TableListWrapperResponse;
+import com.example.restaurant.dto.response.*;
+import com.example.restaurant.dto.sync.SyncDictionaryResponse;
+import com.example.restaurant.dto.sync.SyncTableResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.RestaurantTables;
-import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.services.interfaces.ITableServices;
@@ -130,9 +127,10 @@ public class TableServices implements ITableServices {
 
         _tableRepo.save(table);
 
-        WebSocketEvent<TablePayload> event = WebSocketEvent.created(
-                TABLE_ENTITY_TYPE, table.getToken(),
-                createTablePayload(table)
+        WebSocketEvent<SyncTableResponse> event = WebSocketEvent.created(
+                TABLE_ENTITY_TYPE,
+                table.getToken(),
+                _syncMapper.toSyncTableResponse(table)
         );
         _notification.sendEventToTopic("/tables/updates", event);
     }
@@ -225,22 +223,11 @@ public class TableServices implements ITableServices {
         table.setTableStatus(new HashSet<>(Set.of(cleanStatus)));
         _tableRepo.save(table);
 
-        WebSocketEvent<TablePayload> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncTableResponse> event = WebSocketEvent.updated(
                 TABLE_ENTITY_TYPE,
                 table.getToken(),
-                createTablePayload(table)
+                _syncMapper.toSyncTableResponse(table)
         );
         _notification.sendEventToTopic("/tables/updates", event);
-    }
-
-    private TablePayload createTablePayload(RestaurantTables table) {
-        return TablePayload.builder()
-                .token(table.getToken())
-                .tableNumber(table.getTableNumber())
-                .capacity(table.getCapacity())
-                .statusTokens(table.getTableStatus() != null
-                        ? table.getTableStatus().stream().map(BaseEntity::getToken).toList()
-                        : List.of())
-                .build();
     }
 }

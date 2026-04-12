@@ -1,12 +1,12 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.dto.payload.TablePayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.response.SyncDictionaryResponse;
+import com.example.restaurant.dto.sync.SyncDictionaryResponse;
+import com.example.restaurant.dto.sync.SyncTableResponse;
 import com.example.restaurant.dto.response.TableListWrapperResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
@@ -276,7 +276,7 @@ public class TableServicesTest {
                                 event.getEntityType().equals("TABLE") &&
                                 "NEW_TABLE_TOKEN".equals(event.getToken()) &&
                                 event.getPayload() != null &&
-                                ((TablePayload) event.getPayload()).getTableNumber() == 5
+                                ((SyncTableResponse) event.getPayload()).getTableNumber() == 5
                 )
         );
     }

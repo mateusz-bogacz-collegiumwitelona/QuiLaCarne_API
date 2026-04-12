@@ -1,6 +1,6 @@
 package com.example.restaurant.mappers;
 
-import com.example.restaurant.dto.response.*;
+import com.example.restaurant.dto.sync.*;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
@@ -170,6 +170,16 @@ public abstract class SyncMapper {
 
     @Named("mapReservationStatus")
     public List<String> mapReservationStatus(Set<ReservationStatus> statuses) {
+        return statuses != null
+                ? statuses.stream().map(BaseEntity::getToken).toList()
+                : List.of();
+    }
+
+    @Mapping(target = "statusTokens", source = "tableStatus", qualifiedByName = "mapTableStatus")
+    public abstract SyncTableResponse toSyncTableResponse(RestaurantTables table);
+
+    @Named("mapTableStatus")
+    public List<String> mapTableStatus(Set<TableStatus> statuses) {
         return statuses != null
                 ? statuses.stream().map(BaseEntity::getToken).toList()
                 : List.of();

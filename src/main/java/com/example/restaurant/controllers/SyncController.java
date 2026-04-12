@@ -1,6 +1,6 @@
 package com.example.restaurant.controllers;
 
-import com.example.restaurant.dto.response.*;
+import com.example.restaurant.dto.sync.*;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.ISyncServices;

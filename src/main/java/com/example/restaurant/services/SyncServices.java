@@ -1,11 +1,10 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.response.*;
+import com.example.restaurant.dto.sync.*;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.*;
-import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.repository.interfaces.*;
 import com.example.restaurant.services.interfaces.ISyncServices;
 import lombok.RequiredArgsConstructor;
@@ -171,20 +170,7 @@ public class SyncServices implements ISyncServices {
     public PagedResult<SyncTableResponse> getTablesSync(int page) {
         Page<RestaurantTables> tablesPage = _tableRepo.findAll(calculatePageable(page));
 
-        Page<SyncTableResponse> response = tablesPage.map(t -> {
-            List<String> statusTokens = t.getTableStatus() != null
-                    ? t.getTableStatus().stream().map(BaseEntity::getToken).toList()
-                    : List.of();
-
-            return SyncTableResponse.builder()
-                    .token(t.getToken())
-                    .tableNumber(t.getTableNumber())
-                    .capacity(t.getCapacity())
-                    .statusTokens(statusTokens)
-                    .createdAt(t.getCreatedAt())
-                    .updatedAt(t.getUpdatedAt())
-                    .build();
-        });
+        Page<SyncTableResponse> response = tablesPage.map(_syncMapper::toSyncTableResponse);
 
         return new PagedResult<>(response);
     }
