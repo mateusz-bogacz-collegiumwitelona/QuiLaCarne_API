@@ -1,9 +1,10 @@
 package com.example.restaurant.services;
 
-import com.example.restaurant.dto.payload.ReportPayload;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
+import com.example.restaurant.dto.response.SyncReportResponse;
 import com.example.restaurant.enums.WebSocketEventType;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.GuestReportStatus;
@@ -15,8 +16,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -43,6 +46,9 @@ public class ReportServicesTest {
 
     @InjectMocks
     private ReportServices _reportServices;
+
+    @Spy
+    private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
     @BeforeEach
     void setUp() {
@@ -87,7 +93,7 @@ public class ReportServicesTest {
                                 "NEW_REPORT_TOKEN".equals(event.getToken()) &&
                                 event.getPayload() != null &&
                                 "Inappropriate behavior at the table."
-                                        .equals(((ReportPayload) event.getPayload()).getReason())
+                                        .equals(((SyncReportResponse) event.getPayload()).getReason())
                 )
         );
     }
@@ -178,8 +184,9 @@ public class ReportServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/reports/updates"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("REPORT") &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.UPDATED &&
+                                "REPORT".equals(event.getEntityType()) &&
                                 "REPORT_TOKEN".equals(event.getToken()) &&
                                 event.getPayload() != null
                 )

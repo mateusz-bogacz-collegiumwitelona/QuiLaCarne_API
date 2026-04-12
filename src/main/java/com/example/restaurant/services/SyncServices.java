@@ -122,26 +122,7 @@ public class SyncServices implements ISyncServices {
     public PagedResult<SyncReportResponse> getReportsSync(int page) {
         Page<GuestReports> reportsPage = _reportRepo.findAll(null, calculatePageable(page));
 
-        Page<SyncReportResponse> response = reportsPage.map(r -> {
-            String guestToken = r.getGuest() != null ? r.getGuest().getToken() : null;
-            String reporterToken = r.getReporter() != null ? r.getReporter().getToken() : null;
-
-            List<String> statusTokens = r.getStatuses() != null
-                    ? r.getStatuses().stream()
-                      .map(BaseEntity::getToken)
-                      .toList()
-                    : List.of();
-
-            return SyncReportResponse.builder()
-                    .token(r.getToken())
-                    .guestToken(guestToken)
-                    .reporterToken(reporterToken)
-                    .statusTokens(statusTokens)
-                    .reason(r.getReason())
-                    .createdAt(r.getCreatedAt())
-                    .updatedAt(r.getUpdatedAt())
-                    .build();
-        });
+        Page<SyncReportResponse> response = reportsPage.map(_syncMapper::toSyncReportResponse);
 
         return new PagedResult<>(response);
     }

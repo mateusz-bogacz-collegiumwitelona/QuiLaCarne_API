@@ -1,18 +1,13 @@
 package com.example.restaurant.mappers;
 
-import com.example.restaurant.dto.response.SyncBanResponse;
-import com.example.restaurant.dto.response.SyncDictionaryResponse;
-import com.example.restaurant.dto.response.SyncDishResponse;
-import com.example.restaurant.dto.response.SyncUserResponse;
-import com.example.restaurant.models.Bans;
-import com.example.restaurant.models.Dishes;
-import com.example.restaurant.models.Ingredients;
-import com.example.restaurant.models.Users;
+import com.example.restaurant.dto.response.*;
+import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.BanStatus;
 import com.example.restaurant.models.lookup.DishesCategories;
+import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.models.lookup.Roles;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -97,7 +92,7 @@ public abstract class SyncMapper {
     }
 
     @Mapping(target = "userToken", source = "user", qualifiedByName = "mapUserToken")
-    @Mapping(target = "bannedByToken", source = "bannedBy", qualifiedByName = "mapBannedByToken")
+    @Mapping(target = "bannedByToken", source = "bannedBy", qualifiedByName = "mapUserToken")
     @Mapping(target = "statusTokens", source = "banStatuses", qualifiedByName = "mapBanStatuses")
     public abstract SyncBanResponse toBanSyncResponse(Bans ban);
 
@@ -106,13 +101,21 @@ public abstract class SyncMapper {
         return user != null ? user.getToken() : null;
     }
 
-    @Named("mapBannedByToken")
-    protected String mapBannedByToken(Users bannedBy) {
-        return bannedBy != null ? bannedBy.getToken() : null;
-    }
-
     @Named("mapBanStatuses")
     protected List<String> mapBanStatuses(Set<BanStatus> statuses) {
+        return statuses != null
+                ? statuses.stream().map(BaseEntity::getToken).toList()
+                : List.of();
+    }
+
+
+    @Mapping(target = "guestToken", source = "guest", qualifiedByName = "mapUserToken")
+    @Mapping(target = "reporterToken", source = "reporter", qualifiedByName = "mapUserToken")
+    @Mapping(target = "statusTokens", source = "statuses", qualifiedByName = "mapReportStatuses")
+    public abstract SyncReportResponse toSyncReportResponse(GuestReports report);
+
+    @Named("mapReportStatuses")
+    public List<String> mapReportStatuses(Set<GuestReportStatus> statuses) {
         return statuses != null
                 ? statuses.stream().map(BaseEntity::getToken).toList()
                 : List.of();

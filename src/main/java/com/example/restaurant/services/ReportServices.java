@@ -2,10 +2,11 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
-import com.example.restaurant.dto.payload.ReportPayload;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
+import com.example.restaurant.dto.response.SyncReportResponse;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.repository.interfaces.IReportRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
@@ -25,6 +26,8 @@ public class ReportServices implements IReportServices {
     private final IUserRepository _userRepo;
     private final IBanServices _banServices;
     private final NotificationServices _notification;
+
+    private final SyncMapper _syncMapper;
 
     private static final String REPORT_ENTITY_TYPE = "REPORT";
 
@@ -48,10 +51,10 @@ public class ReportServices implements IReportServices {
 
         _reportRepo.save(report);
 
-        WebSocketEvent<ReportPayload> event = WebSocketEvent.created(
+        WebSocketEvent<SyncReportResponse> event = WebSocketEvent.created(
                 REPORT_ENTITY_TYPE,
                 report.getToken(),
-                createPayload(report)
+                _syncMapper.toSyncReportResponse(report)
         );
         _notification.sendEventToTopic("/reports/updates", event);
     }
@@ -89,27 +92,11 @@ public class ReportServices implements IReportServices {
 
         _reportRepo.save(report);
 
-        WebSocketEvent<ReportPayload> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncReportResponse> event = WebSocketEvent.updated(
                 REPORT_ENTITY_TYPE,
                 report.getToken(),
-                createPayload(report)
+                _syncMapper.toSyncReportResponse(report)
         );
         _notification.sendEventToTopic("/reports/updates", event);
-    }
-
-    private ReportPayload createPayload(GuestReports report) {
-        String statusToken = null;
-        if (report.getStatuses() != null && !report.getStatuses().isEmpty()) {
-            statusToken = report.getStatuses().iterator().next().getToken();
-        }
-
-        return ReportPayload.builder()
-                .token(report.getToken())
-                .guestToken(report.getGuest() != null ? report.getGuest().getToken() : null)
-                .reporterToken(report.getReporter() != null ? report.getReporter().getToken() : null)
-                .reason(report.getReason())
-                .statusToken(statusToken)
-                .createdAt(report.getCreatedAt())
-                .build();
     }
 }
