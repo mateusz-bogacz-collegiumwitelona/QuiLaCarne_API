@@ -3,13 +3,28 @@
 Wszystkie powiadomienia w czasie rzeczywistym używają protokołu **STOMP** opartego na WebSocketach (z fallbackiem na
 SockJS).
 
-Aplikacja działa w architekturze **Push-to-Pull (Signal-and-Sync)**. Przez WebSockety NIE przesyłamy dużych obiektów
-JSON z danymi. Serwer wysyła jedynie krótki sygnał (string) informujący o zmianie. Kiedy klient odbierze sygnał, jego
-zadaniem jest wykonanie standardowego zapytania REST API (GET) w celu pobrania świeżych danych.
+---
+
+## 1. Architektura: Event-Driven Data
+
+Aplikacja przesyła kompletne, płaskie obiekty zmian (DTO). Klient **nie musi** wykonywać dodatkowego zapytania GET do
+REST API po odebraniu zdarzenia – pełne i aktualne dane znajdują się bezpośrednio w payloadzie wiadomości.
+
+### Struktura Koperty — `WebSocketEvent<T>`
+
+Każda wiadomość przesyłana przez WebSocket jest opakowana w standardową, generyczną kopertę:
+
+| Pole         | Typ      | Opis                                                                                      |
+|:-------------|:---------|:------------------------------------------------------------------------------------------|
+| `eventType`  | `String` | Rodzaj operacji: `CREATED`, `UPDATED` lub `DELETED`.                                      |
+| `entityType` | `String` | Typ encji, np. `ORDER`, `TABLE`, `RESERVATION`, `INGREDIENT`.                             |
+| `token`      | `String` | Unikalny identyfikator (token) zmienionego zasobu.                                        |
+| `payload`    | `Object` | Płaski obiekt danych DTO (np. `SyncOrderResponse`). Zawsze `null` dla operacji `DELETED`. |
+| `timestamp`  | `String` | Czas wygenerowania zdarzenia w formacie ISO (UTC).                                        |
 
 ---
 
-## 1. Nawiązywanie połączenia
+## 2. Nawiązywanie Połączenia
 
 **Adres endpointu:**
 
@@ -17,90 +32,109 @@ zadaniem jest wykonanie standardowego zapytania REST API (GET) w celu pobrania �
 ws://<adres-serwera>/ws-qlc
 ```
 
-> Jeśli korzystasz z biblioteki z obsługą SockJS (np. `stompjs`), użyj schematu `http://` zamiast `ws://`.
+> **Uwaga:** Przy korzystaniu z SockJS (np. `stompjs`), użyj schematu `http://` zamiast `ws://`. Token JWT autoryzujący
+> użytkownika należy przekazać w nagłówku ramki `CONNECT`.
 
-> **Autoryzacja:** Ponieważ nie jest to standardowy request HTTP, token JWT musisz podać w nagłówku ramki `CONNECT`.
+---
 
-**Przykład połączenia:**
+## 3. Wykaz Kanałów (Topics) i Payloadów
 
-```javascript
-const client = new StompJs.Client({
-    brokerURL: "ws://localhost:8080/ws-qlc",
-    connectHeaders: {
-        Authorization: "Bearer TWOJ_TOKEN_JWT",
-    },
-    onConnect: () => {
-        client.subscribe("/topic/menu/updates", (message) => {
-            console.log(message.body); // Akcja pobrania nowych danych
-        });
-    },
-});
+Poniżej znajduje się lista wszystkich dostępnych kanałów, na które klient może się zasubskrybować, wraz z informacją o
+klasie danych przesyłanej w polu `payload` w przypadku operacji tworzenia lub aktualizacji.
+
+### 3.1 Rezerwacje i Stoliki
+
+| Topic                         | Kiedy występuje                                                                                        | Klasa Payloadu (DTO)      |
+|:------------------------------|:-------------------------------------------------------------------------------------------------------|:--------------------------|
+| `/topic/reservations/updates` | Tworzenie nowej rezerwacji, anulowanie, przypisanie kelnera (IN_PROGRESS) lub oznaczenie jako NO_SHOW. | `SyncReservationResponse` |
+| `/topic/tables/updates`       | Utworzenie stolika, usunięcie lub zmiana jego statusu (np. na CLEANING, OUT_OF_SERVICE).               | `SyncTableResponse`       |
+
+### 3.2 Zamówienia
+
+| Topic                   | Kiedy występuje                                                                                                       | Klasa Payloadu (DTO)    |
+|:------------------------|:----------------------------------------------------------------------------------------------------------------------|:------------------------|
+| `/topic/orders/updates` | Tworzenie zamówienia do rezerwacji, aktualizacja całego zamówienia (np. zmiana całkowitej ceny, przypisanie kelnera). | `SyncOrderResponse`     |
+| `/topic/orders/items`   | Dodawanie nowych pozycji do zamówienia lub zmiana statusów konkretnych dań.                                           | `SyncOrderItemResponse` |
+
+### 3.3 Słowniki i Menu (Dictionary Sync)
+
+Kanały te służą do synchronizacji słowników referencyjnych oraz menu.
+
+| Topic                                   | Kiedy występuje                                                                 | Klasa Payloadu (DTO)                |
+|:----------------------------------------|:--------------------------------------------------------------------------------|:------------------------------------|
+| `/topic/dictionary/sync`                | Dodanie nowego składnika do słownika.                                           | `SyncIngredientResponse`            |
+| `/topic/menu/availability`              | Usunięcie składnika (Soft Delete), które powoduje dezaktywację powiązanych dań. | Zdarzenie `DELETED` (brak payloadu) |
+| `/topic/dictionary/allergens`           | Dodanie lub usunięcie alergenu ze słownika.                                     | `SyncDictionaryResponse`            |
+| `/topic/dictionary/dish-categories`     | Dodanie lub usunięcie kategorii dań.                                            | `SyncDictionaryResponse`            |
+| `/topic/dictionary/table-statuses`      | Dodanie lub usunięcie statusu stolika.                                          | `SyncDictionaryResponse`            |
+| `/topic/dictionary/order-statuses`      | Dodanie/usunięcie statusu całego zamówienia.                                    | `SyncDictionaryResponse`            |
+| `/topic/dictionary/order-item-statuses` | Dodanie/usunięcie statusu pojedynczej pozycji zamówienia.                       | `SyncDictionaryResponse`            |
+
+### 3.4 Bezpieczeństwo i Zgłoszenia (Security & Reports)
+
+| Topic                    | Kiedy występuje                                                                     | Klasa Payloadu (DTO) |
+|:-------------------------|:------------------------------------------------------------------------------------|:---------------------|
+| `/topic/reports/updates` | Kelner zgłasza klienta lub manager rozpatruje (akceptuje/odrzuca) takie zgłoszenie. | `SyncReportResponse` |
+| `/topic/security/bans`   | Nadanie bana klientowi, usunięcie bana lub jego automatyczne wygaśnięcie (CRON).    | `SyncBanResponse`    |
+
+### 3.5 Zarządzanie Menu (Dania)
+
+Kanały odpowiedzialne za główne pozycje w menu restauracji.
+
+| Topic                 | Kiedy występuje                                                                                     | Klasa Payloadu (DTO) |
+|:----------------------|:----------------------------------------------------------------------------------------------------|:---------------------|
+| `/topic/menu/updates` | Dodanie nowego dania, edycja jego ceny, zmiana zdjęcia, lub całkowite usunięcie z menu.             | `SyncDishResponse`   |
+| `/topic/menu`         | Zmiana dostępności dania (np. ręczne wyłączenie przez managera z powodu braku składnika na kuchni). | `SyncDishResponse`   |
+
+### 3.6 Zarządzanie Personelem (Users / Staff)
+
+Kanał synchronizujący konta pracowników (kelnerów, managerów, adminów).
+
+| Topic                      | Kiedy występuje                                                                     | Klasa Payloadu (DTO) |
+|:---------------------------|:------------------------------------------------------------------------------------|:---------------------|
+| `/topic/personnel/updates` | Dodanie nowego pracownika, zmiana jego roli, edycja danych, lub zablokowanie konta. | `SyncUserResponse`   |
+
+---
+
+## 4. Przykłady Struktury Komunikatów (JSON)
+
+Poniżej znajdują się przykłady reprezentujące komunikaty dla różnych typów operacji (`eventType`).
+
+### Przykład A: Tworzenie lub Aktualizacja (z pełnym payloadem)
+
+Gdy zasób zostaje utworzony (`CREATED`) lub zaktualizowany (`UPDATED`), pole `payload` zawiera pełny płaski obiekt (w
+tym wypadku zaktualizowany stolik).
+
+```json
+{
+  "eventType": "UPDATED",
+  "entityType": "TABLE",
+  "token": "TABLE-XYZ-123",
+  "payload": {
+    "token": "TABLE-XYZ-123",
+    "tableNumber": 12,
+    "capacity": 4,
+    "statusTokens": [
+      "CLEANING"
+    ],
+    "createdAt": "2026-03-01T10:00:00Z",
+    "updatedAt": "2026-04-12T22:59:00Z"
+  },
+  "timestamp": "2026-04-12T22:59:01Z"
+}
 ```
 
----
+### Przykład B: Usunięcie zasobu (brak payloadu)
 
-## 2. Kanały (Topics) — Kelner i Klient (React / Kotlin)
+Dla operacji `DELETED` obiekt `payload` jest zawsze pusty (`null`). Klient powinien usunąć zasób o podanym `token` ze
+swojego lokalnego stanu (np. ze store'a Redux / kontekstu).
 
-Te kanały są kluczowe do utrzymania spójności menu i mapy sali w trybie Offline.
-
-### Menu i dostępność
-
-| Topic                      | Kiedy                                                             | Payload                                                              |
-|----------------------------|-------------------------------------------------------------------|----------------------------------------------------------------------|
-| `/topic/menu/updates`      | Manager usunął, edytował lub dodał nowe danie.                    | `Dish removed: <token>` / `Dish updated: <token>` / `New dish added` |
-| `/topic/menu`              | Zmieniono dostępność dania (np. brak składników, ręczna blokada). | `Dish <token> is now available/unavailable`                          |
-| `/topic/menu/availability` | Usunięto składnik, co lawinowo zablokowało powiązane dania.       | `Multiple dishes disabled due to ingredient removal: <token>`        |
-
-### Słowniki (alergeny, składniki, kategorie)
-
-| Topic                         | Kiedy                                            | Payload                           |
-|-------------------------------|--------------------------------------------------|-----------------------------------|
-| `/topic/dictionary/sync`      | Zmiany w kategoriach menu lub liście składników. | `dish_categories` / `ingredients` |
-| `/topic/dictionary/allergens` | Dodano lub usunięto alergen.                     | `Allergen list updated`           |
-
-### Statusy stolików na sali
-
-| Topic                  | Kiedy                                                               | Payload                                    |
-|------------------------|---------------------------------------------------------------------|--------------------------------------------|
-| `/topic/tables`        | Stolik zmienił swój status (np. do sprzątania, wyłączony z użytku). | `Table <token> status changed to <status>` |
-| `/topic/tables/layout` | Manager dodał nowy fizyczny stolik na salę lub go usunął.           | `Table layout changed`                     |
-
----
-
-## 3. Kanały (Topics) — Kuchnia i Manager (Monitor zamówień .NET)
-
-### Zamówienia (kafelki na kuchni)
-
-| Topic                   | Kiedy                                                                     | Payload                                                                                                                                     |
-|-------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| `/topic/orders`         | Klient złożył zupełnie nowe zamówienie do rezerwacji (Pre-order).         | `New order for table: <tableToken>`                                                                                                         |
-| `/topic/orders/updates` | Kelner domówił danie, anulował pozycję lub goście nie przyszli (No Show). | `Item added to order: <reservationToken>` / `Item removed from order: <reservationToken>` / `Order cancelled (No Show): <reservationToken>` |
-
-### Rezerwacje
-
-| Topic                         | Kiedy                                                                                                               | Payload               |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------|-----------------------|
-| `/topic/reservations/updates` | Ktoś stworzył nową rezerwację lub ją anulował; kelner został przypisany do stolika (zmiana statusu na IN_PROGRESS). | `Reservation changed` |
-
----
-
-## 4. Kanały (Topics) — Bezpieczeństwo i Zarządzanie Personelem
-
-### Zgłoszenia (wzywanie managera)
-
-| Topic                    | Kiedy                                                                                           | Payload                                 |
-|--------------------------|-------------------------------------------------------------------------------------------------|-----------------------------------------|
-| `/topic/reports`         | Kelner zgłasza w aplikacji problematycznego gościa (kierownik sali dostaje alert na desktopie). | `New report from waiter: <waiterToken>` |
-| `/topic/reports/updates` | Manager rozpatrzył zgłoszenie kelnera (zaakceptował lub odrzucił).                              | `Report resolved: <reportToken>`        |
-
-### Bany (czarne listy)
-
-| Topic                  | Kiedy                                                                                                        | Payload                                           |
-|------------------------|--------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
-| `/topic/security/bans` | Klient dostał bana od managera lub ban naturalnie wygasł. Krytyczne dla urządzeń mobilnych w trybie offline. | `User banned: <token>` / `User unbanned: <token>` |
-
-### Personel
-
-| Topic                      | Kiedy                                                                                                      | Payload                  |
-|----------------------------|------------------------------------------------------------------------------------------------------------|--------------------------|
-| `/topic/personnel/updates` | Manager dodał nowego pracownika, edytował jego dane, zmienił rolę, zablokował konto lub usunął pracownika. | `Personnel list changed` |
+```json
+{
+  "eventType": "DELETED",
+  "entityType": "ALLERGEN",
+  "token": "ALLERGEN-NUTS-99",
+  "payload": null,
+  "timestamp": "2026-04-12T23:05:00Z"
+}
+```
