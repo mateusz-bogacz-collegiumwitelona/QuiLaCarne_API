@@ -4,11 +4,11 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
-import com.example.restaurant.dto.payload.OrderPayload;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.SyncDictionaryResponse;
+import com.example.restaurant.dto.response.SyncOrderResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.mappers.SyncMapper;
@@ -113,12 +113,12 @@ public class OrderServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/orders/updates"),
                 argThat(event ->
-                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.CREATED &&
+                        event.getEventType() == WebSocketEventType.CREATED &&
                                 event.getEntityType().equals("ORDER") &&
                                 "NEW_ORDER_TOKEN".equals(event.getToken()) &&
                                 event.getPayload() != null &&
                                 TestConstants.FAKE_RESERVATION_TOKEN
-                                        .equals(((OrderPayload) event.getPayload()).getReservationToken())
+                                        .equals(((SyncOrderResponse) event.getPayload()).getReservationToken())
                 )
         );
     }
@@ -367,10 +367,10 @@ public class OrderServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/orders/updates"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
+                        event.getEventType() == WebSocketEventType.DELETED &&
                                 event.getEntityType().equals("ORDER") &&
                                 event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN) &&
-                                event.getPayload() != null
+                                event.getPayload() == null
                 )
         );
     }
@@ -427,10 +427,10 @@ public class OrderServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/orders/updates"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
+                        event.getEventType() == WebSocketEventType.DELETED &&
                                 event.getEntityType().equals("ORDER") &&
                                 event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN) &&
-                                event.getPayload() != null
+                                event.getPayload() == null
                 )
         );
     }
@@ -587,17 +587,7 @@ public class OrderServicesTest {
         verify(_orderRepo, times(1)).saveAllItems(anyList());
         verify(_orderRepo, times(1)).save(mockOrder);
 
-        verify(_notification, times(1)).sendEventToTopic(
-                eq("/orders/updates"),
-                argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("ORDER") &&
-                                event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN) &&
-                                event.getPayload() != null &&
-                                TestConstants.FAKE_USER_TOKEN
-                                        .equals(((OrderPayload) event.getPayload()).getWaiterToken())
-                )
-        );
+        verify(_notification, never()).sendEventToTopic(anyString(), any());
     }
 
     @Test

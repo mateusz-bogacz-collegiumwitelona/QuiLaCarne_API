@@ -127,4 +127,49 @@ public abstract class SyncMapper {
                 ? allergens.stream().map(BaseEntity::getToken).toList()
                 : List.of();
     }
+
+    @Mapping(target = "waiterToken", source = "waiter", qualifiedByName = "mapUserToken")
+    @Mapping(target = "reservationToken", source = "reservation", qualifiedByName = "mapReservation")
+    @Mapping(target = "tableToken", source = "table", qualifiedByName = "mapTableToken")
+    @Mapping(target = "statusTokens", source = "statuses", qualifiedByName = "mapOrderStatuses")
+    public abstract SyncOrderResponse toSyncOrderResponse(Orders order);
+
+    @Mapping(target = "orderToken", source = "order", qualifiedByName = "mapOrder")
+    @Mapping(target = "productToken", source = "product", qualifiedByName = "mapProduct")
+    @Mapping(target = "statusTokens", source = "statuses", qualifiedByName = "mapOrderItemStatuses")
+    public abstract SyncOrderItemResponse toSyncOrderItemResponse(OrderItems item);
+
+    @Named("mapTableToken")
+    public String mapTableToken(RestaurantTables table) {
+        return table != null ? table.getToken() : null;
+    }
+
+    @Named("mapOrderStatuses")
+    public List<String> mapOrderStatuses(Set<OrderStatus> statuses) {
+        return statuses != null
+                ? statuses.stream().map(BaseEntity::getToken).toList()
+                : List.of();
+    }
+
+    @Named("mapOrder")
+    public String mapOrderToken(Orders order) {
+        return order != null ? order.getToken() : null;
+    }
+
+    @Named("mapProduct")
+    public String mapProductToken(Dishes dish) {
+        return dish != null ? dish.getToken() : null;
+    }
+
+    @Named("mapOrderItemStatuses")
+    public List<String> mapOrderItemStatuses(Set<OrderItemsStatus> statuses) {
+        return statuses != null
+                ? statuses.stream().map(BaseEntity::getToken).toList()
+                : List.of();
+    }
+
+    @Named("mapReservation")
+    public String mapReservation(Reservations reservation) {
+        return reservation != null ? reservation.getToken() : null;
+    }
 }

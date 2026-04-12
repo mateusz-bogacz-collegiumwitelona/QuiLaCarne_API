@@ -141,26 +141,7 @@ public class SyncServices implements ISyncServices {
     public PagedResult<SyncOrderResponse> getOrdersSync(int page) {
         Page<Orders> ordersPage = _orderRepo.findAll(calculatePageable(page));
 
-        Page<SyncOrderResponse> response = ordersPage.map(o -> {
-            String reservationToken = o.getReservation() != null ? o.getReservation().getToken() : null;
-            String tableToken = o.getTable() != null ? o.getTable().getToken() : null;
-            String waiterToken = o.getWaiter() != null ? o.getWaiter().getToken() : null;
-
-            List<String> statusTokens = o.getStatuses() != null
-                    ? o.getStatuses().stream().map(BaseEntity::getToken).toList()
-                    : List.of();
-
-            return SyncOrderResponse.builder()
-                    .token(o.getToken())
-                    .reservationToken(reservationToken)
-                    .tableToken(tableToken)
-                    .waiterToken(waiterToken)
-                    .totalPrice(o.getTotalPrice())
-                    .statusTokens(statusTokens)
-                    .createdAt(o.getCreatedAt())
-                    .updatedAt(o.getUpdatedAt())
-                    .build();
-        });
+        Page<SyncOrderResponse> response = ordersPage.map(_syncMapper::toSyncOrderResponse);
 
         return new PagedResult<>(response);
     }
@@ -170,26 +151,7 @@ public class SyncServices implements ISyncServices {
     public PagedResult<SyncOrderItemResponse> getOrderItemsSync(int page) {
         Page<OrderItems> itemsPage = _orderRepo.findAllItems(calculatePageable(page));
 
-        Page<SyncOrderItemResponse> response = itemsPage.map(i -> {
-            String orderToken = i.getOrder() != null ? i.getOrder().getToken() : null;
-            String productToken = i.getProduct() != null ? i.getProduct().getToken() : null;
-
-            List<String> statusTokens = i.getStatuses() != null
-                    ? i.getStatuses().stream().map(BaseEntity::getToken).toList()
-                    : List.of();
-
-            return SyncOrderItemResponse.builder()
-                    .token(i.getToken())
-                    .orderToken(orderToken)
-                    .productToken(productToken)
-                    .quantity(i.getQuantity())
-                    .priceAtTimeOfOrder(i.getPriceAtTimeOfOrder())
-                    .note(i.getNote())
-                    .statusTokens(statusTokens)
-                    .createdAt(i.getCreatedAt())
-                    .updatedAt(i.getUpdatedAt())
-                    .build();
-        });
+        Page<SyncOrderItemResponse> response = itemsPage.map(_syncMapper::toSyncOrderItemResponse);
 
         return new PagedResult<>(response);
     }
