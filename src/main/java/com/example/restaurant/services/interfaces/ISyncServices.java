@@ -17,4 +17,6 @@ public interface ISyncServices {
     PagedResult<SyncBanResponse> getBansSync(int page);
 
     PagedResult<SyncReportResponse> getReportsSync(int page);
+
+    PagedResult<SyncIngredientResponse> getIngredientsSync(int page);
 }

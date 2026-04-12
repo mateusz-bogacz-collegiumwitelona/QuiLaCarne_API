@@ -6,6 +6,7 @@ import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.GuestReports;
+import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
@@ -83,7 +84,6 @@ public class SyncServices implements ISyncServices {
     public SyncDictionariesResponse getDictionaries() {
         return SyncDictionariesResponse.builder()
                 .allergens(mapToSync(_allergenRepo.findAll()))
-                .ingredients(mapToSync(_ingredientsRepo.findAll()))
                 .dishCategories(mapToSync(_dishRepo.findAllCategories()))
                 .banStatuses(mapToSync(_banRepo.findAllStatuses()))
                 .reportStatuses(mapToSync(_reportRepo.findAllStatuses()))
@@ -207,6 +207,29 @@ public class SyncServices implements ISyncServices {
                     .reason(r.getReason())
                     .createdAt(r.getCreatedAt())
                     .updatedAt(r.getUpdatedAt())
+                    .build();
+        });
+
+        return new PagedResult<>(response);
+    }
+
+    @Override
+    @Auditable(action = "SYNC_INGREDIENTS")
+    public PagedResult<SyncIngredientResponse> getIngredientsSync(int page) {
+        Page<Ingredients> ingredientsPage = _ingredientsRepo.findAll(calculatePageable(page));
+
+        Page<SyncIngredientResponse> response = ingredientsPage.map(i -> {
+            List<String> allergenTokens = i.getAllergens() != null
+                    ? i.getAllergens().stream()
+                      .map(BaseEntity::getToken)
+                      .toList()
+                    : List.of();
+
+            return SyncIngredientResponse.builder()
+                    .token(i.getToken())
+                    .nameEn(i.getNameEn())
+                    .namePl(i.getNamePl())
+                    .allergenTokens(allergenTokens)
                     .build();
         });
 

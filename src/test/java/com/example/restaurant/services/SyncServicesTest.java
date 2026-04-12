@@ -5,10 +5,7 @@ import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
-import com.example.restaurant.models.lookup.BanStatus;
-import com.example.restaurant.models.lookup.DishesCategories;
-import com.example.restaurant.models.lookup.GuestReportStatus;
-import com.example.restaurant.models.lookup.Roles;
+import com.example.restaurant.models.lookup.*;
 import com.example.restaurant.repository.interfaces.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -116,7 +113,6 @@ public class SyncServicesTest {
         when(translatedEntity.getNamePl()).thenReturn("Jabłko");
 
         when(_allergenRepo.findAll()).thenReturn((List) List.of(translatedEntity));
-        when(_ingredientsRepo.findAll()).thenReturn(List.of());
         when(_dishRepo.findAllCategories()).thenReturn(List.of());
         when(_banRepo.findAllStatuses()).thenReturn(List.of());
         when(_reportRepo.findAllStatuses()).thenReturn(List.of());
@@ -132,7 +128,6 @@ public class SyncServicesTest {
         assertEquals("TOKEN_1", response.getAllergens().getFirst().getToken());
         assertEquals("Apple", response.getAllergens().getFirst().getNameEn());
         assertEquals("Jabłko", response.getAllergens().getFirst().getNamePl());
-        assertTrue(response.getIngredients().isEmpty());
     }
 
     @Test
@@ -388,5 +383,66 @@ public class SyncServicesTest {
         assertNull(response.getReporterToken());
         assertNotNull(response.getStatusTokens());
         assertTrue(response.getStatusTokens().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Get Ingredients Sync: Should correctly map ingredients and extract allergen tokens")
+    void getIngredientsSync_ShouldReturnMappedIngredients() {
+        Allergens allergen = new Allergens();
+        allergen.setToken("ALLERGEN_PEANUTS");
+
+        Ingredients ingredient = new Ingredients();
+        ingredient.setToken("ING_PEANUT_BUTTER");
+        ingredient.setNameEn("Peanut Butter");
+        ingredient.setNamePl("Masło Orzechowe");
+        ingredient.setAllergens(java.util.Set.of(allergen));
+
+        Page<Ingredients> mockPage =
+                new PageImpl<>(
+                        List.of(ingredient),
+                        PageRequest.of(0, 20),
+                        1
+                );
+        when(_ingredientsRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncIngredientResponse> result =
+                _syncServices.getIngredientsSync(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+
+        SyncIngredientResponse response = result.getItems().getFirst();
+        assertEquals("ING_PEANUT_BUTTER", response.getToken());
+        assertEquals("Peanut Butter", response.getNameEn());
+        assertEquals("Masło Orzechowe", response.getNamePl());
+        assertNotNull(response.getAllergenTokens());
+        assertEquals(1, response.getAllergenTokens().size());
+        assertEquals("ALLERGEN_PEANUTS", response.getAllergenTokens().getFirst());
+    }
+
+    @Test
+    @DisplayName("Get Ingredients Sync: Should handle missing relations gracefully")
+    void getIngredientsSync_ShouldHandleNullRelations() {
+        Ingredients ingredient = new Ingredients();
+        ingredient.setToken("ING_WATER");
+        ingredient.setNameEn("Water");
+        ingredient.setNamePl("Woda");
+
+        Page<Ingredients> mockPage =
+                new PageImpl<>(
+                        List.of(ingredient),
+                        PageRequest.of(0, 20),
+                        1
+                );
+        when(_ingredientsRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncIngredientResponse> result =
+                _syncServices.getIngredientsSync(1);
+
+        assertNotNull(result);
+        SyncIngredientResponse response = result.getItems().getFirst();
+
+        assertNotNull(response.getAllergenTokens());
+        assertTrue(response.getAllergenTokens().isEmpty());
     }
 }

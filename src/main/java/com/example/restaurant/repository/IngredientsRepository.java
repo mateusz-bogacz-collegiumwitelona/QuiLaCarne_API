@@ -5,6 +5,8 @@ import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaIngredientsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -36,6 +38,11 @@ public class IngredientsRepository implements IIngredientsRepository {
     @Override
     public List<Ingredients> findAll() {
         return _jpaIngredientsRepo.findAll();
+    }
+
+    @Override
+    public Page<Ingredients> findAll(Pageable pageable) {
+        return _jpaIngredientsRepo.findAll(pageable);
     }
 
     @Override

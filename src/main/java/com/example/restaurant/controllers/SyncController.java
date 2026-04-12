@@ -174,4 +174,28 @@ public class SyncController {
                 result
         ));
     }
+
+    @Operation(
+            summary = "Fetch flat list of ingredients (Sync)",
+            description = "Returns a paginated, flat list of ingredients with their " +
+                    "translations and associated allergen tokens."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Ingredients sync page fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role")
+    })
+    @GetMapping("/ingredients")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<SyncIngredientResponse>>> getIngredientsSync(
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        var result = _syncServices.getIngredientsSync(page);
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Ingredients sync page fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
 }

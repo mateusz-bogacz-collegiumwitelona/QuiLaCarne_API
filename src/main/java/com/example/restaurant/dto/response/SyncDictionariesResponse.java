@@ -13,7 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 public class SyncDictionariesResponse {
     private List<SyncDictionaryResponse> allergens;
-    private List<SyncDictionaryResponse> ingredients;
     private List<SyncDictionaryResponse> dishCategories;
     private List<SyncDictionaryResponse> banStatuses;
     private List<SyncDictionaryResponse> reportStatuses;
