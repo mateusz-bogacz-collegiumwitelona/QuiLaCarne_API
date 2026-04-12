@@ -112,28 +112,7 @@ public class SyncServices implements ISyncServices {
     public PagedResult<SyncBanResponse> getBansSync(int page) {
         Page<Bans> bansPage = _banRepo.findAll(calculatePageable(page));
 
-        Page<SyncBanResponse> response = bansPage.map(b -> {
-            String userToken = b.getUser() != null ? b.getUser().getToken() : null;
-            String bannedByToken = b.getBannedBy() != null ? b.getBannedBy().getToken() : null;
-
-            List<String> statusToken = b.getBanStatuses() != null
-                    ? b.getBanStatuses().stream()
-                      .map(BaseEntity::getToken)
-                      .toList()
-                    : List.of();
-
-            return SyncBanResponse.builder()
-                    .token(b.getToken())
-                    .userToken(userToken)
-                    .bannedByToken(bannedByToken)
-                    .statusTokens(statusToken)
-                    .reason(b.getReason())
-                    .expiresAt(b.getExpiresAt())
-                    .isActive(b.getIsActive())
-                    .createdAt(b.getCreatedAt())
-                    .updatedAt(b.getUpdatedAt())
-                    .build();
-        });
+        Page<SyncBanResponse> response = bansPage.map(_syncMapper::toBanSyncResponse);
 
         return new PagedResult<>(response);
     }

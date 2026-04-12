@@ -3,6 +3,8 @@ package com.example.restaurant.services;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.enums.WebSocketEventType;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.BanStatus;
@@ -14,8 +16,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -43,6 +47,9 @@ public class BanServicesTest {
 
     @InjectMocks
     private BanServices _banServices;
+
+    @Spy
+    private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
     private Users admin;
     private Users client;
@@ -89,9 +96,10 @@ public class BanServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/security/bans"),
                 argThat(event ->
-                        event.getEventType() == com.example.restaurant.enums.WebSocketEventType.CREATED &&
-                                event.getEntityType().equals("BAN") &&
-                                event.getPayload() == null
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.CREATED &&
+                                "BAN".equals(event.getEntityType()) &&
+                                event.getPayload() != null
                 )
         );
     }

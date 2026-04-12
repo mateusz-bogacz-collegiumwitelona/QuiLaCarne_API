@@ -4,8 +4,10 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.SyncBanResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IBanRepository;
@@ -30,6 +32,8 @@ public class BanServices implements IBanServices {
     private final EmailServices _emailServices;
     private final IUserRepository _userRepo;
     private final NotificationServices _notification;
+
+    private final SyncMapper _syncMapper;
 
     private static final String ENTITY_TYPE = "BAN";
 
@@ -87,7 +91,11 @@ public class BanServices implements IBanServices {
                 domain.reason()
         );
 
-        WebSocketEvent<Void> event = WebSocketEvent.created(ENTITY_TYPE, ban.getToken(), null);
+        WebSocketEvent<SyncBanResponse> event = WebSocketEvent.created(
+                ENTITY_TYPE,
+                ban.getToken(),
+                _syncMapper.toBanSyncResponse(ban)
+        );
         _notification.sendEventToTopic("/security/bans", event);
     }
 
@@ -121,7 +129,11 @@ public class BanServices implements IBanServices {
             _banRepo.save(ban);
             _userRepo.save(user);
 
-            WebSocketEvent<Void> event = WebSocketEvent.updated(ENTITY_TYPE, ban.getToken(), null);
+            WebSocketEvent<SyncBanResponse> event = WebSocketEvent.updated(
+                    ENTITY_TYPE,
+                    ban.getToken(),
+                    _syncMapper.toBanSyncResponse(ban)
+            );
             _notification.sendEventToTopic("/security/bans", event);
 
             log.info("User {} has been automatically unbanned.", user.getUsername());
