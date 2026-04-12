@@ -3,6 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseNamedEntity;
@@ -34,6 +35,8 @@ public class SyncServices implements ISyncServices {
     private final IRoleRepository _roleRepo;
     private final ITableRespository _tableRepo;
     private final IIngredientsRepository _ingredientsRepo;
+
+    private final SyncMapper _syncMapper;
 
     private final int DEFAULT_PAGE_SIZE = 20;
 
@@ -337,27 +340,7 @@ public class SyncServices implements ISyncServices {
     public PagedResult<SyncUserResponse> getUsersSync(int page) {
         Page<Users> usersPage = _userRepo.findAllUsers(null, calculatePageable(page));
 
-        Page<SyncUserResponse> response = usersPage.map(u -> {
-            List<String> roleTokens = u.getRoles() != null
-                    ? u.getRoles().stream().map(BaseEntity::getToken).toList()
-                    : List.of();
-
-            boolean isStaff = u.getRoles() != null && u.getRoles().stream()
-                    .anyMatch(r -> r.getName().equals("ROLE_WAITER")
-                            || r.getName().equals("ROLE_MANAGER")
-                            || r.getName().equals("ROLE_ADMIN"));
-
-            return SyncUserResponse.builder()
-                    .token(u.getToken())
-                    .username(u.getUsername())
-                    .email(u.getEmail())
-                    .isActive(u.getIsActive())
-                    .isStaff(isStaff)
-                    .roleTokens(roleTokens)
-                    .createdAt(u.getCreatedAt())
-                    .updatedAt(u.getUpdatedAt())
-                    .build();
-        });
+        Page<SyncUserResponse> response = usersPage.map(_syncMapper::toSyncUserResponse);
 
         return new PagedResult<>(response);
     }

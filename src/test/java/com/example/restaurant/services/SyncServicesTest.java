@@ -2,6 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
@@ -11,9 +12,11 @@ import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -65,6 +68,9 @@ public class SyncServicesTest {
 
     @InjectMocks
     private SyncServices _syncServices;
+
+    @Spy
+    private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
     @Test
     @DisplayName("Get Bootstrap Manifest: Should return correct counts and calculated pages")

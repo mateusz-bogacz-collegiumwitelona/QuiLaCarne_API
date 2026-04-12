@@ -35,6 +35,7 @@ public interface ReservationMapper {
     @Mapping(target = "status", source = "reservationStatus", qualifiedByName = "mapStatus")
     @Mapping(target = "dishes", ignore = true)
     @Mapping(target = "totalPrice", ignore = true)
+    @SuppressWarnings("unused")
     TodayReservationsResponse toTodayReservationsResponse(Reservations reservations, @Context String lang);
 
     @Named("mapTableStatus")

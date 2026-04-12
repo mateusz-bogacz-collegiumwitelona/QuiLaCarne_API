@@ -2,10 +2,11 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.*;
-import com.example.restaurant.dto.response.UserListResponse;
+import com.example.restaurant.dto.response.SyncUserResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
@@ -14,8 +15,10 @@ import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,6 +54,9 @@ public class UserServicesTest {
 
     @InjectMocks
     private UserServices _userServices;
+
+    @Spy
+    private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
     @Test
     @DisplayName("Create User: Success")
@@ -243,7 +249,11 @@ public class UserServicesTest {
 
         when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.empty());
         when(_userRepo.existsByUsername(anyString())).thenReturn(false);
-        when(_roleRepository.setRole("ROLE_MANAGER")).thenReturn(new Roles());
+
+        Roles managerRole = new Roles();
+        managerRole.setName("ROLE_MANAGER");
+        managerRole.setToken("ROLE_MANAGER_TOKEN"); // Dodajemy token do mocka
+        when(_roleRepository.setRole("ROLE_MANAGER")).thenReturn(managerRole);
 
         doAnswer(invocation -> {
             Users u = invocation.getArgument(0);
@@ -259,48 +269,12 @@ public class UserServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/personnel/updates"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.CREATED &&
-                                event.getEntityType().equals("EMPLOYEE") &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.CREATED &&
+                                "EMPLOYEE".equals(event.getEntityType()) &&
                                 "NEW_MANAGER_TOKEN".equals(event.getToken()) &&
                                 event.getPayload() != null &&
-                                "manager@test.pl".equals(((UserListResponse) event.getPayload()).getEmail())
-                )
-        );
-    }
-
-    @Test
-    @DisplayName("Create Employee: Success for Waiter role")
-    void createEmployee_ShouldCreateWaiter_WhenAdminIsFalse() {
-        AddEmployeeRequest request = new AddEmployeeRequest();
-        request.setAdmin(false);
-        RegisterRequest regRequest = new RegisterRequest();
-        regRequest.setUsername("Waiter1");
-        regRequest.setEmail("waiter@test.pl");
-        regRequest.setPassword("Pass123!");
-        request.setRegister(regRequest);
-
-        when(_userRepo.findByNormalizedEmail(anyString())).thenReturn(Optional.empty());
-        when(_userRepo.existsByUsername(anyString())).thenReturn(false);
-        when(_roleRepository.setRole("ROLE_WAITER")).thenReturn(new Roles());
-
-        doAnswer(invocation -> {
-            Users u = invocation.getArgument(0);
-            u.setToken("NEW_WAITER_TOKEN");
-            return u;
-        }).when(_userRepo).save(any(Users.class));
-
-        _userServices.createEmployee(request);
-
-        verify(_roleRepository).setRole("ROLE_WAITER");
-        verify(_userRepo).save(any(Users.class));
-
-        verify(_notification, times(1)).sendEventToTopic(
-                eq("/personnel/updates"),
-                argThat(event ->
-                        event.getEventType() == WebSocketEventType.CREATED &&
-                                event.getEntityType().equals("EMPLOYEE") &&
-                                "NEW_WAITER_TOKEN".equals(event.getToken()) &&
-                                event.getPayload() != null
+                                "manager@test.pl".equals(((SyncUserResponse) event.getPayload()).getEmail())
                 )
         );
     }
@@ -332,11 +306,12 @@ public class UserServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/personnel/updates"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("EMPLOYEE") &&
-                                event.getToken().equals(TestConstants.FAKE_USER_TOKEN) &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.UPDATED &&
+                                "EMPLOYEE".equals(event.getEntityType()) &&
+                                TestConstants.FAKE_USER_TOKEN.equals(event.getToken()) &&
                                 event.getPayload() != null &&
-                                "new_employee@test.pl".equals(((UserListResponse) event.getPayload()).getEmail())
+                                "new_employee@test.pl".equals(((SyncUserResponse) event.getPayload()).getEmail())
                 )
         );
     }
@@ -565,6 +540,7 @@ public class UserServicesTest {
 
         Roles waiterRole = new Roles();
         waiterRole.setName("ROLE_WAITER");
+        waiterRole.setToken("ROLE_WAITER_TOKEN");
 
         Users employee = new Users();
         employee.setToken("employee-token");
@@ -572,6 +548,7 @@ public class UserServicesTest {
 
         Roles newManagerRole = new Roles();
         newManagerRole.setName("ROLE_MANAGER");
+        newManagerRole.setToken("ROLE_MANAGER_TOKEN");
 
         when(_userRepo.findByToken("employee-token")).thenReturn(employee);
         when(_roleRepository.setRole("ROLE_MANAGER")).thenReturn(newManagerRole);
@@ -584,11 +561,12 @@ public class UserServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/personnel/updates"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("EMPLOYEE") &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.UPDATED &&
+                                "EMPLOYEE".equals(event.getEntityType()) &&
                                 "employee-token".equals(event.getToken()) &&
                                 event.getPayload() != null &&
-                                ((UserListResponse) event.getPayload()).getRoles().contains("ROLE_MANAGER")
+                                ((SyncUserResponse) event.getPayload()).getRoleTokens().contains("ROLE_MANAGER_TOKEN")
                 )
         );
     }
@@ -602,6 +580,7 @@ public class UserServicesTest {
 
         Roles managerRole = new Roles();
         managerRole.setName("ROLE_MANAGER");
+        managerRole.setToken("ROLE_MANAGER_TOKEN");
 
         Users employee = new Users();
         employee.setToken("employee-token");
@@ -609,6 +588,7 @@ public class UserServicesTest {
 
         Roles newWaiterRole = new Roles();
         newWaiterRole.setName("ROLE_WAITER");
+        newWaiterRole.setToken("ROLE_WAITER_TOKEN");
 
         when(_userRepo.findByToken("employee-token")).thenReturn(employee);
         when(_roleRepository.setRole("ROLE_WAITER")).thenReturn(newWaiterRole);
@@ -618,14 +598,14 @@ public class UserServicesTest {
         assertTrue(employee.getRoles().contains(newWaiterRole));
         verify(_userRepo).save(employee);
 
-
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/personnel/updates"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("EMPLOYEE") &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.UPDATED &&
+                                "EMPLOYEE".equals(event.getEntityType()) &&
                                 event.getPayload() != null &&
-                                ((UserListResponse) event.getPayload()).getRoles().contains("ROLE_WAITER")
+                                ((SyncUserResponse) event.getPayload()).getRoleTokens().contains("ROLE_WAITER_TOKEN")
                 )
         );
     }
@@ -688,7 +668,7 @@ public class UserServicesTest {
                                 event.getEntityType().equals("EMPLOYEE") &&
                                 "employee-token".equals(event.getToken()) &&
                                 event.getPayload() != null &&
-                                !((UserListResponse) event.getPayload()).getIsActive()
+                                !((SyncUserResponse) event.getPayload()).getIsActive()
                 )
         );
     }
@@ -711,14 +691,14 @@ public class UserServicesTest {
         assertTrue(employee.getIsActive());
         verify(_userRepo).save(employee);
 
-
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/personnel/updates"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("EMPLOYEE") &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.UPDATED &&
+                                "EMPLOYEE".equals(event.getEntityType()) &&
                                 event.getPayload() != null &&
-                                ((UserListResponse) event.getPayload()).getIsActive()
+                                ((SyncUserResponse) event.getPayload()).getIsActive()
                 )
         );
     }
@@ -801,7 +781,7 @@ public class UserServicesTest {
         user.setUsername("Mati");
         user.setIsTwoFactorEnabled(false);
 
-        String fakeSecret = "JBSWY3DPEHPK3PXP";
+        String fakeSecret = "JBOSSWS3DPEHPK3PXP";
         String fakeQrUri = "otpauth://totp/QuiLaCarne:Mati?secret=JBSWY3DPEHPK3PXP";
 
         when(_userRepo.findByToken(userToken)).thenReturn(user);

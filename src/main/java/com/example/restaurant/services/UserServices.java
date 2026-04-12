@@ -4,14 +4,14 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.Generate2faResponse;
-import com.example.restaurant.dto.response.UserListResponse;
+import com.example.restaurant.dto.response.SyncUserResponse;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.helpers.SoftDeleteHelpers;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Users;
-import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
@@ -40,6 +40,8 @@ public class UserServices implements IUserServices {
     private final IVerificationTokenServices _tokenServices;
     private final TwoFactorServices _2faServices;
     private final NotificationServices _notification;
+
+    private final SyncMapper _syncMapper;
 
     private final String ROLE_MANAGER = "ROLE_MANAGER";
     private final String ROLE_WAITER = "ROLE_WAITER";
@@ -187,10 +189,10 @@ public class UserServices implements IUserServices {
             employee = buildAndSaveUser(request.getRegister(), ROLE_WAITER, true);
         }
 
-        WebSocketEvent<UserListResponse> event = WebSocketEvent.created(
+        WebSocketEvent<SyncUserResponse> event = WebSocketEvent.created(
                 EMPLOYEE_ENTITY_TYPE,
                 employee.getToken(),
-                createPayload(employee)
+                _syncMapper.toSyncUserResponse(employee)
         );
         _notification.sendEventToTopic("/personnel/updates", event);
     }
@@ -230,10 +232,10 @@ public class UserServices implements IUserServices {
 
         _userRepo.save(employee);
 
-        WebSocketEvent<UserListResponse> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncUserResponse> event = WebSocketEvent.updated(
                 EMPLOYEE_ENTITY_TYPE,
                 employee.getToken(),
-                createPayload(employee)
+                _syncMapper.toSyncUserResponse(employee)
         );
         _notification.sendEventToTopic("/personnel/updates", event);
     }
@@ -283,10 +285,10 @@ public class UserServices implements IUserServices {
 
         _userRepo.save(user);
 
-        WebSocketEvent<UserListResponse> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncUserResponse> event = WebSocketEvent.updated(
                 EMPLOYEE_ENTITY_TYPE,
                 user.getToken(),
-                createPayload(user)
+                _syncMapper.toSyncUserResponse(user)
         );
         _notification.sendEventToTopic("/personnel/updates", event);
     }
@@ -308,10 +310,10 @@ public class UserServices implements IUserServices {
 
         _userRepo.save(user);
 
-        WebSocketEvent<UserListResponse> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncUserResponse> event = WebSocketEvent.updated(
                 EMPLOYEE_ENTITY_TYPE,
                 user.getToken(),
-                createPayload(user)
+                _syncMapper.toSyncUserResponse(user)
         );
         _notification.sendEventToTopic("/personnel/updates", event);
     }
@@ -438,16 +440,5 @@ public class UserServices implements IUserServices {
 
         _userRepo.save(user);
         return user;
-    }
-
-    private UserListResponse createPayload(Users user) {
-        return UserListResponse.builder()
-                .token(user.getToken())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .isActive(user.getIsActive())
-                .roles(user.getRoles().stream().map(BaseNamedEntity::getName).toList())
-                .createdAt(user.getCreatedAt())
-                .build();
     }
 }
