@@ -198,4 +198,72 @@ public class SyncController {
                 result
         ));
     }
+
+    @Operation(
+            summary = "Fetch flat list of orders (Sync)",
+            description = "Returns a paginated, flat list of orders with " +
+                    "foreign key tokens (reservation, table, waiter, statuses)."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Orders sync page fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role")
+    })
+    @GetMapping("/orders")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<SyncOrderResponse>>> getOrdersSync(
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        var result = _syncServices.getOrdersSync(page);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Orders sync page fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
+
+    @Operation(
+            summary = "Fetch flat list of order items (Sync)",
+            description = "Returns a paginated, flat list of order items with foreign key tokens (order, product, statuses)."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Order items sync page fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role")
+    })
+    @GetMapping("/order-items")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<SyncOrderItemResponse>>> getOrderItemsSync(
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        var result = _syncServices.getOrderItemsSync(page);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Order items sync page fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
+
+    @Operation(
+            summary = "Fetch flat list of reservations (Sync)",
+            description = "Returns a paginated, flat list of reservations " +
+                    "with foreign key tokens (user, table, statuses)."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Reservations sync page fetched successfully"),
+            @ApiResponse(responseCode = "401", description = "No authorization"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role")
+    })
+    @GetMapping("/reservations")
+    @PreAuthorize("hasAnyRole('ROLE_WAITER', 'ROLE_MANAGER')")
+    public ResponseEntity<ResultHandler<PagedResult<SyncReservationResponse>>> getReservationsSync(
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        var result = _syncServices.getReservationsSync(page);
+        return ResponseEntity.ok(ResultHandler.success(
+                "Reservations sync page fetched successfully",
+                HttpStatus.OK.value(),
+                result
+        ));
+    }
 }

@@ -19,4 +19,10 @@ public interface ISyncServices {
     PagedResult<SyncReportResponse> getReportsSync(int page);
 
     PagedResult<SyncIngredientResponse> getIngredientsSync(int page);
+
+    PagedResult<SyncOrderResponse> getOrdersSync(int page);
+
+    PagedResult<SyncOrderItemResponse> getOrderItemsSync(int page);
+
+    PagedResult<SyncReservationResponse> getReservationsSync(int page);
 }

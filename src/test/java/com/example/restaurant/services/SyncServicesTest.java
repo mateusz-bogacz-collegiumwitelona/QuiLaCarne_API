@@ -7,6 +7,7 @@ import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
 import com.example.restaurant.models.lookup.*;
 import com.example.restaurant.repository.interfaces.*;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -316,21 +318,7 @@ public class SyncServicesTest {
     @Test
     @DisplayName("Get Reports Sync: Should correctly map reports and extract foreign keys")
     void getReportsSync_ShouldReturnMappedReports() {
-        Users guest = new Users();
-        guest.setToken("GUEST_123");
-
-        Users reporter = new Users();
-        reporter.setToken("REPORTER_456");
-
-        GuestReportStatus status = new GuestReportStatus();
-        status.setToken("STATUS_IN_PROGRESS");
-
-        GuestReports report = new GuestReports();
-        report.setToken("REPORT_789");
-        report.setGuest(guest);
-        report.setReporter(reporter);
-        report.setReason("Głośne zachowanie");
-        report.setStatuses(Set.of(status));
+        GuestReports report = getGuestReports();
 
         Page<GuestReports> mockPage =
                 new PageImpl<>(
@@ -356,6 +344,7 @@ public class SyncServicesTest {
         assertEquals(1, response.getStatusTokens().size());
         assertEquals("STATUS_IN_PROGRESS", response.getStatusTokens().getFirst());
     }
+
 
     @Test
     @DisplayName("Get Reports Sync: Should handle missing relations gracefully")
@@ -444,5 +433,241 @@ public class SyncServicesTest {
 
         assertNotNull(response.getAllergenTokens());
         assertTrue(response.getAllergenTokens().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Get Orders Sync: Should correctly map orders and extract foreign keys")
+    void getOrdersSync_ShouldReturnMappedOrders() {
+        Orders order = getOrders();
+
+        Page<Orders> mockPage = new PageImpl<>(
+                List.of(order),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_orderRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncOrderResponse> result = _syncServices.getOrdersSync(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+
+        SyncOrderResponse response = result.getItems().getFirst();
+        assertEquals("ORDER_1", response.getToken());
+        assertEquals(15000, response.getTotalPrice());
+
+        assertEquals("RES_123", response.getReservationToken());
+        assertEquals("TABLE_5", response.getTableToken());
+        assertEquals("WAITER_99", response.getWaiterToken());
+        assertEquals(1, response.getStatusTokens().size());
+        assertEquals("STATUS_NEW", response.getStatusTokens().getFirst());
+    }
+
+    @Test
+    @DisplayName("Get Orders Sync: Should handle missing relations gracefully")
+    void getOrdersSync_ShouldHandleNullRelations() {
+        Orders order = new Orders();
+        order.setToken("ORDER_NULL");
+
+        Page<Orders> mockPage = new PageImpl<>(
+                List.of(order),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_orderRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncOrderResponse> result = _syncServices.getOrdersSync(1);
+
+        assertNotNull(result);
+        SyncOrderResponse response = result.getItems().getFirst();
+
+        assertNull(response.getReservationToken());
+        assertNull(response.getTableToken());
+        assertNull(response.getWaiterToken());
+        assertNotNull(response.getStatusTokens());
+        assertTrue(response.getStatusTokens().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Get Order Items Sync: Should correctly map items and extract foreign keys")
+    void getOrderItemsSync_ShouldReturnMappedItems() {
+        OrderItems item = getOrderItems();
+
+        Page<OrderItems> mockPage = new PageImpl<>(
+                List.of(item),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_orderRepo.findAllItems(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncOrderItemResponse> result = _syncServices.getOrderItemsSync(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+
+        SyncOrderItemResponse response = result.getItems().getFirst();
+        assertEquals("ITEM_1", response.getToken());
+        assertEquals(2, response.getQuantity());
+        assertEquals(3500, response.getPriceAtTimeOfOrder());
+        assertEquals("Bez cebuli", response.getNote());
+
+        assertEquals("ORDER_1", response.getOrderToken());
+        assertEquals("DISH_PIZZA", response.getProductToken());
+        assertEquals(1, response.getStatusTokens().size());
+        assertEquals("ITEM_STATUS_DONE", response.getStatusTokens().getFirst());
+    }
+
+    private static @NonNull OrderItems getOrderItems() {
+        Orders order = new Orders();
+        order.setToken("ORDER_1");
+
+        Dishes dish = new Dishes();
+        dish.setToken("DISH_PIZZA");
+
+        OrderItemsStatus status = new OrderItemsStatus();
+        status.setToken("ITEM_STATUS_DONE");
+
+        OrderItems item = new OrderItems();
+        item.setToken("ITEM_1");
+        item.setOrder(order);
+        item.setProduct(dish);
+        item.setQuantity(2);
+        item.setPriceAtTimeOfOrder(3500);
+        item.setNote("Bez cebuli");
+        item.setStatuses(Set.of(status));
+        return item;
+    }
+
+    @Test
+    @DisplayName("Get Order Items Sync: Should handle missing relations gracefully")
+    void getOrderItemsSync_ShouldHandleNullRelations() {
+        OrderItems item = new OrderItems();
+        item.setToken("ITEM_NULL");
+
+        Page<OrderItems> mockPage = new PageImpl<>(
+                List.of(item),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_orderRepo.findAllItems(any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncOrderItemResponse> result = _syncServices.getOrderItemsSync(1);
+
+        assertNotNull(result);
+        SyncOrderItemResponse response = result.getItems().getFirst();
+
+        assertNull(response.getOrderToken());
+        assertNull(response.getProductToken());
+        assertNotNull(response.getStatusTokens());
+        assertTrue(response.getStatusTokens().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Get Reservations Sync: Should correctly map reservations and extract foreign keys")
+    void getReservationsSync_ShouldReturnMappedReservations() {
+        Users user = new Users();
+        user.setToken("USER_1");
+
+        RestaurantTables table = new RestaurantTables();
+        table.setToken("TABLE_10");
+
+        ReservationStatus status = new ReservationStatus();
+        status.setToken("RES_STATUS_CONFIRMED");
+
+        Reservations reservation = new Reservations();
+        reservation.setToken("RES_1");
+        reservation.setUser(user);
+        reservation.setTableId(table);
+        reservation.setReservationStatus(Set.of(status));
+        reservation.setStartTime(OffsetDateTime.now());
+        reservation.setEndTime(OffsetDateTime.now().plusHours(2));
+
+        Page<Reservations> mockPage = new PageImpl<>(
+                List.of(reservation),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_reservationRepo.findAll(ArgumentMatchers.isNull(), any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncReservationResponse> result = _syncServices.getReservationsSync(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+
+        SyncReservationResponse response = result.getItems().getFirst();
+        assertEquals("RES_1", response.getToken());
+        assertNotNull(response.getStartTime());
+        assertNotNull(response.getEndTime());
+
+        assertEquals("USER_1", response.getUserToken());
+        assertEquals("TABLE_10", response.getTableToken());
+        assertEquals(1, response.getStatusTokens().size());
+        assertEquals("RES_STATUS_CONFIRMED", response.getStatusTokens().getFirst());
+    }
+
+    @Test
+    @DisplayName("Get Reservations Sync: Should handle missing relations gracefully")
+    void getReservationsSync_ShouldHandleNullRelations() {
+        Reservations reservation = new Reservations();
+        reservation.setToken("RES_NULL");
+
+        Page<Reservations> mockPage = new PageImpl<>(
+                List.of(reservation),
+                PageRequest.of(0, 20),
+                1
+        );
+        when(_reservationRepo.findAll(ArgumentMatchers.isNull(), any(Pageable.class))).thenReturn(mockPage);
+
+        PagedResult<SyncReservationResponse> result = _syncServices.getReservationsSync(1);
+
+        assertNotNull(result);
+        SyncReservationResponse response = result.getItems().getFirst();
+
+        assertNull(response.getUserToken());
+        assertNull(response.getTableToken());
+        assertNotNull(response.getStatusTokens());
+        assertTrue(response.getStatusTokens().isEmpty());
+    }
+
+    private static @NonNull GuestReports getGuestReports() {
+        Users guest = new Users();
+        guest.setToken("GUEST_123");
+
+        Users reporter = new Users();
+        reporter.setToken("REPORTER_456");
+
+        GuestReportStatus status = new GuestReportStatus();
+        status.setToken("STATUS_IN_PROGRESS");
+
+        GuestReports report = new GuestReports();
+        report.setToken("REPORT_789");
+        report.setGuest(guest);
+        report.setReporter(reporter);
+        report.setReason("Głośne zachowanie");
+        report.setStatuses(Set.of(status));
+        return report;
+    }
+
+    private static @NonNull Orders getOrders() {
+        Reservations reservation = new Reservations();
+        reservation.setToken("RES_123");
+
+        RestaurantTables table = new RestaurantTables();
+        table.setToken("TABLE_5");
+
+        Users waiter = new Users();
+        waiter.setToken("WAITER_99");
+
+        OrderStatus status = new OrderStatus();
+        status.setToken("STATUS_NEW");
+
+        Orders order = new Orders();
+        order.setToken("ORDER_1");
+        order.setReservation(reservation);
+        order.setTable(table);
+        order.setWaiter(waiter);
+        order.setTotalPrice(15000);
+        order.setStatuses(Set.of(status));
+        return order;
     }
 }

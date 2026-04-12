@@ -3,10 +3,7 @@ package com.example.restaurant.services;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.response.*;
 import com.example.restaurant.helpers.PagedResult;
-import com.example.restaurant.models.Bans;
-import com.example.restaurant.models.Dishes;
-import com.example.restaurant.models.GuestReports;
-import com.example.restaurant.models.Ingredients;
+import com.example.restaurant.models.*;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.base.BaseNamedEntity;
 import com.example.restaurant.models.base.BaseTranslatedEntity;
@@ -230,6 +227,92 @@ public class SyncServices implements ISyncServices {
                     .nameEn(i.getNameEn())
                     .namePl(i.getNamePl())
                     .allergenTokens(allergenTokens)
+                    .build();
+        });
+
+        return new PagedResult<>(response);
+    }
+
+    @Override
+    @Auditable(action = "SYNC_ORDERS")
+    public PagedResult<SyncOrderResponse> getOrdersSync(int page) {
+        Page<Orders> ordersPage = _orderRepo.findAll(calculatePageable(page));
+
+        Page<SyncOrderResponse> response = ordersPage.map(o -> {
+            String reservationToken = o.getReservation() != null ? o.getReservation().getToken() : null;
+            String tableToken = o.getTable() != null ? o.getTable().getToken() : null;
+            String waiterToken = o.getWaiter() != null ? o.getWaiter().getToken() : null;
+
+            List<String> statusTokens = o.getStatuses() != null
+                    ? o.getStatuses().stream().map(BaseEntity::getToken).toList()
+                    : List.of();
+
+            return SyncOrderResponse.builder()
+                    .token(o.getToken())
+                    .reservationToken(reservationToken)
+                    .tableToken(tableToken)
+                    .waiterToken(waiterToken)
+                    .totalPrice(o.getTotalPrice())
+                    .statusTokens(statusTokens)
+                    .createdAt(o.getCreatedAt())
+                    .updatedAt(o.getUpdatedAt())
+                    .build();
+        });
+
+        return new PagedResult<>(response);
+    }
+
+    @Override
+    @Auditable(action = "SYNC_ORDER_ITEMS")
+    public PagedResult<SyncOrderItemResponse> getOrderItemsSync(int page) {
+        Page<OrderItems> itemsPage = _orderRepo.findAllItems(calculatePageable(page));
+
+        Page<SyncOrderItemResponse> response = itemsPage.map(i -> {
+            String orderToken = i.getOrder() != null ? i.getOrder().getToken() : null;
+            String productToken = i.getProduct() != null ? i.getProduct().getToken() : null;
+
+            List<String> statusTokens = i.getStatuses() != null
+                    ? i.getStatuses().stream().map(BaseEntity::getToken).toList()
+                    : List.of();
+
+            return SyncOrderItemResponse.builder()
+                    .token(i.getToken())
+                    .orderToken(orderToken)
+                    .productToken(productToken)
+                    .quantity(i.getQuantity())
+                    .priceAtTimeOfOrder(i.getPriceAtTimeOfOrder())
+                    .note(i.getNote())
+                    .statusTokens(statusTokens)
+                    .createdAt(i.getCreatedAt())
+                    .updatedAt(i.getUpdatedAt())
+                    .build();
+        });
+
+        return new PagedResult<>(response);
+    }
+
+    @Override
+    @Auditable(action = "SYNC_RESERVATIONS")
+    public PagedResult<SyncReservationResponse> getReservationsSync(int page) {
+        Page<Reservations> reservationsPage = _reservationRepo.findAll(null, calculatePageable(page));
+
+        Page<SyncReservationResponse> response = reservationsPage.map(r -> {
+            String userToken = r.getUser() != null ? r.getUser().getToken() : null;
+            String tableToken = r.getTableId() != null ? r.getTableId().getToken() : null;
+
+            List<String> statusTokens = r.getReservationStatus() != null
+                    ? r.getReservationStatus().stream().map(BaseEntity::getToken).toList()
+                    : List.of();
+
+            return SyncReservationResponse.builder()
+                    .token(r.getToken())
+                    .userToken(userToken)
+                    .tableToken(tableToken)
+                    .statusTokens(statusTokens)
+                    .startTime(r.getStartTime())
+                    .endTime(r.getEndTime())
+                    .createdAt(r.getCreatedAt())
+                    .updatedAt(r.getUpdatedAt())
                     .build();
         });
 

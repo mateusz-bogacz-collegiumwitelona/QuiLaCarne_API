@@ -4,11 +4,14 @@ import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface IOrderRepository {
+    Page<Orders> findAll(Pageable pageable);
 
     OrderStatus findStatusByToken(String token);
 
@@ -49,4 +52,6 @@ public interface IOrderRepository {
     long countItems();
 
     long count();
+
+    Page<OrderItems> findAllItems(Pageable pageable);
 }

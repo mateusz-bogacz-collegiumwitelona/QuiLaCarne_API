@@ -11,6 +11,8 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaOrderItemsRepository
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrderRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaOrederStatusRepositry;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -23,6 +25,11 @@ public class OrderRepository implements IOrderRepository {
     private final IJpaOrderItemsRepository _jpaOrderItemRepo;
     private final IJpaOrederStatusRepositry _jpaOrderStatusRepo;
     private final IJpaOrderItemStatusRepository _jpaOrderItemStatusRepo;
+
+    @Override
+    public Page<Orders> findAll(Pageable pageable) {
+        return _jpaOrderRepo.findAll(pageable);
+    }
 
     @Override
     public OrderStatus findStatusByToken(String token) {
@@ -129,5 +136,10 @@ public class OrderRepository implements IOrderRepository {
     @Override
     public long count() {
         return _jpaOrderRepo.count();
+    }
+
+    @Override
+    public Page<OrderItems> findAllItems(Pageable pageable) {
+        return _jpaOrderItemRepo.findAll(pageable);
     }
 }
