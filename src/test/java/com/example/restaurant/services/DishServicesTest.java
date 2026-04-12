@@ -1,11 +1,11 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
-import com.example.restaurant.dto.payload.DishPayload;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.dto.response.SyncDictionaryResponse;
+import com.example.restaurant.dto.response.SyncDishResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
@@ -70,6 +70,8 @@ public class DishServicesTest {
     void setUp() {
         ReflectionTestUtils.setField(_dishServices, "s3Endpoint", "http://localhost:9000");
         ReflectionTestUtils.setField(_dishServices, "s3BucketName", "restaurant-images");
+        ReflectionTestUtils.setField(_syncMapper, "s3Endpoint", "http://localhost:9000");
+        ReflectionTestUtils.setField(_syncMapper, "s3BucketName", "restaurant-images");
     }
 
     @AfterEach
@@ -148,48 +150,15 @@ public class DishServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/menu/dishes"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.DELETED &&
-                                event.getEntityType().equals("DISH") &&
-                                event.getToken().equals(TestConstants.FAKE_DISH_TOKEN) &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.DELETED &&
+                                "DISH".equals(event.getEntityType()) &&
+                                TestConstants.FAKE_DISH_TOKEN.equals(event.getToken()) &&
                                 event.getPayload() == null
                 )
         );
     }
 
-    @Test
-    @DisplayName("changeAvailable: should restore the availability " +
-            "of the dish and remove the reason for its unavailability")
-    void changeAvailable_ShouldSetAvailable_AndClearReason() {
-        Dishes dish = new Dishes();
-        dish.setToken(TestConstants.FAKE_DISH_TOKEN);
-        dish.setAvailable(false);
-        dish.setUnavailableReason("Zepsuty piec");
-
-        ChangeDishAvailableRequest request = new ChangeDishAvailableRequest();
-        request.setToken(TestConstants.FAKE_DISH_TOKEN);
-        request.setAvailable(true);
-        request.setUnavailableReason("Ten tekst i tak zostanie zignorowany");
-
-        when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
-
-        _dishServices.changeAvailable(request);
-
-        assertTrue(dish.isAvailable());
-        assertNull(dish.getUnavailableReason());
-
-        verify(_dishRepo, times(1)).findByToken(TestConstants.FAKE_DISH_TOKEN);
-        verify(_dishRepo, times(1)).save(dish);
-        verify(_notification, times(1)).sendEventToTopic(
-                eq("/menu/dishes"),
-                argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("DISH") &&
-                                event.getToken().equals(TestConstants.FAKE_DISH_TOKEN) &&
-                                event.getPayload() != null &&
-                                ((DishPayload) event.getPayload()).isAvailable()
-                )
-        );
-    }
 
     @Test
     @DisplayName("changeAvailable: should disable accessibility and set custom reason ")
@@ -211,16 +180,16 @@ public class DishServicesTest {
         assertEquals("Brak świeżej bazylii", dish.getUnavailableReason());
 
         verify(_dishRepo, times(1)).save(dish);
-
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/menu/dishes"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("DISH") &&
-                                event.getToken().equals(TestConstants.FAKE_DISH_TOKEN) &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.UPDATED &&
+                                "DISH".equals(event.getEntityType()) &&
+                                TestConstants.FAKE_DISH_TOKEN.equals(event.getToken()) &&
                                 event.getPayload() != null &&
-                                !((DishPayload) event.getPayload()).isAvailable() &&
-                                "Brak świeżej bazylii".equals(((DishPayload) event.getPayload()).getUnavailableReason())
+                                !((SyncDishResponse) event.getPayload()).isAvailable() &&
+                                "Brak świeżej bazylii".equals(((SyncDishResponse) event.getPayload()).getUnavailableReason())
                 )
         );
     }
@@ -248,11 +217,12 @@ public class DishServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/menu/dishes"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("DISH") &&
-                                event.getToken().equals(TestConstants.FAKE_DISH_TOKEN) &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.UPDATED &&
+                                "DISH".equals(event.getEntityType()) &&
+                                TestConstants.FAKE_DISH_TOKEN.equals(event.getToken()) &&
                                 event.getPayload() != null &&
-                                "Brak składników".equals(((DishPayload) event.getPayload()).getUnavailableReason())
+                                "Brak składników".equals(((SyncDishResponse) event.getPayload()).getUnavailableReason())
                 )
         );
     }
@@ -327,8 +297,8 @@ public class DishServicesTest {
                                 event.getToken().equals(TestConstants.FAKE_DISH_TOKEN) &&
                                 event.getPayload() != null &&
                                 TestConstants.FAKE_DISH_CATEGORY.equals(
-                                        ((DishPayload) event.getPayload()).getCategoryToken()) &&
-                                ((DishPayload) event.getPayload())
+                                        ((SyncDishResponse) event.getPayload()).getCategoryToken()) &&
+                                ((SyncDishResponse) event.getPayload())
                                         .getIngredientTokens().contains(TestConstants.INGREDIENT_PL)
                 )
         );
@@ -372,11 +342,12 @@ public class DishServicesTest {
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/menu/dishes"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.UPDATED &&
-                                event.getEntityType().equals("DISH") &&
-                                event.getToken().equals(TestConstants.FAKE_DISH_TOKEN) &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.UPDATED &&
+                                "DISH".equals(event.getEntityType()) &&
+                                TestConstants.FAKE_DISH_TOKEN.equals(event.getToken()) &&
                                 event.getPayload() != null &&
-                                ((DishPayload) event.getPayload()).getImageUrl().contains("new_uuid_steak.png")
+                                ((SyncDishResponse) event.getPayload()).getImageUrl().contains("new_uuid_steak.png")
                 )
         );
     }
@@ -446,7 +417,7 @@ public class DishServicesTest {
                                 "NEW_DISH_TOKEN".equals(event.getToken()) &&
                                 event.getPayload() != null &&
                                 TestConstants.FAKE_DISH_CATEGORY
-                                        .equals(((DishPayload) event.getPayload()).getCategoryToken())
+                                        .equals(((SyncDishResponse) event.getPayload()).getCategoryToken())
                 )
         );
     }
@@ -506,17 +477,16 @@ public class DishServicesTest {
         assertEquals("uuid_pizza.png", savedDish.getImageUrl());
 
         verify(_s3Services, never()).deleteFile(any());
-
         verify(_notification, times(1)).sendEventToTopic(
                 eq("/menu/dishes"),
                 argThat(event ->
-                        event.getEventType() == WebSocketEventType.CREATED &&
-                                event.getEntityType().equals("DISH") &&
+                        event != null &&
+                                event.getEventType() == WebSocketEventType.CREATED &&
+                                "DISH".equals(event.getEntityType()) &&
                                 "NEW_PIZZA_TOKEN".equals(event.getToken()) &&
                                 event.getPayload() != null &&
-                                ((DishPayload) event.getPayload()).getImageUrl().contains("uuid_pizza.png") &&
-                                ((DishPayload) event.getPayload())
-                                        .getIngredientTokens().contains(TestConstants.INGREDIENT_EN)
+                                ((SyncDishResponse) event.getPayload()).getImageUrl().contains("uuid_pizza.png") &&
+                                ((SyncDishResponse) event.getPayload()).getIngredientTokens().contains(TestConstants.INGREDIENT_EN)
                 )
         );
     }

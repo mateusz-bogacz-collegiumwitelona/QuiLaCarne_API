@@ -1,11 +1,11 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.payload.DishPayload;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.dto.response.SyncDictionaryResponse;
+import com.example.restaurant.dto.response.SyncDishResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.WebSocketEvent;
@@ -13,7 +13,6 @@ import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
-import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
@@ -135,10 +134,10 @@ public class DishServices implements IDishServices {
 
         _dishRepo.save(dish);
 
-        WebSocketEvent<DishPayload> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncDishResponse> event = WebSocketEvent.updated(
                 DISH_ENTITY_TYPE,
                 dish.getToken(),
-                createPayload(dish)
+                _syncMapper.toSyncDishResponse(dish)
         );
 
         _notification.sendEventToTopic("/menu/dishes", event);
@@ -166,10 +165,10 @@ public class DishServices implements IDishServices {
 
         _dishRepo.save(dish);
 
-        WebSocketEvent<DishPayload> event = WebSocketEvent.updated(
+        WebSocketEvent<SyncDishResponse> event = WebSocketEvent.updated(
                 DISH_ENTITY_TYPE,
                 dish.getToken(),
-                createPayload(dish)
+                _syncMapper.toSyncDishResponse(dish)
         );
         _notification.sendEventToTopic("/menu/dishes", event);
     }
@@ -193,10 +192,10 @@ public class DishServices implements IDishServices {
 
         _dishRepo.save(dish);
 
-        WebSocketEvent<DishPayload> event = WebSocketEvent.created(
+        WebSocketEvent<SyncDishResponse> event = WebSocketEvent.created(
                 DISH_ENTITY_TYPE,
                 dish.getToken(),
-                createPayload(dish)
+                _syncMapper.toSyncDishResponse(dish)
         );
         _notification.sendEventToTopic("/menu/dishes", event);
     }
@@ -287,25 +286,5 @@ public class DishServices implements IDishServices {
                 throw new RuntimeException("Could not process photo file", e);
             }
         }
-    }
-
-    private DishPayload createPayload(Dishes dish) {
-        String fullUrl = dish.getImageUrl();
-        if (fullUrl != null && !fullUrl.startsWith("http")) {
-            fullUrl = String.format("%s/%s/%s", s3Endpoint.trim(), s3BucketName, dish.getImageUrl());
-        }
-
-        return DishPayload.builder()
-                .token(dish.getToken())
-                .name(dish.getName())
-                .price(dish.getPrice())
-                .isAvailable(dish.isAvailable())
-                .unavailableReason(dish.getUnavailableReason())
-                .imageUrl(fullUrl)
-                .categoryToken(dish.getCategory() != null ? dish.getCategory().getToken() : null)
-                .ingredientTokens(dish.getIngredients() != null
-                        ? dish.getIngredients().stream().map(BaseEntity::getToken).toList()
-                        : List.of())
-                .build();
     }
 }

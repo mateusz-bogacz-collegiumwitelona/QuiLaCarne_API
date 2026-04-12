@@ -173,8 +173,8 @@ public class SyncServicesTest {
     @Test
     @DisplayName("Get Dishes Sync: Should correctly map dishes, format S3 URL and extract foreign keys")
     void getDishesSync_ShouldReturnMappedDishes() {
-        ReflectionTestUtils.setField(_syncServices, "s3Endpoint", "https://s3.example.com");
-        ReflectionTestUtils.setField(_syncServices, "s3BucketName", "my-restaurant");
+        ReflectionTestUtils.setField(_syncMapper, "s3Endpoint", "https://s3.example.com");
+        ReflectionTestUtils.setField(_syncMapper, "s3BucketName", "my-restaurant");
 
         DishesCategories category = new DishesCategories();
         category.setToken("CAT_123");

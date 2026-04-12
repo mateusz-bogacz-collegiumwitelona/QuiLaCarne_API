@@ -9,7 +9,6 @@ import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.repository.interfaces.*;
 import com.example.restaurant.services.interfaces.ISyncServices;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,12 +36,6 @@ public class SyncServices implements ISyncServices {
     private final SyncMapper _syncMapper;
 
     private final int DEFAULT_PAGE_SIZE = 20;
-
-    @Value("${application.storage.s3.public-endpoint}")
-    private String s3Endpoint;
-
-    @Value("${application.storage.s3.bucket-name}")
-    private String s3BucketName;
 
     @Override
     @Auditable(action = "BOOTSTRAP_MANIFEST")
@@ -109,34 +102,7 @@ public class SyncServices implements ISyncServices {
     public PagedResult<SyncDishResponse> getDishesSync(int page) {
         Page<Dishes> dishesPage = _dishRepo.findAll(calculatePageable(page));
 
-        Page<SyncDishResponse> response = dishesPage.map(d -> {
-            String categoryToken = d.getCategory() != null ? d.getCategory().getToken() : null;
-
-            List<String> ingredientTokens = d.getIngredients() != null
-                    ? d.getIngredients().stream()
-                      .map(BaseEntity::getToken)
-                      .toList()
-                    : List.of();
-
-            String imageUrl = d.getImageUrl();
-
-            if (imageUrl != null && !imageUrl.startsWith("http")) {
-                if (s3Endpoint != null && !s3Endpoint.isBlank() && s3BucketName != null) {
-                    imageUrl = String.format("%s/%s/%s", s3Endpoint.trim(), s3BucketName, imageUrl);
-                }
-            }
-
-            return SyncDishResponse.builder()
-                    .token(d.getToken())
-                    .name(d.getName())
-                    .price(d.getPrice())
-                    .isAvailable(d.isAvailable())
-                    .unavailableReason(d.getUnavailableReason())
-                    .imageUrl(imageUrl)
-                    .categoryToken(categoryToken)
-                    .ingredientTokens(ingredientTokens)
-                    .build();
-        });
+        Page<SyncDishResponse> response = dishesPage.map(_syncMapper::toSyncDishResponse);
 
         return new PagedResult<>(response);
     }
