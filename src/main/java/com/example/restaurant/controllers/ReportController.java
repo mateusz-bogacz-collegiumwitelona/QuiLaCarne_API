@@ -27,7 +27,8 @@ public class ReportController {
             summary = "Create a new guest report",
             description = "Creates a new incident report for a specific client. " +
                     "The user being reported must have the ROLE_CLIENT. " +
-                    "The report is created with an initial status of IN_PROGRESS. Requires WAITER or MANAGER role."
+                    "The report is created with an initial status of IN_PROGRESS. Requires WAITER or MANAGER role.",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -60,7 +61,8 @@ public class ReportController {
                     "If the report is accepted (`isAccepted: true`), " +
                     "the system automatically issues a ban for the reported guest " +
                     "until the specified `expiresAt` date and sends an email notification. " +
-                    "Requires MANAGER role."
+                    "Requires MANAGER role.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(

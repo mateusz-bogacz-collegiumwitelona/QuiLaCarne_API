@@ -27,13 +27,13 @@ public class AllergensController {
     @Operation(
             summary = "Get list of allergens",
             description = "Retrieves a dictionary list of all allergens available in the system. " +
-                    "The names are translated based on the 'Accept-Language' header."
+                    "The names are translated based on the 'Accept-Language' header.",
+            tags = {"All"}
     )
     @Parameter(
             name = "Accept-Language",
             in = ParameterIn.HEADER,
             description = "Preferred language (e.g., 'pl' or 'en')",
-            required = false,
             schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
     )
     @ApiResponses(value = {
@@ -60,7 +60,8 @@ public class AllergensController {
             summary = "Add a new allergen",
             description = "Creates a new allergen in the system. " +
                     "The English name is automatically used to generate a unique token. " +
-                    "Requires MANAGER role."
+                    "Requires MANAGER role.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -87,7 +88,8 @@ public class AllergensController {
             summary = "Remove a allergen (Soft Delete)",
             description = "Marks a dish as allergen by setting its availability to false, " +
                     "adding an unavailable reason, and setting the deleted_at timestamp. " +
-                    "Requires ROLE_MANAGER privileges."
+                    "Requires ROLE_MANAGER privileges.",
+            tags = {"Manager"}
     )
     @Parameter(
             name = "token",

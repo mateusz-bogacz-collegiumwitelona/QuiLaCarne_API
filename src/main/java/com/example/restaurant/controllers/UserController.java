@@ -28,7 +28,8 @@ public class UserController {
 
     @Operation(
             summary = "Update user password",
-            description = "Allows an authenticated user to change their password by verifying the current password."
+            description = "Allows an authenticated user to change their password by verifying the current password.",
+            tags = {"Client"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Password updated successfully"),
@@ -53,7 +54,8 @@ public class UserController {
     @Operation(
             summary = "Request email update",
             description = "Initiates the email update process by saving the new email " +
-                    "in a pending state and sending a verification link to it."
+                    "in a pending state and sending a verification link to it.",
+            tags = {"Client"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Verification link sent to the new email address"),
@@ -83,7 +85,8 @@ public class UserController {
     @Operation(
             summary = "Confirm email change",
             description = "Finalizes the email update process by validating " +
-                    "the verification token sent to the user's new email address."
+                    "the verification token sent to the user's new email address.",
+            tags = {"Client"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Email updated successfully"),
@@ -107,7 +110,11 @@ public class UserController {
         ));
     }
 
-    @Operation(summary = "Update username", description = "Allows the authenticated user to change their display name.")
+    @Operation(
+            summary = "Update username",
+            description = "Allows the authenticated user to change their display name.",
+            tags = {"Client"}
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Username updated successfully"),
             @ApiResponse(responseCode = "400", description = "Username already taken or invalid"),
@@ -129,7 +136,11 @@ public class UserController {
         ));
     }
 
-    @Operation(summary = "Delete user", description = "Allows the authenticated user to delete account.")
+    @Operation(
+            summary = "Delete user",
+            description = "Allows the authenticated user to delete account.",
+            tags = {"Client"}
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User deleted successfully"),
             @ApiResponse(responseCode = "400", description = "Can't delte user"),
@@ -149,7 +160,8 @@ public class UserController {
     @Operation(
             summary = "Add a new employee",
             description = "Creates a new employee account (Manager or Waiter) and automatically activates it. " +
-                    "Requires ROLE_MANAGER privileges."
+                    "Requires ROLE_MANAGER privileges.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -157,10 +169,26 @@ public class UserController {
                     description = "Employee created successfully",
                     content = @Content(schema = @Schema(implementation = ResultHandler.class))
             ),
-            @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data or email/username already exists", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden - User does not have the required ROLE_MANAGER role", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad Request - Invalid input data or email/username already exists",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized - User is not logged in",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden - User does not have the required ROLE_MANAGER role",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content
+            )
     })
     @PostMapping("/employee")
     @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
@@ -180,7 +208,8 @@ public class UserController {
     @Operation(
             summary = "Edit employee details",
             description = "Updates the email and/or username of an existing employee. " +
-                    "Only provided fields will be updated. Requires ROLE_MANAGER privileges."
+                    "Only provided fields will be updated. Requires ROLE_MANAGER privileges.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -229,7 +258,8 @@ public class UserController {
     @Operation(
             summary = "Change employee password",
             description = "Allows a manager to forcefully change an employee's password. " +
-                    "Managers cannot change their own password using this endpoint."
+                    "Managers cannot change their own password using this endpoint.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -276,7 +306,8 @@ public class UserController {
     @Operation(
             summary = "Change employee role",
             description = "Allows a manager to change the role of an employee " +
-                    "(e.g., promote to Manager or demote to Waiter). Managers cannot change their own role."
+                    "(e.g., promote to Manager or demote to Waiter). Managers cannot change their own role.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -315,7 +346,8 @@ public class UserController {
     @Operation(
             summary = "Change employee availability (Block/Unblock)",
             description = "Allows a manager to block or unblock an employee's access to the system. " +
-                    "Managers cannot change their own availability."
+                    "Managers cannot change their own availability.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -362,7 +394,8 @@ public class UserController {
     @Operation(
             summary = "Delete employee",
             description = "Performs a soft delete of an employee account, " +
-                    "anonymizing their personal data and deactivating the account. Managers cannot delete themselves."
+                    "anonymizing their personal data and deactivating the account. Managers cannot delete themselves.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -407,7 +440,8 @@ public class UserController {
     @Operation(
             summary = "Generate 2FA QR code for setup",
             description = "Generates a new 2FA secret and returns a QR code URI along with a manual code. " +
-                    "Does NOT enable 2FA yet. Requires ROLE_MANAGER."
+                    "Does NOT enable 2FA yet. Requires ROLE_MANAGER.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -436,7 +470,8 @@ public class UserController {
     @Operation(
             summary = "Verify code and enable 2FA on account",
             description = "Verifies the 6-digit code from the authenticator app. " +
-                    "If correct, permanently enables 2FA for the manager's account. Requires ROLE_MANAGER."
+                    "If correct, permanently enables 2FA for the manager's account. Requires ROLE_MANAGER.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(

@@ -22,7 +22,8 @@ public class SystemController {
 
     @Operation(
             summary = "Clear all caches",
-            description = "Flushes all Redis caches managed by the application. Requires ROLE_MANAGER."
+            description = "Flushes all Redis caches managed by the application. Requires ROLE_MANAGER.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "All caches cleared successfully"),
@@ -42,7 +43,9 @@ public class SystemController {
 
     @Operation(
             summary = "Clear specific cache",
-            description = "Flushes a specific Redis cache by its name (e.g., 'usersList', 'dishMenu'). Requires ROLE_MANAGER."
+            description = "Flushes a specific Redis cache by its name (e.g., 'usersList', 'dishMenu'). " +
+                    "Requires ROLE_MANAGER.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Specific cache cleared successfully"),
@@ -65,7 +68,9 @@ public class SystemController {
 
     @Operation(
             summary = "Review cache List",
-            description = "Review list of all Redis caches names (e.g., 'usersList', 'dishMenu'). Requires ROLE_MANAGER."
+            description = "Review list of all Redis caches names (e.g., 'usersList', 'dishMenu'). " +
+                    "Requires ROLE_MANAGER.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List review successully"),

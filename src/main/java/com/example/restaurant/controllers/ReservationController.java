@@ -38,7 +38,8 @@ public class ReservationController {
     @Operation(
             summary = "Create a new table reservation",
             description = "Creates a new table reservation for the authenticated user. " +
-                    "Optionally, a list of dishes can be provided to pre-order food for the reservation."
+                    "Optionally, a list of dishes can be provided to pre-order food for the reservation.",
+            tags = {"Client"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -71,7 +72,8 @@ public class ReservationController {
             summary = "Get user reservations history",
             description = "Retrieves a paginated and filterable list of reservations " +
                     "made by the currently authenticated user. " +
-                    "Supports filtering by date range and status."
+                    "Supports filtering by date range and status.",
+            tags = {"All"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -101,7 +103,8 @@ public class ReservationController {
     @Operation(
             summary = "Get reservation details",
             description = "Retrieves the full details of a specific reservation, " +
-                    "including pre-ordered dishes and total price."
+                    "including pre-ordered dishes and total price.",
+            tags = {"All"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -131,7 +134,8 @@ public class ReservationController {
 
     @Operation(
             summary = "Cancel a reservation",
-            description = "Cancels an active reservation by changing its status to CANCELLED."
+            description = "Cancels an active reservation by changing its status to CANCELLED.",
+            tags = {"Client"}
     )
     @PreAuthorize("hasAnyRole('ROLE_CLIENT')")
     @PatchMapping("/{token}/cancel")
@@ -151,7 +155,8 @@ public class ReservationController {
             summary = "Remove a dish from reservation",
             description = "Decreases the quantity of a specific dish in the reservation's order. " +
                     "If the quantity to remove is equal to or greater than the current quantity, " +
-                    "the dish is completely removed from the order."
+                    "the dish is completely removed from the order.",
+            tags = {"Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -185,7 +190,8 @@ public class ReservationController {
                     "If a requested dish (with the exact same note) already exists on the order, " +
                     "its quantity will be automatically increased. " +
                     "If it is a new dish or has a different note, it will be added as a separate line item. " +
-                    "The total price of the order is automatically recalculated."
+                    "The total price of the order is automatically recalculated.",
+            tags = {"Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -215,7 +221,8 @@ public class ReservationController {
     @Operation(
             summary = "Assign waiter to a reservation",
             description = "Assigns a specific waiter to a reservation and its associated order. " +
-                    "Automatically changes the status of the order and pending dishes to IN_PROGRESS."
+                    "Automatically changes the status of the order and pending dishes to IN_PROGRESS.",
+            tags = {"Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -245,7 +252,8 @@ public class ReservationController {
             description = "Changes the reservation status to NO_SHOW. " +
                     "If an order is attached to the reservation, " +
                     "its status (and the status of its items) is changed to CANCELLED. " +
-                    "Requires the reservation to be in the ACTIVE state. Available only for waiters."
+                    "Requires the reservation to be in the ACTIVE state. Available only for waiters.",
+            tags = {"Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -276,7 +284,8 @@ public class ReservationController {
     @Operation(
             summary = "Get list of reservation statuses",
             description = "Retrieves a dictionary list of all reservation statuses available in the system. " +
-                    "The names are translated based on the 'Accept-Language' header."
+                    "The names are translated based on the 'Accept-Language' header.",
+            tags = {"All"}
     )
     @Parameter(
             name = "Accept-Language",

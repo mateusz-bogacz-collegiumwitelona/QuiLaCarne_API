@@ -29,7 +29,8 @@ public class BanController {
             summary = "Ban a user manually",
             description = "Allows a manager to manually ban a client without needing a prior report. " +
                     "The targeted user must have the ROLE_CLIENT. " +
-                    "Automatically deactivates the user and sends an email notification. Requires MANAGER role."
+                    "Automatically deactivates the user and sends an email notification. Requires MANAGER role.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -78,7 +79,8 @@ public class BanController {
     @Operation(
             summary = "Get list of bans statuses",
             description = "Retrieves a dictionary list of all bans statuses available in the system. " +
-                    "The names are translated based on the 'Accept-Language' header."
+                    "The names are translated based on the 'Accept-Language' header.",
+            tags = {"Manager"}
     )
     @Parameter(
             name = "Accept-Language",
@@ -95,6 +97,7 @@ public class BanController {
             ),
             @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
+    @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
     @GetMapping("/dictionary")
     public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
         var result = _banServices.getDictionary();

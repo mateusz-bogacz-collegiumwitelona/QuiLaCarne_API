@@ -33,6 +33,7 @@ public class AuthController {
                     "If credentials are valid and 2FA is OFF, a final JWT token is returned. " +
                     "If 2FA is ON, a Pre-Auth token is returned and the 'requires2fa' flag is set to true. " +
                     "In that case, the client must proceed to the /verify-2fa endpoint.",
+            tags = {"All"},
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = "application/json",
@@ -80,7 +81,8 @@ public class AuthController {
     @Operation(
             summary = "Logout user",
             description = "Logs out the authenticated user by revoking their refresh token. " +
-                    "The client application must also delete the JWT and Refresh Token locally."
+                    "The client application must also delete the JWT and Refresh Token locally.",
+            tags = {"All"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -109,6 +111,7 @@ public class AuthController {
             description = "Creates a new account with 'isActive' set to false and " +
                     "sends an activation email containing a unique token. " +
                     "The user must call the /confirm endpoint with this token to enable the account.",
+            tags = {"Client"},
             responses = {
                     @ApiResponse(
                             responseCode = "201",
@@ -145,6 +148,7 @@ public class AuthController {
                             example = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
                     )
             },
+            tags = {"Client"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "Account activated successfully"),
                     @ApiResponse(responseCode = "400", description = "Invalid, expired or already used token"),
@@ -164,7 +168,8 @@ public class AuthController {
     @Operation(
             summary = "Request password reset",
             description = "Sends a password reset link to the provided email address if the account exists. " +
-                    "For privacy reasons, always returns a success message."
+                    "For privacy reasons, always returns a success message.",
+            tags = {"Client"}
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Request processed")
@@ -180,7 +185,8 @@ public class AuthController {
 
     @Operation(
             summary = "Set new password",
-            description = "Updates the user's password using the reset token received via email."
+            description = "Updates the user's password using the reset token received via email.",
+            tags = {"Client"}
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Password updated successfully"),
@@ -200,7 +206,8 @@ public class AuthController {
             summary = "Continue with Google (Login/Register)",
             description = "Accepts a Google ID Token. If the user doesn't exist, " +
                     "an account is created automatically. " +
-                    "Returns a standard JWT Bearer token."
+                    "Returns a standard JWT Bearer token.",
+            tags = {"Client"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -225,7 +232,8 @@ public class AuthController {
     @Operation(
             summary = "Verify 2FA code and get JWT Token",
             description = "Validates the 6-digit 2FA code along with the Pre-Auth token. " +
-                    "If valid, returns the final JWT Bearer token giving full access to the system."
+                    "If valid, returns the final JWT Bearer token giving full access to the system.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -251,7 +259,8 @@ public class AuthController {
 
     @Operation(
             summary = "Refresh Access Token",
-            description = "Exchanges a valid Refresh Token for a new pair of Access and Refresh tokens."
+            description = "Exchanges a valid Refresh Token for a new pair of Access and Refresh tokens.",
+            tags = {"All"}
     )
     @ApiResponses(value = {
             @ApiResponse(

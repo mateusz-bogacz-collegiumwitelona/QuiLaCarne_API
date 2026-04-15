@@ -27,7 +27,8 @@ public class IngredientsController {
     @Operation(
             summary = "Add a new ingredient",
             description = "Creates a new ingredient in the system. " +
-                    "The English name is automatically used to generate a unique token. Requires MANAGER role."
+                    "The English name is automatically used to generate a unique token. Requires MANAGER role.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -54,7 +55,8 @@ public class IngredientsController {
             summary = "Remove an ingredient",
             description = "Performs a soft delete on an ingredient by its token. " +
                     "Also automatically marks all dishes containing this ingredient as unavailable. " +
-                    "Requires MANAGER role."
+                    "Requires MANAGER role.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -80,7 +82,8 @@ public class IngredientsController {
     @Operation(
             summary = "Get list of ingredients (dictionary)",
             description = "Retrieves a dictionary list of all ingredients available in the system. " +
-                    "The names are translated based on the 'Accept-Language' header."
+                    "The names are translated based on the 'Accept-Language' header.",
+            tags = {"All"}
     )
     @Parameter(
             name = "Accept-Language",

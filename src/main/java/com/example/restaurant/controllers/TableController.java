@@ -31,7 +31,8 @@ public class TableController {
             summary = "Get full list of restaurant tables or check availability",
             description = "Returns a list of tables. If startTime and endTime are provided, " +
                     "it filters out tables that are reserved or unavailable in that timeframe. " +
-                    "The names of table status are translated based on the 'Accept-Language' header."
+                    "The names of table status are translated based on the 'Accept-Language' header.",
+            tags = {"All"}
     )
     @Parameter(
             name = "Accept-Language",
@@ -61,7 +62,8 @@ public class TableController {
             summary = "Change table status to cleaning",
             description = "Updates the status of a specific table to CLEANING. " +
                     "This is typically used by waiters to indicate that " +
-                    "a table needs to be prepared for the next guests."
+                    "a table needs to be prepared for the next guests.",
+            tags = {"Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Table status changed successfully"),
@@ -85,7 +87,8 @@ public class TableController {
     @Operation(
             summary = "Change table status to out of service",
             description = "Updates the status of a specific table to OUT_OF_SERVICE. " +
-                    "This is typically used by waiters to indicate that a table have a problem (leg is broken)."
+                    "This is typically used by waiters to indicate that a table have a problem (leg is broken).",
+            tags = {"Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Table status changed successfully"),
@@ -108,7 +111,8 @@ public class TableController {
     @Operation(
             summary = "Add a new restaurant table",
             description = "Creates a new table with the specified number and capacity. " +
-                    "The table is automatically assigned the default 'AVAILABLE' status. Requires ROLE_MANAGER."
+                    "The table is automatically assigned the default 'AVAILABLE' status. Requires ROLE_MANAGER.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -151,7 +155,8 @@ public class TableController {
     @Operation(
             summary = "Delete a restaurant table",
             description = "Performs a soft delete of a table. " +
-                    "It will no longer be visible in the active tables list. Requires ROLE_MANAGER."
+                    "It will no longer be visible in the active tables list. Requires ROLE_MANAGER.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -188,7 +193,8 @@ public class TableController {
     @Operation(
             summary = "Get list of table statuses",
             description = "Retrieves a dictionary list of all table statuses available in the system. " +
-                    "The names are translated based on the 'Accept-Language' header."
+                    "The names are translated based on the 'Accept-Language' header.",
+            tags = {"All"}
     )
     @Parameter(
             name = "Accept-Language",
@@ -219,7 +225,8 @@ public class TableController {
     @Operation(
             summary = "Add a new table status",
             description = "Creates a new table status in the system. " +
-                    "The English name is automatically used to generate a unique token. Requires MANAGER role."
+                    "The English name is automatically used to generate a unique token. Requires MANAGER role.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -244,7 +251,8 @@ public class TableController {
 
     @Operation(
             summary = "Remove a table status (Soft Delete)",
-            description = "Marks a table status as deleted and reassigns tables to 'AVAILABLE'. Requires ROLE_MANAGER."
+            description = "Marks a table status as deleted and reassigns tables to 'AVAILABLE'. Requires ROLE_MANAGER.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(

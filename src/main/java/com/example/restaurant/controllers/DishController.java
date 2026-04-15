@@ -31,7 +31,8 @@ public class DishController {
     @Operation(
             summary = "Get full restaurant menu",
             description = "Returns a list of all available dishes including ingredients and allergens. " +
-                    "The names of categories and allergens are translated based on the 'Accept-Language' header."
+                    "The names of categories and allergens are translated based on the 'Accept-Language' header.",
+            tags = {"All"}
     )
     @Parameter(
             name = "Accept-Language",
@@ -63,7 +64,8 @@ public class DishController {
             summary = "Remove a dish (Soft Delete)",
             description = "Marks a dish as deleted by setting its availability to false, " +
                     "adding an unavailable reason, and setting the deleted_at timestamp. " +
-                    "Requires ROLE_MANAGER privileges."
+                    "Requires ROLE_MANAGER privileges.",
+            tags = {"Manager"}
     )
     @Parameter(
             name = "token",
@@ -112,7 +114,8 @@ public class DishController {
     @Operation(
             summary = "Change dish availability",
             description = "Toggles the availability of a dish. " +
-                    "If marking as unavailable, an optional reason can be provided. Requires ROLE_MANAGER privileges."
+                    "If marking as unavailable, an optional reason can be provided. Requires ROLE_MANAGER privileges.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -150,7 +153,8 @@ public class DishController {
     @Operation(
             summary = "Edit an existing dish",
             description = "Updates dish details and/or replaces its photo on S3. " +
-                    "Requires ROLE_MANAGER privileges. Uses multipart/form-data."
+                    "Requires ROLE_MANAGER privileges. Uses multipart/form-data.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -182,7 +186,8 @@ public class DishController {
     @Operation(
             summary = "Add a new dish",
             description = "Creates a new dish in the menu and optionally uploads its photo to S3. " +
-                    "Requires ROLE_MANAGER privileges. Uses multipart/form-data."
+                    "Requires ROLE_MANAGER privileges. Uses multipart/form-data.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -230,7 +235,8 @@ public class DishController {
     @Operation(
             summary = "Get list of dish categories",
             description = "Retrieves a dictionary list of all dish categories available in the system. " +
-                    "The names are translated based on the 'Accept-Language' header."
+                    "The names are translated based on the 'Accept-Language' header.",
+            tags = {"All"}
     )
     @Parameter(
             name = "Accept-Language",
@@ -263,7 +269,8 @@ public class DishController {
     @Operation(
             summary = "Add a new dish category",
             description = "Creates a new dish category in the system. " +
-                    "The English name is automatically used to generate a unique token. Requires MANAGER role."
+                    "The English name is automatically used to generate a unique token. Requires MANAGER role.",
+            tags = {"Manager"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -289,7 +296,8 @@ public class DishController {
     @Operation(
             summary = "Remove a dish category (Soft Delete)",
             description = "Marks a dish category as deleted and automatically reassigns " +
-                    "all associated dishes to the default 'OTHER' category. Requires ROLE_MANAGER privileges."
+                    "all associated dishes to the default 'OTHER' category. Requires ROLE_MANAGER privileges.",
+            tags = {"Manager"}
     )
     @Parameter(
             name = "token",

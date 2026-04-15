@@ -29,7 +29,8 @@ public class SyncController {
     @Operation(
             summary = "Download the sync manifest (Bootstrap)",
             description = "Returns the number of records and pages for each system module. " +
-                    "Used to initialize the database on mobile and desktop devices."
+                    "Used to initialize the database on mobile and desktop devices.",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -55,7 +56,8 @@ public class SyncController {
     @Operation(
             summary = "Fetch all system dictionaries",
             description = "Returns flat lists of all dictionaries " +
-                    "(statuses, categories, allergens) with EN/PL translations, perfect for saving in local SQLite"
+                    "(statuses, categories, allergens) with EN/PL translations, perfect for saving in local SQLite",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -81,7 +83,8 @@ public class SyncController {
     @Operation(
             summary = "Fetch system roles",
             description = "Returns a flat list of all available roles in the system. " +
-                    "Used to synchronize the roles dictionary on client devices."
+                    "Used to synchronize the roles dictionary on client devices.",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Roles fetched successfully"),
@@ -103,7 +106,8 @@ public class SyncController {
     @Operation(
             summary = "Fetch flat list of dishes",
             description = "Returns a paginated, flat list of dishes with foreign key tokens. " +
-                    "Page size is strictly fixed by the server."
+                    "Page size is strictly fixed by the server.",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Dishes sync page fetched successfully"),
@@ -128,7 +132,8 @@ public class SyncController {
     @Operation(
             summary = "Fetch flat list of bans",
             description = "Returns a paginated, flat list of bans with foreign key tokens (user, bannedBy, statuses). " +
-                    "Page size is strictly fixed by the server."
+                    "Page size is strictly fixed by the server.",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Bans sync page fetched successfully"),
@@ -154,7 +159,8 @@ public class SyncController {
             summary = "Fetch flat list of reports",
             description = "Returns a paginated, " +
                     "flat list of guest reports with foreign key tokens (guest, reporter, statuses). " +
-                    "Page size is strictly fixed by the server."
+                    "Page size is strictly fixed by the server.",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Reports sync page fetched successfully"),
@@ -178,7 +184,8 @@ public class SyncController {
     @Operation(
             summary = "Fetch flat list of ingredients (Sync)",
             description = "Returns a paginated, flat list of ingredients with their " +
-                    "translations and associated allergen tokens."
+                    "translations and associated allergen tokens.",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Ingredients sync page fetched successfully"),
@@ -202,7 +209,8 @@ public class SyncController {
     @Operation(
             summary = "Fetch flat list of orders (Sync)",
             description = "Returns a paginated, flat list of orders with " +
-                    "foreign key tokens (reservation, table, waiter, statuses)."
+                    "foreign key tokens (reservation, table, waiter, statuses).",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Orders sync page fetched successfully"),
@@ -224,7 +232,9 @@ public class SyncController {
 
     @Operation(
             summary = "Fetch flat list of order items (Sync)",
-            description = "Returns a paginated, flat list of order items with foreign key tokens (order, product, statuses)."
+            description = "Returns a paginated, flat list of order items with " +
+                    "foreign key tokens (order, product, statuses).",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Order items sync page fetched successfully"),
@@ -247,7 +257,8 @@ public class SyncController {
     @Operation(
             summary = "Fetch flat list of reservations (Sync)",
             description = "Returns a paginated, flat list of reservations " +
-                    "with foreign key tokens (user, table, statuses)."
+                    "with foreign key tokens (user, table, statuses).",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Reservations sync page fetched successfully"),
@@ -269,7 +280,8 @@ public class SyncController {
 
     @Operation(
             summary = "Fetch flat list of tables (Sync)",
-            description = "Returns a paginated, flat list of tables with their statuses."
+            description = "Returns a paginated, flat list of tables with their statuses.",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Tables sync page fetched successfully"),
@@ -292,7 +304,8 @@ public class SyncController {
     @Operation(
             summary = "Fetch flat list of users (Sync)",
             description = "Returns a paginated, flat list of users (both staff and guests) " +
-                    "with their role tokens and a convenient isStaff flag."
+                    "with their role tokens and a convenient isStaff flag.",
+            tags = {"Manager", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Users sync page fetched successfully"),
