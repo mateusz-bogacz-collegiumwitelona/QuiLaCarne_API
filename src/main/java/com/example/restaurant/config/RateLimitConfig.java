@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @RequiredArgsConstructor
+@SuppressWarnings("PMD.LawOfDemeter")
 public class RateLimitConfig extends OncePerRequestFilter {
     private final ProxyManager<byte[]> _proxyManager;
     private final ObjectMapper _objectMapper;
@@ -60,7 +61,7 @@ public class RateLimitConfig extends OncePerRequestFilter {
     private String getClientKey(HttpServletRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser"))
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal()))
             return auth.getName();
 
         return request.getRemoteAddr();
@@ -72,7 +73,8 @@ public class RateLimitConfig extends OncePerRequestFilter {
         if (auth == null || !auth.isAuthenticated()) return RateLimitEnum.GUEST;
 
         return auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER") || a.getAuthority().equals("ROLE_WAITER"))
+                .anyMatch(a -> "ROLE_MANAGER".equals(a.getAuthority()) ||
+                        "ROLE_WAITER".equals(a.getAuthority()))
                 ? RateLimitEnum.STAFF : RateLimitEnum.CLIENT;
     }
 }

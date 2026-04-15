@@ -49,7 +49,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReservationServices Unit Tests")
-public class ReservationServicesTest {
+class ReservationServicesTest {
     @Mock
     private ITableRespository _tableRepo;
 
@@ -283,7 +283,8 @@ public class ReservationServicesTest {
     @Test
     @DisplayName("getDictionary: Returns Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
+        LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
+
         ReservationStatus status = new ReservationStatus();
         status.setToken(TestConstants.STATUS_ACTIVE);
         status.setNamePl("Aktywna PL");
@@ -301,7 +302,7 @@ public class ReservationServicesTest {
     @Test
     @DisplayName("getDictionary: Returns English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
+        Locale.of(TestConstants.LANG_EN);
         ReservationStatus status = new ReservationStatus();
         status.setToken(TestConstants.STATUS_CANCELLED);
         status.setNamePl("Anulowana PL");

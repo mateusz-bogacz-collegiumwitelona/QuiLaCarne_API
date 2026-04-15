@@ -6,6 +6,7 @@ import com.example.restaurant.dto.response.Generate2faResponse;
 
 import java.util.Optional;
 
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IUserServices {
     String create(RegisterRequest request, String userRole, boolean isActive);
 

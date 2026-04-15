@@ -6,6 +6,7 @@ import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
+import com.example.restaurant.exceptions.GoogleAuthenticationException;
 import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IUserRepository;
@@ -23,16 +24,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class AuthServices implements IAuthServices {
     private final AuthenticationManager _authManager;
     private final JwtServices _jwtServices;
@@ -46,7 +49,7 @@ public class AuthServices implements IAuthServices {
     @Value("${application.security.google.client-id}")
     private String googleClientId;
 
-
+    @Override
     @Auditable(action = "USER_LOGIN")
     public AuthResponse authenticate(LoginRequest request) {
         var auth = _authManager.authenticate(
@@ -90,8 +93,8 @@ public class AuthServices implements IAuthServices {
             throw new IllegalStateException("Passwords do not match");
 
 
-        String ROLE_CLIENT = "ROLE_CLIENT";
-        String userToken = _userServices.create(request, ROLE_CLIENT, false);
+        String role = "ROLE_CLIENT";
+        String userToken = _userServices.create(request, role, false);
 
         String activationToken = _tokenServices.createToken(userToken, TokenTypeEnum.ACTIVATION, 24 * 60);
 
@@ -99,6 +102,7 @@ public class AuthServices implements IAuthServices {
 
     }
 
+    @Override
     @Auditable(action = "REGISTER_CONFIRM")
     @Transactional
     public Boolean registerConfirm(String token) {
@@ -112,6 +116,7 @@ public class AuthServices implements IAuthServices {
         return true;
     }
 
+    @Override
     @Auditable(action = "RESET_PASSWORD")
     @Transactional
     public void resetPassword(String email) {
@@ -134,6 +139,7 @@ public class AuthServices implements IAuthServices {
         }
     }
 
+    @Override
     @Auditable(action = "SET_NEW_PASSWORD")
     @Transactional
     public Boolean setNewPassword(ResetPasswordRequest request) {
@@ -161,12 +167,7 @@ public class AuthServices implements IAuthServices {
             GoogleIdToken.Payload payload = verifyGoogleToken(request.getToken());
 
             if (payload == null)
-                throw new AuthenticationException("Invalid ID token") {
-                    @Override
-                    public String getMessage() {
-                        return super.getMessage();
-                    }
-                };
+                throw new BadCredentialsException("Invalid ID token");
 
             String email = payload.getEmail();
             var userOpt = _userServices.findMinimalByEmail(email);
@@ -184,7 +185,7 @@ public class AuthServices implements IAuthServices {
 
         } catch (Exception ex) {
             log.error("Google authentication error", ex);
-            throw new RuntimeException("Authentication failed");
+            throw new GoogleAuthenticationException("Authentication failed", ex);
         }
     }
 
@@ -194,14 +195,8 @@ public class AuthServices implements IAuthServices {
     public AuthResponse verify2faLogin(Verify2faLoginRequest request) {
         var userTokenOpt = _tokenServices.validateToken(request.getPreAuthToken(), TokenTypeEnum.PRE_AUTH_2FA);
 
-        if (userTokenOpt.isEmpty()) {
-            throw new AuthenticationException("Pre-Auth token is invalid or expired") {
-                @Override
-                public String getMessage() {
-                    return super.getMessage();
-                }
-            };
-        }
+        if (userTokenOpt.isEmpty())
+            throw new BadCredentialsException("Pre-Auth token is invalid or expired");
 
         Users user = _userRepo.findByToken(userTokenOpt.get());
 
@@ -219,12 +214,7 @@ public class AuthServices implements IAuthServices {
         var userTokenOpt = _tokenServices.validateToken(request.getRefreshToken(), TokenTypeEnum.REFRESH_TOKEN);
 
         if (userTokenOpt.isEmpty())
-            throw new AuthenticationException("Refresh token is invalid or expired") {
-                @Override
-                public String getMessage() {
-                    return super.getMessage();
-                }
-            };
+            throw new BadCredentialsException("Refresh token is invalid or expired");
 
         Users user = _userRepo.findByToken(userTokenOpt.get());
         UserDetails userDetails = _userDetailsService.loadUserByUsername(user.getUsername());
@@ -234,26 +224,25 @@ public class AuthServices implements IAuthServices {
 
     private AuthResponse buildSuccessAuthResponse(UserDetails userDetails) {
         if (!userDetails.isEnabled())
-            throw new AuthenticationException("User not enabled") {
-                @Override
-                public String getMessage() {
-                    return super.getMessage();
-                }
-            };
+            throw new BadCredentialsException("User not enabled");
 
         String jwtToken = _jwtServices.generateToken(userDetails);
 
         if (jwtToken == null)
-            throw new RuntimeException("Jwt Token not generated");
+            throw new BadCredentialsException("Jwt Token not generated");
 
-        Users user = _userRepo.findByNormalizedUsername(userDetails.getUsername().trim().toUpperCase()).get();
+        Users user = _userRepo.findByNormalizedUsername(
+                userDetails.getUsername().trim().toUpperCase()
+        ).orElseThrow(() ->
+                new BadCredentialsException("User not found")
+        );
 
         _tokenServices.revokeTokensForUser(user.getToken(), TokenTypeEnum.REFRESH_TOKEN);
 
         String refreshToken = _tokenServices.createToken(user.getToken(),
                 TokenTypeEnum.REFRESH_TOKEN,
                 60 * 24 * 7 // 7 days
-                );
+        );
 
         return AuthResponse.builder()
                 .token(jwtToken)
@@ -263,14 +252,22 @@ public class AuthServices implements IAuthServices {
                 .build();
     }
 
-    private GoogleIdToken.Payload verifyGoogleToken(String token) throws Exception {
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                new NetHttpTransport(),
-                new GsonFactory())
-                .setAudience(Collections.singletonList(googleClientId))
-                .build();
+    private GoogleIdToken.Payload verifyGoogleToken(String token) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    new NetHttpTransport(),
+                    new GsonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
 
-        GoogleIdToken idToken = verifier.verify(token);
-        return idToken != null ? idToken.getPayload() : null;
+            GoogleIdToken idToken = verifier.verify(token);
+            return idToken != null ? idToken.getPayload() : null;
+
+        } catch (GeneralSecurityException | IOException ex) {
+            throw new GoogleAuthenticationException(
+                    "Failed to verify Google token",
+                    ex
+            );
+        }
     }
 }

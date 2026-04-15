@@ -17,7 +17,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class RoleRepositoryTest {
+class RoleRepositoryTest {
     @Mock
     private IJpaRoleRepository _jpaRoleRepository;
 

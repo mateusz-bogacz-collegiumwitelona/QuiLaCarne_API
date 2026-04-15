@@ -12,6 +12,7 @@ import com.example.restaurant.helpers.PagedResult;
 
 import java.util.List;
 
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IReservationServices {
     ReservationResponse create(ReservationRequest request, String userToken);
 

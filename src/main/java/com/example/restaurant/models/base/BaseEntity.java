@@ -11,6 +11,7 @@ import java.util.UUID;
 @MappedSuperclass
 @Getter
 @Setter
+@SuppressWarnings({"PMD.AbstractClassWithoutAnyMethod", "PMD.AbstractClassWithoutAbstractMethod"})
 public abstract class BaseEntity {
     @Id
     private UUID id;

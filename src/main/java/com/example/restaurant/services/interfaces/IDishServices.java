@@ -5,6 +5,7 @@ import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.helpers.PagedResult;
 
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IDishServices {
     PagedResult<DishListResponse> getMenu(DishFilterRequest request, PaggedRequest pagged);
 

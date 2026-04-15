@@ -3,6 +3,8 @@ plugins {
     id 'org.springframework.boot' version '3.5.13'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'jacoco'
+    id 'pmd'
+    id 'com.github.spotbugs' version '6.0.7'
 }
 
 group = 'com.example'
@@ -124,4 +126,24 @@ jacocoTestReport {
             ])
         }))
     }
+}
+
+pmd {
+    toolVersion = "7.0.0"
+    ruleSets = ["category/java/bestpractices.xml", "category/java/design.xml"]
+}
+
+spotbugs {
+    toolVersion = '4.9.8'
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
+    reports {
+        html.required = true
+    }
+    jvmArgs = ['-Dspotbugs.ignoreMissingClasses=true']
+}
+
+tasks.named('check') {
+    dependsOn 'pmdMain', 'spotbugsMain'
 }

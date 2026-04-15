@@ -1,10 +1,8 @@
 package com.example.restaurant.repository;
 
 import com.example.restaurant.enums.TokenTypeEnum;
-import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.models.VerificationToken;
 import com.example.restaurant.repository.interfaces.IVerificationTokenRepository;
-import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaVerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -13,9 +11,9 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class VerificationTokenRepository implements IVerificationTokenRepository {
     private final IJpaVerificationTokenRepository _jpaTokenRepo;
-    private final IJpaUserRepository _jpaUserRepo;
 
     @Override
     public void save(VerificationToken token) {

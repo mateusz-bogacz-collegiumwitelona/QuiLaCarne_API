@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -45,7 +44,7 @@ public class GlobalExceptionHandler {
                 .getFieldErrors()
                 .stream()
                 .map(err -> String.format("%s: %s", err.getField(), err.getDefaultMessage()))
-                .collect(Collectors.toList());
+                .toList();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 ResultHandler.failure("Validation failed", HttpStatus.BAD_REQUEST.value(), errors)
@@ -53,7 +52,10 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler({
+            Exception.class,
+            GoogleAuthenticationException.class
+    })
     public ResponseEntity<ResultHandler<Object>> handleGenericException(Exception ex) {
         log.error("CRITICAL UNHANDLED EXCEPTION: ", ex);
 
@@ -91,7 +93,9 @@ public class GlobalExceptionHandler {
 
         _auditLogServices.log(logDomain);
 
-        log.warn("Failed login attempt from IP: {}. Reason: {}", ipAddress, aex.getMessage());
+        if (log.isWarnEnabled()) {
+            log.warn("Authentication failed for IP: {}. Reason: {}", ipAddress, aex.getMessage());
+        }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 ResultHandler.failure(
@@ -105,7 +109,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ResultHandler<Object>> handleIllegalStateException(IllegalStateException isex) {
-        log.warn("Business rule violation: {}", isex.getMessage());
+        if (log.isWarnEnabled()) {
+            log.warn("Business rule violation: {}", isex.getMessage());
+        }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 ResultHandler.failure(
@@ -117,7 +123,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ResultHandler<Object>> handleEntityNotFoundException(RuntimeException rex) {
-        log.warn("Resource not found: {}", rex.getMessage());
+        if (log.isWarnEnabled()) {
+            log.warn("Resource not found: {}", rex.getMessage());
+        }
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ResultHandler.failure(rex.getMessage(), HttpStatus.NOT_FOUND.value())

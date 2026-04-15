@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DictionaryHelperTest {
+class DictionaryHelperTest {
     private static class DummyEntity extends BaseTranslatedEntity {
         public DummyEntity() {
         }

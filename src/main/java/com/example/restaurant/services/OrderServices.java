@@ -7,7 +7,9 @@ import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
-import com.example.restaurant.dto.response.*;
+import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.ReservationDishResponse;
+import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.dto.sync.SyncOrderItemResponse;
 import com.example.restaurant.dto.sync.SyncOrderResponse;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class OrderServices implements IOrderServices {
     private final IOrderRepository _orderRepo;
     private final IDishRepository _dishRepo;
@@ -60,7 +63,7 @@ public class OrderServices implements IOrderServices {
 
         List<String> dishTokens = dishesRequest.stream()
                 .map(ReservationDishRequest::getDishToken)
-                .collect(Collectors.toList());
+                .toList();
 
         Map<String, Dishes> dishesMap = _dishRepo.listForOrder(dishTokens).stream()
                 .collect(Collectors.toMap(Dishes::getToken, dish -> dish));
@@ -133,7 +136,7 @@ public class OrderServices implements IOrderServices {
             response.setQuantity(item.getQuantity());
             response.setPrice(item.getPriceAtTimeOfOrder());
             return response;
-        }).collect(Collectors.toList());
+        }).toList();
 
         int totalPrice = items.stream().mapToInt(item -> item.getPriceAtTimeOfOrder() * item.getQuantity()).sum();
 
@@ -177,7 +180,7 @@ public class OrderServices implements IOrderServices {
             }
 
             return response;
-        }).collect(Collectors.toList());
+        }).toList();
 
         int totalPrice = items.stream().mapToInt(item -> item.getPriceAtTimeOfOrder() * item.getQuantity()).sum();
 
@@ -188,7 +191,7 @@ public class OrderServices implements IOrderServices {
     @Transactional
     public void removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request) {
         Orders order = _orderRepo.findByReservationToken(reservationToken)
-                .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
+                .filter(o -> o.getWaiter() != null && waiterToken.equals(o.getWaiter().getToken()))
                 .orElseThrow(() -> new EntityNotFoundException("Assigned order not found"));
 
         List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
@@ -196,8 +199,11 @@ public class OrderServices implements IOrderServices {
         String reqNote = normalizeNote(request.getNote());
 
         OrderItems itemToMod = items.stream()
-                .filter(i -> i.getProduct().getToken().equals(request.getDishToken()) && Objects.equals(reqNote, normalizeNote(i.getNote())))
-                .filter(i -> i.getStatuses().stream().noneMatch(s -> "CANCELLED".equals(s.getToken())))
+                .filter(i -> request.getDishToken().equals(i.getProduct().getToken()) && Objects.equals(reqNote, normalizeNote(i.getNote())))
+                .filter(i -> i.getStatuses().stream().noneMatch(
+                                s -> "CANCELLED".equals(s.getToken())
+                        )
+                )
                 .findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("Active dish with specified note not found in the order"));
 
@@ -241,7 +247,7 @@ public class OrderServices implements IOrderServices {
             List<ReservationDishRequest> request
     ) {
         Orders order = _orderRepo.findByReservationToken(reservationToken)
-                .filter(o -> o.getWaiter() != null && o.getWaiter().getToken().equals(waiterToken))
+                .filter(o -> o.getWaiter() != null && waiterToken.equals(o.getWaiter().getToken()))
                 .orElseThrow(() -> new RuntimeException("Order not found or you are not the assigned waiter"));
 
         List<OrderItems> existingItems = _orderRepo.findItemsByOrderToken(order.getToken());
@@ -252,15 +258,15 @@ public class OrderServices implements IOrderServices {
 
         for (ReservationDishRequest r : request) {
             Dishes dish = allRequestedDishes.stream()
-                    .filter(d -> d.getToken().equals(r.getDishToken()))
+                    .filter(d -> r.getDishToken().equals(d.getToken()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Dish not found: " + r.getDishToken()));
 
             String reqNote = normalizeNote(r.getNote());
 
             Optional<OrderItems> existingItemOpt = existingItems.stream()
-                    .filter(i -> i.getProduct().getToken().equals(dish.getToken()) &&
-                            java.util.Objects.equals(reqNote, normalizeNote(i.getNote())))
+                    .filter(i -> dish.getToken().equals(i.getProduct().getToken()) &&
+                            Objects.equals(reqNote, normalizeNote(i.getNote())))
                     .filter(i -> i.getStatuses().stream()
                             .noneMatch(s -> "CANCELLED".equals(s.getToken()))
                     )
@@ -312,7 +318,7 @@ public class OrderServices implements IOrderServices {
         for (OrderItems item : items) {
             boolean isPending = item.getStatuses()
                     .stream()
-                    .anyMatch(s -> s.getToken().equals("PENDING"));
+                    .anyMatch(s -> "PENDING".equals(s.getToken()));
 
             if (isPending || item.getStatuses().isEmpty()) item.setStatuses(new HashSet<>(Set.of(orderItemsStatus)));
         }

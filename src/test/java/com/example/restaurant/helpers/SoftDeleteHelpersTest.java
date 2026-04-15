@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SoftDeleteHelpersTest {
+class SoftDeleteHelpersTest {
     @Test
     @DisplayName("markAsDelete: should return null when input is null")
     void markAsDelete_ShouldReturnNull_WhenInputIsNull() {

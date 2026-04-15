@@ -5,9 +5,9 @@ import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.TableListWrapperResponse;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.dto.sync.SyncTableResponse;
-import com.example.restaurant.dto.response.TableListWrapperResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TableServices Unit Tests")
-public class TableServicesTest {
+class TableServicesTest {
 
     @Mock
     private ITableRespository _tableRepo;
@@ -51,7 +51,7 @@ public class TableServicesTest {
     private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         LocaleContextHolder.resetLocaleContext();
     }
 
@@ -363,7 +363,7 @@ public class TableServicesTest {
     @Test
     @DisplayName("getDictionary: Returns Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
+        LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
         TableStatus status = new TableStatus();
         status.setToken(TestConstants.STATUS_AVAILABLE);
         status.setNamePl("Wolny PL");
@@ -381,7 +381,7 @@ public class TableServicesTest {
     @Test
     @DisplayName("getDictionary: Returns English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
+        Locale.of(TestConstants.LANG_EN);
         TableStatus status = new TableStatus();
         status.setToken(TestConstants.STATUS_CLEANING);
         status.setNamePl("Sprzątanie PL");

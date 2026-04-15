@@ -4,12 +4,11 @@ import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.exceptions.GlobalExceptionHandler;
 import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.services.interfaces.IAuditLogServices;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @ExtendWith(MockitoExtension.class)
-public class GlobalExceptionHandlerTest {
-
-    @Mock
-    private IAuditLogServices _auditLogServices;
+class GlobalExceptionHandlerTest {
 
     @InjectMocks
     private GlobalExceptionHandler _exceptionHandler;
@@ -34,6 +30,7 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<ResultHandler<Object>> response = _exceptionHandler.handleEntityNotFoundException(ex);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
         assertFalse(response.getBody().isSuccess());
         assertEquals("Dish not found in database", response.getBody().getMessage());
         assertEquals(404, response.getBody().getStatusCode());
@@ -47,6 +44,7 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<ResultHandler<Object>> response = _exceptionHandler.handleBadRequestExceptions(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
         assertFalse(response.getBody().isSuccess());
         assertEquals("User email already taken", response.getBody().getMessage());
         assertEquals(400, response.getBody().getStatusCode());
@@ -60,6 +58,7 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<ResultHandler<Object>> response = _exceptionHandler.handleIllegalStateException(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertNotNull(response.getBody());
         assertFalse(response.getBody().isSuccess());
         assertEquals("You cannot ban yourself", response.getBody().getMessage());
         assertEquals(400, response.getBody().getStatusCode());

@@ -12,7 +12,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class DictionaryHelper {
+public final class DictionaryHelper {
+    private DictionaryHelper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static <T extends BaseTranslatedEntity> List<EntityResponse> map(List<T> entities, String lang) {
         if (ObjectUtils.isEmpty(entities)) return List.of();
 

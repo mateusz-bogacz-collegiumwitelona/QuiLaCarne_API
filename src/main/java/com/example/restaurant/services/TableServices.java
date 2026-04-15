@@ -4,7 +4,9 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddTableRequest;
 import com.example.restaurant.dto.request.TableFilterRequest;
-import com.example.restaurant.dto.response.*;
+import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.TableListResponse;
+import com.example.restaurant.dto.response.TableListWrapperResponse;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.dto.sync.SyncTableResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
@@ -24,13 +26,13 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class TableServices implements ITableServices {
     private final ITableRespository _tableRepo;
     private final NotificationServices _notification;
@@ -47,44 +49,19 @@ public class TableServices implements ITableServices {
                     "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
     )
     public TableListWrapperResponse getTables(TableFilterRequest request) {
-        if (request.getStartTime() != null && request.getEndTime() != null) {
-            if (request.getStartTime().isAfter(request.getEndTime())) {
-                throw new IllegalStateException("Start time cannot be after end time");
-            }
-        }
+
+        validateTimeRange(request);
 
         String lang = LocaleContextHolder.getLocale().getLanguage();
-        boolean isAvailabilityCheck = (request.getStartTime() != null && request.getEndTime() != null);
+        List<RestaurantTables> tables = fetchTables(request);
 
-        List<RestaurantTables> tables;
-        if (isAvailabilityCheck) {
-            tables = _tableRepo.findAvailableTablesInTimeframe(request.getStartTime(), request.getEndTime());
-        } else {
-            tables = _tableRepo.findAll();
+        if (tables.isEmpty()) {
+            return new TableListWrapperResponse(List.of());
         }
 
-        if (tables == null || tables.isEmpty()) {
-            return new TableListWrapperResponse(new ArrayList<>());
-        }
-
-        List<TableListResponse> response = tables.stream().map(table -> {
-            String statusName = "UNKNOWN";
-            if (table.getTableStatus() != null && !table.getTableStatus().isEmpty()) {
-                var status = table.getTableStatus().iterator().next();
-                statusName = "pl".equalsIgnoreCase(lang) ? status.getNamePl() : status.getNameEn();
-            }
-
-            if (isAvailabilityCheck)
-                statusName = "pl".equalsIgnoreCase(lang) ? "Wolny" : "Available";
-
-            return TableListResponse.builder()
-                    .token(table.getToken())
-                    .tableNumber(table.getTableNumber())
-                    .capacity(table.getCapacity())
-                    .status(statusName)
-                    .updatedAt(table.getUpdatedAt())
-                    .build();
-        }).toList();
+        List<TableListResponse> response = tables.stream()
+                .map(table -> mapTable(table, lang, isAvailabilityRequest(request)))
+                .toList();
 
         return new TableListWrapperResponse(response);
     }
@@ -94,8 +71,8 @@ public class TableServices implements ITableServices {
     @Auditable(action = "CHANGE_TABLE_STATUS_TO_CLEAN")
     @CacheEvict(value = "tablesList", allEntries = true)
     public void changeStatusToClean(String tableToken) {
-        String CLEANING_STATUS = "CLEANING";
-        changeStatus(tableToken, CLEANING_STATUS);
+        String status = "CLEANING";
+        changeStatus(tableToken, status);
     }
 
     @Override
@@ -103,8 +80,8 @@ public class TableServices implements ITableServices {
     @Auditable(action = "CHANGE_TABLE_STATUS_TO_OUT_OF_SERVICE")
     @CacheEvict(value = "tablesList", allEntries = true)
     public void changeStatusToOutOfService(String tableToken) {
-        String OUT_OF_SERVICE = "OUT_OF_SERVICE";
-        changeStatus(tableToken, OUT_OF_SERVICE);
+        String status = "OUT_OF_SERVICE";
+        changeStatus(tableToken, status);
     }
 
     @Override
@@ -229,5 +206,55 @@ public class TableServices implements ITableServices {
                 _syncMapper.toSyncTableResponse(table)
         );
         _notification.sendEventToTopic("/tables/updates", event);
+    }
+
+    private void validateTimeRange(TableFilterRequest request) {
+        if (request.getStartTime() != null && request.getEndTime() != null
+                && request.getStartTime().isAfter(request.getEndTime())) {
+            throw new IllegalStateException("Start time cannot be after end time");
+        }
+    }
+
+    private boolean isAvailabilityRequest(TableFilterRequest request) {
+        return request.getStartTime() != null && request.getEndTime() != null;
+    }
+
+    private List<RestaurantTables> fetchTables(TableFilterRequest request) {
+        if (isAvailabilityRequest(request)) {
+            return _tableRepo.findAvailableTablesInTimeframe(
+                    request.getStartTime(),
+                    request.getEndTime()
+            );
+        }
+        return _tableRepo.findAll();
+    }
+
+    private String resolveStatusName(RestaurantTables table, String lang) {
+        if (table.getTableStatus() == null || table.getTableStatus().isEmpty()) {
+            return "UNKNOWN";
+        }
+
+        var status = table.getTableStatus().iterator().next();
+
+        return "pl".equalsIgnoreCase(lang)
+                ? status.getNamePl()
+                : status.getNameEn();
+    }
+
+    private TableListResponse mapTable(RestaurantTables table, String lang, boolean isAvailabilityCheck) {
+
+        String statusName = resolveStatusName(table, lang);
+
+        if (isAvailabilityCheck) {
+            statusName = "pl".equalsIgnoreCase(lang) ? "Wolny" : "Available";
+        }
+
+        return TableListResponse.builder()
+                .token(table.getToken())
+                .tableNumber(table.getTableNumber())
+                .capacity(table.getCapacity())
+                .status(statusName)
+                .updatedAt(table.getUpdatedAt())
+                .build();
     }
 }

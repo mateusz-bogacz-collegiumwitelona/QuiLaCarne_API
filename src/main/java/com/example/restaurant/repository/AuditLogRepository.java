@@ -4,12 +4,11 @@ import com.example.restaurant.models.AuditLog;
 import com.example.restaurant.repository.interfaces.IAuditLogRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaAuditLogRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-@Slf4j
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class AuditLogRepository implements IAuditLogRepository {
     private final IJpaAuditLogRepository _jpaAuditLogRepo;
 

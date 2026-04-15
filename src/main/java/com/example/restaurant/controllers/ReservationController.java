@@ -32,6 +32,7 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/api/reservations", produces = "application/json")
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class ReservationController {
     private final IReservationServices _reservationServices;
 
@@ -291,7 +292,6 @@ public class ReservationController {
             name = "Accept-Language",
             in = ParameterIn.HEADER,
             description = "Preferred language (e.g., 'pl' or 'en')",
-            required = false,
             schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
     )
     @ApiResponses(value = {

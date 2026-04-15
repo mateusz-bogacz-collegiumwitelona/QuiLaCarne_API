@@ -50,7 +50,7 @@ class EmailQueueProducerTest {
     void enqueueEmail_ShouldCatchException_WhenSerializationFails() throws Exception {
         EmailDomain mockEmail = mock(EmailDomain.class);
 
-        when(_mapper.writeValueAsString(mockEmail)).thenThrow(new RuntimeException("Serialization failure"));
+        when(_mapper.writeValueAsString(mockEmail)).thenThrow(mock(JsonProcessingException.class));
 
         assertDoesNotThrow(() -> _emailQueueProducer.enqueueEmail(mockEmail));
 

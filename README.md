@@ -37,7 +37,7 @@ docker compose run --rm test
 ## Przydatne adresy
 
 | Usługa  | Adres                                       |
-| ------- | ------------------------------------------- |
+|---------|---------------------------------------------|
 | Swagger | http://localhost:8080/swagger-ui/index.html |
 | Mailpit | http://localhost:8025/                      |
 | Minio   | http://localhost:9001/                      |

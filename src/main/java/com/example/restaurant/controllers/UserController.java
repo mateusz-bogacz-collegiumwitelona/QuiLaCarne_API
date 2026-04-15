@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(value = "/api/user", produces = "application/json")
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class UserController {
     private final IUserServices _userServices;
 
@@ -425,8 +426,7 @@ public class UserController {
             @AuthenticationPrincipal(expression = "token")
             String adminToken,
 
-            @PathVariable("employeeToken")
-            @Parameter(description = "Token of the employee to delete")
+            @PathVariable @Parameter(description = "Token of the employee to delete")
             String employeeToken
     ) {
         _userServices.deleteEmployee(adminToken, employeeToken);

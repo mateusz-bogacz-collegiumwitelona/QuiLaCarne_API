@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AllergensServicesTest {
+class AllergensServicesTest {
 
     @Mock
     private IAllergensRepository _allergenRepo;
@@ -62,7 +62,7 @@ public class AllergensServicesTest {
     @Test
     @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
+        LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
 
         Allergens allergen = new Allergens();
         allergen.setToken(TestConstants.TOKEN_GLUTEN);
@@ -81,7 +81,7 @@ public class AllergensServicesTest {
     @Test
     @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
+        Locale.of(TestConstants.LANG_EN);
 
         Allergens allergen = new Allergens();
         allergen.setToken(TestConstants.TOKEN_NUTS);

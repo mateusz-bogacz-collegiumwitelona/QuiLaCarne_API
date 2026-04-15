@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class VerificationTokenRepositoryTest {
+class VerificationTokenRepositoryTest {
     @Mock
     private IJpaVerificationTokenRepository _jpaTokenRepo;
 
@@ -69,6 +69,7 @@ public class VerificationTokenRepositoryTest {
 
         assertTrue(result.isEmpty());
     }
+
     @Test
     @DisplayName("delete By User Token And Type: Should Call Jpa")
     void deleteByUserTokenAndType_ShouldCallJpaMethod() {

@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 
@@ -25,7 +26,8 @@ class JwtServicesTest {
 
     @BeforeEach
     void setUp() {
-        String testSecret = Base64.getEncoder().encodeToString("super_secret_test_key_32_characters_long".getBytes());
+        String testSecret = Base64.getEncoder().encodeToString("super_secret_test_key_32_characters_long"
+                .getBytes(StandardCharsets.UTF_8));
         ReflectionTestUtils.setField(_jwtServices, "privateKey", testSecret);
         ReflectionTestUtils.setField(_jwtServices, "jwtExpiration", 3600000L);
 

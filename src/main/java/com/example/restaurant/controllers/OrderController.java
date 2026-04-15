@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(value = "/api/order", produces = "application/json")
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class OrderController {
     private final IOrderServices _orderServices;
 
@@ -34,7 +35,6 @@ public class OrderController {
             name = "Accept-Language",
             in = ParameterIn.HEADER,
             description = "Preferred language (e.g., 'pl' or 'en')",
-            required = false,
             schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
     )
     @ApiResponses(value = {
@@ -67,7 +67,6 @@ public class OrderController {
             name = "Accept-Language",
             in = ParameterIn.HEADER,
             description = "Preferred language (e.g., 'pl' or 'en')",
-            required = false,
             schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
     )
     @ApiResponses(value = {

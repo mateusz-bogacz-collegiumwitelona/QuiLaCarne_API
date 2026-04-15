@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ReportServicesTest {
+class ReportServicesTest {
     @Mock
     private IReportRepository _reportRepo;
 

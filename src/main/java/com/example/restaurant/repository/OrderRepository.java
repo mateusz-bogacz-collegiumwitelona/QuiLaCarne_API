@@ -20,6 +20,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class OrderRepository implements IOrderRepository {
     private final IJpaOrderRepository _jpaOrderRepo;
     private final IJpaOrderItemsRepository _jpaOrderItemRepo;

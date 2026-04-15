@@ -11,6 +11,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -34,7 +35,7 @@ public interface DishMapper {
 
     @Named("mapAllergenList")
     default List<String> mapAllergenList(Set<Allergens> allergens, @Context String lang) {
-        if (allergens == null) return null;
+        if (allergens == null) return new ArrayList<>();
         return allergens.stream()
                 .map(a -> translateByLang(a, lang))
                 .toList();

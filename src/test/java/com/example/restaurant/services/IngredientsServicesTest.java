@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class IngredientsServicesTest {
+class IngredientsServicesTest {
     @Mock
     private IIngredientsRepository _ingredientsRepo;
 
@@ -176,7 +176,7 @@ public class IngredientsServicesTest {
     @Test
     @DisplayName("getDictionary: Returns Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
+        LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
         Ingredients ingredient = new Ingredients();
         ingredient.setToken(TestConstants.TOKEN_INGREDIENT);
         ingredient.setNamePl(TestConstants.INGREDIENT_PL);
@@ -194,7 +194,7 @@ public class IngredientsServicesTest {
     @Test
     @DisplayName("getDictionary: Returns English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
+        Locale.of(TestConstants.LANG_EN);
         Ingredients ingredient = new Ingredients();
         ingredient.setToken(TestConstants.TOKEN_INGREDIENT);
         ingredient.setNamePl(TestConstants.INGREDIENT_PL);

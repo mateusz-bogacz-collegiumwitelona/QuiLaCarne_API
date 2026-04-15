@@ -20,6 +20,7 @@ import java.util.Map;
 @Aspect
 @Component
 @RequiredArgsConstructor
+@SuppressWarnings("PMD.LawOfDemeter")
 public class AuditAspect {
     private final IAuditLogServices _auditLogServices;
 
@@ -47,12 +48,18 @@ public class AuditAspect {
     }
 
     private String getIp() {
-        if (RequestContextHolder.getRequestAttributes() == null) return "UNKNOWN";
+        var attrs = RequestContextHolder.getRequestAttributes();
 
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        if (!(attrs instanceof ServletRequestAttributes servletAttrs)) {
+            return "UNKNOWN";
+        }
+
+        HttpServletRequest request = servletAttrs.getRequest();
 
         String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader == null) return request.getRemoteAddr();
+        if (xfHeader == null || xfHeader.isEmpty()) {
+            return request.getRemoteAddr();
+        }
 
         return xfHeader.split(",")[0];
     }

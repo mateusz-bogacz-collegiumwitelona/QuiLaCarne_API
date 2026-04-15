@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class BanServicesTest {
+class BanServicesTest {
     @Mock
     private IBanRepository _banRepo;
 
@@ -53,7 +53,7 @@ public class BanServicesTest {
 
     private Users admin;
     private Users client;
-    private final String CLIENT_TOKEN = "client-token-123";
+    private static final String CLIENT_TOKEN = "client-token-123";
 
     @AfterEach
     void tearDown() {
@@ -124,7 +124,7 @@ public class BanServicesTest {
         CreateBanRequest request = new CreateBanRequest();
         request.setClientToken(CLIENT_TOKEN);
 
-        assertThrows(IllegalStateException.class, () -> _banServices.create(admin.getToken(), request));
+        assertThrows(IllegalStateException.class, () -> callCreateBan(request));
     }
 
     @Test
@@ -140,7 +140,7 @@ public class BanServicesTest {
     @Test
     @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
+        LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
 
         BanStatus status = new BanStatus();
         status.setToken(TestConstants.STATUS_ACTIVE);
@@ -159,7 +159,7 @@ public class BanServicesTest {
     @Test
     @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
+        Locale.of(TestConstants.LANG_EN);
 
         BanStatus status = new BanStatus();
         status.setToken(TestConstants.STATUS_EXPIRED);
@@ -179,5 +179,9 @@ public class BanServicesTest {
         Roles role = new Roles();
         role.setName(roleName);
         return role;
+    }
+
+    private void callCreateBan(CreateBanRequest request) {
+        _banServices.create(admin.getToken(), request);
     }
 }

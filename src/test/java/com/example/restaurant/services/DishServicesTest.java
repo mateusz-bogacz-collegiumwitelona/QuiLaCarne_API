@@ -44,7 +44,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class DishServicesTest {
+class DishServicesTest {
     @Mock
     private IDishRepository _dishRepo;
 
@@ -528,7 +528,7 @@ public class DishServicesTest {
     @Test
     @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
+        LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
 
         DishesCategories category = new DishesCategories();
         category.setToken(TestConstants.TOKEN_SOUPS);
@@ -547,7 +547,7 @@ public class DishServicesTest {
     @Test
     @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
+        Locale.of(TestConstants.LANG_EN);
 
         DishesCategories category = new DishesCategories();
         category.setToken(TestConstants.TOKEN_DESSERTS);

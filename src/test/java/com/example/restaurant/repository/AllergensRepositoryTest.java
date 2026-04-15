@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AllergensRepositoryTest {
+class AllergensRepositoryTest {
     @Mock
     private IJpaAllergensRepository _jpaAllergensRepo;
 

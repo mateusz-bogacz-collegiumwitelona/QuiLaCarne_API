@@ -16,14 +16,17 @@ import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class DishRepository implements IDishRepository {
     private final IJpaDishRepository _jpaDishRepo;
     private final IJpaDishesCategoryRepository _jpaDishCategoryRepo;
 
+    @Override
     public Page<Dishes> findAll(Pageable pageable) {
         return _jpaDishRepo.findAll(pageable);
     }
 
+    @Override
     public Page<Dishes> findWithoutAllergens(List<String> excludedAllergens, Pageable pageable) {
         return _jpaDishRepo.findWithoutAllergens(excludedAllergens, pageable);
     }

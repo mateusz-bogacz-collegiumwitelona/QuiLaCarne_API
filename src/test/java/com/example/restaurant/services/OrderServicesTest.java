@@ -7,9 +7,9 @@ import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.dto.sync.SyncOrderResponse;
-import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.*;
@@ -36,7 +36,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderServicesTest {
+class OrderServicesTest {
     @Mock
     private IOrderRepository _orderRepo;
 
@@ -152,13 +152,7 @@ public class OrderServicesTest {
 
         when(_dishRepo.listForOrder(List.of(TestConstants.FAKE_DISH_TOKEN))).thenReturn(List.of());
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                _orderServices.createOrderForReservation(
-                        TestConstants.FAKE_RESERVATION_TOKEN,
-                        TestConstants.FAKE_TABLE_TOKEN,
-                        List.of(dishReq)
-                )
-        );
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> createOrderForReservation(dishReq));
 
         assertTrue(exception.getMessage().contains("Dish not found"));
         verify(_orderRepo, never()).saveOrderWithItems(any(), any());
@@ -518,11 +512,9 @@ public class OrderServicesTest {
         when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.of(mockOrder));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> _orderServices.addItemFromReservation(
-                intruderWaiterToken,
-                TestConstants.FAKE_RESERVATION_TOKEN,
-                List.of()
-        ));
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> addItemFromReservation(intruderWaiterToken)
+        );
 
         assertEquals("Order not found or you are not the assigned waiter", exception.getMessage());
         verify(_orderRepo, never()).save(any());
@@ -661,7 +653,8 @@ public class OrderServicesTest {
     @Test
     @DisplayName("getDictionary: Returns Polish names when language is pl")
     void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale("pl"));
+        LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
+
         OrderStatus status = new OrderStatus();
         status.setToken("PENDING");
         status.setNamePl("Oczekujące PL");
@@ -679,7 +672,7 @@ public class OrderServicesTest {
     @Test
     @DisplayName("getDictionary: Returns English names when language is not pl")
     void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale("en"));
+        Locale.of(TestConstants.LANG_EN);
         OrderStatus status = new OrderStatus();
         status.setToken("COMPLETED");
         status.setNamePl("Zakończone PL");
@@ -705,7 +698,7 @@ public class OrderServicesTest {
     @Test
     @DisplayName("getItemStatusesDictionary: Returns Polish names when language is pl")
     void getItemStatusesDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_PL));
+        LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
         OrderItemsStatus status = new OrderItemsStatus();
         status.setToken(TestConstants.STATUS_READY);
         status.setNamePl("Gotowe PL");
@@ -723,7 +716,7 @@ public class OrderServicesTest {
     @Test
     @DisplayName("getItemStatusesDictionary: Returns English names when language is not pl")
     void getItemStatusesDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
-        LocaleContextHolder.setLocale(new Locale(TestConstants.LANG_EN));
+        Locale.of(TestConstants.LANG_EN);
         OrderItemsStatus status = new OrderItemsStatus();
         status.setToken(TestConstants.STATUS_READY);
         status.setNamePl("Gotowe PL");
@@ -912,6 +905,22 @@ public class OrderServicesTest {
                                 event.getToken().equals(tokenToRemove) &&
                                 event.getPayload() == null
                 )
+        );
+    }
+
+    private void createOrderForReservation(ReservationDishRequest dishReq) {
+        _orderServices.createOrderForReservation(
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                TestConstants.FAKE_TABLE_TOKEN,
+                List.of(dishReq)
+        );
+    }
+
+    private void addItemFromReservation(String intruderWaiterToken) {
+        _orderServices.addItemFromReservation(
+                intruderWaiterToken,
+                TestConstants.FAKE_RESERVATION_TOKEN,
+                List.of()
         );
     }
 }

@@ -1,6 +1,6 @@
 package com.example.restaurant.helpers;
 
-public class SoftDeleteHelpers {
+public final class SoftDeleteHelpers {
     private SoftDeleteHelpers() {
         throw new IllegalStateException("Utility class");
     }

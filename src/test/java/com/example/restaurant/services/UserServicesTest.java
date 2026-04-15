@@ -33,7 +33,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServicesTest {
+class UserServicesTest {
     @Mock
     private IUserRepository _userRepo;
 
@@ -856,7 +856,10 @@ public class UserServicesTest {
 
         when(_userRepo.findByToken(userToken)).thenReturn(user);
 
-        assertThrows(IllegalStateException.class, () -> _userServices
-                .verifyAndEnable2fa(userToken, new Verify2faRequest()));
+        assertThrows(IllegalStateException.class, () -> verifyAndEnable2fa(userToken));
+    }
+
+    private void verifyAndEnable2fa(String token) {
+        _userServices.verifyAndEnable2fa(token, new Verify2faRequest());
     }
 }

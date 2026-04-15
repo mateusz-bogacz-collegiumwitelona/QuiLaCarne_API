@@ -20,6 +20,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.function.Supplier;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class DataSeeder implements CommandLineRunner {
     private final IJpaRoleRepository _jpaRoleRepo;
     private final IJpaTableStatusRepository _jpaTableStatusRepo;
@@ -139,7 +141,10 @@ public class DataSeeder implements CommandLineRunner {
                 entity.setName(name);
                 repo.save(entity);
             });
-            log.info("Seed table: {} (added {} items)", factory.get().getClass().getSimpleName(), names.size());
+
+            if (log.isInfoEnabled()) {
+                log.info("Seed table: {} (added {} items)", factory.get().getClass().getSimpleName(), names.size());
+            }
         }
     }
 
@@ -156,7 +161,9 @@ public class DataSeeder implements CommandLineRunner {
                 entity.setNameEn(item.en());
                 repo.save(entity);
             });
-            log.info("Seeded table: {} ({} items)", factory.get().getClass().getSimpleName(), data.size());
+            if (log.isInfoEnabled()) {
+                log.info("Seeded table: {} ({} items)", factory.get().getClass().getSimpleName(), data.size());
+            }
         }
     }
 
@@ -203,7 +210,6 @@ public class DataSeeder implements CommandLineRunner {
         Ingredients rice = createIngredient("Ryż Arborio", "Arborio Rice", "RICE-ARBORIO", asSet());
         Ingredients lemon = createIngredient("Cytryny Sycylijskie", "Sicilian Lemons", "LEMON-SICILY", asSet());
 
-        // NOWE SKŁADNIKI DLA PROBLEMÓW Z NUT / EGG
         Ingredients pistachios = createIngredient("Pistacje", "Pistachios", "PISTACHIOS", asSet(nuts));
         Ingredients eggIngredient = createIngredient("Jajka", "Eggs", "EGG_ING", asSet(eggs));
 
@@ -213,7 +219,7 @@ public class DataSeeder implements CommandLineRunner {
         DishesCategories dessertCat = _jpaDishesCategoryRepo.findByToken("DESSERT").orElseThrow();
         DishesCategories drinkCat = _jpaDishesCategoryRepo.findByToken("DRINK").orElseThrow();
         DishesCategories otherCat = _jpaDishesCategoryRepo.findByToken("OTHER").orElseThrow();
-        
+
         createDish("Bruschetta Classica", 2500, starterCat, asSet(bread, tomato, oliveOil), "bruschetta.jpg");
         createDish("Carpaccio di Manzo", 4800, starterCat, asSet(beef, parmesan, oliveOil), "carpaccio.jpg");
         createDish("Focaccia Rosmarino", 2200, starterCat, asSet(bread, oliveOil), "focaccia.jpg");
@@ -275,7 +281,9 @@ public class DataSeeder implements CommandLineRunner {
         createSingleTable(2, 4, availableStatus);
         createSingleTable(3, 6, availableStatus);
 
-        log.info("Seed: 3 restaurant table create");
+        if (log.isInfoEnabled()) {
+            log.info("Seed: 3 restaurant table create");
+        }
     }
 
     private void createSingleTable(int number, int capacity, TableStatus status) {
@@ -299,11 +307,15 @@ public class DataSeeder implements CommandLineRunner {
                         resource.contentLength()
                 );
             } else {
-                log.warn("Resource not found: {}", resourcePath);
+                if (log.isWarnEnabled()) {
+                    log.warn("Resource not found: {}", resourcePath);
+                }
                 return null;
             }
-        } catch (Exception e) {
-            log.error("Error uploading image: {}", fileName, e);
+        } catch (IOException e) {
+            if (log.isErrorEnabled()) {
+                log.error("Error uploading image: {}", fileName, e);
+            }
             return null;
         }
     }

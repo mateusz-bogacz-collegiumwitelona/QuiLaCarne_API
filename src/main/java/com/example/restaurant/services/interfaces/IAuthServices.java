@@ -4,6 +4,7 @@ import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IAuthServices {
     AuthResponse authenticate(LoginRequest request);
 

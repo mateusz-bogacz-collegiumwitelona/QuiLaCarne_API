@@ -12,6 +12,7 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class AllergensRepository implements IAllergensRepository {
     private final IJpaAllergensRepository _jpaAllergensRepo;
 

@@ -27,6 +27,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class BanServices implements IBanServices {
     private final IBanRepository _banRepo;
     private final EmailServices _emailServices;
@@ -54,7 +55,7 @@ public class BanServices implements IBanServices {
 
         validatePermissions(admin, client);
 
-        if (!client.getIsActive())
+        if (!Boolean.TRUE.equals(client.getIsActive()))
             throw new IllegalStateException("User is already inactive or banned");
 
         CreateBanDomain banDomain = new CreateBanDomain(
@@ -136,20 +137,22 @@ public class BanServices implements IBanServices {
             );
             _notification.sendEventToTopic("/security/bans", event);
 
-            log.info("User {} has been automatically unbanned.", user.getUsername());
+            if (log.isInfoEnabled()) {
+                log.info("User {} has been automatically unbanned.", user.getUsername());
+            }
         }
     }
 
     private void validatePermissions(Users admin, Users client) {
         boolean isAdminManager = admin.getRoles().stream()
-                .anyMatch(r -> r.getName().equals(ROLE_MANAGER));
+                .anyMatch(r -> ROLE_MANAGER.equals(r.getName()));
 
         if (!isAdminManager) {
             throw new IllegalStateException("Only managers can issue bans");
         }
 
         boolean isTargetClient = client.getRoles().stream()
-                .anyMatch(r -> r.getName().equals(ROLE_CLIENT));
+                .anyMatch(r -> ROLE_CLIENT.equals(r.getName()));
 
         if (!isTargetClient) {
             throw new IllegalStateException("Targeted user must be a client");

@@ -25,7 +25,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class EmailQueueConsumerTest {
+class EmailQueueConsumerTest {
     @Mock
     private StringRedisTemplate _redisTemplate;
 

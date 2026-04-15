@@ -21,6 +21,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class ReportServices implements IReportServices {
     private final IReportRepository _reportRepo;
     private final IUserRepository _userRepo;

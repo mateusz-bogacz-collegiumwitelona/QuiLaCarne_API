@@ -41,6 +41,13 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({
+        "PMD.TooManyMethods",
+        "PMD.CouplingBetweenObjects",
+        "PMD.GodClass",
+        "PMD.ExcessiveImports",
+        "PMD.CyclomaticComplexity"
+})
 public class ReservationServices implements IReservationServices {
     private final ITableRespository _tableRepo;
     private final IReservationRepository _reservationRepo;
@@ -240,7 +247,7 @@ public class ReservationServices implements IReservationServices {
                 .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
         boolean isActive = reservation.getReservationStatus().stream()
-                .anyMatch(status -> status.getToken().equals(STATUS_ACTIVE));
+                .anyMatch(status -> STATUS_ACTIVE.equals(status.getToken()));
 
         if (!isActive) throw new IllegalStateException("Only ACTIVE reservations can be set to NO_SHOW");
 

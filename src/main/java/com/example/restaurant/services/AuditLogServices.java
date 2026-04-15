@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class AuditLogServices implements IAuditLogServices {
     private final IAuditLogRepository _auditRepo;
     private final IUserRepository _userRepo;
@@ -22,6 +23,7 @@ public class AuditLogServices implements IAuditLogServices {
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public void log(LogDomain logDomain) {
         if (logDomain == null || logDomain.action() == null) {
             log.warn("Attempted to save an empty audit log. Skipping.");
@@ -34,14 +36,18 @@ public class AuditLogServices implements IAuditLogServices {
             auditLog.setIpAddress(logDomain.ipAddress());
             auditLog.setDetails(logDomain.details());
 
-            if (logDomain.username() != null && !logDomain.username().equals("anonymousUser"))
+            if (logDomain.username() != null && !"anonymousUser".equals(logDomain.username()))
                 _userRepo.findByNormalizedUsername(logDomain.username().toUpperCase())
                         .ifPresent(auditLog::setUser);
 
             _auditRepo.save(auditLog);
-            log.info("Audit log saved async for action: {}", logDomain.action());
+            if (log.isInfoEnabled()) {
+                log.info("Audit log saved async for action: {}", logDomain.action());
+            }
         } catch (Exception ex) {
-            log.error("Failed to save audit log for action {}: {}", logDomain.action(), ex.getMessage());
+            if (log.isErrorEnabled()) {
+                log.error("Failed to save audit log for action {}: {}", logDomain.action(), ex.getMessage());
+            }
         }
     }
 

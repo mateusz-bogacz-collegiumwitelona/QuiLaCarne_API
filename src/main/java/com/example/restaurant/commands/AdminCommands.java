@@ -26,15 +26,15 @@ public class AdminCommands implements CommandLineRunner {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
 
     private static final Pattern PASS_UPPERCASE = Pattern.compile(".*[A-Z].*");
-    private static final Pattern PASS_DIGIT = Pattern.compile(".*[0-9].*");
-    private static final Pattern PASS_SPECIAL = Pattern.compile(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*");
+    private static final Pattern PASS_DIGIT = Pattern.compile(".*\\d.*");
+    private static final Pattern PASS_SPECIAL = Pattern.compile(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
 
     @Override
     public void run(String... args) {
         if (args.length > 0 && Arrays.asList(args).contains("--create-admin")) {
             Scanner scanner = new Scanner(System.in);
 
-            System.out.println("Enter username:");
+            log.info("Enter username:");
             String username = scanner.nextLine().trim();
             if (username.isBlank()) {
                 log.error("Error: Username cannot be empty");
@@ -46,14 +46,14 @@ public class AdminCommands implements CommandLineRunner {
                 return;
             }
 
-            System.out.println("Enter email: ");
+            log.info("Enter email: ");
             String email = scanner.nextLine().trim();
             if (!EMAIL_PATTERN.matcher(email).matches()) {
                 log.error("Error: The email you provided has an incorrect structure");
                 return;
             }
 
-            System.out.println("Enter password (min. 8 characters, capital letter, number, special character): ");
+            log.info("Enter password (min. 8 characters, capital letter, number, special character): ");
             String password = scanner.nextLine().trim();
             if (!validatePassword(password)) return;
 

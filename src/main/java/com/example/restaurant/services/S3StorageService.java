@@ -16,6 +16,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class S3StorageService {
     private final S3Client _s3Client;
 
@@ -47,7 +48,9 @@ public class S3StorageService {
                     .bucket(bucketName)
                     .build()
             );
-            log.info("Bucket {} already exists.", bucketName);
+            if (log.isInfoEnabled()) {
+                log.info("Bucket {} already exists.", bucketName);
+            }
         } catch (S3Exception e) {
             if (e instanceof NoSuchBucketException || e.statusCode() == 404) {
                 _s3Client.createBucket(CreateBucketRequest.builder()
@@ -55,7 +58,9 @@ public class S3StorageService {
                         .build()
                 );
 
-                log.info("Created bucket: {}", bucketName);
+                if (log.isInfoEnabled()) {
+                    log.info("Created bucket: {}", bucketName);
+                }
 
                 String policy = "{" +
                         "\"Version\": \"2012-10-17\"," +
@@ -74,7 +79,9 @@ public class S3StorageService {
 
                 log.info("Set public read policy for bucket: {}", bucketName);
             } else {
-                log.error("Error checking S3 bucket", e);
+                if (log.isWarnEnabled()) {
+                    log.error("Error checking S3 bucket", e);
+                }
             }
         }
     }
@@ -106,7 +113,9 @@ public class S3StorageService {
             _s3Client.putObject(put, RequestBody.fromInputStream(is, contentLength));
             return cleanFileName;
         } catch (S3Exception e) {
-            log.error("Failed to upload file to S3: {}", e.getMessage());
+            if (log.isErrorEnabled()) {
+                log.error("Failed to upload file to S3: {}", e.getMessage());
+            }
             throw new IllegalStateException("Could not upload file to cloud storage", e);
         }
     }
@@ -122,7 +131,9 @@ public class S3StorageService {
                     .key(key)
                     .build()
             );
-            log.info("Deleted file from S3: {}", key);
+            if (log.isInfoEnabled()) {
+                log.info("Deleted file from S3: {}", key);
+            }
         } catch (S3Exception e) {
             log.error("Failed to delete file {} from S3: {}", key, e.getMessage());
         }
@@ -135,7 +146,9 @@ public class S3StorageService {
         if (i > 0) extension = fileName.substring(i).toLowerCase();
 
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            log.warn("Blocked upload attempt with invalid extension: {}", extension);
+            if (log.isWarnEnabled()) {
+                log.warn("Blocked upload attempt with invalid extension: {}", extension);
+            }
             throw new IllegalArgumentException("Invalid file extension. Allowed: JPG, JPEG, PNG, WEBP.");
         }
 

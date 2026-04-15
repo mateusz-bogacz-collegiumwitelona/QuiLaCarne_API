@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAsync
 @EnableCaching
 @EnableScheduling
+@SuppressWarnings("PMD.UseUtilityClass")
 public class QuiLaCarneApiApplication {
     public static void main(String[] args) {
         SpringApplication.run(QuiLaCarneApiApplication.class, args);

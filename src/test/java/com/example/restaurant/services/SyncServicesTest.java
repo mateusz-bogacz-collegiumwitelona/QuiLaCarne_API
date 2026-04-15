@@ -33,7 +33,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class SyncServicesTest {
+class SyncServicesTest {
     @Mock
     private IUserRepository _userRepo;
 

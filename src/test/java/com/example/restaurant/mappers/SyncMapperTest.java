@@ -40,7 +40,7 @@ class SyncMapperTest {
 
         assertTrue(result.isStaff(), "User with ROLE_WAITER should be identified as staff");
         assertEquals(1, result.getRoleTokens().size());
-        assertEquals("ROLE_WAITER_TOKEN", result.getRoleTokens().get(0));
+        assertEquals("ROLE_WAITER_TOKEN", result.getRoleTokens().getFirst());
     }
 
     @Test
@@ -114,7 +114,7 @@ class SyncMapperTest {
         SyncIngredientResponse result = mapper.toSyncIngredientResponse(ingredient);
 
         assertEquals(1, result.getAllergenTokens().size());
-        assertEquals("ALL_NUTS", result.getAllergenTokens().get(0));
+        assertEquals("ALL_NUTS", result.getAllergenTokens().getFirst());
         ingredient.setAllergens(null);
         SyncIngredientResponse resultNull = mapper.toSyncIngredientResponse(ingredient);
         assertNotNull(resultNull.getAllergenTokens(), "Should return empty list instead of null");

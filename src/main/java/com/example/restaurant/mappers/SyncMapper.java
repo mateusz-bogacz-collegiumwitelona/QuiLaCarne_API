@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.List;
 import java.util.Set;
 
+@SuppressWarnings({"PMD.GodClass", "PMD.CouplingBetweenObjects", "PMD.TooManyMethods"})
 @Mapper(componentModel = "spring")
 public abstract class SyncMapper {
 
@@ -36,9 +37,9 @@ public abstract class SyncMapper {
     protected boolean checkIfStaff(Set<Roles> roles) {
         if (roles == null) return false;
         return roles.stream()
-                .anyMatch(r -> r.getName().equals("ROLE_WAITER")
-                        || r.getName().equals("ROLE_MANAGER")
-                        || r.getName().equals("ROLE_ADMIN"));
+                .anyMatch(r -> "ROLE_WAITER".equals(r.getName())
+                        || "ROLE_MANAGER".equals(r.getName())
+                        || "ROLE_ADMIN".equals(r.getName()));
     }
 
     public SyncDictionaryResponse toSyncDictionaryResponse(BaseTranslatedEntity entity) {
@@ -70,11 +71,21 @@ public abstract class SyncMapper {
 
     @Named("mapImageUrl")
     protected String mapImageUrl(String imageUrl) {
-        if (imageUrl != null && !imageUrl.startsWith("http")) {
-            if (s3Endpoint != null && !s3Endpoint.isBlank() && s3BucketName != null) {
-                return String.format("%s/%s/%s", s3Endpoint.trim(), s3BucketName, imageUrl);
-            }
+
+        if (imageUrl != null
+                && !imageUrl.startsWith("http")
+                && s3Endpoint != null
+                && !s3Endpoint.isBlank()
+                && s3BucketName != null) {
+
+            return String.format(
+                    "%s/%s/%s",
+                    s3Endpoint.trim(),
+                    s3BucketName,
+                    imageUrl
+            );
         }
+
         return imageUrl;
     }
 

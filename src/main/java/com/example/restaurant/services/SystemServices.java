@@ -14,6 +14,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class SystemServices implements ISystemServices {
     private final CacheManager _cacheManager;
 
@@ -40,6 +41,7 @@ public class SystemServices implements ISystemServices {
         log.info("Cleared specific cache: {}", cacheName);
     }
 
+    @Override
     public List<String> getCacheList() {
         return _cacheManager.getCacheNames().stream().toList();
     }

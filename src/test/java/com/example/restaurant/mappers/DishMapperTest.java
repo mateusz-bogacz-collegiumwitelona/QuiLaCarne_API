@@ -16,7 +16,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DishMapperTest {
+class DishMapperTest {
 
     private DishMapper _dishMapper;
 
@@ -51,9 +51,11 @@ public class DishMapperTest {
     }
 
     @Test
-    @DisplayName("mapAllergenList: Should return null when allergens set is null")
-    void mapAllergenList_ShouldReturnNull_WhenAllergensAreNull() {
-        assertNull(_dishMapper.mapAllergenList(null, TestConstants.LANG_PL));
+    @DisplayName("mapAllergenList: Should return empty list when allergens set is null")
+    void mapAllergenList_ShouldReturnEmptyList_WhenAllergensAreNull() {
+        List<String> result = _dishMapper.mapAllergenList(null, TestConstants.LANG_PL);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test

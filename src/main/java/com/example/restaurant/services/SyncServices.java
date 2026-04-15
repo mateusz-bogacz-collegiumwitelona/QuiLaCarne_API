@@ -20,6 +20,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class SyncServices implements ISyncServices {
     private final IUserRepository _userRepo;
     private final IAllergensRepository _allergenRepo;
@@ -34,7 +35,7 @@ public class SyncServices implements ISyncServices {
 
     private final SyncMapper _syncMapper;
 
-    private final int DEFAULT_PAGE_SIZE = 20;
+    private static final int DEFAULT_PAGE_SIZE = 20;
 
     @Override
     @Auditable(action = "BOOTSTRAP_MANIFEST")

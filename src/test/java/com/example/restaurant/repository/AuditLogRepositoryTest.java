@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AuditLogRepositoryTest {
+class AuditLogRepositoryTest {
     @Mock
     private IJpaAuditLogRepository _jpaAuditRepo;
 

@@ -32,6 +32,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class UserServices implements IUserServices {
     private final IUserRepository _userRepo;
     private final EmailServices _emailServices;
@@ -43,8 +44,8 @@ public class UserServices implements IUserServices {
 
     private final SyncMapper _syncMapper;
 
-    private final String ROLE_MANAGER = "ROLE_MANAGER";
-    private final String ROLE_WAITER = "ROLE_WAITER";
+    private static final String ROLE_MANAGER = "ROLE_MANAGER";
+    private static final String ROLE_WAITER = "ROLE_WAITER";
 
     private static final String EMPLOYEE_ENTITY_TYPE = "EMPLOYEE";
 
@@ -61,7 +62,7 @@ public class UserServices implements IUserServices {
     public void activeUser(String userToken) {
         Users user = _userRepo.findByToken(userToken);
 
-        if (user.getIsActive())
+        if (Boolean.TRUE.equals(user.getIsActive()))
             throw new IllegalStateException("User is already active");
 
         user.setIsActive(true);
@@ -82,7 +83,7 @@ public class UserServices implements IUserServices {
     @Auditable(action = "UPDATE_PASSWORD")
     @Transactional
     public void updatePassword(String userToken, ChangePasswordRequest request) {
-        if (!request.getPassword().equals(request.getConfirmPassword()))
+        if (!request.getConfirmPassword().equals(request.getPassword()))
             throw new IllegalStateException("Passwords do not match");
 
         Users user = _userRepo.findByToken(userToken);
@@ -111,12 +112,12 @@ public class UserServices implements IUserServices {
         String normalizedEmail = email.toUpperCase().trim();
 
         var existingUser = findMinimalByEmail(email);
-        if (existingUser.isPresent() && !existingUser.get().token().equals(userToken))
+        if (existingUser.isPresent() && !userToken.equals(existingUser.get().token()))
             throw new EntityAlreadyExistsException("The email is being used by someone else");
 
         Users user = _userRepo.findByToken(userToken);
 
-        if (normalizedEmail.equals(user.getNormalizedEmail()))
+        if (user.getNormalizedEmail().equals(normalizedEmail))
             throw new IllegalStateException("You are already using this email address");
 
 
@@ -207,7 +208,7 @@ public class UserServices implements IUserServices {
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
             String normalizedEmail = request.getEmail().toUpperCase().trim();
 
-            if (employee.getNormalizedEmail().equals(normalizedEmail))
+            if (normalizedEmail.equals(employee.getNormalizedEmail()))
                 throw new IllegalStateException("Email must be different");
 
             if (_userRepo.findByNormalizedEmail(normalizedEmail).isPresent())
@@ -220,7 +221,7 @@ public class UserServices implements IUserServices {
         if (request.getUserName() != null && !request.getUserName().isBlank()) {
             String normalizedUserName = request.getUserName().toUpperCase().trim();
 
-            if (employee.getNormalizedUsername().equals(normalizedUserName))
+            if (normalizedUserName.equals(employee.getNormalizedUsername()))
                 throw new IllegalStateException("User name must be different");
 
             if (_userRepo.existsByUsername(normalizedUserName))
@@ -244,7 +245,7 @@ public class UserServices implements IUserServices {
     @Transactional
     @Auditable(action = "CHANGE_EMPLOYEE_PASSWORD")
     public void changeEmployeePassword(String adminToken, ChangeEmployeePasswordRequest request) {
-        if (adminToken.trim().equals(request.getEmployeeToken().trim()))
+        if (request.getEmployeeToken().trim().equals(adminToken.trim()))
             throw new IllegalStateException("You can't change your own password");
 
         if (!request.getPassword().equals(request.getConfirmPassword()))
@@ -262,12 +263,12 @@ public class UserServices implements IUserServices {
     @Auditable(action = "CHANGE_EMPLOYEE_ROLE")
     @CacheEvict(value = "usersList", allEntries = true)
     public void changeEmployeeRole(String adminToken, ChangeEmployeeRoleRequest request) {
-        if (adminToken.trim().equals(request.getEmployeeToken().trim()))
+        if (request.getEmployeeToken().trim().equals(adminToken.trim()))
             throw new IllegalStateException("You can't change your own role");
 
         Users user = _userRepo.findByToken(request.getEmployeeToken());
 
-        boolean isCurrentlyManager = user.getRoles().stream().anyMatch(r -> r.getName().equals(ROLE_MANAGER));
+        boolean isCurrentlyManager = user.getRoles().stream().anyMatch(r -> ROLE_MANAGER.equals(r.getName()));
 
         if (request.isAdmin() && isCurrentlyManager)
             throw new IllegalStateException("User is already a Manager");
@@ -303,7 +304,7 @@ public class UserServices implements IUserServices {
 
         Users user = _userRepo.findByToken(request.getEmployeeToken());
 
-        if (request.isAvailable() == user.getIsActive())
+        if (request.isAvailable() == Boolean.TRUE.equals(user.getIsActive()))
             throw new IllegalStateException("Employee availability is already set to this state");
 
         user.setIsActive(request.isAvailable());
@@ -339,17 +340,18 @@ public class UserServices implements IUserServices {
     @CacheEvict(value = "usersList", allEntries = true)
     public String createOAuthUser(String email) {
         String baseUserName = email.split("@")[0];
+        String originalBase = baseUserName;
         int counter = 1;
 
         while (_userRepo.existsByUsername(baseUserName.toUpperCase().trim())) {
-            baseUserName = baseUserName + counter;
+            baseUserName = originalBase + counter;
             counter++;
         }
 
         String randomPassword = UUID.randomUUID() + "G00G1E#";
 
-        String ROLE_CLIENT = "ROLE_CLIENT";
-        Roles role = _roleRepository.setRole(ROLE_CLIENT);
+        String roleClien = "ROLE_CLIENT";
+        Roles role = _roleRepository.setRole(roleClien);
 
         Users user = new Users();
         user.setUsername(baseUserName);

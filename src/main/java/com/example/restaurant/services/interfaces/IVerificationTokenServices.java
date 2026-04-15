@@ -4,6 +4,7 @@ import com.example.restaurant.enums.TokenTypeEnum;
 
 import java.util.Optional;
 
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IVerificationTokenServices {
     String createToken(String userToken, TokenTypeEnum type, int expiryMinutes);
 

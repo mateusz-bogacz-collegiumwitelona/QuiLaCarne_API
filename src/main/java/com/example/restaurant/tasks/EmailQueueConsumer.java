@@ -27,6 +27,7 @@ public class EmailQueueConsumer {
     private static final String QUEUE_NAME = "email_queue";
 
     @Scheduled(fixedDelay = 100)
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public void processQueue() {
         String jsonJob = _redisTemplate.opsForList().rightPop(QUEUE_NAME, Duration.ofSeconds(5));
 
@@ -35,7 +36,9 @@ public class EmailQueueConsumer {
                 EmailDomain job = _mapper.readValue(jsonJob, EmailDomain.class);
                 sendActualEmail(job);
             } catch (Exception e) {
-                log.error("Failed to process email from queue. JSON: {}", jsonJob, e);
+                if (log.isErrorEnabled()) {
+                    log.error("Failed to process email from queue. JSON: {}", jsonJob, e);
+                }
             }
         }
     }
@@ -56,6 +59,8 @@ public class EmailQueueConsumer {
         helper.setText(html, true);
 
         _sender.send(message);
-        log.info("Email successfully sent to {} from queue.", job.to());
+        if (log.isInfoEnabled()) {
+            log.info("Email successfully sent to {} from queue.", job.to());
+        }
     }
 }

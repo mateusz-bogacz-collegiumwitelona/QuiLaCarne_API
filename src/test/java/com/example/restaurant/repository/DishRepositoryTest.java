@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class DishRepositoryTest {
+class DishRepositoryTest {
     @Mock
     private IJpaDishRepository _jpaDishRepo;
 
@@ -59,9 +59,9 @@ public class DishRepositoryTest {
     }
 
     @Test
-    @DisplayName("Get: Throw exception when dish doesn't exists")
+    @DisplayName("Get: Throw exception when dish doesn't exist")
     void get_ShouldThrowException_WhenTokenDoesNotExist() {
-        assertThrows(RuntimeException.class, () -> _dishRepo.get(List.of(), "MISSING"));
+        assertThrows(RuntimeException.class, this::callDishGet);
     }
 
     @Test
@@ -220,5 +220,9 @@ public class DishRepositoryTest {
 
         assertEquals(2, result.size());
         verify(_jpaDishRepo).findByCategoryId(id);
+    }
+
+    private void callDishGet() {
+        _dishRepo.get(List.of(), "MISSING");
     }
 }

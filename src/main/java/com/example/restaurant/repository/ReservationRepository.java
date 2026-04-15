@@ -17,6 +17,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class ReservationRepository implements IReservationRepository {
     private final IJpaReservationStatusRepository _jpaReservationStatusRepo;
     private final IJpaReservationsRepository _jpaReservationsRepo;

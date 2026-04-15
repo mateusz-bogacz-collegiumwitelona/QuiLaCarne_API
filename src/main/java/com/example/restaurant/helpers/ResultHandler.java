@@ -7,12 +7,11 @@ import java.util.List;
 
 @Getter
 public class ResultHandler<T> {
-    public boolean isSuccess;
-    public T data;
-    public String message;
-    public int statusCode;
-    public List<String> errorMessages;
-
+    private boolean isSuccess;
+    private T data;
+    private String message;
+    private int statusCode;
+    private List<String> errorMessages;
 
     // z data
     public static <T> ResultHandler<T> success(String message, int statusCode, T data) {

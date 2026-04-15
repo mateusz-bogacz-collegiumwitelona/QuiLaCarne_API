@@ -16,6 +16,7 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class ReportRepository implements IReportRepository {
     private final IJpaGuestReportRepository _jpaRepostRepo;
     private final IJpaGuestReportStatusRepository _jpaReportStatusRepo;

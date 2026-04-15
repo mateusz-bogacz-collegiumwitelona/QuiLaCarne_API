@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +42,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass", "PMD.CyclomaticComplexity"})
 public class DishServices implements IDishServices {
     private final IDishRepository _dishRepo;
     private final DishMapper _dishMapper;
@@ -281,7 +283,7 @@ public class DishServices implements IDishServices {
                         photo.getSize()
                 );
                 dish.setImageUrl(finalFileName);
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 log.error("Error reading photo input stream", e);
                 throw new RuntimeException("Could not process photo file", e);
             }
