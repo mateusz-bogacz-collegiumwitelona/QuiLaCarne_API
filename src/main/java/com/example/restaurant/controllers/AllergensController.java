@@ -28,7 +28,7 @@ public class AllergensController {
             summary = "Get list of allergens",
             description = "Retrieves a dictionary list of all allergens available in the system. " +
                     "The names are translated based on the 'Accept-Language' header.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @Parameter(
             name = "Accept-Language",

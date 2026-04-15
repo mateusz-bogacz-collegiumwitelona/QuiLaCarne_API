@@ -28,7 +28,7 @@ public class OrderController {
             summary = "Get list of order statuses",
             description = "Retrieves a dictionary list of all order statuses available in the system. " +
                     "The names are translated based on the 'Accept-Language' header.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @Parameter(
             name = "Accept-Language",
@@ -61,7 +61,7 @@ public class OrderController {
             summary = "Get list of order item statuses",
             description = "Retrieves a dictionary list of all order item statuses available in the system. " +
                     "The names are translated based on the 'Accept-Language' header.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @Parameter(
             name = "Accept-Language",

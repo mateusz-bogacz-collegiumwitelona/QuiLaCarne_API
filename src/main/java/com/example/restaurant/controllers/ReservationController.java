@@ -73,7 +73,7 @@ public class ReservationController {
             description = "Retrieves a paginated and filterable list of reservations " +
                     "made by the currently authenticated user. " +
                     "Supports filtering by date range and status.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -104,7 +104,7 @@ public class ReservationController {
             summary = "Get reservation details",
             description = "Retrieves the full details of a specific reservation, " +
                     "including pre-ordered dishes and total price.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -285,7 +285,7 @@ public class ReservationController {
             summary = "Get list of reservation statuses",
             description = "Retrieves a dictionary list of all reservation statuses available in the system. " +
                     "The names are translated based on the 'Accept-Language' header.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @Parameter(
             name = "Accept-Language",

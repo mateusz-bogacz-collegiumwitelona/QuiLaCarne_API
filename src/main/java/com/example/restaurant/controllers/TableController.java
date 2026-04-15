@@ -32,7 +32,7 @@ public class TableController {
             description = "Returns a list of tables. If startTime and endTime are provided, " +
                     "it filters out tables that are reserved or unavailable in that timeframe. " +
                     "The names of table status are translated based on the 'Accept-Language' header.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @Parameter(
             name = "Accept-Language",
@@ -194,7 +194,7 @@ public class TableController {
             summary = "Get list of table statuses",
             description = "Retrieves a dictionary list of all table statuses available in the system. " +
                     "The names are translated based on the 'Accept-Language' header.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @Parameter(
             name = "Accept-Language",

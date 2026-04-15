@@ -33,7 +33,7 @@ public class AuthController {
                     "If credentials are valid and 2FA is OFF, a final JWT token is returned. " +
                     "If 2FA is ON, a Pre-Auth token is returned and the 'requires2fa' flag is set to true. " +
                     "In that case, the client must proceed to the /verify-2fa endpoint.",
-            tags = {"All"},
+            tags = {"Manager", "Client", "Waiter"},
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
                             mediaType = "application/json",
@@ -82,7 +82,7 @@ public class AuthController {
             summary = "Logout user",
             description = "Logs out the authenticated user by revoking their refresh token. " +
                     "The client application must also delete the JWT and Refresh Token locally.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -260,7 +260,7 @@ public class AuthController {
     @Operation(
             summary = "Refresh Access Token",
             description = "Exchanges a valid Refresh Token for a new pair of Access and Refresh tokens.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @ApiResponses(value = {
             @ApiResponse(

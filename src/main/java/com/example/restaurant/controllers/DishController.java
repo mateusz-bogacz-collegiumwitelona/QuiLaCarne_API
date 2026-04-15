@@ -32,7 +32,7 @@ public class DishController {
             summary = "Get full restaurant menu",
             description = "Returns a list of all available dishes including ingredients and allergens. " +
                     "The names of categories and allergens are translated based on the 'Accept-Language' header.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @Parameter(
             name = "Accept-Language",
@@ -236,7 +236,7 @@ public class DishController {
             summary = "Get list of dish categories",
             description = "Retrieves a dictionary list of all dish categories available in the system. " +
                     "The names are translated based on the 'Accept-Language' header.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @Parameter(
             name = "Accept-Language",

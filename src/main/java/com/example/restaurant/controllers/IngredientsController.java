@@ -83,7 +83,7 @@ public class IngredientsController {
             summary = "Get list of ingredients (dictionary)",
             description = "Retrieves a dictionary list of all ingredients available in the system. " +
                     "The names are translated based on the 'Accept-Language' header.",
-            tags = {"All"}
+            tags = {"Manager", "Client", "Waiter"}
     )
     @Parameter(
             name = "Accept-Language",
