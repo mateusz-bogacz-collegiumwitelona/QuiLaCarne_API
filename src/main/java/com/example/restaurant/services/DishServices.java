@@ -285,7 +285,7 @@ public class DishServices implements IDishServices {
                 dish.setImageUrl(finalFileName);
             } catch (IOException e) {
                 log.error("Error reading photo input stream", e);
-                throw new RuntimeException("Could not process photo file", e);
+                throw new wRuntimeException("Could not process photo file", e);
             }
         }
     }

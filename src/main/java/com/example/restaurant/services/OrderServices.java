@@ -123,9 +123,9 @@ public class OrderServices implements IOrderServices {
     @Override
     public OrderSummaryDomain getOrderSummaryForReservation(String reservationToken) {
         var orderOpt = _orderRepo.findByReservationToken(reservationToken);
-        if (orderOpt.isEmpty()) {
+
+        if (orderOpt.isEmpty())
             return new OrderSummaryDomain(0, new ArrayList<>());
-        }
 
         Orders order = orderOpt.get();
         List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());

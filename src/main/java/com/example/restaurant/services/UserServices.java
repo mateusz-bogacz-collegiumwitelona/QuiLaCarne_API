@@ -206,29 +206,11 @@ public class UserServices implements IUserServices {
         Users employee = _userRepo.findByToken(request.getEmployeeToken());
 
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            String normalizedEmail = request.getEmail().toUpperCase().trim();
-
-            if (normalizedEmail.equals(employee.getNormalizedEmail()))
-                throw new IllegalStateException("Email must be different");
-
-            if (_userRepo.findByNormalizedEmail(normalizedEmail).isPresent())
-                throw new EntityAlreadyExistsException("User with this email already exists");
-
-            employee.setEmail(request.getEmail().trim());
-            employee.setNormalizedEmail(normalizedEmail);
+            employee = changeEmail(employee, request.getEmail());
         }
 
         if (request.getUserName() != null && !request.getUserName().isBlank()) {
-            String normalizedUserName = request.getUserName().toUpperCase().trim();
-
-            if (normalizedUserName.equals(employee.getNormalizedUsername()))
-                throw new IllegalStateException("User name must be different");
-
-            if (_userRepo.existsByUsername(normalizedUserName))
-                throw new EntityAlreadyExistsException("User with this username already exists");
-
-            employee.setUsername(request.getUserName().trim());
-            employee.setNormalizedUsername(normalizedUserName);
+            employee = changeUsername(employee, request.getUserName());
         }
 
         _userRepo.save(employee);
@@ -327,7 +309,7 @@ public class UserServices implements IUserServices {
         if (adminToken.trim().equals(employeeToken.trim()))
             throw new IllegalStateException("You can't delete yourself");
 
-        delete(employeeToken);
+        deleteAccount(employeeToken);
 
         WebSocketEvent<Void> event = WebSocketEvent.deleted(EMPLOYEE_ENTITY_TYPE, employeeToken);
         _notification.sendEventToTopic("/personnel/updates", event);
@@ -441,6 +423,35 @@ public class UserServices implements IUserServices {
         user.setRoles(Set.of(role));
 
         _userRepo.save(user);
+        return user;
+    }
+
+    private Users changeEmail(Users user, String email) {
+        String normalizedEmail = email.toUpperCase().trim();
+
+        if (normalizedEmail.equals(user.getNormalizedEmail()))
+            throw new IllegalStateException("Email must be different");
+
+        if (_userRepo.findByNormalizedEmail(normalizedEmail).isPresent())
+            throw new EntityAlreadyExistsException("User with this email already exists");
+
+        user.setEmail(email.trim());
+        user.setNormalizedEmail(normalizedEmail);
+        return user;
+    }
+
+    private Users changeUsername(Users user, String userName) {
+        String normalizedUserName = userName.toUpperCase().trim();
+
+        if (normalizedUserName.equals(user.getNormalizedUsername()))
+            throw new IllegalStateException("User name must be different");
+
+        if (_userRepo.existsByUsername(normalizedUserName))
+            throw new EntityAlreadyExistsException("User with this username already exists");
+
+        user.setUsername(userName.trim());
+        user.setNormalizedUsername(normalizedUserName);
+
         return user;
     }
 }

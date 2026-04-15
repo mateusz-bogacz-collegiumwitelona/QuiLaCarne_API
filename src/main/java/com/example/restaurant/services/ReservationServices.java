@@ -104,7 +104,9 @@ public class ReservationServices implements IReservationServices {
                 request.getDishes());
 
         ReservationResponse response = new ReservationResponse();
+
         response.setActive(true);
+
         response.setDishes(orderCreate.dishes().stream().map(domainDish -> {
             ReservationDishResponse dishRes = new ReservationDishResponse();
             dishRes.setDishName(domainDish.dishName());
@@ -112,6 +114,7 @@ public class ReservationServices implements IReservationServices {
             dishRes.setQuantity(domainDish.quantity());
             return dishRes;
         }).toList());
+
         response.setTotalPrice(orderCreate.totalPrice());
 
         WebSocketEvent<SyncReservationResponse> event = WebSocketEvent.created(
@@ -130,6 +133,7 @@ public class ReservationServices implements IReservationServices {
             PaggedRequest pagged, String
                     userToken) {
         String lang = LocaleContextHolder.getLocale().getLanguage();
+
         Pageable pageable = PageRequest.of(
                 Math.max(0, pagged.getPage() - 1),
                 pagged.getSize(),
