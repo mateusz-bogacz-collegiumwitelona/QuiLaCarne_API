@@ -105,6 +105,7 @@ public class DataSeeder implements CommandLineRunner {
         seedTranslatedEntity(_jpaOrderStatusRepo, OrderStatus::new, List.of(
                 new TranslatedDomain("ACTIVE", "Aktywna", "Active"),
                 new TranslatedDomain("COMPLETED", "Zakończona", "Completed"),
+                new TranslatedDomain("PENDING", "Oczekujące", "Pending"),
                 new TranslatedDomain("IN_PROGRESS", "W trakcie", "In progress"),
                 new TranslatedDomain("CANCELLED", "Anulowana", "Cancelled"),
                 new TranslatedDomain("OTHER", "Inne", "Other")
