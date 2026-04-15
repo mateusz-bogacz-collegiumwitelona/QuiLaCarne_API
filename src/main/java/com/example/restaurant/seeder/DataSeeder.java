@@ -20,6 +20,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -83,7 +85,10 @@ public class DataSeeder implements CommandLineRunner {
         seedTranslatedEntity(_jpaAllergensRepo, Allergens::new, List.of(
                 new TranslatedDomain("GLUTEN", "Gluten", "Gluten"),
                 new TranslatedDomain("LACTOSE", "Laktoza", "Lactose"),
-                new TranslatedDomain("NUTS", "Orzechy", "Nuts")
+                new TranslatedDomain("NUTS", "Orzechy", "Nuts"),
+                new TranslatedDomain("EGGS", "Jaja", "Eggs"),
+                new TranslatedDomain("SEAFOOD", "Owoce morza", "Seafood"),
+                new TranslatedDomain("SOY", "Soja", "Soy")
         ));
 
         seedTranslatedEntity(_jpaReservationStatusRepo, ReservationStatus::new, List.of(
@@ -181,35 +186,74 @@ public class DataSeeder implements CommandLineRunner {
         Allergens gluten = _jpaAllergensRepo.findByToken("GLUTEN").orElseThrow();
         Allergens lactose = _jpaAllergensRepo.findByToken("LACTOSE").orElseThrow();
         Allergens nuts = _jpaAllergensRepo.findByToken("NUTS").orElseThrow();
+        Allergens eggs = _jpaAllergensRepo.findByToken("EGGS").orElseThrow();
+        Allergens seafood = _jpaAllergensRepo.findByToken("SEAFOOD").orElseThrow();
 
-        Ingredients beef = createIngredient("Wołowina Chianina", "Chianina Beef", "BEEF_CHIANINA", Set.of());
-        Ingredients tomato = createIngredient("Pomidory San Marzano", "San Marzano Tomatoes", "TOMATOES-SM", Set.of());
-        Ingredients mozzarella = createIngredient("Mozzarella di Bufala", "Buffalo Mozzarella", "MOZZARELLA-BUFFALA", Set.of(lactose));
-        Ingredients pasta = createIngredient("Makaron Tagliatelle", "Tagliatelle Pasta", "TAGLIATELLE-PASTA", Set.of(gluten));
-        Ingredients parmesan = createIngredient("Ser Grana Padano", "Grana Padano Cheese", "GRANA-PADANO", Set.of(lactose));
-        Ingredients oliveOil = createIngredient("Oliwa z oliwek", "Olive Oil", "OLIVE-OLI", Set.of());
+        Ingredients beef = createIngredient("Wołowina Chianina", "Chianina Beef", "BEEF_CHIANINA", asSet());
+        Ingredients tomato = createIngredient("Pomidory San Marzano", "San Marzano Tomatoes", "TOMATOES-SM", asSet());
+        Ingredients mozzarella = createIngredient("Mozzarella di Bufala", "Buffalo Mozzarella", "MOZZARELLA-BUFFALA", asSet(lactose));
+        Ingredients pasta = createIngredient("Makaron Tagliatelle", "Tagliatelle Pasta", "TAGLIATELLE-PASTA", asSet(gluten));
+        Ingredients parmesan = createIngredient("Ser Grana Padano", "Grana Padano Cheese", "GRANA-PADANO", asSet(lactose));
+        Ingredients oliveOil = createIngredient("Oliwa z oliwek", "Olive Oil", "OLIVE-OLI", asSet());
+        Ingredients bread = createIngredient("Pieczywo domowe", "Homemade Bread", "BREAD-HOME", asSet(gluten));
+        Ingredients shrimp = createIngredient("Krewetki tygrysie", "Tiger Prawns", "SHRIMPS-TIGER", asSet(seafood));
+        Ingredients mascarpone = createIngredient("Serek Mascarpone", "Mascarpone Cheese", "MASCARPONE", asSet(lactose));
+        Ingredients ladyfingers = createIngredient("Biszkopty", "Ladyfingers", "LADYFINGERS", asSet(gluten, eggs));
+        Ingredients coffee = createIngredient("Kawa Espresso", "Espresso Coffee", "COFFEE-ESP", asSet());
+        Ingredients rice = createIngredient("Ryż Arborio", "Arborio Rice", "RICE-ARBORIO", asSet());
+        Ingredients lemon = createIngredient("Cytryny Sycylijskie", "Sicilian Lemons", "LEMON-SICILY", asSet());
 
+        // NOWE SKŁADNIKI DLA PROBLEMÓW Z NUT / EGG
+        Ingredients pistachios = createIngredient("Pistacje", "Pistachios", "PISTACHIOS", asSet(nuts));
+        Ingredients eggIngredient = createIngredient("Jajka", "Eggs", "EGG_ING", asSet(eggs));
+
+        DishesCategories starterCat = _jpaDishesCategoryRepo.findByToken("STARTER").orElseThrow();
+        DishesCategories soupCat = _jpaDishesCategoryRepo.findByToken("SOUP").orElseThrow();
         DishesCategories mainCat = _jpaDishesCategoryRepo.findByToken("MAIN").orElseThrow();
+        DishesCategories dessertCat = _jpaDishesCategoryRepo.findByToken("DESSERT").orElseThrow();
+        DishesCategories drinkCat = _jpaDishesCategoryRepo.findByToken("DRINK").orElseThrow();
+        DishesCategories otherCat = _jpaDishesCategoryRepo.findByToken("OTHER").orElseThrow();
+        
+        createDish("Bruschetta Classica", 2500, starterCat, asSet(bread, tomato, oliveOil), "bruschetta.jpg");
+        createDish("Carpaccio di Manzo", 4800, starterCat, asSet(beef, parmesan, oliveOil), "carpaccio.jpg");
+        createDish("Focaccia Rosmarino", 2200, starterCat, asSet(bread, oliveOil), "focaccia.jpg");
 
-        Dishes steak = new Dishes();
-        steak.setName("Bistecca alla Fiorentina");
-        steak.setPrice(12000);
-        steak.setCategory(mainCat);
-        steak.setAvailable(true);
-        steak.setIngredients(Set.of(beef, oliveOil));
-        String steakImageUrl = uploadImage("images/steak.jpg", "steak.jpg");
-        steak.setImageUrl(steakImageUrl);
-        _jpaDishRepo.save(steak);
+        createDish("Crema di Pomodoro", 2800, soupCat, asSet(tomato, mozzarella, oliveOil), "tomato_soup.jpg");
+        createDish("Minestrone Toscano", 3200, soupCat, asSet(tomato, pasta), "minestrone.jpg");
+        createDish("Zuppa di Pesce", 5500, soupCat, asSet(shrimp, tomato, oliveOil), "fish_soup.jpg");
 
-        Dishes pastaDish = new Dishes();
-        pastaDish.setName("Tagliatelle Ragu");
-        pastaDish.setPrice(4200);
-        pastaDish.setCategory(mainCat);
-        pastaDish.setAvailable(true);
-        pastaDish.setIngredients(Set.of(pasta, beef, tomato, parmesan));
-        String pastaImageUrl = uploadImage("images/pasta.jpg", "pasta.jpg");
-        pastaDish.setImageUrl(pastaImageUrl);
-        _jpaDishRepo.save(pastaDish);
+        createDish("Bistecca alla Fiorentina", 12000, mainCat, asSet(beef, oliveOil), "steak.jpg");
+        createDish("Tagliatelle Ragu", 4200, mainCat, asSet(pasta, beef, tomato, parmesan), "pasta.jpg");
+        createDish("Risotto ai Funghi", 4500, mainCat, asSet(rice, parmesan, oliveOil), "risotto.jpg");
+
+        createDish("Classic Tiramisu", 3500, dessertCat, asSet(mascarpone, ladyfingers, coffee), "tiramisu.jpg");
+        createDish("Panna Cotta", 2800, dessertCat, asSet(mascarpone, lemon), "panna_cotta.jpg");
+        createDish("Cannoli Siciliani", 3000, dessertCat, asSet(bread, mascarpone, pistachios), "cannoli.jpg");
+
+        createDish("Espresso", 1200, drinkCat, asSet(coffee), "espresso.jpg");
+        createDish("Limonata Fatta in Casa", 1800, drinkCat, asSet(lemon), "lemonade.jpg");
+        createDish("Acqua Panna", 1500, drinkCat, asSet(), "water.jpg");
+
+        createDish("Pane e Coperto", 1000, otherCat, asSet(bread), "bread_basket.jpg");
+        createDish("Olive Marinate", 1500, otherCat, asSet(oliveOil), "olives.jpg");
+        createDish("Salsa al Tartufo", 2000, otherCat, asSet(eggIngredient, oliveOil), "truffle_sauce.jpg");
+    }
+
+    @SafeVarargs
+    private <T> Set<T> asSet(T... items) {
+        return new HashSet<>(Arrays.asList(items));
+    }
+
+    private void createDish(String name, int price, DishesCategories cat, Set<Ingredients> ing, String imgName) {
+        Dishes dish = new Dishes();
+        dish.setName(name);
+        dish.setPrice(price);
+        dish.setCategory(cat);
+        dish.setAvailable(true);
+        dish.setIngredients(ing);
+        String url = uploadImage("images/" + imgName, imgName);
+        dish.setImageUrl(url);
+        _jpaDishRepo.save(dish);
     }
 
     private Ingredients createIngredient(String pl, String en, String token, Set<Allergens> allergens) {
