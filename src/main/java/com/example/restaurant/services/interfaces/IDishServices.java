@@ -3,6 +3,7 @@ package com.example.restaurant.services.interfaces;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.PublicMenuResponse;
 import com.example.restaurant.helpers.PagedResult;
 
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
@@ -22,4 +23,6 @@ public interface IDishServices {
     void addCategory(AddEntityRequest request);
 
     void removeCategory(String token);
+
+    PublicMenuResponse getPublicMenu();
 }

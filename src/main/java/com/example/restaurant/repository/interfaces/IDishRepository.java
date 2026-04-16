@@ -12,6 +12,8 @@ import java.util.UUID;
 public interface IDishRepository {
     Page<Dishes> findAll(Pageable pageable);
 
+    List<Dishes> findAll();
+
     Page<Dishes> findWithoutAllergens(List<String> excludedAllergens, Pageable pageable);
 
     List<Dishes> listForOrder(List<String> tokens);

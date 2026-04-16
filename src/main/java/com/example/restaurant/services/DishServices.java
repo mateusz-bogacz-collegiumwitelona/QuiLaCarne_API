@@ -2,8 +2,7 @@ package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.*;
-import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.*;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.dto.sync.SyncDishResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
@@ -37,6 +36,7 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -101,7 +101,10 @@ public class DishServices implements IDishServices {
     @Override
     @Transactional
     @Auditable(action = "REMOVE_DISH")
-    @CacheEvict(value = "dishMenu", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "dishMenu", allEntries = true),
+            @CacheEvict(value = "publicDishMenu", allEntries = true)
+    })
     public void remove(String dishToken) {
         Dishes dish = _dishRepo.findByToken(dishToken);
 
@@ -121,7 +124,10 @@ public class DishServices implements IDishServices {
     @Override
     @Transactional
     @Auditable(action = "CHANGE_DISH_AVAILABLE")
-    @CacheEvict(value = "dishMenu", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = "dishMenu", allEntries = true),
+        @CacheEvict(value = "publicDishMenu", allEntries = true)
+    })
     public void changeAvailable(ChangeDishAvailableRequest request) {
         Dishes dish = _dishRepo.findByToken(request.getToken());
 
@@ -148,7 +154,10 @@ public class DishServices implements IDishServices {
     @Override
     @Transactional
     @Auditable(action = "EDIT_DISH")
-    @CacheEvict(value = "dishMenu", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "dishMenu", allEntries = true),
+            @CacheEvict(value = "publicDishMenu", allEntries = true)
+    })
     public void edit(EditDishRequest request) {
         Dishes dish = _dishRepo.findByToken(request.getDishToken());
 
@@ -234,7 +243,8 @@ public class DishServices implements IDishServices {
     @Auditable(action = "REMOVE_DISH_CATEGORY")
     @Caching(evict = {
             @CacheEvict(value = "dishCategories", allEntries = true),
-            @CacheEvict(value = "dishMenu", allEntries = true)
+            @CacheEvict(value = "dishMenu", allEntries = true),
+            @CacheEvict(value = "publicDishMenu", allEntries = true)
     })
     public void removeCategory(String token) {
         DictionaryHelper.deleteEntity(
@@ -255,6 +265,40 @@ public class DishServices implements IDishServices {
 
         WebSocketEvent<Void> event = WebSocketEvent.deleted(CATEGORY_ENTITY_TYPE, token);
         _notification.sendEventToTopic("/dictionary/dish-categories", event);
+    }
+
+    @Override
+    @Cacheable(
+            value = "publicDishMenu",
+            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()"
+    )
+    public PublicMenuResponse getPublicMenu() {
+        String lang = LocaleContextHolder.getLocale().getLanguage();
+        List<Dishes> allDishes = _dishRepo.findAll();
+
+        List<MenuResponse> menu = allDishes.stream()
+                .filter(Dishes::isAvailable)
+                .collect(Collectors.groupingBy(
+                        d -> d.getCategory().translate(lang)
+                ))
+                .entrySet()
+                .stream()
+                .map( d -> {
+                    String category = d.getKey();
+
+                    List<DishResponse> dishesInCategory = d.getValue()
+                            .stream()
+                            .map(dish -> mapToDishResponse(dish, lang))
+                            .toList();
+
+                    return MenuResponse
+                            .builder()
+                            .category(category)
+                            .dish(dishesInCategory)
+                            .build();
+                } ).toList();
+
+        return new PublicMenuResponse(menu);
     }
 
     private void updateDishIngredients(Dishes dish, List<String> tokens) {
@@ -285,8 +329,35 @@ public class DishServices implements IDishServices {
                 dish.setImageUrl(finalFileName);
             } catch (IOException e) {
                 log.error("Error reading photo input stream", e);
-                throw new wRuntimeException("Could not process photo file", e);
+                throw new RuntimeException("Could not process photo file", e);
             }
         }
+    }
+
+    private DishResponse mapToDishResponse(Dishes dish, String lang) {
+        List<String> ingridents = dish.getIngredients().stream()
+                .map(i -> i.translate(lang))
+                .toList();
+
+        List<String> allergens = dish.getIngredients().stream()
+                .flatMap(i -> i.getAllergens().stream())
+                .map(a -> a.translate(lang))
+                .distinct()
+                .toList();
+
+        String imageUrl = "";
+        if (s3Endpoint == null || s3Endpoint.isBlank() || s3BucketName == null) {
+            log.error("S3 storage is not properly configured. Returning relative image path.");
+        } else {
+            imageUrl = String.format("%s/%s/%s", s3Endpoint.trim(), s3BucketName, dish.getImageUrl());
+        }
+
+        return DishResponse.builder()
+                .name(dish.getName())
+                .price(dish.getPrice())
+                .ingridents(ingridents)
+                .imageUrl(imageUrl)
+                .allergens(allergens)
+                .build();
     }
 }

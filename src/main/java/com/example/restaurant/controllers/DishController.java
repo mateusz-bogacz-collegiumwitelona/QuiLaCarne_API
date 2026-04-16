@@ -3,6 +3,7 @@ package com.example.restaurant.controllers;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.PublicMenuResponse;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IDishServices;
@@ -341,5 +342,44 @@ public class DishController {
                         HttpStatus.OK.value()
                 )
         );
+    }
+
+
+    @Operation(
+            summary = "Get public restaurant menu",
+            description = "Retrieves the public menu grouped by category. " +
+                    "Returns only available dishes without internal tokens. " +
+                    "Category names, ingredients, and allergens are translated dynamically " +
+                    "based on the 'Accept-Language' header. " +
+                    "This endpoint is strictly public and does not require any authentication (JWT token).",
+            tags = {"Public"}
+    )
+    @Parameter(
+            name = "Accept-Language",
+            in = ParameterIn.HEADER,
+            description = "Preferred language (e.g., 'pl' or 'en')",
+            schema = @Schema(type = "string", defaultValue = "pl", allowableValues = {"pl", "en"})
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Public menu retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = ResultHandler.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content
+            )
+    })
+    @GetMapping("/menu/public")
+    public ResponseEntity<ResultHandler<PublicMenuResponse>> getPublicMenu(){
+        var respone = _dishServices.getPublicMenu();
+
+        return ResponseEntity.ok(ResultHandler.success(
+                "Public menu reviewed successfully",
+                HttpStatus.OK.value(),
+                respone
+        ));
     }
 }

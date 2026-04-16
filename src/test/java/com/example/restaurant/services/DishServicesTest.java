@@ -4,6 +4,8 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.DishResponse;
+import com.example.restaurant.dto.response.PublicMenuResponse;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.dto.sync.SyncDishResponse;
 import com.example.restaurant.enums.WebSocketEventType;
@@ -12,6 +14,7 @@ import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
+import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
@@ -37,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -641,5 +645,90 @@ class DishServicesTest {
                                 event.getPayload() == null
                 )
         );
+    }
+
+    @Test
+    @DisplayName("getPublicMenu: Should return empty menu when there are no dishes in repository")
+    void getPublicMenu_ShouldReturnEmptyMenu_WhenNoDishesExist() {
+        when(_dishRepo.findAll()).thenReturn(List.of());
+
+        PublicMenuResponse result = _dishServices.getPublicMenu();
+
+        assertNotNull(result);
+        assertNotNull(result.getMenu());
+        assertTrue(result.getMenu().isEmpty());
+    }
+
+    @Test
+    @DisplayName("getPublicMenu: Should filter out unavailable dishes")
+    void getPublicMenu_ShouldFilterOutUnavailableDishes() {
+        DishesCategories category = new DishesCategories();
+        category.setNamePl("Zupy");
+        category.setNameEn("Soups");
+
+        Dishes availableDish = new Dishes();
+        availableDish.setName("Dostępne Danie");
+        availableDish.setAvailable(true);
+        availableDish.setCategory(category);
+        availableDish.setIngredients(Set.of());
+
+        Dishes unavailableDish = new Dishes();
+        unavailableDish.setName("Niedostępne Danie");
+        unavailableDish.setAvailable(false);
+        unavailableDish.setCategory(category);
+        unavailableDish.setIngredients(Set.of());
+
+        when(_dishRepo.findAll()).thenReturn(List.of(availableDish, unavailableDish));
+
+        PublicMenuResponse result = _dishServices.getPublicMenu();
+
+        assertEquals(1, result.getMenu().size());
+        assertEquals(1, result.getMenu().getFirst().getDish().size());
+        assertEquals("Dostępne Danie", result.getMenu().getFirst().getDish().getFirst().getName());
+    }
+
+    @Test
+    @DisplayName("getPublicMenu: Should group by category, translate names to PL, " +
+            "map ingredients/allergens and append S3 url")
+    void getPublicMenu_ShouldGroupByCategory_AndTranslateToPl() {
+        LocaleContextHolder.setLocale(Locale.of("pl"));
+
+        DishesCategories soupCategory = new DishesCategories();
+        soupCategory.setNamePl("Zupy PL");
+        soupCategory.setNameEn("Soups EN");
+
+        Allergens gluten = new Allergens();
+        gluten.setNamePl("Gluten PL");
+        gluten.setNameEn("Gluten EN");
+
+        Ingredients pasta = new Ingredients();
+        pasta.setNamePl("Makaron PL");
+        pasta.setNameEn("Pasta EN");
+        pasta.setAllergens(Set.of(gluten));
+
+        Dishes dish1 = new Dishes();
+        dish1.setName("Rosół");
+        dish1.setPrice(1500);
+        dish1.setAvailable(true);
+        dish1.setCategory(soupCategory);
+        dish1.setImageUrl("rosol.jpg");
+        dish1.setIngredients(Set.of(pasta));
+
+        when(_dishRepo.findAll()).thenReturn(List.of(dish1));
+
+        PublicMenuResponse result = _dishServices.getPublicMenu();
+
+        assertEquals(1, result.getMenu().size());
+        assertEquals("Zupy PL", result.getMenu().getFirst().getCategory());
+
+        DishResponse dto = result.getMenu().getFirst().getDish().getFirst();
+        assertEquals("Rosół", dto.getName());
+        assertEquals(1500, dto.getPrice());
+        assertEquals("http://localhost:9000/restaurant-images/rosol.jpg", dto.getImageUrl());
+
+        assertEquals(1, dto.getIngridents().size());
+        assertTrue(dto.getIngridents().contains("Makaron PL"), "Ingredient should be translated to PL");
+        assertEquals(1, dto.getAllergens().size());
+        assertTrue(dto.getAllergens().contains("Gluten PL"), "Allergen should be translated to PL");
     }
 }

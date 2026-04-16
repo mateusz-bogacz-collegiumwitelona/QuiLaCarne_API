@@ -77,7 +77,8 @@ public class IngredientsServices implements IIngredientsServices {
     @Auditable(action = "REMOVE_INGREDIENTS")
     @Caching(evict = {
             @CacheEvict(value = "ingredientsDictionary", allEntries = true),
-            @CacheEvict(value = "dishMenu", allEntries = true)
+            @CacheEvict(value = "dishMenu", allEntries = true),
+            @CacheEvict(value = "publicDishMenu", allEntries = true)
     })
     public void remove(String token) {
         DictionaryHelper.deleteEntity(

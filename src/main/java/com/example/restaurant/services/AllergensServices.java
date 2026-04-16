@@ -70,6 +70,7 @@ public class AllergensServices implements IAllergensServices {
     @Caching(evict = {
             @CacheEvict(value = "allergensDictionary", allEntries = true),
             @CacheEvict(value = "ingredientsDictionary", allEntries = true),
+            @CacheEvict(value = "publicDishMenu", allEntries = true),
             @CacheEvict(value = "dishMenu", allEntries = true)
     })
     public void remove(String token) {

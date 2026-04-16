@@ -27,6 +27,11 @@ public class DishRepository implements IDishRepository {
     }
 
     @Override
+    public List<Dishes> findAll() {
+        return _jpaDishRepo.findAll();
+    }
+
+    @Override
     public Page<Dishes> findWithoutAllergens(List<String> excludedAllergens, Pageable pageable) {
         return _jpaDishRepo.findWithoutAllergens(excludedAllergens, pageable);
     }
