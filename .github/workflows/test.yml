@@ -32,6 +32,10 @@ jobs:
       - name: Run Tests
         run: docker compose run --rm test
 
+      - name : Show database logs on failure
+        if: failure()
+        run: docker compose logs postgres
+
       - name: Cleanup
         if: always()
         run: docker compose down --volumes --remove-orphans
