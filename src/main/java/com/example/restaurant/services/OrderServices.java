@@ -130,15 +130,25 @@ public class OrderServices implements IOrderServices {
         Orders order = orderOpt.get();
         List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
 
+        String lang = LocaleContextHolder.getLocale().getLanguage();
+
         List<ReservationDishResponse> dishResponses = items.stream().map(item -> {
             ReservationDishResponse response = new ReservationDishResponse();
             response.setDishName(item.getProduct().getName());
             response.setQuantity(item.getQuantity());
             response.setPrice(item.getPriceAtTimeOfOrder());
+
+            if (item.getStatuses() != null && !item.getStatuses().isEmpty()) {
+                response.setStatus(item.getStatuses().iterator().next().translate(lang));
+            } else {
+                response.setStatus("UNKNOWN");
+            }
+
             return response;
         }).toList();
 
-        int totalPrice = items.stream().mapToInt(item -> item.getPriceAtTimeOfOrder() * item.getQuantity()).sum();
+        int totalPrice = items.stream()
+                .mapToInt(item -> item.getPriceAtTimeOfOrder() * item.getQuantity()).sum();
 
         return new OrderSummaryDomain(totalPrice, dishResponses);
     }
@@ -199,13 +209,17 @@ public class OrderServices implements IOrderServices {
         String reqNote = normalizeNote(request.getNote());
 
         OrderItems itemToMod = items.stream()
-                .filter(i -> request.getDishToken().equals(i.getProduct().getToken()) && Objects.equals(reqNote, normalizeNote(i.getNote())))
+                .filter(i -> request.getDishToken().equals(i.getProduct().getToken())
+                        && Objects.equals(reqNote, normalizeNote(i.getNote()))
+                )
                 .filter(i -> i.getStatuses().stream().noneMatch(
                                 s -> "CANCELLED".equals(s.getToken())
                         )
                 )
                 .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Active dish with specified note not found in the order"));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Active dish with specified note not found in the order")
+                );
 
         int currentQuantity = itemToMod.getQuantity();
         int quantityToRemove = request.getQuantity();
@@ -484,8 +498,16 @@ public class OrderServices implements IOrderServices {
 
         for (OrderItems item : items) {
             WebSocketEvent<SyncOrderItemResponse> itemEvent = isNew
-                    ? WebSocketEvent.created("ORDER_ITEM", item.getToken(), _syncMapper.toSyncOrderItemResponse(item))
-                    : WebSocketEvent.updated("ORDER_ITEM", item.getToken(), _syncMapper.toSyncOrderItemResponse(item));
+                    ? WebSocketEvent.created(
+                        "ORDER_ITEM",
+                        item.getToken(),
+                        _syncMapper.toSyncOrderItemResponse(item)
+                    )
+                    : WebSocketEvent.updated(
+                        "ORDER_ITEM",
+                        item.getToken(),
+                        _syncMapper.toSyncOrderItemResponse(item)
+                    );
 
             _notification.sendEventToTopic("/orders/items", itemEvent);
         }

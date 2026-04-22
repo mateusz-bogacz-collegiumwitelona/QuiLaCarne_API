@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDishDoamin;
 import com.example.restaurant.dto.domain.ReservationDomain;
 import com.example.restaurant.dto.request.ClientReservationRequest;
@@ -159,20 +160,27 @@ class ReservationServicesTest {
     }
 
     @Test
-    @DisplayName("Details: Success - Should return detailed response")
+    @DisplayName("Details: Success - Should return detailed response with order summary")
     void details_ReturnsSuccessfulResponse() {
         Reservations mockEntity = new Reservations();
+        mockEntity.setToken(TestConstants.FAKE_RESERVATION_TOKEN);
+
         ReservationDetailsResponse mockDetails = new ReservationDetailsResponse();
         mockDetails.setStatus("Active");
+        OrderSummaryDomain mockOrderSummary = new OrderSummaryDomain(100, new ArrayList<>());
 
         when(_reservationRepo.findByTokenAndUserToken(anyString(), anyString())).thenReturn(Optional.of(mockEntity));
         when(_reservationMapper.toReservationDetailsResponse(any(), anyString())).thenReturn(mockDetails);
+        when(_orderServices.getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN))
+                .thenReturn(mockOrderSummary);
 
         ReservationDetailsResponse result = _reservationServices
-                .details("res-token", "user-token");
+                .details(TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_USER_TOKEN);
 
         assertNotNull(result);
         assertEquals("Active", result.getStatus());
+        assertEquals(100, result.getTotalPrice());
+        assertNotNull(result.getDishes());
     }
 
     @Test

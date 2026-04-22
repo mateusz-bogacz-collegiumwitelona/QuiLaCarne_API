@@ -173,8 +173,10 @@ class OrderServicesTest {
     }
 
     @Test
-    @DisplayName("Get order summary for reservation: should return mapped dishes when order exist")
+    @DisplayName("Get order summary for reservation: should return mapped dishes with translated status when order exist")
     void getOrderSummaryForReservation_ShouldReturnMappedDishes_WhenOrderExists() {
+        LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
+
         Orders mockOrder = new Orders();
         mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
         mockOrder.setTotalPrice(150);
@@ -182,10 +184,15 @@ class OrderServicesTest {
         Dishes mockDish = new Dishes();
         mockDish.setName("Pizza");
 
+        OrderItemsStatus mockStatus = new OrderItemsStatus();
+        mockStatus.setNamePl("W Przygotowaniu");
+        mockStatus.setNameEn("In Progress");
+
         OrderItems mockItem = new OrderItems();
         mockItem.setProduct(mockDish);
         mockItem.setQuantity(3);
         mockItem.setPriceAtTimeOfOrder(50);
+        mockItem.setStatuses(Set.of(mockStatus));
 
         when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
                 .thenReturn(Optional.of(mockOrder));
@@ -200,6 +207,7 @@ class OrderServicesTest {
         assertEquals("Pizza", result.dishes().getFirst().getDishName());
         assertEquals(50, result.dishes().getFirst().getPrice());
         assertEquals(3, result.dishes().getFirst().getQuantity());
+        assertEquals("W Przygotowaniu", result.dishes().getFirst().getStatus());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
@@ -173,10 +174,17 @@ public class ReservationServices implements IReservationServices {
     @Override
     public ReservationDetailsResponse details(String reservationToken, String userToken) {
         return _reservationRepo.findByTokenAndUserToken(reservationToken, userToken)
-                .map(
-                        r -> _reservationMapper
-                                .toReservationDetailsResponse(r, LocaleContextHolder.getLocale().getLanguage())
-                )
+                .map(r -> {
+                    ReservationDetailsResponse response = _reservationMapper
+                            .toReservationDetailsResponse(r, LocaleContextHolder.getLocale().getLanguage());
+
+                    OrderSummaryDomain orderSummary = _orderServices.getOrderSummaryForReservation(r.getToken());
+
+                    response.setDishes(orderSummary.dishes());
+                    response.setTotalPrice(orderSummary.totalPrice());
+
+                    return response;
+                })
                 .orElse(null);
     }
 
