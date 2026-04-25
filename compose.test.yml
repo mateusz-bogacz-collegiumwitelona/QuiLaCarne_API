@@ -1,0 +1,13 @@
+services:
+  test:
+    container_name: test
+    image: eclipse-temurin:21-jdk-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - JWT_SECRET_KEY=${API_JWT_SECRET_KEY}
+      - JWT_EXPIRATION=${API_JWT_EXPIRATION:-86400000}
+      - GRADLE_USER_HOME=/tmp/.gradle
+      - TZ=UTC
+    command: ./gradlew check --no-daemon -g /tmp/.gradle

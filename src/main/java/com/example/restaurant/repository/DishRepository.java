@@ -16,7 +16,6 @@ import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class DishRepository implements IDishRepository {
     private final IJpaDishRepository _jpaDishRepo;
     private final IJpaDishesCategoryRepository _jpaDishCategoryRepo;

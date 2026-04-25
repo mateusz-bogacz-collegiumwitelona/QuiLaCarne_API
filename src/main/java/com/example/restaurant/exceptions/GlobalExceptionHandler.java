@@ -53,7 +53,6 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler({
-            Exception.class,
             GoogleAuthenticationException.class
     })
     public ResponseEntity<ResultHandler<Object>> handleGenericException(Exception ex) {
@@ -136,6 +135,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ResultHandler<Object>> handleBadCredentials() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 ResultHandler.failure("Invalid credentials", HttpStatus.UNAUTHORIZED.value())
+        );
+    }
+
+    @ExceptionHandler(FileProcessingException.class)
+    public ResponseEntity<ResultHandler<Object>> handleFileProcessingException(){
+        return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResultHandler.failure(
+                        "Server error during proccessed file",
+                        HttpStatus.INTERNAL_SERVER_ERROR.value()
+                )
         );
     }
 }

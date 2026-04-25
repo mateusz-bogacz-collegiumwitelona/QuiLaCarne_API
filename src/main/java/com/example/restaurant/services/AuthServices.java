@@ -35,7 +35,6 @@ import java.util.Collections;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class AuthServices implements IAuthServices {
     private final AuthenticationManager _authManager;
     private final JwtServices _jwtServices;

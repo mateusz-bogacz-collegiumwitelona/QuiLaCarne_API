@@ -42,13 +42,6 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({
-        "PMD.TooManyMethods",
-        "PMD.CouplingBetweenObjects",
-        "PMD.GodClass",
-        "PMD.ExcessiveImports",
-        "PMD.CyclomaticComplexity"
-})
 public class ReservationServices implements IReservationServices {
     private final ITableRespository _tableRepo;
     private final IReservationRepository _reservationRepo;

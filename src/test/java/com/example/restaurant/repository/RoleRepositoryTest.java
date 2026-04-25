@@ -30,9 +30,8 @@ class RoleRepositoryTest {
         when(_jpaRoleRepository.findByName(TestConstants.TOKEN_NON_EXISTENT)).thenReturn(Optional.empty());
 
 
-        assertThrows(RuntimeException.class, () -> {
-            _roleRepository.setRole(TestConstants.TOKEN_NON_EXISTENT);
-        });
+        assertThrows(RuntimeException.class, () ->
+            _roleRepository.setRole(TestConstants.TOKEN_NON_EXISTENT));
     }
 
     @Test

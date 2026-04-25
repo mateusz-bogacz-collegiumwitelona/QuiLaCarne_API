@@ -5,6 +5,7 @@ import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.*;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.dto.sync.SyncDishResponse;
+import com.example.restaurant.exceptions.FileProcessingException;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.WebSocketEvent;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass", "PMD.CyclomaticComplexity"})
+@SuppressWarnings("java:S2166")
 public class DishServices implements IDishServices {
     private final IDishRepository _dishRepo;
     private final DishMapper _dishMapper;
@@ -329,7 +330,7 @@ public class DishServices implements IDishServices {
                 dish.setImageUrl(finalFileName);
             } catch (IOException e) {
                 log.error("Error reading photo input stream", e);
-                throw new RuntimeException("Could not process photo file", e);
+                throw new FileProcessingException("Could not process photo file", e);
             }
         }
     }

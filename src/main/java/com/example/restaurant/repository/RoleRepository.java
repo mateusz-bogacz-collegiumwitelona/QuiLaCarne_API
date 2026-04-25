@@ -11,7 +11,6 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class RoleRepository implements IRoleRepository {
     private final IJpaRoleRepository _jpaRoleRepository;
 

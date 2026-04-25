@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class AuditLogRepository implements IAuditLogRepository {
     private final IJpaAuditLogRepository _jpaAuditLogRepo;
 

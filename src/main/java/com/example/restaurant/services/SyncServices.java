@@ -20,7 +20,6 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class SyncServices implements ISyncServices {
     private final IUserRepository _userRepo;
     private final IAllergensRepository _allergenRepo;

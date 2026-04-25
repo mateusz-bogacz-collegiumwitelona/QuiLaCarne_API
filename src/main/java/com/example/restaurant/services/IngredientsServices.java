@@ -27,7 +27,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class IngredientsServices implements IIngredientsServices {
     private final IIngredientsRepository _ingredientsRepo;
     private final IAllergensRepository _allergensRepo;

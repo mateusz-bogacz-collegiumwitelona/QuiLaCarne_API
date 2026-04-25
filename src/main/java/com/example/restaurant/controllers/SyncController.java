@@ -23,7 +23,6 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/api/sync", produces = "application/json")
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class SyncController {
     private final ISyncServices _syncServices;
 

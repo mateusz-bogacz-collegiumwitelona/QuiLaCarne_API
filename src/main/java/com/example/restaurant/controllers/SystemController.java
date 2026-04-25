@@ -17,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/api/system", produces = "application/json")
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class SystemController {
     private final ISystemServices _systemServices;
 

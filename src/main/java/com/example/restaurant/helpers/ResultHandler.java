@@ -4,7 +4,7 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
-
+@SuppressWarnings("java:S1450")
 @Getter
 public class ResultHandler<T> {
     private boolean isSuccess;

@@ -6,7 +6,6 @@ import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.TableListWrapperResponse;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface ITableServices {
     TableListWrapperResponse getTables(TableFilterRequest request);
 

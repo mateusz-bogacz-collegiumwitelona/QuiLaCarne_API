@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"PMD.GodClass", "PMD.CouplingBetweenObjects", "PMD.TooManyMethods"})
 @Mapper(componentModel = "spring")
 public abstract class SyncMapper {
 

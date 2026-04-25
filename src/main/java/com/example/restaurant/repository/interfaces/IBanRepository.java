@@ -8,7 +8,6 @@ import org.springframework.data.domain.Pageable;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IBanRepository {
     BanStatus findStatusByToken(String token);
 

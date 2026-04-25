@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class OrderServices implements IOrderServices {
     private final IOrderRepository _orderRepo;
     private final IDishRepository _dishRepo;
