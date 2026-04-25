@@ -22,7 +22,7 @@ docker compose up --build
 Wykonaj kroki konfiguracyjne opisane powyżej (sekcja 1), a następnie uruchom testy:
 
 ```bash
-docker compose run --rm test
+docker compose -f compose.yml -f compose.test.yml run --rm test
 ```
 
 ---
