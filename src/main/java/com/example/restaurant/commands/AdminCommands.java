@@ -10,6 +10,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.Set;
@@ -32,7 +33,7 @@ public class AdminCommands implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (args.length > 0 && Arrays.asList(args).contains("--create-admin")) {
-            Scanner scanner = new Scanner(System.in);
+            Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
 
             log.info("Enter username:");
             String username = scanner.nextLine().trim();

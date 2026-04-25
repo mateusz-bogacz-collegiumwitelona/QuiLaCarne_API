@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class TwoFactorServices {
     private final GoogleAuthenticator _gAuth;
 

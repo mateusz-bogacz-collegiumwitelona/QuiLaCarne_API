@@ -19,9 +19,9 @@ public class AddDishRequest {
     private int price;
 
     @NotBlank(message = "Category token cannot be blank")
-    public String categoryToken;
+    private String categoryToken;
 
-    List<String> ingredientTokens = new ArrayList<>();
+    private List<String> ingredientTokens = new ArrayList<>();
 
 
     private MultipartFile photo;

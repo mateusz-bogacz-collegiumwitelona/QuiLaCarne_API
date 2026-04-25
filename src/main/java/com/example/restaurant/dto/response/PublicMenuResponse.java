@@ -12,5 +12,5 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PublicMenuResponse {
-    public List<MenuResponse> menu;
+    private List<MenuResponse> menu;
 }

@@ -7,7 +7,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Optional;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IUserRepository {
     boolean existsByUsername(String username);
 

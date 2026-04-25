@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass", "PMD.CyclomaticComplexity"})
 public class DishServices implements IDishServices {
     private final IDishRepository _dishRepo;
     private final DishMapper _dishMapper;

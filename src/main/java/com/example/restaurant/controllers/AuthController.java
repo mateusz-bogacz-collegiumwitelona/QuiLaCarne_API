@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(value = "/api/auth", produces = "application/json")
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class AuthController {
     private final IAuthServices _authServices;
 

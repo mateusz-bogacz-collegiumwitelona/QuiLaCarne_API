@@ -27,7 +27,6 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class BanServices implements IBanServices {
     private final IBanRepository _banRepo;
     private final EmailServices _emailServices;

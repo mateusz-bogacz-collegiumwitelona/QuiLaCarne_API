@@ -32,7 +32,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class UserServices implements IUserServices {
     private final IUserRepository _userRepo;
     private final EmailServices _emailServices;

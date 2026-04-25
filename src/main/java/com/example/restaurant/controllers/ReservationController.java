@@ -32,7 +32,6 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/api/reservations", produces = "application/json")
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class ReservationController {
     private final IReservationServices _reservationServices;
 

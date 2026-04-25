@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class AuditLogServices implements IAuditLogServices {
     private final IAuditLogRepository _auditRepo;
     private final IUserRepository _userRepo;

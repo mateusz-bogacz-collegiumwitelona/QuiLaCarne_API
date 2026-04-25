@@ -12,21 +12,14 @@ jobs:
     timeout-minutes: 15
 
     env:
-      API_JWT_SECRET_KEY: ${{ secrets.API_JWT_SECRET_KEY }}
+      API_JWT_SECRET_KEY: "dummy-secret-key-for-testing-only-12345678"
       API_JWT_EXPIRATION: 3600000
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      API_PORT: 8080
-      POSTGRES_PORT: 5432
-      REDIS_PORT: 6379
-      MAILPIT_UI_PORT: 8025
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup java nad gradle
+      - name: Setup java and gradle
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -37,3 +30,22 @@ jobs:
 
       - name: Run tests
         run:  ./gradlew test --no-daemon
+
+      - name: Run code analysis (SpotBugs)
+        run: ./gradlew spotbugsMain --no-daemon
+
+      - name: Upload SpotBugs Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-report
+          path: build/reports/spotbugs/
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            build/reports/tests/
+            build/reports/jacoco/

@@ -26,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @RequiredArgsConstructor
-@SuppressWarnings("PMD.LawOfDemeter")
 public class RateLimitConfig extends OncePerRequestFilter {
     private final ProxyManager<byte[]> _proxyManager;
     private final ObjectMapper _objectMapper;

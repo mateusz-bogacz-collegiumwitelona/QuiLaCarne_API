@@ -5,7 +5,6 @@ import com.example.restaurant.models.VerificationToken;
 
 import java.util.Optional;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IVerificationTokenRepository {
     void save(VerificationToken token);
 

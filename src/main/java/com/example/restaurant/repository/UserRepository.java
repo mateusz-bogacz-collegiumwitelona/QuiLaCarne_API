@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class UserRepository implements IUserRepository {
     private final IJpaUserRepository _jpaUserRepository;
     private final IJpaRoleRepository _jpaRoleRepository;

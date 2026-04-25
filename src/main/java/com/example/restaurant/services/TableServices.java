@@ -32,7 +32,6 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class TableServices implements ITableServices {
     private final ITableRespository _tableRepo;
     private final NotificationServices _notification;

@@ -6,7 +6,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IIngredientsRepository {
     void save(Ingredients ingredients);
 

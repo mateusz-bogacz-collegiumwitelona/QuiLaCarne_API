@@ -16,7 +16,6 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class BanRepository implements IBanRepository {
     private final IJpaBanStatusRepository _jpaStatusRepo;
     private final IJpaBanRepository _jpaBanRepo;

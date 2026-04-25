@@ -9,7 +9,6 @@ import com.example.restaurant.dto.response.DictionaryResponse;
 
 import java.util.List;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface IOrderServices {
     ReservationDomain createOrderForReservation(
             String reservationToken,

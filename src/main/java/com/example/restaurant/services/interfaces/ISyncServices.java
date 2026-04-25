@@ -5,7 +5,6 @@ import com.example.restaurant.helpers.PagedResult;
 
 import java.util.List;
 
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public interface ISyncServices {
     SyncBootstrapResponse getBootstrapManifest();
 

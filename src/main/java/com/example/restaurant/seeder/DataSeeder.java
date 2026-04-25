@@ -30,7 +30,6 @@ import java.util.function.Supplier;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class DataSeeder implements CommandLineRunner {
     private final IJpaRoleRepository _jpaRoleRepo;
     private final IJpaTableStatusRepository _jpaTableStatusRepo;

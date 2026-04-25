@@ -20,7 +20,6 @@ import java.util.Map;
 @Aspect
 @Component
 @RequiredArgsConstructor
-@SuppressWarnings("PMD.LawOfDemeter")
 public class AuditAspect {
     private final IAuditLogServices _auditLogServices;
 

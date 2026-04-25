@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class AllergensServices implements IAllergensServices {
     private final IAllergensRepository _allergenRepo;
     private final IIngredientsRepository _ingredientsRepo;

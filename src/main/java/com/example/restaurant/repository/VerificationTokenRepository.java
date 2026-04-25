@@ -11,7 +11,6 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class VerificationTokenRepository implements IVerificationTokenRepository {
     private final IJpaVerificationTokenRepository _jpaTokenRepo;
 

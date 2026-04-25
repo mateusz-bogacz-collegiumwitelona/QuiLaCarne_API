@@ -6,7 +6,6 @@ import jakarta.validation.ConstraintValidatorContext;
 
 import java.time.OffsetDateTime;
 
-@SuppressWarnings("PMD.LawOfDemeter")
 public class ReservationDatesValidator implements ConstraintValidator<ValidDates, ITimeFramedRequest> {
 
     @Override

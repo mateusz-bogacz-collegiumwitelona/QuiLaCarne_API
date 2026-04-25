@@ -15,7 +15,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.CouplingBetweenObjects", "PMD.GodClass"})
 public class VerificationTokenServices implements IVerificationTokenServices {
     private final IVerificationTokenRepository _tokenRepo;
     private final IUserRepository _userRepo;
