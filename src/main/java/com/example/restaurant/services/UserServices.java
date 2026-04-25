@@ -205,11 +205,11 @@ public class UserServices implements IUserServices {
         Users employee = _userRepo.findByToken(request.getEmployeeToken());
 
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            employee = changeEmail(employee, request.getEmail());
+            changeEmail(employee, request.getEmail());
         }
 
         if (request.getUserName() != null && !request.getUserName().isBlank()) {
-            employee = changeUsername(employee, request.getUserName());
+            changeUsername(employee, request.getUserName());
         }
 
         _userRepo.save(employee);
@@ -425,7 +425,7 @@ public class UserServices implements IUserServices {
         return user;
     }
 
-    private Users changeEmail(Users user, String email) {
+    private void changeEmail(Users user, String email) {
         String normalizedEmail = email.toUpperCase().trim();
 
         if (normalizedEmail.equals(user.getNormalizedEmail()))
@@ -436,10 +436,9 @@ public class UserServices implements IUserServices {
 
         user.setEmail(email.trim());
         user.setNormalizedEmail(normalizedEmail);
-        return user;
     }
 
-    private Users changeUsername(Users user, String userName) {
+    private void changeUsername(Users user, String userName) {
         String normalizedUserName = userName.toUpperCase().trim();
 
         if (normalizedUserName.equals(user.getNormalizedUsername()))
@@ -451,6 +450,5 @@ public class UserServices implements IUserServices {
         user.setUsername(userName.trim());
         user.setNormalizedUsername(normalizedUserName);
 
-        return user;
     }
 }

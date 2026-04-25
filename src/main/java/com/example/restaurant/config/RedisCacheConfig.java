@@ -35,7 +35,7 @@ public class RedisCacheConfig {
 
     @Bean
     public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer(RedisCacheConfiguration baseConfig) {
-        return (builder) -> builder
+        return builder -> builder
                 .withCacheConfiguration("tableStatuses", baseConfig.entryTtl(Duration.ofHours(24)))
                 .withCacheConfiguration("dishCategories", baseConfig.entryTtl(Duration.ofHours(24)))
                 .withCacheConfiguration("tablesList", baseConfig.entryTtl(Duration.ofSeconds(15)))
