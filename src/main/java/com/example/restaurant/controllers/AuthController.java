@@ -14,12 +14,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping(value = "/api/auth", produces = "application/json")
@@ -69,13 +70,11 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/login")
-    public ResponseEntity<ResultHandler<AuthResponse>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<ResultHandler<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         var response = _authServices.authenticate(request);
-        return ResponseEntity.ok(ResultHandler.success(
-                "Login processed successfully",
-                HttpStatus.OK.value(),
-                response
-        ));
+        return ResponseEntity.ok()
+                .headers(createCookieHeaders(response))
+                .body(ResultHandler.success("Login processed successfully", HttpStatus.OK.value(), response));
     }
 
     @Operation(
@@ -100,10 +99,28 @@ public class AuthController {
     ) {
         _authServices.logout(userToken);
 
-        return ResponseEntity.ok(ResultHandler.success(
-                "Logged out successfully",
-                HttpStatus.OK.value()
-        ));
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(
+                HttpHeaders.SET_COOKIE,
+                ResponseCookie.from("accessToken", "")
+                        .httpOnly(true).path("/")
+                        .maxAge(0)
+                        .build()
+                        .toString()
+        );
+        headers.add(
+                HttpHeaders.SET_COOKIE,
+                ResponseCookie.from("refreshToken", "")
+                        .httpOnly(true)
+                        .path("/api/auth/refresh")
+                        .maxAge(0)
+                        .build()
+                        .toString()
+        );
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(ResultHandler.success("Logged out successfully", HttpStatus.OK.value()));
     }
 
     @Operation(
@@ -222,11 +239,9 @@ public class AuthController {
     @PostMapping("/google")
     public ResponseEntity<ResultHandler<AuthResponse>> googleAuth(@Valid @RequestBody GoogleLoginRequest request) {
         var response = _authServices.authenticateWithGoogle(request);
-        return ResponseEntity.ok(ResultHandler.success(
-                "Login successful",
-                HttpStatus.OK.value(),
-                response
-        ));
+        return ResponseEntity.ok()
+                .headers(createCookieHeaders(response))
+                .body(ResultHandler.success("Login successful", HttpStatus.OK.value(), response));
     }
 
     @Operation(
@@ -250,11 +265,9 @@ public class AuthController {
             @Valid @RequestBody Verify2faLoginRequest request
     ) {
         var response = _authServices.verify2faLogin(request);
-        return ResponseEntity.ok(ResultHandler.success(
-                "2FA verification successful",
-                HttpStatus.OK.value(),
-                response
-        ));
+        return ResponseEntity.ok()
+                .headers(createCookieHeaders(response))
+                .body(ResultHandler.success("2FA verification successful", HttpStatus.OK.value(), response));
     }
 
     @Operation(
@@ -274,13 +287,53 @@ public class AuthController {
     })
     @PostMapping("/refresh")
     public ResponseEntity<ResultHandler<AuthResponse>> refreshToken(
-            @Valid @RequestBody RefreshTokenRequest request
+            @Valid @RequestBody(required = false) RefreshTokenRequest request,
+            @CookieValue(name = "refreshToken", required = false) String refreshTokenCookie
     ) {
-        var response = _authServices.refreshToken(request);
-        return ResponseEntity.ok(ResultHandler.success(
-                "Token refreshed successfully",
-                HttpStatus.OK.value(),
-                response
-        ));
+        String tokenToRefresh = (request != null && request.getRefreshToken() != null)
+                ? request.getRefreshToken()
+                : refreshTokenCookie;
+
+        if (tokenToRefresh == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
+        RefreshTokenRequest actualRequest = new RefreshTokenRequest();
+        actualRequest.setRefreshToken(tokenToRefresh);
+
+        var response = _authServices.refreshToken(actualRequest);
+
+        return ResponseEntity.ok()
+                .headers(createCookieHeaders(response))
+                .body(ResultHandler.success("Token refreshed successfully", HttpStatus.OK.value(), response));
+    }
+
+
+    private HttpHeaders createCookieHeaders(AuthResponse response) {
+        HttpHeaders headers =  new HttpHeaders();
+
+        if (response.getToken() != null ){
+            ResponseCookie jwtCookie = ResponseCookie.from("accessToken", response.getToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(15L * 60)
+                    .sameSite("Strict")
+                    .build();
+            headers.add(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        }
+
+        if (response.getRefreshToken() != null) {
+            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/api/auth/refresh")
+                    .maxAge(7L * 24 * 60 * 60)
+                    .sameSite("Strict")
+                    .build();
+            headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        }
+
+        return headers;
     }
 }

@@ -11,6 +11,7 @@ import lombok.Data;
 public class RegisterRequest {
     @Schema(description = "Unique username for the account", example = "Mati_99")
     @NotBlank(message = "Username is required")
+    @Pattern(regexp = "^[a-zA-Z0-9_.-]+$", message = "Username contains invalid characters")
     private String username;
 
     @Schema(description = "Valid email address for account activation", example = "mati@example.pl")
