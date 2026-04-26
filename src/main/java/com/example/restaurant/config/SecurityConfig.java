@@ -48,7 +48,9 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/test",
                                 "/api/auth/**",
-                                "/api/dishes/menu/public") //tu dopisujemy co ma być publiczne
+                                "/api/dishes/menu/public",
+                                "/actuator/**"
+                        ) //tu dopisujemy co ma być publiczne
                         .permitAll()
                         .anyRequest()
                         .authenticated()

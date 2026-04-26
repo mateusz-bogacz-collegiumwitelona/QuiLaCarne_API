@@ -1,0 +1,57 @@
+// LOKI
+loki.write "loki_out" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "docker_logs" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+}
+
+loki.source.docker "docker_logs" {
+  host    = "unix:///var/run/docker.sock"
+  targets = discovery.relabel.docker_logs.output
+  forward_to = [loki.write.loki_out.receiver]
+}
+
+// PROMETHEUS
+prometheus.remote_write "prometheus_out" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
+
+prometheus.scrape "spring_boot" {
+  targets = [
+    {"__address__" = "api:8080", "job" = "spring-boot-app", "app" = "quilacarne"},
+  ]
+  metrics_path    = "/actuator/prometheus"
+  scrape_interval = "5s"
+  scrape_timeout  = "4s"
+  forward_to = [prometheus.remote_write.prometheus_out.receiver]
+}
+
+prometheus.scrape "redis" {
+  targets = [
+    {"__address__" = "redis-exporter:9121", "job" = "redis"},
+  ]
+  scrape_interval = "10s"
+  scrape_timeout  = "9s"
+  forward_to      = [prometheus.remote_write.prometheus_out.receiver]
+}
