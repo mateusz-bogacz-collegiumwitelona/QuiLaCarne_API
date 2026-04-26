@@ -318,7 +318,7 @@ public class AuthController {
                     .secure(true)
                     .path("/")
                     .maxAge(15L * 60)
-                    .sameSite("Strict")
+                    .sameSite("None")
                     .build();
             headers.add(HttpHeaders.SET_COOKIE, jwtCookie.toString());
         }
@@ -329,7 +329,7 @@ public class AuthController {
                     .secure(true)
                     .path("/api/auth/refresh")
                     .maxAge(7L * 24 * 60 * 60)
-                    .sameSite("Strict")
+                    .sameSite("None")
                     .build();
             headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         }
