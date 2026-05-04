@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-
+import org.springframework.beans.factory.annotation.Value;
 import java.time.Duration;
 
 @Component
@@ -26,8 +26,10 @@ public class EmailQueueConsumer {
 
     private static final String QUEUE_NAME = "email_queue";
 
+    @Value("${app.mail.from}")
+    private String fromAddress;
+
     @Scheduled(fixedDelay = 100)
-    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public void processQueue() {
         String jsonJob = _redisTemplate.opsForList().rightPop(QUEUE_NAME, Duration.ofSeconds(5));
 
@@ -54,6 +56,8 @@ public class EmailQueueConsumer {
 
         MimeMessage message = _sender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setFrom(fromAddress);
         helper.setTo(job.to());
         helper.setSubject(job.subject());
         helper.setText(html, true);

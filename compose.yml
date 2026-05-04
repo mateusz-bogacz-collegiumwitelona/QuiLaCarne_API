@@ -3,9 +3,6 @@ networks:
     driver: bridge
 
 volumes:
-  db-data: { }
-  redis-data: { }
-  minio-data: { }
   loki-data: { }
 
 services:
@@ -15,12 +12,14 @@ services:
     ports:
       - "${API_PORT:-8080}:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-postgres}
+      - SPRING_DATASOURCE_URL=${POSTGRES_CONNECTION_STRING}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_HOST=postgres
       - SPRING_DATA_REDIS_HOST=${REDIS_HOST:-redis}
       - SPRING_DATA_REDIS_PORT=${REDIS_PORT:-6379}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - SPRING_DATA_REDIS_SSL=${REDIS_SSL}
       - SPRING_MAIL_HOST=mailpit
       - SPRING_MAIL_PORT=1025
       - JWT_SECRET_KEY=${API_JWT_SECRET_KEY}
@@ -37,158 +36,11 @@ services:
       - S3_ACCESS_LOGIN=${S3_ACCESS_LOGIN}
       - S3_SECRET_PASSWORD=${S3_SECRET_PASSWORD}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
+      - SPRING_MAIL_HOST=${SMTP_HOST:-smtp-relay.brevo.com}
+      - SPRING_MAIL_PORT=${SMTP_PORT:-587}
+      - SPRING_MAIL_USERNAME=${SMTP_USERNAME}
+      - SPRING_MAIL_PASSWORD=${SMTP_PASSWORD}
+      - SPRING_EMAIL_USERNAME=${API_EMAIL_FROM}
+      - API_EMAIL_FROM=${API_EMAIL_FROM}
     networks:
       - dev
-
-  postgres:
-    image: postgres:18-alpine
-    container_name: postgres-db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-postgres}
-      PGDATA: /var/lib/postgresql/data/pgdata
-      TZ: UTC
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgres}",
-        ]
-      interval: 10s
-      retries: 15
-      start_period: 10s
-      timeout: 5s
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    networks:
-      - dev
-    restart: unless-stopped
-
-  mailpit:
-    image: axllent/mailpit:v1.27.9
-    container_name: mailpit-dev
-    ports:
-      - "${MAILPIT_UI_PORT:-8025}:8025"
-      - "1025:1025"
-    networks:
-      - dev
-    restart: unless-stopped
-
-  redis:
-    image: redis:8.2-alpine
-    container_name: redis-dev
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - dev
-    restart: unless-stopped
-
-  minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-    container_name: minio
-    ports:
-      - "${S3_API_PORT:-9000}:9000"
-      - "${S3_UI_PORT:-9001}:9001"
-    environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin123}
-    command: server /data --console-address ":${S3_UI_PORT:-9001}"
-    volumes:
-      - minio-data:/data
-    networks:
-      - dev
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  loki:
-    image: grafana/loki:3.5.0
-    container_name: loki
-    ports:
-      - "${LOKI_PORT:-3100}:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-    volumes:
-      - loki-data:/loki
-    networks:
-      - dev
-    restart: unless-stopped
-
-  alloy:
-    image: grafana/alloy:v1.16.0
-    container_name: alloy
-    ports:
-      - "${ALLOY_PORT:-12345}:12345"
-    volumes:
-      - ./config/alloy/config.alloy:/etc/alloy/config.alloy
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: run --server.http.listen-addr=0.0.0.0:12345 /etc/alloy/config.alloy
-    depends_on:
-      - loki
-      - prometheus
-    networks:
-      - dev
-    restart: unless-stopped
-
-  prometheus:
-    image: prom/prometheus:v3
-    container_name: prometheus
-    ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--web.enable-remote-write-receiver'
-    volumes:
-      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - dev
-    restart: unless-stopped
-
-  grafana:
-    image: grafana/grafana:main-ubuntu
-    container_name: grafana
-    ports:
-      - "${GF_PORT:-3000}:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
-      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
-    volumes:
-      - ./config/grafana:/etc/grafana/provisioning
-    depends_on:
-      - prometheus
-      - loki
-    networks:
-      - dev
-    restart: unless-stopped
-
-  redis-exporter:
-    image: oliver006/redis_exporter:v1.82.0-alpine
-    container_name: redis-exporter
-    environment:
-      REDIS_ADDR: redis://redis:6379
-    ports:
-      - "9121:9121"
-    networks:
-      - dev
-    depends_on:
-      - redis
-    restart: unless-stopped

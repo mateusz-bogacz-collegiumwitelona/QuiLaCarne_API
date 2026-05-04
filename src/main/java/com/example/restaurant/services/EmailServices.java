@@ -23,9 +23,11 @@ public class EmailServices {
     public void sendActivationEmail(String to, String username, String token) {
         validateInputs(to, username, token);
 
+        String activationUrl = String.format("%s/confirmation?email=%s&token=%s", _appUrl, to, token);
+
         Map<String, Object> variables = Map.of(
                 "username", username,
-                "activationUrl", token
+                "activationUrl", activationUrl
         );
 
         enqueueHtmlEmail(
@@ -38,9 +40,11 @@ public class EmailServices {
 
     @Async
     public void sendResetPasswordEmail(String to, String username, String token) {
+        String resetUrl = String.format("%s/reset-password?email=%s&token=%s", _appUrl, to, token);
+
         Map<String, Object> variables = Map.of(
                 "username", username,
-                "resetUrl", token
+                "resetUrl", resetUrl
         );
 
         enqueueHtmlEmail(
@@ -53,8 +57,10 @@ public class EmailServices {
 
     @Async
     public void sendEmailChangeVerification(String to, String token) {
+        String validationUrl = String.format("%s/confirm-email-change?email=%s&token=%s", _appUrl, to, token);
+
         Map<String, Object> variables = Map.of(
-                "validationUrl", token
+                "validationUrl", validationUrl
         );
 
         enqueueHtmlEmail(
