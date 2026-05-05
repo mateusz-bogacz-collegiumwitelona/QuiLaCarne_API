@@ -20,6 +20,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -290,7 +291,15 @@ public class AuthController {
                 .body(ResultHandler.success("Token refreshed successfully", HttpStatus.OK.value(), response));
     }
 
-
+    @GetMapping("/csrf")
+    public ResponseEntity<ResultHandler<String>> getCsrfToken(
+            @Parameter(hidden = true) CsrfToken csrfToken
+    ) {
+        return ResponseEntity.ok(ResultHandler.success(
+                "CSRF Token",
+                HttpStatus.OK.value(),
+                csrfToken.getToken()));
+    }
     private HttpHeaders createLoginCookieHeaders(AuthResponse response) {
         HttpHeaders headers =  new HttpHeaders();
 
@@ -298,6 +307,7 @@ public class AuthController {
             ResponseCookie jwtCookie = ResponseCookie.from("accessToken", response.getToken())
                     .httpOnly(true)
                     .secure(true)
+                    .domain(".quilacarne.com.pl")
                     .path("/")
                     .maxAge(15L * 60)
                     .sameSite("None")
@@ -309,6 +319,7 @@ public class AuthController {
             ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
                     .httpOnly(true)
                     .secure(true)
+                    .domain(".quilacarne.com.pl")
                     .path("/api/auth/refresh")
                     .maxAge(7L * 24 * 60 * 60)
                     .sameSite("None")
@@ -318,6 +329,8 @@ public class AuthController {
         return headers;
     }
 
+
+
     private HttpHeaders createLogoutCookieHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.add(
@@ -325,18 +338,21 @@ public class AuthController {
                 ResponseCookie.from("accessToken", "")
                         .httpOnly(true)
                         .path("/")
+                        .domain(".quilacarne.com.pl")
                         .secure(true)
                         .sameSite("None")
                         .maxAge(0)
                         .build()
                         .toString()
         );
+
         headers.add(
                 HttpHeaders.SET_COOKIE,
                 ResponseCookie.from("refreshToken", "")
                         .httpOnly(true)
                         .path("/api/auth/refresh")
                         .secure(true)
+                        .domain(".quilacarne.com.pl")
                         .sameSite("None")
                         .maxAge(0)
                         .build()
