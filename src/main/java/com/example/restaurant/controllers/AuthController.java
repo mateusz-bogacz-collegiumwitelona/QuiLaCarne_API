@@ -291,6 +291,11 @@ public class AuthController {
                 .body(ResultHandler.success("Token refreshed successfully", HttpStatus.OK.value(), response));
     }
 
+    @Operation(
+            summary = "Get CSRF token",
+            description = "Protection against browser stupidity. Handle if login doesn't work in production",
+            tags = {"Client"}
+    )
     @GetMapping("/csrf")
     public ResponseEntity<ResultHandler<String>> getCsrfToken(
             @Parameter(hidden = true) CsrfToken csrfToken
