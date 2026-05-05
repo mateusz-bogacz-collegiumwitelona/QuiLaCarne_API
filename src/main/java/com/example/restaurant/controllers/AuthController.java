@@ -73,7 +73,7 @@ public class AuthController {
     public ResponseEntity<ResultHandler<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         var response = _authServices.authenticate(request);
         return ResponseEntity.ok()
-                .headers(createCookieHeaders(response))
+                .headers(createLoginCookieHeaders(response))
                 .body(ResultHandler.success("Login processed successfully", HttpStatus.OK.value(), response));
     }
 
@@ -99,27 +99,9 @@ public class AuthController {
     ) {
         _authServices.logout(userToken);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(
-                HttpHeaders.SET_COOKIE,
-                ResponseCookie.from("accessToken", "")
-                        .httpOnly(true).path("/")
-                        .maxAge(0)
-                        .build()
-                        .toString()
-        );
-        headers.add(
-                HttpHeaders.SET_COOKIE,
-                ResponseCookie.from("refreshToken", "")
-                        .httpOnly(true)
-                        .path("/api/auth/refresh")
-                        .maxAge(0)
-                        .build()
-                        .toString()
-        );
 
         return ResponseEntity.ok()
-                .headers(headers)
+                .headers(createLogoutCookieHeaders())
                 .body(ResultHandler.success("Logged out successfully", HttpStatus.OK.value()));
     }
 
@@ -240,7 +222,7 @@ public class AuthController {
     public ResponseEntity<ResultHandler<AuthResponse>> googleAuth(@Valid @RequestBody GoogleLoginRequest request) {
         var response = _authServices.authenticateWithGoogle(request);
         return ResponseEntity.ok()
-                .headers(createCookieHeaders(response))
+                .headers(createLoginCookieHeaders(response))
                 .body(ResultHandler.success("Login successful", HttpStatus.OK.value(), response));
     }
 
@@ -266,7 +248,7 @@ public class AuthController {
     ) {
         var response = _authServices.verify2faLogin(request);
         return ResponseEntity.ok()
-                .headers(createCookieHeaders(response))
+                .headers(createLoginCookieHeaders(response))
                 .body(ResultHandler.success("2FA verification successful", HttpStatus.OK.value(), response));
     }
 
@@ -304,12 +286,12 @@ public class AuthController {
         var response = _authServices.refreshToken(actualRequest);
 
         return ResponseEntity.ok()
-                .headers(createCookieHeaders(response))
+                .headers(createLoginCookieHeaders(response))
                 .body(ResultHandler.success("Token refreshed successfully", HttpStatus.OK.value(), response));
     }
 
 
-    private HttpHeaders createCookieHeaders(AuthResponse response) {
+    private HttpHeaders createLoginCookieHeaders(AuthResponse response) {
         HttpHeaders headers =  new HttpHeaders();
 
         if (response.getToken() != null ){
@@ -333,7 +315,33 @@ public class AuthController {
                     .build();
             headers.add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         }
+        return headers;
+    }
 
+    private HttpHeaders createLogoutCookieHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(
+                HttpHeaders.SET_COOKIE,
+                ResponseCookie.from("accessToken", "")
+                        .httpOnly(true)
+                        .path("/")
+                        .secure(true)
+                        .sameSite("None")
+                        .maxAge(0)
+                        .build()
+                        .toString()
+        );
+        headers.add(
+                HttpHeaders.SET_COOKIE,
+                ResponseCookie.from("refreshToken", "")
+                        .httpOnly(true)
+                        .path("/api/auth/refresh")
+                        .secure(true)
+                        .sameSite("None")
+                        .maxAge(0)
+                        .build()
+                        .toString()
+        );
         return headers;
     }
 }
