@@ -1,9 +1,10 @@
 package com.example.restaurant.config;
 
 import com.warrenstrange.googleauth.GoogleAuthenticator;
-import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,8 +24,8 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    @Value("${app.cors.allowed-origins}")
-    private String _frontedURL;
+//    @Value("${app.cors.allowed-origins}")
+//    private String _frontedURL;
 
     private final JwtAuthenticationFilter _jwtAuthenticationFilter;
     private final AuthenticationProvider _authenticationProvider;
@@ -61,11 +62,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
                         .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/test",
                                 "/api/auth/**",
                                 "/api/dishes/menu/public",
                                 "/actuator/health")
@@ -83,21 +82,23 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOrigins(List.of(_frontedURL));
+        configuration.setAllowedOrigins(List.of(
+                "https://quilacarne.com.pl",
+                "https://www.quilacarne.com.pl"
+        ));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
         configuration.setAllowedHeaders(List.of(
                 "Authorization",
                 "Content-Type",
-                "X-Requested-With",
-                "Accept",
-                "Origin",
-                "X-XSRF-TOKEN"
+                "X-XSRF-TOKEN",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials"
         ));
 
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Set-Cookie"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
