@@ -5,11 +5,11 @@ import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 
 public interface IBanServices {
-    void create(String adminToken, CreateBanRequest request);
+  void create(String adminToken, CreateBanRequest request);
 
-    void add(CreateBanDomain domain);
+  void add(CreateBanDomain domain);
 
-    DictionaryResponse getDictionary();
+  DictionaryResponse getDictionary();
 
-    void processExpiredBans();
+  void processExpiredBans();
 }

@@ -1,16 +1,15 @@
 package com.example.restaurant.dto.response;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PublicMenuResponse {
-    private List<MenuResponse> menu;
+  private List<MenuResponse> menu;
 }

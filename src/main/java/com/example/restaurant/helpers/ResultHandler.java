@@ -1,45 +1,45 @@
 package com.example.restaurant.helpers;
 
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+
 @SuppressWarnings("java:S1450")
 @Getter
 public class ResultHandler<T> {
-    private boolean isSuccess;
-    private T data;
-    private String message;
-    private int statusCode;
-    private List<String> errorMessages;
+  private boolean isSuccess;
+  private T data;
+  private String message;
+  private int statusCode;
+  private List<String> errorMessages;
 
-    // z data
-    public static <T> ResultHandler<T> success(String message, int statusCode, T data) {
-        ResultHandler<T> result = new ResultHandler<>();
-        result.isSuccess = true;
-        result.message = message;
-        result.statusCode = statusCode;
-        result.data = data;
-        return result;
-    }
+  // z data
+  public static <T> ResultHandler<T> success(String message, int statusCode, T data) {
+    ResultHandler<T> result = new ResultHandler<>();
+    result.isSuccess = true;
+    result.message = message;
+    result.statusCode = statusCode;
+    result.data = data;
+    return result;
+  }
 
-    // bez data
-    public static <T> ResultHandler<T> success(String message, int statusCode) {
-        return success(message, statusCode, null);
-    }
+  // bez data
+  public static <T> ResultHandler<T> success(String message, int statusCode) {
+    return success(message, statusCode, null);
+  }
 
-    // z data
-    public static <T> ResultHandler<T> failure(String message, int statusCode, List<String> errors) {
-        ResultHandler<T> result = new ResultHandler<>();
-        result.isSuccess = false;
-        result.message = message;
-        result.statusCode = statusCode;
-        result.errorMessages = errors != null ? errors : new ArrayList<>();
-        return result;
-    }
+  // z data
+  public static <T> ResultHandler<T> failure(String message, int statusCode, List<String> errors) {
+    ResultHandler<T> result = new ResultHandler<>();
+    result.isSuccess = false;
+    result.message = message;
+    result.statusCode = statusCode;
+    result.errorMessages = errors != null ? errors : new ArrayList<>();
+    return result;
+  }
 
-    //bez data
-    public static <T> ResultHandler<T> failure(String message, int statusCode) {
-        return failure(message, statusCode, null);
-    }
+  // bez data
+  public static <T> ResultHandler<T> failure(String message, int statusCode) {
+    return failure(message, statusCode, null);
+  }
 }

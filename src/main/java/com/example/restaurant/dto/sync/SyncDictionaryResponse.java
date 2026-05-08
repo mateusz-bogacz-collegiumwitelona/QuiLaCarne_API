@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SyncDictionaryResponse {
-    private String token;
-    private String nameEn;
-    private String namePl;
+  private String token;
+  private String nameEn;
+  private String namePl;
 }

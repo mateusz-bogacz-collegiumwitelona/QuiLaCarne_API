@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SyncRoleResponse {
-    private String name;
-    private String token;
+  private String name;
+  private String token;
 }

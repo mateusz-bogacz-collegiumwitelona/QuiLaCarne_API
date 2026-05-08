@@ -9,10 +9,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 @RequiredArgsConstructor
 public class AuditLogRepository implements IAuditLogRepository {
-    private final IJpaAuditLogRepository _jpaAuditLogRepo;
+  private final IJpaAuditLogRepository _jpaAuditLogRepo;
 
-    @Override
-    public void save(AuditLog auditLog) {
-        _jpaAuditLogRepo.saveAndFlush(auditLog);
-    }
+  @Override
+  public void save(AuditLog auditLog) {
+    _jpaAuditLogRepo.saveAndFlush(auditLog);
+  }
 }

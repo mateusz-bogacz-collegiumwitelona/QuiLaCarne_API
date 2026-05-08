@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Verify2faLoginRequest {
-    @NotBlank(message = "Pre-Auth token is required")
-    private String preAuthToken;
+  @NotBlank(message = "Pre-Auth token is required")
+  private String preAuthToken;
 
-    @NotNull(message = "2FA code is required")
-    private Integer code;
+  @NotNull(message = "2FA code is required")
+  private Integer code;
 }

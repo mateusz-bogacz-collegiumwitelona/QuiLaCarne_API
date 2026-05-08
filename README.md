@@ -37,13 +37,27 @@ docker compose -f compose.test.yml run --rm test
 ## Przydatne adresy
 
 | Usługa  | Adres                                       |
-|---------|---------------------------------------------|
+| ------- | ------------------------------------------- |
 | Swagger | http://localhost:8080/swagger-ui/index.html |
 | Mailpit | http://localhost:8025/                      |
 | Minio   | http://localhost:9001/                      |
 
-### Po klucz do google zgłosić się do matiego
+## Tabela komend java
 
-### Dokumentacja WebSockets jest dostępna w pliku [WEBSOCKETS.md](./WEBSOCKETS.md)
+| Komenada                     | Opis                                                                |
+| ---------------------------- | ------------------------------------------------------------------- |
+| `./gradlew spotlessApply`    | Automatycznie formatuje i naprawia styl kodu Javy.                  |
+| `./gradlew spotlessCheck`    | Sprawdza poprawność formatowania (bez wprowadzania zmian).          |
+| `./gradlew spotbugsMain`     | Skanuje kod w poszukiwaniu ukrytych błędów i luk.                   |
+| `./gradlew check`            | Uruchamia zbiorczą weryfikację jakości projektu (m m.in. SpotBugs). |
+| `./gradlew test`             | Uruchamia wszystkie testy jednostkowe.                              |
+| `./gradlew jacocoTestReport` | Generuje raport pokazujący, ile kodu jest pokryte testami.          |
+| `./gradlew bootRun`          | Uruchamia aplikację Spring Boot lokalnie (serwer deweloperski).     |
+| `./gradlew bootJar`          | Buduje gotową paczkę aplikacji (plik `.jar`) do wdrożenia.          |
+| `./gradlew clean`            | Usuwa stare, skompilowane pliki i raporty (czyści środowisko).      |
 
-### Dokumentacja api online [API](https://mateusz-bogacz-collegiumwitelona.github.io/QuiLaCarne_API/)
+## Ważne info
+
+1. **Po klucz do google zgłosić się do matiego**
+2. **Dokumentacja WebSockets jest dostępna w pliku [WEBSOCKETS.md](./WEBSOCKETS.md)**
+3. **Dokumentacja api online [API](https://mateusz-bogacz-collegiumwitelona.github.io/QuiLaCarne_API/)**

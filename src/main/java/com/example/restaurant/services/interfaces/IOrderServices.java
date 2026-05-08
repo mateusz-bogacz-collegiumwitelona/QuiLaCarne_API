@@ -6,37 +6,35 @@ import com.example.restaurant.dto.domain.TodayOrderSummaryDomain;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-
 import java.util.List;
 
 public interface IOrderServices {
-    ReservationDomain createOrderForReservation(
-            String reservationToken,
-            String tableToken,
-            List<ReservationDishRequest> dishesRequest
-    );
+  ReservationDomain createOrderForReservation(
+      String reservationToken, String tableToken, List<ReservationDishRequest> dishesRequest);
 
-    OrderSummaryDomain getOrderSummaryForReservation(String reservationToken);
+  OrderSummaryDomain getOrderSummaryForReservation(String reservationToken);
 
-    TodayOrderSummaryDomain todayOrderDetails(String reservationToken, String lang);
+  TodayOrderSummaryDomain todayOrderDetails(String reservationToken, String lang);
 
-    void removeItemFromReservation(String waiterToken, String reservationToken, ReservationDishRequest request);
+  void removeItemFromReservation(
+      String waiterToken, String reservationToken, ReservationDishRequest request);
 
-    void addItemFromReservation(String waiterToken, String reservationToken, List<ReservationDishRequest> request);
+  void addItemFromReservation(
+      String waiterToken, String reservationToken, List<ReservationDishRequest> request);
 
-    void assignWaiterToOrders(String reservationToken, String waiterToken);
+  void assignWaiterToOrders(String reservationToken, String waiterToken);
 
-    void isAbsent(String reservationToken);
+  void isAbsent(String reservationToken);
 
-    DictionaryResponse getDictionary();
+  DictionaryResponse getDictionary();
 
-    DictionaryResponse getItemStatusesDictionary();
+  DictionaryResponse getItemStatusesDictionary();
 
-    void addStatus(AddEntityRequest request);
+  void addStatus(AddEntityRequest request);
 
-    void addItemStatus(AddEntityRequest request);
+  void addItemStatus(AddEntityRequest request);
 
-    void removeStatus(String token);
+  void removeStatus(String token);
 
-    void removeItemStatus(String token);
+  void removeItemStatus(String token);
 }

@@ -2,24 +2,23 @@ package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.lookup.BanStatus;
+import java.time.OffsetDateTime;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-
 public interface IBanRepository {
-    BanStatus findStatusByToken(String token);
+  BanStatus findStatusByToken(String token);
 
-    void save(Bans ban);
+  void save(Bans ban);
 
-    List<BanStatus> findAllStatuses();
+  List<BanStatus> findAllStatuses();
 
-    List<Bans> findExpiredActiveBans(OffsetDateTime time);
+  List<Bans> findExpiredActiveBans(OffsetDateTime time);
 
-    long countStatuses();
+  long countStatuses();
 
-    long count();
+  long count();
 
-    Page<Bans> findAll(Pageable pageable);
+  Page<Bans> findAll(Pageable pageable);
 }

@@ -12,22 +12,22 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailQueueProducer {
-    private final StringRedisTemplate _redisTemplate;
-    private final ObjectMapper _mapper;
+  private final StringRedisTemplate _redisTemplate;
+  private final ObjectMapper _mapper;
 
-    private static final String QUEUE_NAME = "email_queue";
+  private static final String QUEUE_NAME = "email_queue";
 
-    public void enqueueEmail(EmailDomain job) {
-        try {
-            String json = _mapper.writeValueAsString(job);
-            _redisTemplate.opsForList().leftPush(QUEUE_NAME, json);
-            if (log.isInfoEnabled()) {
-                log.info("Email job to {} pushed to queue.", job.to());
-            }
-        } catch (JsonProcessingException ex) {
-            if (log.isErrorEnabled()) {
-                log.error("Failed to enqueue email job", ex);
-            }
-        }
+  public void enqueueEmail(EmailDomain job) {
+    try {
+      String json = _mapper.writeValueAsString(job);
+      _redisTemplate.opsForList().leftPush(QUEUE_NAME, json);
+      if (log.isInfoEnabled()) {
+        log.info("Email job to {} pushed to queue.", job.to());
+      }
+    } catch (JsonProcessingException ex) {
+      if (log.isErrorEnabled()) {
+        log.error("Failed to enqueue email job", ex);
+      }
     }
+  }
 }
