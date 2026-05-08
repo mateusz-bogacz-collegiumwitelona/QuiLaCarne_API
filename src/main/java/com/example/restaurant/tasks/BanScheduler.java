@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class BanScheduler {
-    private final IBanServices _banServices;
+  private final IBanServices _banServices;
 
-    @Scheduled(cron = "0 * * * * *")
-    public void unban() {
-        log.debug("Checking for expired bans...");
-        _banServices.processExpiredBans();
-    }
+  @Scheduled(cron = "0 * * * * *")
+  public void unban() {
+    log.debug("Checking for expired bans...");
+    _banServices.processExpiredBans();
+  }
 }

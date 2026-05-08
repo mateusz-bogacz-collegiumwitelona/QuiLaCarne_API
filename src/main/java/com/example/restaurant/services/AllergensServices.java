@@ -23,70 +23,64 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AllergensServices implements IAllergensServices {
-    private final IAllergensRepository _allergenRepo;
-    private final IIngredientsRepository _ingredientsRepo;
-    private final NotificationServices _notification;
+  private final IAllergensRepository _allergenRepo;
+  private final IIngredientsRepository _ingredientsRepo;
+  private final NotificationServices _notification;
 
-    private final SyncMapper _syncMapper;
+  private final SyncMapper _syncMapper;
 
-    private static final String ENTITY_TYPE = "ALLERGEN";
+  private static final String ENTITY_TYPE = "ALLERGEN";
 
-    @Override
-    @Cacheable(
-            value = "allergensDictionary",
-            key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
-    public DictionaryResponse getDictionary() {
-        String lang = LocaleContextHolder.getLocale().getLanguage();
-        return new DictionaryResponse(DictionaryHelper.map(_allergenRepo.findAll(), lang));
-    }
+  @Override
+  @Cacheable(
+      value = "allergensDictionary",
+      key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
+  public DictionaryResponse getDictionary() {
+    String lang = LocaleContextHolder.getLocale().getLanguage();
+    return new DictionaryResponse(DictionaryHelper.map(_allergenRepo.findAll(), lang));
+  }
 
-    @Override
-    @Transactional
-    @Auditable(action = "ADD_ALLERGEN")
-    @CacheEvict(value = "allergensDictionary", allEntries = true)
-    public void add(AddEntityRequest request) {
-        Allergens allergen = DictionaryHelper.createEntity(
-                Allergens::new,
-                request,
-                _allergenRepo::isNameTaken,
-                "Allergen already exist"
-        );
+  @Override
+  @Transactional
+  @Auditable(action = "ADD_ALLERGEN")
+  @CacheEvict(value = "allergensDictionary", allEntries = true)
+  public void add(AddEntityRequest request) {
+    Allergens allergen =
+        DictionaryHelper.createEntity(
+            Allergens::new, request, _allergenRepo::isNameTaken, "Allergen already exist");
 
-        _allergenRepo.save(allergen);
+    _allergenRepo.save(allergen);
 
-        SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(allergen);
-        WebSocketEvent<SyncDictionaryResponse> event = WebSocketEvent.created(
-                ENTITY_TYPE,
-                allergen.getToken(),
-                payload
-        );
-        _notification.sendEventToTopic("/dictionary/allergens", event);
-    }
+    SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(allergen);
+    WebSocketEvent<SyncDictionaryResponse> event =
+        WebSocketEvent.created(ENTITY_TYPE, allergen.getToken(), payload);
+    _notification.sendEventToTopic("/dictionary/allergens", event);
+  }
 
-    @Override
-    @Transactional
-    @Auditable(action = "REMOVE_ALLERGEN")
-    @Caching(evict = {
-            @CacheEvict(value = "allergensDictionary", allEntries = true),
-            @CacheEvict(value = "ingredientsDictionary", allEntries = true),
-            @CacheEvict(value = "publicDishMenu", allEntries = true),
-            @CacheEvict(value = "dishMenu", allEntries = true)
-    })
-    public void remove(String token) {
-        DictionaryHelper.deleteEntity(
-                token,
-                _allergenRepo::findByToken,
-                _allergenRepo::save,
-                a -> {
-                    for (Ingredients ingredient : a.getIngredients()) {
-                        ingredient.getAllergens().remove(a);
-                        _ingredientsRepo.save(ingredient);
-                    }
-                }
-        );
+  @Override
+  @Transactional
+  @Auditable(action = "REMOVE_ALLERGEN")
+  @Caching(
+      evict = {
+        @CacheEvict(value = "allergensDictionary", allEntries = true),
+        @CacheEvict(value = "ingredientsDictionary", allEntries = true),
+        @CacheEvict(value = "publicDishMenu", allEntries = true),
+        @CacheEvict(value = "dishMenu", allEntries = true)
+      })
+  public void remove(String token) {
+    DictionaryHelper.deleteEntity(
+        token,
+        _allergenRepo::findByToken,
+        _allergenRepo::save,
+        a -> {
+          for (Ingredients ingredient : a.getIngredients()) {
+            ingredient.getAllergens().remove(a);
+            _ingredientsRepo.save(ingredient);
+          }
+        });
 
-        WebSocketEvent<Void> event = WebSocketEvent.deleted(ENTITY_TYPE, token);
+    WebSocketEvent<Void> event = WebSocketEvent.deleted(ENTITY_TYPE, token);
 
-        _notification.sendEventToTopic("/dictionary/allergens", event);
-    }
+    _notification.sendEventToTopic("/dictionary/allergens", event);
+  }
 }

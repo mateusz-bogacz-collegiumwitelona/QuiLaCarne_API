@@ -7,21 +7,21 @@ import com.example.restaurant.dto.response.PublicMenuResponse;
 import com.example.restaurant.helpers.PagedResult;
 
 public interface IDishServices {
-    PagedResult<DishListResponse> getMenu(DishFilterRequest request, PaggedRequest pagged);
+  PagedResult<DishListResponse> getMenu(DishFilterRequest request, PaggedRequest pagged);
 
-    void remove(String dishToken);
+  void remove(String dishToken);
 
-    void changeAvailable(ChangeDishAvailableRequest request);
+  void changeAvailable(ChangeDishAvailableRequest request);
 
-    void edit(EditDishRequest request);
+  void edit(EditDishRequest request);
 
-    void add(AddDishRequest request);
+  void add(AddDishRequest request);
 
-    DictionaryResponse getDictionary();
+  DictionaryResponse getDictionary();
 
-    void addCategory(AddEntityRequest request);
+  void addCategory(AddEntityRequest request);
 
-    void removeCategory(String token);
+  void removeCategory(String token);
 
-    PublicMenuResponse getPublicMenu();
+  PublicMenuResponse getPublicMenu();
 }

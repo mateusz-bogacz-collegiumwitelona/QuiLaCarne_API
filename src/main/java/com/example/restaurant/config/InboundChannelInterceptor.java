@@ -18,34 +18,35 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 @Configuration
 @RequiredArgsConstructor
 public class InboundChannelInterceptor implements ChannelInterceptor {
-    private final JwtServices _jwt;
-    private final UserDetailsService _userDetalis;
+  private final JwtServices _jwt;
+  private final UserDetailsService _userDetalis;
 
-    @Override
-    public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
-        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+  @Override
+  public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
+    StompHeaderAccessor accessor =
+        MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-        if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
-            String authHeader = accessor.getFirstNativeHeader("Authorization");
+    if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+      String authHeader = accessor.getFirstNativeHeader("Authorization");
 
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
-                String username = _jwt.extractUsername(token);
+      if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        String token = authHeader.substring(7);
+        String username = _jwt.extractUsername(token);
 
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UserDetails userDetails = _userDetalis.loadUserByUsername(username);
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+          UserDetails userDetails = _userDetalis.loadUserByUsername(username);
 
-                    if (_jwt.isTokenValid(token, userDetails)) {
-                        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities()
-                        );
+          if (_jwt.isTokenValid(token, userDetails)) {
+            UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
 
-                        accessor.setUser(auth);
-                    }
-                }
-            }
+            accessor.setUser(auth);
+          }
         }
-
-        return message;
+      }
     }
+
+    return message;
+  }
 }

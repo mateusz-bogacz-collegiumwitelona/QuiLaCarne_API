@@ -13,90 +13,80 @@ import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IBanServices;
 import com.example.restaurant.services.interfaces.IReportServices;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.time.OffsetDateTime;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class ReportServices implements IReportServices {
-    private final IReportRepository _reportRepo;
-    private final IUserRepository _userRepo;
-    private final IBanServices _banServices;
-    private final NotificationServices _notification;
+  private final IReportRepository _reportRepo;
+  private final IUserRepository _userRepo;
+  private final IBanServices _banServices;
+  private final NotificationServices _notification;
 
-    private final SyncMapper _syncMapper;
+  private final SyncMapper _syncMapper;
 
-    private static final String REPORT_ENTITY_TYPE = "REPORT";
+  private static final String REPORT_ENTITY_TYPE = "REPORT";
 
-    @Override
-    @Transactional
-    @Auditable(action = "ADD_REPORT")
-    public void add(String waiterToken, AddReportRequest request) {
-        var client = _userRepo.findByToken(request.getClientToken());
+  @Override
+  @Transactional
+  @Auditable(action = "ADD_REPORT")
+  public void add(String waiterToken, AddReportRequest request) {
+    var client = _userRepo.findByToken(request.getClientToken());
 
-        if (!_userRepo.isInRole("ROLE_CLIENT", client.getToken()))
-            throw new IllegalStateException("You can only report users with the client role");
+    if (!_userRepo.isInRole("ROLE_CLIENT", client.getToken()))
+      throw new IllegalStateException("You can only report users with the client role");
 
-        var waiter = _userRepo.findByToken(waiterToken);
-        var status = _reportRepo.findStatusByToken("IN_PROGRESS");
+    var waiter = _userRepo.findByToken(waiterToken);
+    var status = _reportRepo.findStatusByToken("IN_PROGRESS");
 
-        GuestReports report = new GuestReports();
-        report.setGuest(client);
-        report.setReporter(waiter);
-        report.setReason(request.getReason().trim());
-        report.setStatuses(Set.of(status));
+    GuestReports report = new GuestReports();
+    report.setGuest(client);
+    report.setReporter(waiter);
+    report.setReason(request.getReason().trim());
+    report.setStatuses(Set.of(status));
 
-        _reportRepo.save(report);
+    _reportRepo.save(report);
 
-        WebSocketEvent<SyncReportResponse> event = WebSocketEvent.created(
-                REPORT_ENTITY_TYPE,
-                report.getToken(),
-                _syncMapper.toSyncReportResponse(report)
-        );
-        _notification.sendEventToTopic("/reports/updates", event);
+    WebSocketEvent<SyncReportResponse> event =
+        WebSocketEvent.created(
+            REPORT_ENTITY_TYPE, report.getToken(), _syncMapper.toSyncReportResponse(report));
+    _notification.sendEventToTopic("/reports/updates", event);
+  }
+
+  @Override
+  @Transactional
+  @Auditable(action = "CHANGE_REPORT_STATUS")
+  public void changeStatus(String adminToken, ChangeReportStatusRequest request) {
+    var report = _reportRepo.findByToken(request.getReportToken());
+
+    var admin = _userRepo.findByToken(adminToken);
+
+    if (request.isAccepted()) {
+      if (request.getExpiresAt() == null || request.getExpiresAt().isBefore(OffsetDateTime.now()))
+        throw new IllegalStateException(
+            "A valid future expiration date is required to accept a report and issue a ban");
+
+      CreateBanDomain banDomain =
+          new CreateBanDomain(report.getGuest(), admin, report.getReason(), request.getExpiresAt());
+
+      _banServices.add(banDomain);
+
+      var status = _reportRepo.findStatusByToken("ACCEPTED");
+      report.setStatuses(Set.of(status));
+
+    } else {
+      var status = _reportRepo.findStatusByToken("REJECTED");
+      report.setStatuses(Set.of(status));
     }
 
-    @Override
-    @Transactional
-    @Auditable(action = "CHANGE_REPORT_STATUS")
-    public void changeStatus(String adminToken, ChangeReportStatusRequest request) {
-        var report = _reportRepo.findByToken(request.getReportToken());
+    _reportRepo.save(report);
 
-        var admin = _userRepo.findByToken(adminToken);
-
-        if (request.isAccepted()) {
-            if (request.getExpiresAt() == null ||
-                    request.getExpiresAt().isBefore(OffsetDateTime.now()))
-                throw new IllegalStateException("A valid future expiration date is required to accept a report and issue a ban");
-
-
-            CreateBanDomain banDomain = new CreateBanDomain(
-                    report.getGuest(),
-                    admin,
-                    report.getReason(),
-                    request.getExpiresAt()
-            );
-
-            _banServices.add(banDomain);
-
-            var status = _reportRepo.findStatusByToken("ACCEPTED");
-            report.setStatuses(Set.of(status));
-
-        } else {
-            var status = _reportRepo.findStatusByToken("REJECTED");
-            report.setStatuses(Set.of(status));
-        }
-
-        _reportRepo.save(report);
-
-        WebSocketEvent<SyncReportResponse> event = WebSocketEvent.updated(
-                REPORT_ENTITY_TYPE,
-                report.getToken(),
-                _syncMapper.toSyncReportResponse(report)
-        );
-        _notification.sendEventToTopic("/reports/updates", event);
-    }
+    WebSocketEvent<SyncReportResponse> event =
+        WebSocketEvent.updated(
+            REPORT_ENTITY_TYPE, report.getToken(), _syncMapper.toSyncReportResponse(report));
+    _notification.sendEventToTopic("/reports/updates", event);
+  }
 }

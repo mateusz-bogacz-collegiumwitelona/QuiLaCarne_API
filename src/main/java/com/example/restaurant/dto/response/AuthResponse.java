@@ -11,15 +11,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponse {
-    @Schema(description = "JWT Access Token")
-    private String token;
+  @Schema(description = "JWT Access Token")
+  private String token;
 
-    @Schema(description = "Refresh token")
-    private String refreshToken;
+  @Schema(description = "Refresh token")
+  private String refreshToken;
 
-    @Schema(description = "Authenticated user's login")
-    private String username;
+  @Schema(description = "Authenticated user's login")
+  private String username;
 
-    @Schema(description = "Is 2fa enable")
-    private boolean requires2fa;
+  @Schema(description = "Is 2fa enable")
+  private boolean requires2fa;
 }

@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class GoogleLoginRequest {
-    @NotBlank(message = "Token cannot be empty")
-    private String token;
+  @NotBlank(message = "Token cannot be empty")
+  private String token;
 }

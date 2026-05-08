@@ -8,20 +8,19 @@ import lombok.Data;
 
 @Data
 public class ResetPasswordRequest {
-    @Schema(description = "Token to reset passowrd", example = "adadfafrfwerfwerferfwfs")
-    @NotBlank(message = "Token is required ")
-    private String token;
+  @Schema(description = "Token to reset passowrd", example = "adadfafrfwerfwerferfwfs")
+  @NotBlank(message = "Token is required ")
+  private String token;
 
+  @NotBlank(message = "Password is required")
+  @Size(min = 6, max = 100, message = "Password must be at least 6 characters long")
+  @Pattern(
+      regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\"{}|<>]).+$",
+      message =
+          "Password must contain at least one uppercase letter, one number, and one special character")
+  private String password;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, max = 100, message = "Password must be at least 6 characters long")
-    @Pattern(
-            regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\"{}|<>]).+$",
-            message = "Password must contain at least one uppercase letter, one number, and one special character"
-    )
-    private String password;
-
-    @Schema(description = "Must match the password field", example = "SecurePass123!")
-    @NotBlank(message = "Confirm password is required")
-    private String confirmPassword;
+  @Schema(description = "Must match the password field", example = "SecurePass123!")
+  @NotBlank(message = "Confirm password is required")
+  private String confirmPassword;
 }

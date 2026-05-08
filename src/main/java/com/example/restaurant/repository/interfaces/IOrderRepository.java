@@ -4,54 +4,53 @@ import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-import java.util.Optional;
-
 public interface IOrderRepository {
-    Page<Orders> findAll(Pageable pageable);
+  Page<Orders> findAll(Pageable pageable);
 
-    OrderStatus findStatusByToken(String token);
+  OrderStatus findStatusByToken(String token);
 
-    void saveOrderWithItems(Orders order, List<OrderItems> items);
+  void saveOrderWithItems(Orders order, List<OrderItems> items);
 
-    Optional<Orders> findByReservationToken(String reservationToken);
+  Optional<Orders> findByReservationToken(String reservationToken);
 
-    List<OrderItems> findItemsByOrderToken(String orderToken);
+  List<OrderItems> findItemsByOrderToken(String orderToken);
 
-    void save(Orders order);
+  void save(Orders order);
 
-    void saveItem(OrderItems item);
+  void saveItem(OrderItems item);
 
-    OrderItemsStatus findItemStatusByToken(String token);
+  OrderItemsStatus findItemStatusByToken(String token);
 
-    void saveAllItems(List<OrderItems> items);
+  void saveAllItems(List<OrderItems> items);
 
-    List<OrderStatus> findAllStatuses();
+  List<OrderStatus> findAllStatuses();
 
-    List<OrderItemsStatus> findAllItemStatuses();
+  List<OrderItemsStatus> findAllItemStatuses();
 
-    boolean isStatusNameTaken(String pl, String en);
+  boolean isStatusNameTaken(String pl, String en);
 
-    void saveStatus(OrderStatus status);
+  void saveStatus(OrderStatus status);
 
-    boolean isItemStatusNameTaken(String pl, String en);
+  boolean isItemStatusNameTaken(String pl, String en);
 
-    void saveItemStatus(OrderItemsStatus status);
+  void saveItemStatus(OrderItemsStatus status);
 
-    List<Orders> findOrdersByStatus(OrderStatus status);
+  List<Orders> findOrdersByStatus(OrderStatus status);
 
-    List<OrderItems> findOrderItemsByStatus(OrderItemsStatus status);
+  List<OrderItems> findOrderItemsByStatus(OrderItemsStatus status);
 
-    long countOrderItemsStatuses();
+  long countOrderItemsStatuses();
 
-    long countStatuses();
+  long countStatuses();
 
-    long countItems();
+  long countItems();
 
-    long count();
+  long count();
 
-    Page<OrderItems> findAllItems(Pageable pageable);
+  Page<OrderItems> findAllItems(Pageable pageable);
 }

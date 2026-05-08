@@ -6,73 +6,78 @@ import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaRoleRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaUserRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
 @RequiredArgsConstructor
 public class UserRepository implements IUserRepository {
-    private final IJpaUserRepository _jpaUserRepository;
-    private final IJpaRoleRepository _jpaRoleRepository;
+  private final IJpaUserRepository _jpaUserRepository;
+  private final IJpaRoleRepository _jpaRoleRepository;
 
-    @Override
-    public boolean existsByUsername(String username) {
-        return _jpaUserRepository.findByNormalizedUsername(username).isPresent();
-    }
+  @Override
+  public boolean existsByUsername(String username) {
+    return _jpaUserRepository.findByNormalizedUsername(username).isPresent();
+  }
 
-    @Override
-    public boolean existByEmail(String email) {
-        return _jpaUserRepository.findByNormalizedEmail(email).isPresent();
-    }
+  @Override
+  public boolean existByEmail(String email) {
+    return _jpaUserRepository.findByNormalizedEmail(email).isPresent();
+  }
 
-    @Override
-    public Users findByToken(String token) {
-        return _jpaUserRepository.findByToken(token).orElseThrow(
-                () -> new EntityNotFoundException("User not found")
-        );
-    }
+  @Override
+  public Users findByToken(String token) {
+    return _jpaUserRepository
+        .findByToken(token)
+        .orElseThrow(() -> new EntityNotFoundException("User not found"));
+  }
 
-    @Override
-    public boolean isInRole(String roleName, String userToken) {
-        Users user = _jpaUserRepository.findByToken(userToken).orElseThrow(() -> new EntityNotFoundException("User not found"));
+  @Override
+  public boolean isInRole(String roleName, String userToken) {
+    Users user =
+        _jpaUserRepository
+            .findByToken(userToken)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        Roles role = _jpaRoleRepository.findByName(roleName).orElseThrow(() -> new RuntimeException("Role not found"));
+    Roles role =
+        _jpaRoleRepository
+            .findByName(roleName)
+            .orElseThrow(() -> new RuntimeException("Role not found"));
 
-        return user.getRoles().contains(role);
-    }
+    return user.getRoles().contains(role);
+  }
 
-    @Override
-    public Optional<Users> findByNormalizedUsername(String username) {
-        return _jpaUserRepository.findByNormalizedUsername(username);
-    }
+  @Override
+  public Optional<Users> findByNormalizedUsername(String username) {
+    return _jpaUserRepository.findByNormalizedUsername(username);
+  }
 
-    @Override
-    public void save(Users user) {
-        _jpaUserRepository.saveAndFlush(user);
-    }
+  @Override
+  public void save(Users user) {
+    _jpaUserRepository.saveAndFlush(user);
+  }
 
-    @Override
-    public void delete(Users user) {
-        _jpaUserRepository.delete(user);
-    }
+  @Override
+  public void delete(Users user) {
+    _jpaUserRepository.delete(user);
+  }
 
-    @Override
-    public Optional<Users> findByNormalizedEmail(String email) {
-        return _jpaUserRepository.findByNormalizedEmail(email);
-    }
+  @Override
+  public Optional<Users> findByNormalizedEmail(String email) {
+    return _jpaUserRepository.findByNormalizedEmail(email);
+  }
 
-    @Override
-    public Page<Users> findAllUsers(Specification<Users> spec, Pageable pageable) {
-        return _jpaUserRepository.findAll(spec, pageable);
-    }
+  @Override
+  public Page<Users> findAllUsers(Specification<Users> spec, Pageable pageable) {
+    return _jpaUserRepository.findAll(spec, pageable);
+  }
 
-    @Override
-    public long count() {
-        return _jpaUserRepository.count();
-    }
+  @Override
+  public long count() {
+    return _jpaUserRepository.count();
+  }
 }

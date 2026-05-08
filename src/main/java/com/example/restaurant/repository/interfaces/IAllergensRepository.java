@@ -1,19 +1,18 @@
 package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.models.lookup.Allergens;
-
 import java.util.List;
 
 public interface IAllergensRepository {
-    List<Allergens> findAllergens(List<String> allergenTokens);
+  List<Allergens> findAllergens(List<String> allergenTokens);
 
-    List<Allergens> findAll();
+  List<Allergens> findAll();
 
-    boolean isNameTaken(String pl, String en);
+  boolean isNameTaken(String pl, String en);
 
-    void save(Allergens allergen);
+  void save(Allergens allergen);
 
-    Allergens findByToken(String token);
+  Allergens findByToken(String token);
 
-    long count();
+  long count();
 }

@@ -2,35 +2,33 @@ package com.example.restaurant.models;
 
 import com.example.restaurant.enums.TokenTypeEnum;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "verification_tokens")
 @Getter
 @Setter
 public class VerificationToken {
-    @Id
-    private UUID id = UUID.randomUUID();
+  @Id private UUID id = UUID.randomUUID();
 
-    @Column(nullable = false, unique = true)
-    private String token;
+  @Column(nullable = false, unique = true)
+  private String token;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private Users user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private Users user;
 
-    @Enumerated(EnumType.STRING)
-    private TokenTypeEnum type;
+  @Enumerated(EnumType.STRING)
+  private TokenTypeEnum type;
 
-    private OffsetDateTime expiryDate;
+  private OffsetDateTime expiryDate;
 
-    private OffsetDateTime createdAt;
+  private OffsetDateTime createdAt;
 
-    public boolean isExpired() {
-        return expiryDate.isBefore(OffsetDateTime.now());
-    }
+  public boolean isExpired() {
+    return expiryDate.isBefore(OffsetDateTime.now());
+  }
 }

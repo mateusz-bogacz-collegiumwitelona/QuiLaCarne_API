@@ -1,6 +1,7 @@
 package com.example.restaurant.config;
 
 import com.warrenstrange.googleauth.GoogleAuthenticator;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,93 +18,92 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    @Value("${app.cors.allowed-origins}")
-    private String _frontedURL;
+  @Value("${app.cors.allowed-origins}")
+  private String _frontedURL;
 
-    private final JwtAuthenticationFilter _jwtAuthenticationFilter;
-    private final AuthenticationProvider _authenticationProvider;
+  private final JwtAuthenticationFilter _jwtAuthenticationFilter;
+  private final AuthenticationProvider _authenticationProvider;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, AuthenticationProvider authenticationProvider) {
-        _jwtAuthenticationFilter = jwtAuthenticationFilter;
-        _authenticationProvider = authenticationProvider;
-    }
+  public SecurityConfig(
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      AuthenticationProvider authenticationProvider) {
+    _jwtAuthenticationFilter = jwtAuthenticationFilter;
+    _authenticationProvider = authenticationProvider;
+  }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
 
-        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
-        requestHandler.setCsrfRequestAttributeName(null);
+    CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+    requestHandler.setCsrfRequestAttributeName(null);
 
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(csrfTokenRepository)
-                        .csrfTokenRequestHandler(requestHandler)
-                        .ignoringRequestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/google",
-                                "/api/auth/verify-2fa"
-                        )
-                        .ignoringRequestMatchers(request -> {
-                            String authHeader = request.getHeader("Authorization");
-                            return authHeader != null && authHeader.startsWith("Bearer ");
-                        })
-                )
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(
+            csrf ->
+                csrf.csrfTokenRepository(csrfTokenRepository)
+                    .csrfTokenRequestHandler(requestHandler)
+                    .ignoringRequestMatchers(
+                        "/api/auth/login",
+                        "/api/auth/register",
+                        "/api/auth/google",
+                        "/api/auth/verify-2fa")
+                    .ignoringRequestMatchers(
+                        request -> {
+                          String authHeader = request.getHeader("Authorization");
+                          return authHeader != null && authHeader.startsWith("Bearer ");
+                        }))
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers(
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/test",
+                        "/api/auth/**",
+                        "/api/dishes/menu/public")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
+        .authenticationProvider(_authenticationProvider)
+        .addFilterBefore(_jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterAfter(new CsrfConfig(), JwtAuthenticationFilter.class);
 
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/test",
-                                "/api/auth/**",
-                                "/api/dishes/menu/public")
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated()
-                )
-                .authenticationProvider(_authenticationProvider)
-                .addFilterBefore(_jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(new CsrfConfig(), JwtAuthenticationFilter.class);
+    return http.build();
+  }
 
-        return http.build();
-    }
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(List.of(_frontedURL));
 
-        configuration.setAllowedOrigins(List.of(_frontedURL));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+    configuration.setAllowedHeaders(
+        List.of(
+            "Authorization",
+            "Content-Type",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+            "X-XSRF-TOKEN"));
 
-        configuration.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "Accept",
-                "Origin",
-                "X-XSRF-TOKEN"
-        ));
+    configuration.setAllowCredentials(true);
 
-        configuration.setAllowCredentials(true);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
-    @Bean
-    public GoogleAuthenticator googleAuthenticator() {
-        return new GoogleAuthenticator();
-    }
+  @Bean
+  public GoogleAuthenticator googleAuthenticator() {
+    return new GoogleAuthenticator();
+  }
 }

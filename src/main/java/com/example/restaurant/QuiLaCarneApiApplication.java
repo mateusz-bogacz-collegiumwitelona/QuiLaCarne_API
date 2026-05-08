@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @SuppressWarnings("PMD.UseUtilityClass")
 public class QuiLaCarneApiApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(QuiLaCarneApiApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(QuiLaCarneApiApplication.class, args);
+  }
 }

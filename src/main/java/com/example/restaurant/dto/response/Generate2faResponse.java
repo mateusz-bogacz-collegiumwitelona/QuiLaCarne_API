@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Generate2faResponse {
-    private String qrCodeUri;
-    private String manualCode;
+  private String qrCodeUri;
+  private String manualCode;
 }
