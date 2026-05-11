@@ -24,13 +24,12 @@ import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.*;
-import java.util.*;
-
 import com.example.restaurant.services.NotificationServices;
 import com.example.restaurant.services.order.OrderDictionaryService;
 import com.example.restaurant.services.order.OrderQueryService;
 import com.example.restaurant.services.order.OrderSyncPublisher;
 import com.example.restaurant.services.order.OrderWorkflowService;
+import java.util.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -70,9 +69,9 @@ class OrderFacadeTest {
   void setUp() {
     OrderSyncPublisher syncPublisher = new OrderSyncPublisher(_notification, _syncMapper);
 
-    OrderWorkflowService workflow = new OrderWorkflowService(
-            _orderRepo, syncPublisher, _dishRepo, _reservationRepo, _tableRepo, _userRepo
-    );
+    OrderWorkflowService workflow =
+        new OrderWorkflowService(
+            _orderRepo, syncPublisher, _dishRepo, _reservationRepo, _tableRepo, _userRepo);
     OrderQueryService query = new OrderQueryService(_orderRepo);
     OrderDictionaryService dictionary = new OrderDictionaryService(_orderRepo, syncPublisher);
 
@@ -382,16 +381,15 @@ class OrderFacadeTest {
     verify(_orderRepo, times(1)).save(mockOrder);
 
     verify(_notification, times(1))
-            .sendEventToTopic(
-                    eq("/orders/updates"),
-                    argThat(event ->
-                            event.getEventType() == WebSocketEventType.UPDATED // Zmieniono z DELETED
-                                    && event.getEntityType().equals("ORDER")
-                                    && ((SyncOrderResponse) event.getPayload()).getTotalPrice() == 100
-                    ));
+        .sendEventToTopic(
+            eq("/orders/updates"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.UPDATED // Zmieniono z DELETED
+                        && event.getEntityType().equals("ORDER")
+                        && ((SyncOrderResponse) event.getPayload()).getTotalPrice() == 100));
 
-    verify(_notification, times(1))
-            .sendEventToTopic(eq("/orders/items"), any());
+    verify(_notification, times(1)).sendEventToTopic(eq("/orders/items"), any());
   }
 
   @Test
@@ -441,22 +439,24 @@ class OrderFacadeTest {
     verify(_orderRepo, times(1)).save(mockOrder);
 
     verify(_notification, times(1))
-            .sendEventToTopic(
-                    eq("/orders/updates"),
-                    argThat(event ->
-                            event.getEventType() == WebSocketEventType.UPDATED
-                                    && event.getEntityType().equals("ORDER")
-                                    && event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN)
-                                    && ((SyncOrderResponse) event.getPayload()).getTotalPrice() == 0
-                    ));
+        .sendEventToTopic(
+            eq("/orders/updates"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.UPDATED
+                        && event.getEntityType().equals("ORDER")
+                        && event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN)
+                        && ((SyncOrderResponse) event.getPayload()).getTotalPrice() == 0));
 
     verify(_notification, times(1))
-            .sendEventToTopic(
-                    eq("/orders/items"),
-                    argThat(event ->
-                            event.getEntityType().equals("ORDER_ITEM")
-                                    && ((SyncOrderItemResponse) event.getPayload()).getStatusTokens().contains("CANCELLED")
-                    ));
+        .sendEventToTopic(
+            eq("/orders/items"),
+            argThat(
+                event ->
+                    event.getEntityType().equals("ORDER_ITEM")
+                        && ((SyncOrderItemResponse) event.getPayload())
+                            .getStatusTokens()
+                            .contains("CANCELLED")));
   }
 
   @Test

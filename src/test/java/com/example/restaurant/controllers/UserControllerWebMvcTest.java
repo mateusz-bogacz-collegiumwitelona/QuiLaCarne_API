@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.restaurant.config.RateLimitConfig;
 import com.example.restaurant.exceptions.EntityNotFoundException;
-import com.example.restaurant.services.interfaces.IUserServices;
+import com.example.restaurant.fasade.interfaces.IUserFacade;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -27,7 +27,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @AutoConfigureMockMvc(addFilters = false)
 class UserControllerWebMvcTest extends AbstractControllerWebMvcTest {
 
-  @MockitoBean private IUserServices _userServices;
+  @MockitoBean private IUserFacade _userServices;
 
   @Test
   void updatePassword_path() throws Exception {

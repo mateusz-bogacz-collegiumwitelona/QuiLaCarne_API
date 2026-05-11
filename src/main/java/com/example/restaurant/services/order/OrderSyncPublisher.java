@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class OrderSyncPublisher {
-
   private final NotificationServices _notification;
   private final SyncMapper _syncMapper;
 

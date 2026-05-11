@@ -1,4 +1,4 @@
-package com.example.restaurant.services;
+package com.example.restaurant.facades;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,15 +11,22 @@ import com.example.restaurant.dto.sync.SyncUserResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.InvalidDateException;
+import com.example.restaurant.fasade.UserFacade;
+import com.example.restaurant.helpers.UserManagmentHelper;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.EmailServices;
+import com.example.restaurant.services.NotificationServices;
+import com.example.restaurant.services.TwoFactorServices;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
+import com.example.restaurant.services.user.*;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,22 +39,47 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
-class UserServicesTest {
+class UserFacadeTest {
   @Mock private IUserRepository _userRepo;
 
   @Mock private IRoleRepository _roleRepository;
 
-  @Mock private PasswordEncoder _passwordEncoder;
-
   @Mock private IVerificationTokenServices _tokenServices;
+
+  @Mock private EmailServices _emailServices;
 
   @Mock private TwoFactorServices _2faServices;
 
   @Mock private NotificationServices _notification;
 
-  @InjectMocks private UserServices _userServices;
+  @Mock private PasswordEncoder _passwordEncoder;
+
+  @InjectMocks private UserFacade _userFacade;
 
   @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
+
+  @BeforeEach
+  void setUp() {
+    UserSyncPublisher userPublisher = new UserSyncPublisher(_notification, _syncMapper);
+
+    UserManagmentHelper userHelper =
+        new UserManagmentHelper(_userRepo, _roleRepository, _passwordEncoder);
+
+    EmployeeManagementService employee =
+        new EmployeeManagementService(
+            _userRepo, _roleRepository, _passwordEncoder, userHelper, userPublisher);
+
+    UserAccountService account =
+        new UserAccountService(_userRepo, _roleRepository, _passwordEncoder, userHelper);
+
+    UserIdentityService identity =
+        new UserIdentityService(_userRepo, _tokenServices, _emailServices, userHelper);
+
+    UserSecurityService security =
+        new UserSecurityService(_userRepo, _passwordEncoder, _2faServices);
+
+    this._userFacade = new UserFacade(employee, account, identity, security);
+  }
 
   @Test
   @DisplayName("Create User: Success")
@@ -72,7 +104,7 @@ class UserServicesTest {
         .when(_userRepo)
         .save(any(Users.class));
 
-    String token = _userServices.create(request, "ROLE_CLIENT", false);
+    String token = _userFacade.create(request, "ROLE_CLIENT", false);
 
     assertEquals(TestConstants.FAKE_USER_TOKEN, token);
     verify(_userRepo).save(any(Users.class));
@@ -85,7 +117,7 @@ class UserServicesTest {
     user.setIsActive(false);
     when(_userRepo.findByToken("token")).thenReturn(user);
 
-    _userServices.activeUser("token");
+    _userFacade.activeUser("token");
 
     assertTrue(user.getIsActive());
     verify(_userRepo).save(user);
@@ -99,7 +131,7 @@ class UserServicesTest {
     when(_userRepo.findByToken(anyString())).thenReturn(user);
 
     assertThrows(
-        IllegalStateException.class, () -> _userServices.activeUser(TestConstants.FAKE_USER_TOKEN));
+        IllegalStateException.class, () -> _userFacade.activeUser(TestConstants.FAKE_USER_TOKEN));
   }
 
   @Test
@@ -118,7 +150,7 @@ class UserServicesTest {
 
     assertThrows(
         BadCredentialsException.class,
-        () -> _userServices.updatePassword(TestConstants.FAKE_USER_TOKEN, request));
+        () -> _userFacade.updatePassword(TestConstants.FAKE_USER_TOKEN, request));
   }
 
   @Test
@@ -129,7 +161,7 @@ class UserServicesTest {
     when(_userRepo.findByToken(anyString())).thenReturn(user);
 
     assertThrows(
-        IllegalStateException.class, () -> _userServices.updateEmail("token", "test@test.pl"));
+        IllegalStateException.class, () -> _userFacade.updateEmail("token", "test@test.pl"));
   }
 
   @Test
@@ -145,7 +177,7 @@ class UserServicesTest {
 
     assertThrows(
         EntityAlreadyExistsException.class,
-        () -> _userServices.updateEmail(TestConstants.FAKE_USER_TOKEN, "taken@test.pl"));
+        () -> _userFacade.updateEmail(TestConstants.FAKE_USER_TOKEN, "taken@test.pl"));
   }
 
   @Test
@@ -155,7 +187,7 @@ class UserServicesTest {
 
     assertThrows(
         InvalidDateException.class,
-        () -> _userServices.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "bad_token"));
+        () -> _userFacade.confirmEmailChange(TestConstants.FAKE_USER_TOKEN, "bad_token"));
   }
 
   @Test
@@ -166,7 +198,7 @@ class UserServicesTest {
     when(_userRepo.findByToken(anyString())).thenReturn(user);
     when(_userRepo.existsByUsername(anyString())).thenReturn(false);
 
-    _userServices.updateUserName("NewName", TestConstants.FAKE_USER_TOKEN);
+    _userFacade.updateUserName("NewName", TestConstants.FAKE_USER_TOKEN);
 
     assertEquals("NewName", user.getUsername());
     verify(_userRepo).save(user);
@@ -179,7 +211,7 @@ class UserServicesTest {
     user.setNormalizedUsername("MATI");
     when(_userRepo.findByToken(anyString())).thenReturn(user);
 
-    assertThrows(IllegalStateException.class, () -> _userServices.updateUserName("Mati", "token"));
+    assertThrows(IllegalStateException.class, () -> _userFacade.updateUserName("Mati", "token"));
   }
 
   @Test
@@ -193,7 +225,7 @@ class UserServicesTest {
 
     when(_userRepo.findByToken(anyString())).thenReturn(user);
 
-    _userServices.delete(TestConstants.FAKE_USER_TOKEN);
+    _userFacade.delete(TestConstants.FAKE_USER_TOKEN);
 
     assertFalse(user.getIsActive());
     assertTrue(user.getUsername().startsWith("DELETED_"));
@@ -213,7 +245,7 @@ class UserServicesTest {
 
     assertThrows(
         EntityAlreadyExistsException.class,
-        () -> _userServices.create(request, "ROLE_CLIENT", false));
+        () -> _userFacade.create(request, "ROLE_CLIENT", false));
     verify(_userRepo, never()).save(any());
   }
 
@@ -230,7 +262,7 @@ class UserServicesTest {
 
     assertThrows(
         EntityAlreadyExistsException.class,
-        () -> _userServices.create(request, "ROLE_CLIENT", false));
+        () -> _userFacade.create(request, "ROLE_CLIENT", false));
     verify(_userRepo, never()).save(any());
   }
 
@@ -262,7 +294,7 @@ class UserServicesTest {
         .when(_userRepo)
         .save(any(Users.class));
 
-    _userServices.createEmployee(request);
+    _userFacade.createEmployee(request);
 
     verify(_roleRepository).setRole("ROLE_MANAGER");
     verify(_userRepo).save(any(Users.class));
@@ -300,7 +332,7 @@ class UserServicesTest {
     when(_userRepo.findByNormalizedEmail("NEW_EMPLOYEE@TEST.PL")).thenReturn(Optional.empty());
     when(_userRepo.existsByUsername("NEWEMPLOYEENAME")).thenReturn(false);
 
-    _userServices.editEmployee(request);
+    _userFacade.editEmployee(request);
 
     assertEquals("new_employee@test.pl", employee.getEmail());
     verify(_userRepo).save(employee);
@@ -336,7 +368,7 @@ class UserServicesTest {
     when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
     when(_userRepo.findByNormalizedEmail("NEW_EMPLOYEE@TEST.PL")).thenReturn(Optional.empty());
 
-    _userServices.editEmployee(request);
+    _userFacade.editEmployee(request);
 
     verify(_userRepo).save(employee);
 
@@ -363,7 +395,7 @@ class UserServicesTest {
     when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
 
     IllegalStateException exception =
-        assertThrows(IllegalStateException.class, () -> _userServices.editEmployee(request));
+        assertThrows(IllegalStateException.class, () -> _userFacade.editEmployee(request));
     assertEquals("Email must be different", exception.getMessage());
     verify(_userRepo, never()).save(any());
   }
@@ -381,7 +413,7 @@ class UserServicesTest {
     when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
     when(_userRepo.findByNormalizedEmail("TAKEN@TEST.PL")).thenReturn(Optional.of(new Users()));
 
-    assertThrows(EntityAlreadyExistsException.class, () -> _userServices.editEmployee(request));
+    assertThrows(EntityAlreadyExistsException.class, () -> _userFacade.editEmployee(request));
     verify(_userRepo, never()).save(any());
   }
 
@@ -399,7 +431,7 @@ class UserServicesTest {
     when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
 
     IllegalStateException exception =
-        assertThrows(IllegalStateException.class, () -> _userServices.editEmployee(request));
+        assertThrows(IllegalStateException.class, () -> _userFacade.editEmployee(request));
     assertEquals("User name must be different", exception.getMessage());
     verify(_userRepo, never()).save(any());
   }
@@ -418,7 +450,7 @@ class UserServicesTest {
     when(_userRepo.findByToken(TestConstants.FAKE_USER_TOKEN)).thenReturn(employee);
     when(_userRepo.existsByUsername("TAKENNAME")).thenReturn(true);
 
-    assertThrows(EntityAlreadyExistsException.class, () -> _userServices.editEmployee(request));
+    assertThrows(EntityAlreadyExistsException.class, () -> _userFacade.editEmployee(request));
     verify(_userRepo, never()).save(any());
   }
 
@@ -438,7 +470,7 @@ class UserServicesTest {
     when(_userRepo.findByToken("EMPLOYEE_TOKEN_456")).thenReturn(employee);
     when(_passwordEncoder.encode("NewPass123!")).thenReturn("NewHashedPassword123");
 
-    _userServices.changeEmployeePassword(adminToken, request);
+    _userFacade.changeEmployeePassword(adminToken, request);
 
     assertEquals("NewHashedPassword123", employee.getPassword());
     verify(_userRepo, times(1)).save(employee);
@@ -457,7 +489,7 @@ class UserServicesTest {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
-            () -> _userServices.changeEmployeePassword(adminToken, request));
+            () -> _userFacade.changeEmployeePassword(adminToken, request));
 
     assertEquals("You can't change your own password", exception.getMessage());
     verify(_userRepo, never()).save(any());
@@ -476,7 +508,7 @@ class UserServicesTest {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
-            () -> _userServices.changeEmployeePassword(adminToken, request));
+            () -> _userFacade.changeEmployeePassword(adminToken, request));
 
     assertEquals("Passwords do not match", exception.getMessage());
     verify(_userRepo, never()).save(any());
@@ -493,7 +525,7 @@ class UserServicesTest {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
-            () -> _userServices.changeEmployeeRole("admin-token", request));
+            () -> _userFacade.changeEmployeeRole("admin-token", request));
 
     assertEquals("You can't change your own role", exception.getMessage());
     verify(_userRepo, never()).save(any());
@@ -517,7 +549,7 @@ class UserServicesTest {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
-            () -> _userServices.changeEmployeeRole("admin-token", request));
+            () -> _userFacade.changeEmployeeRole("admin-token", request));
 
     assertEquals("User is already a Manager", exception.getMessage());
     verify(_userRepo, never()).save(any());
@@ -541,7 +573,7 @@ class UserServicesTest {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
-            () -> _userServices.changeEmployeeRole("admin-token", request));
+            () -> _userFacade.changeEmployeeRole("admin-token", request));
 
     assertEquals("User is already a Waiter", exception.getMessage());
     verify(_userRepo, never()).save(any());
@@ -569,7 +601,7 @@ class UserServicesTest {
     when(_userRepo.findByToken("employee-token")).thenReturn(employee);
     when(_roleRepository.setRole("ROLE_MANAGER")).thenReturn(newManagerRole);
 
-    _userServices.changeEmployeeRole("admin-token", request);
+    _userFacade.changeEmployeeRole("admin-token", request);
 
     assertTrue(employee.getRoles().contains(newManagerRole));
     verify(_userRepo).save(employee);
@@ -611,7 +643,7 @@ class UserServicesTest {
     when(_userRepo.findByToken("employee-token")).thenReturn(employee);
     when(_roleRepository.setRole("ROLE_WAITER")).thenReturn(newWaiterRole);
 
-    _userServices.changeEmployeeRole("admin-token", request);
+    _userFacade.changeEmployeeRole("admin-token", request);
 
     assertTrue(employee.getRoles().contains(newWaiterRole));
     verify(_userRepo).save(employee);
@@ -640,7 +672,7 @@ class UserServicesTest {
 
     IllegalStateException exception =
         assertThrows(
-            IllegalStateException.class, () -> _userServices.blockEmployee("admin-token", request));
+            IllegalStateException.class, () -> _userFacade.blockEmployee("admin-token", request));
 
     assertEquals("You can't change your own availability", exception.getMessage());
     verify(_userRepo, never()).save(any());
@@ -660,7 +692,7 @@ class UserServicesTest {
 
     IllegalStateException exception =
         assertThrows(
-            IllegalStateException.class, () -> _userServices.blockEmployee("admin-token", request));
+            IllegalStateException.class, () -> _userFacade.blockEmployee("admin-token", request));
 
     assertEquals("Employee availability is already set to this state", exception.getMessage());
     verify(_userRepo, never()).save(any());
@@ -679,7 +711,7 @@ class UserServicesTest {
 
     when(_userRepo.findByToken("employee-token")).thenReturn(employee);
 
-    _userServices.blockEmployee("admin-token", request);
+    _userFacade.blockEmployee("admin-token", request);
 
     assertFalse(employee.getIsActive());
     verify(_userRepo).save(employee);
@@ -709,7 +741,7 @@ class UserServicesTest {
 
     when(_userRepo.findByToken("employee-token")).thenReturn(employee);
 
-    _userServices.blockEmployee("admin-token", request);
+    _userFacade.blockEmployee("admin-token", request);
 
     assertTrue(employee.getIsActive());
     verify(_userRepo).save(employee);
@@ -735,7 +767,7 @@ class UserServicesTest {
     IllegalStateException exception =
         assertThrows(
             IllegalStateException.class,
-            () -> _userServices.deleteEmployee(adminToken, employeeToken));
+            () -> _userFacade.deleteEmployee(adminToken, employeeToken));
 
     assertEquals("You can't delete yourself", exception.getMessage());
     verify(_userRepo, never()).save(any());
@@ -756,7 +788,7 @@ class UserServicesTest {
 
     when(_userRepo.findByToken("employee-token")).thenReturn(employee);
 
-    _userServices.deleteEmployee(adminToken, employeeToken);
+    _userFacade.deleteEmployee(adminToken, employeeToken);
 
     assertFalse(employee.getIsActive());
     verify(_userRepo).save(employee);
@@ -784,7 +816,7 @@ class UserServicesTest {
     when(_roleRepository.setRole("ROLE_CLIENT")).thenReturn(clientRole);
     when(_passwordEncoder.encode(anyString())).thenReturn("hashed_google_password");
 
-    String generatedUsername = _userServices.createOAuthUser(email);
+    String generatedUsername = _userFacade.createOAuthUser(email);
 
     assertEquals("jan.kowalski1", generatedUsername);
 
@@ -815,7 +847,7 @@ class UserServicesTest {
     when(_2faServices.generateNewSecret()).thenReturn(fakeSecret);
     when(_2faServices.generateQrCodeImageUri(fakeSecret, "Mati")).thenReturn(fakeQrUri);
 
-    var response = _userServices.generate2fa(userToken);
+    var response = _userFacade.generate2fa(userToken);
 
     assertNotNull(response);
     assertEquals(fakeSecret, response.getManualCode());
@@ -833,7 +865,7 @@ class UserServicesTest {
 
     when(_userRepo.findByToken(userToken)).thenReturn(user);
 
-    assertThrows(IllegalStateException.class, () -> _userServices.generate2fa(userToken));
+    assertThrows(IllegalStateException.class, () -> _userFacade.generate2fa(userToken));
     verify(_userRepo, never()).save(any());
   }
 
@@ -851,7 +883,7 @@ class UserServicesTest {
     when(_userRepo.findByToken(userToken)).thenReturn(user);
     when(_2faServices.isOptValid("SECRET", 123456)).thenReturn(true);
 
-    _userServices.verifyAndEnable2fa(userToken, request);
+    _userFacade.verifyAndEnable2fa(userToken, request);
 
     assertTrue(user.getIsTwoFactorEnabled());
     verify(_userRepo).save(user);
@@ -871,7 +903,7 @@ class UserServicesTest {
     when(_2faServices.isOptValid("SECRET", 999999)).thenReturn(false);
 
     assertThrows(
-        IllegalStateException.class, () -> _userServices.verifyAndEnable2fa(userToken, request));
+        IllegalStateException.class, () -> _userFacade.verifyAndEnable2fa(userToken, request));
     assertFalse(user.getIsTwoFactorEnabled());
   }
 
@@ -888,6 +920,6 @@ class UserServicesTest {
   }
 
   private void verifyAndEnable2fa(String token) {
-    _userServices.verifyAndEnable2fa(token, new Verify2faRequest());
+    _userFacade.verifyAndEnable2fa(token, new Verify2faRequest());
   }
 }

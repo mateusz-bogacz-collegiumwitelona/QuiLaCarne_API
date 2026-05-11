@@ -14,9 +14,9 @@ import com.example.restaurant.dto.response.AuthResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.InvalidDateException;
+import com.example.restaurant.fasade.interfaces.IUserFacade;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IUserRepository;
-import com.example.restaurant.services.interfaces.IUserServices;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +45,7 @@ class AuthServicesTest {
 
   @Mock private EmailServices _emailServices;
 
-  @Mock private IUserServices _userServices;
+  @Mock private IUserFacade _userServices;
 
   @Mock private IVerificationTokenServices _tokenServices;
 

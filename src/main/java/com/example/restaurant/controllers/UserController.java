@@ -2,8 +2,8 @@ package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.Generate2faResponse;
+import com.example.restaurant.fasade.interfaces.IUserFacade;
 import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.services.interfaces.IUserServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/api/user", produces = "application/json")
 @RequiredArgsConstructor
 public class UserController {
-  private final IUserServices _userServices;
+  private final IUserFacade _userServices;
 
   @Operation(
       summary = "Update user password",

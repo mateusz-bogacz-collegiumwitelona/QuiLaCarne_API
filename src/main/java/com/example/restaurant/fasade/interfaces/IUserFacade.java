@@ -1,11 +1,11 @@
-package com.example.restaurant.services.interfaces;
+package com.example.restaurant.fasade.interfaces;
 
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.Generate2faResponse;
 import java.util.Optional;
 
-public interface IUserServices {
+public interface IUserFacade {
   String create(RegisterRequest request, String userRole, boolean isActive);
 
   void createEmployee(AddEmployeeRequest request);
