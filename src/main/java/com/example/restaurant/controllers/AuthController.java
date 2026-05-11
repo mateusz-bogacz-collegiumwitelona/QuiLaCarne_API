@@ -184,7 +184,7 @@ public class AuthController {
   })
   @PostMapping("/set-password")
   public ResponseEntity<ResultHandler<Boolean>> setNewPassword(
-      @RequestBody ResetPasswordRequest request) {
+      @RequestBody @Valid ResetPasswordRequest request) {
     var result = _authServices.setNewPassword(request);
     return ResponseEntity.ok(
         ResultHandler.success("Reset password successfully", HttpStatus.OK.value(), result));
