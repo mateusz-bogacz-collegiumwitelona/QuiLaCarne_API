@@ -1,4 +1,4 @@
-package com.example.restaurant.services.interfaces;
+package com.example.restaurant.fasade.interfaces;
 
 import com.example.restaurant.dto.domain.OrderSummaryDomain;
 import com.example.restaurant.dto.domain.ReservationDomain;
@@ -8,7 +8,7 @@ import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import java.util.List;
 
-public interface IOrderServices {
+public interface IOrderFacade {
   ReservationDomain createOrderForReservation(
       String reservationToken, String tableToken, List<ReservationDishRequest> dishesRequest);
 

@@ -1,4 +1,4 @@
-package com.example.restaurant.services;
+package com.example.restaurant.facades;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,8 +14,10 @@ import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.TodayReservationDishResponse;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
+import com.example.restaurant.dto.sync.SyncOrderItemResponse;
 import com.example.restaurant.dto.sync.SyncOrderResponse;
 import com.example.restaurant.enums.WebSocketEventType;
+import com.example.restaurant.fasade.OrderFacade;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.*;
 import com.example.restaurant.models.lookup.Allergens;
@@ -23,7 +25,14 @@ import com.example.restaurant.models.lookup.OrderItemsStatus;
 import com.example.restaurant.models.lookup.OrderStatus;
 import com.example.restaurant.repository.interfaces.*;
 import java.util.*;
+
+import com.example.restaurant.services.NotificationServices;
+import com.example.restaurant.services.order.OrderDictionaryService;
+import com.example.restaurant.services.order.OrderQueryService;
+import com.example.restaurant.services.order.OrderSyncPublisher;
+import com.example.restaurant.services.order.OrderWorkflowService;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,7 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 @ExtendWith(MockitoExtension.class)
-class OrderServicesTest {
+class OrderFacadeTest {
   @Mock private IOrderRepository _orderRepo;
 
   @Mock private IDishRepository _dishRepo;
@@ -48,13 +57,26 @@ class OrderServicesTest {
 
   @Mock private NotificationServices _notification;
 
-  @InjectMocks private OrderServices _orderServices;
+  @InjectMocks private OrderFacade _orderFacade;
 
   @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
   @AfterEach
   void tearDown() {
     LocaleContextHolder.resetLocaleContext();
+  }
+
+  @BeforeEach
+  void setUp() {
+    OrderSyncPublisher syncPublisher = new OrderSyncPublisher(_notification, _syncMapper);
+
+    OrderWorkflowService workflow = new OrderWorkflowService(
+            _orderRepo, syncPublisher, _dishRepo, _reservationRepo, _tableRepo, _userRepo
+    );
+    OrderQueryService query = new OrderQueryService(_orderRepo);
+    OrderDictionaryService dictionary = new OrderDictionaryService(_orderRepo, syncPublisher);
+
+    this._orderFacade = new OrderFacade(workflow, query, dictionary);
   }
 
   @Test
@@ -95,7 +117,7 @@ class OrderServicesTest {
         .saveOrderWithItems(any(Orders.class), anyList());
 
     ReservationDomain result =
-        _orderServices.createOrderForReservation(
+        _orderFacade.createOrderForReservation(
             TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_TABLE_TOKEN, List.of(dishReq));
 
     assertNotNull(result);
@@ -123,7 +145,7 @@ class OrderServicesTest {
   @DisplayName("Create order for reservation: Should return empty domain when no dishes requested")
   void createOrderForReservation_ShouldReturnEmptyDomain_WhenNoDishesRequested() {
     ReservationDomain result =
-        _orderServices.createOrderForReservation(
+        _orderFacade.createOrderForReservation(
             TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_TABLE_TOKEN, List.of());
 
     assertNotNull(result);
@@ -161,7 +183,7 @@ class OrderServicesTest {
         .thenReturn(Optional.empty());
 
     OrderSummaryDomain result =
-        _orderServices.getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN);
+        _orderFacade.getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN);
 
     assertNotNull(result);
     assertEquals(0, result.totalPrice());
@@ -197,7 +219,7 @@ class OrderServicesTest {
         .thenReturn(List.of(mockItem));
 
     OrderSummaryDomain result =
-        _orderServices.getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN);
+        _orderFacade.getOrderSummaryForReservation(TestConstants.FAKE_RESERVATION_TOKEN);
 
     assertNotNull(result);
     assertEquals(150, result.totalPrice());
@@ -213,7 +235,7 @@ class OrderServicesTest {
   void todayOrderDetails_ShouldReturnEmptyDomain_WhenOrderNotFound() {
     when(_orderRepo.findByReservationToken("fake-res-token")).thenReturn(Optional.empty());
 
-    TodayOrderSummaryDomain result = _orderServices.todayOrderDetails("fake-res-token", "pl");
+    TodayOrderSummaryDomain result = _orderFacade.todayOrderDetails("fake-res-token", "pl");
 
     assertEquals(0, result.totalPrice());
     assertTrue(result.dishes().isEmpty());
@@ -257,7 +279,7 @@ class OrderServicesTest {
     when(_orderRepo.findByReservationToken("fake-res-token")).thenReturn(Optional.of(mockOrder));
     when(_orderRepo.findItemsByOrderToken("fake-order-token")).thenReturn(List.of(mockItem));
 
-    TodayOrderSummaryDomain result = _orderServices.todayOrderDetails("fake-res-token", "pl");
+    TodayOrderSummaryDomain result = _orderFacade.todayOrderDetails("fake-res-token", "pl");
 
     assertEquals(120, result.totalPrice());
     assertEquals(1, result.dishes().size());
@@ -290,7 +312,7 @@ class OrderServicesTest {
     when(_orderRepo.findByReservationToken(anyString())).thenReturn(Optional.of(mockOrder));
     when(_orderRepo.findItemsByOrderToken(anyString())).thenReturn(List.of(mockItem));
 
-    TodayOrderSummaryDomain result = _orderServices.todayOrderDetails("res-token", "pl");
+    TodayOrderSummaryDomain result = _orderFacade.todayOrderDetails("res-token", "pl");
 
     assertTrue(result.dishes().getFirst().getIngredient().isEmpty());
     assertTrue(result.dishes().getFirst().getAllergens().isEmpty());
@@ -311,7 +333,7 @@ class OrderServicesTest {
 
     assertThrows(
         RuntimeException.class,
-        () -> _orderServices.removeItemFromReservation("waiter-token", "res-token", req));
+        () -> _orderFacade.removeItemFromReservation("waiter-token", "res-token", req));
   }
 
   @Test
@@ -350,7 +372,7 @@ class OrderServicesTest {
         .thenReturn(List.of(mockItem));
     when(_orderRepo.findItemStatusByToken("CANCELLED")).thenReturn(cancelledStatus);
 
-    _orderServices.removeItemFromReservation(
+    _orderFacade.removeItemFromReservation(
         TestConstants.FAKE_USER_TOKEN, TestConstants.FAKE_RESERVATION_TOKEN, request);
 
     assertEquals(2, mockItem.getQuantity());
@@ -360,14 +382,16 @@ class OrderServicesTest {
     verify(_orderRepo, times(1)).save(mockOrder);
 
     verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/orders/updates"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.DELETED
-                        && event.getEntityType().equals("ORDER")
-                        && event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN)
-                        && event.getPayload() == null));
+            .sendEventToTopic(
+                    eq("/orders/updates"),
+                    argThat(event ->
+                            event.getEventType() == WebSocketEventType.UPDATED // Zmieniono z DELETED
+                                    && event.getEntityType().equals("ORDER")
+                                    && ((SyncOrderResponse) event.getPayload()).getTotalPrice() == 100
+                    ));
+
+    verify(_notification, times(1))
+            .sendEventToTopic(eq("/orders/items"), any());
   }
 
   @Test
@@ -407,7 +431,7 @@ class OrderServicesTest {
         .thenReturn(List.of(mockItem));
     when(_orderRepo.findItemStatusByToken("CANCELLED")).thenReturn(cancelledStatus);
 
-    _orderServices.removeItemFromReservation(
+    _orderFacade.removeItemFromReservation(
         TestConstants.FAKE_USER_TOKEN, TestConstants.FAKE_RESERVATION_TOKEN, request);
 
     assertEquals(0, mockOrder.getTotalPrice());
@@ -417,14 +441,22 @@ class OrderServicesTest {
     verify(_orderRepo, times(1)).save(mockOrder);
 
     verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/orders/updates"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.DELETED
-                        && event.getEntityType().equals("ORDER")
-                        && event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN)
-                        && event.getPayload() == null));
+            .sendEventToTopic(
+                    eq("/orders/updates"),
+                    argThat(event ->
+                            event.getEventType() == WebSocketEventType.UPDATED
+                                    && event.getEntityType().equals("ORDER")
+                                    && event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN)
+                                    && ((SyncOrderResponse) event.getPayload()).getTotalPrice() == 0
+                    ));
+
+    verify(_notification, times(1))
+            .sendEventToTopic(
+                    eq("/orders/items"),
+                    argThat(event ->
+                            event.getEntityType().equals("ORDER_ITEM")
+                                    && ((SyncOrderItemResponse) event.getPayload()).getStatusTokens().contains("CANCELLED")
+                    ));
   }
 
   @Test
@@ -473,7 +505,7 @@ class OrderServicesTest {
         .thenReturn(List.of(existingItem));
     when(_dishRepo.listForOrder(anyList())).thenReturn(List.of(existingDish, newDish));
 
-    _orderServices.addItemFromReservation(
+    _orderFacade.addItemFromReservation(
         TestConstants.FAKE_USER_TOKEN, TestConstants.FAKE_RESERVATION_TOKEN, requests);
 
     assertEquals(3, existingItem.getQuantity());
@@ -557,7 +589,7 @@ class OrderServicesTest {
     when(_orderRepo.findItemsByOrderToken(mockOrder.getToken()))
         .thenReturn(List.of(pendingDish, emptyStatusDish, cancelledDish));
 
-    _orderServices.assignWaiterToOrders(
+    _orderFacade.assignWaiterToOrders(
         TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_USER_TOKEN);
 
     assertEquals(mockWaiter, mockOrder.getWaiter());
@@ -581,7 +613,7 @@ class OrderServicesTest {
     when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
         .thenReturn(Optional.empty());
 
-    _orderServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+    _orderFacade.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
 
     verify(_orderRepo, never()).findStatusByToken(anyString());
     verify(_orderRepo, never()).save(any());
@@ -612,7 +644,7 @@ class OrderServicesTest {
     when(_orderRepo.findItemStatusByToken("CANCELLED")).thenReturn(cancelledItemStatus);
     when(_orderRepo.findItemsByOrderToken(mockOrder.getToken())).thenReturn(orderItems);
 
-    _orderServices.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
+    _orderFacade.isAbsent(TestConstants.FAKE_RESERVATION_TOKEN);
 
     assertTrue(mockOrder.getStatuses().contains(cancelledStatus));
     assertTrue(mockItem1.getStatuses().contains(cancelledItemStatus));
@@ -636,7 +668,7 @@ class OrderServicesTest {
   @DisplayName("getDictionary: Returns empty list when repository returns empty")
   void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
     when(_orderRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
-    DictionaryResponse result = _orderServices.getDictionary();
+    DictionaryResponse result = _orderFacade.getDictionary();
     assertTrue(result.getItem().isEmpty());
   }
 
@@ -652,7 +684,7 @@ class OrderServicesTest {
 
     when(_orderRepo.findAllStatuses()).thenReturn(List.of(status));
 
-    DictionaryResponse result = _orderServices.getDictionary();
+    DictionaryResponse result = _orderFacade.getDictionary();
 
     assertEquals(1, result.getItem().size());
     assertEquals("PENDING", result.getItem().getFirst().getToken());
@@ -670,7 +702,7 @@ class OrderServicesTest {
 
     when(_orderRepo.findAllStatuses()).thenReturn(List.of(status));
 
-    DictionaryResponse result = _orderServices.getDictionary();
+    DictionaryResponse result = _orderFacade.getDictionary();
 
     assertEquals(1, result.getItem().size());
     assertEquals("COMPLETED", result.getItem().getFirst().getToken());
@@ -681,7 +713,7 @@ class OrderServicesTest {
   @DisplayName("getItemStatusesDictionary: Returns empty list when repository returns empty")
   void getItemStatusesDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
     when(_orderRepo.findAllItemStatuses()).thenReturn(new java.util.ArrayList<>());
-    DictionaryResponse result = _orderServices.getItemStatusesDictionary();
+    DictionaryResponse result = _orderFacade.getItemStatusesDictionary();
     assertTrue(result.getItem().isEmpty());
   }
 
@@ -696,7 +728,7 @@ class OrderServicesTest {
 
     when(_orderRepo.findAllItemStatuses()).thenReturn(List.of(status));
 
-    DictionaryResponse result = _orderServices.getItemStatusesDictionary();
+    DictionaryResponse result = _orderFacade.getItemStatusesDictionary();
 
     assertEquals(1, result.getItem().size());
     assertEquals(TestConstants.STATUS_READY, result.getItem().getFirst().getToken());
@@ -714,7 +746,7 @@ class OrderServicesTest {
 
     when(_orderRepo.findAllItemStatuses()).thenReturn(List.of(status));
 
-    DictionaryResponse result = _orderServices.getItemStatusesDictionary();
+    DictionaryResponse result = _orderFacade.getItemStatusesDictionary();
 
     assertEquals(1, result.getItem().size());
     assertEquals(TestConstants.STATUS_READY, result.getItem().getFirst().getToken());
@@ -739,7 +771,7 @@ class OrderServicesTest {
         .when(_orderRepo)
         .saveStatus(any(OrderStatus.class));
 
-    assertDoesNotThrow(() -> _orderServices.addStatus(request));
+    assertDoesNotThrow(() -> _orderFacade.addStatus(request));
 
     verify(_orderRepo, times(1))
         .saveStatus(
@@ -779,7 +811,7 @@ class OrderServicesTest {
         .when(_orderRepo)
         .saveItemStatus(any(OrderItemsStatus.class));
 
-    assertDoesNotThrow(() -> _orderServices.addItemStatus(request));
+    assertDoesNotThrow(() -> _orderFacade.addItemStatus(request));
 
     verify(_orderRepo, times(1))
         .saveItemStatus(
@@ -830,7 +862,7 @@ class OrderServicesTest {
     when(_orderRepo.findStatusByToken("OTHER")).thenReturn(fallbackStatus);
     when(_orderRepo.findOrdersByStatus(statusToRemove)).thenReturn(affectedOrders);
 
-    assertDoesNotThrow(() -> _orderServices.removeStatus(tokenToRemove));
+    assertDoesNotThrow(() -> _orderFacade.removeStatus(tokenToRemove));
 
     assertFalse(order1.getStatuses().contains(statusToRemove));
     assertTrue(order1.getStatuses().contains(fallbackStatus));
@@ -884,7 +916,7 @@ class OrderServicesTest {
     when(_orderRepo.findItemStatusByToken("OTHER")).thenReturn(fallbackStatus);
     when(_orderRepo.findOrderItemsByStatus(statusToRemove)).thenReturn(affectedItems);
 
-    assertDoesNotThrow(() -> _orderServices.removeItemStatus(tokenToRemove));
+    assertDoesNotThrow(() -> _orderFacade.removeItemStatus(tokenToRemove));
 
     assertFalse(item1.getStatuses().contains(statusToRemove));
     assertTrue(item1.getStatuses().contains(fallbackStatus));
@@ -910,12 +942,12 @@ class OrderServicesTest {
   }
 
   private void createOrderForReservation(ReservationDishRequest dishReq) {
-    _orderServices.createOrderForReservation(
+    _orderFacade.createOrderForReservation(
         TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_TABLE_TOKEN, List.of(dishReq));
   }
 
   private void addItemFromReservation(String intruderWaiterToken) {
-    _orderServices.addItemFromReservation(
+    _orderFacade.addItemFromReservation(
         intruderWaiterToken, TestConstants.FAKE_RESERVATION_TOKEN, List.of());
   }
 }

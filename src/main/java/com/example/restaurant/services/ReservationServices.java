@@ -9,6 +9,7 @@ import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.*;
 import com.example.restaurant.dto.sync.SyncReservationResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
+import com.example.restaurant.fasade.interfaces.IOrderFacade;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.WebSocketEvent;
@@ -19,7 +20,6 @@ import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
-import com.example.restaurant.services.interfaces.IOrderServices;
 import com.example.restaurant.services.interfaces.IReservationServices;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
@@ -45,7 +45,7 @@ public class ReservationServices implements IReservationServices {
   private final ITableRespository _tableRepo;
   private final IReservationRepository _reservationRepo;
   private final IUserRepository _userRepo;
-  private final IOrderServices _orderServices;
+  private final IOrderFacade _orderServices;
   private final ReservationMapper _reservationMapper;
   private final NotificationServices _notification;
 

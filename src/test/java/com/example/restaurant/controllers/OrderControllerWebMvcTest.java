@@ -10,7 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.restaurant.config.RateLimitConfig;
 import com.example.restaurant.exceptions.EntityNotFoundException;
-import com.example.restaurant.services.interfaces.IOrderServices;
+import com.example.restaurant.fasade.interfaces.IOrderFacade;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -26,7 +26,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @AutoConfigureMockMvc
 class OrderControllerWebMvcTest extends AbstractControllerWebMvcTest {
 
-  @MockitoBean private IOrderServices _orderServices;
+  @MockitoBean private IOrderFacade _orderServices;
 
   @Test
   void getDictionary_path() throws Exception {

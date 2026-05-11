@@ -19,6 +19,7 @@ import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityNotFoundException;
+import com.example.restaurant.fasade.interfaces.IOrderFacade;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.ReservationMapper;
 import com.example.restaurant.mappers.SyncMapper;
@@ -29,7 +30,6 @@ import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
-import com.example.restaurant.services.interfaces.IOrderServices;
 import java.time.OffsetDateTime;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +56,7 @@ class ReservationServicesTest {
 
   @Mock private IUserRepository _userRepo;
 
-  @Mock private IOrderServices _orderServices;
+  @Mock private IOrderFacade _orderServices;
 
   @Mock private ReservationMapper _reservationMapper;
 
