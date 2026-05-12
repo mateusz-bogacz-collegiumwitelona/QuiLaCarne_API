@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
 import com.example.restaurant.dto.domain.EmailDomain;
-import com.example.restaurant.services.queue.EmailQueueProducer;
+import com.example.restaurant.queue.EmailQueueProducer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;

@@ -1,4 +1,4 @@
-package com.example.restaurant.services.queue;
+package com.example.restaurant.queue;
 
 import com.example.restaurant.dto.domain.EmailDomain;
 import com.fasterxml.jackson.core.JsonProcessingException;

@@ -3,7 +3,7 @@ package com.example.restaurant.services;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-import com.example.restaurant.services.queue.EmailQueueProducer;
+import com.example.restaurant.queue.EmailQueueProducer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

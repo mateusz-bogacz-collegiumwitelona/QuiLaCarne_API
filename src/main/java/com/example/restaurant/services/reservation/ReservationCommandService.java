@@ -1,64 +1,39 @@
-package com.example.restaurant.services;
+package com.example.restaurant.services.reservation;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.dto.domain.OrderSummaryDomain;
-import com.example.restaurant.dto.request.ClientReservationRequest;
-import com.example.restaurant.dto.request.PaggedRequest;
 import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
-import com.example.restaurant.dto.response.*;
-import com.example.restaurant.dto.sync.SyncReservationResponse;
+import com.example.restaurant.dto.response.ReservationDishResponse;
+import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.fasade.interfaces.IOrderFacade;
-import com.example.restaurant.helpers.DictionaryHelper;
-import com.example.restaurant.helpers.PagedResult;
-import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.mappers.ReservationMapper;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
-import com.example.restaurant.services.interfaces.IReservationServices;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ReservationServices implements IReservationServices {
+public class ReservationCommandService {
   private final ITableRespository _tableRepo;
   private final IReservationRepository _reservationRepo;
   private final IUserRepository _userRepo;
   private final IOrderFacade _orderServices;
-  private final ReservationMapper _reservationMapper;
-  private final NotificationServices _notification;
-
-  private final SyncMapper _syncMapper;
+  private final ReservationSyncPublisher _syncPublisher;
 
   private static final String STATUS_ACTIVE = "ACTIVE";
   private static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
   private static final String STATUS_NO_SHOW = "NO_SHOW";
   private static final String ROLE_WAITER = "ROLE_WAITER";
 
-  private static final String RESERVATION_ENTITY_TYPE = "RESERVATION";
-
-  @Override
   @Transactional
   @Auditable(action = "CREATE_RESERVATION")
   public ReservationResponse create(ReservationRequest request, String userToken) {
@@ -112,79 +87,12 @@ public class ReservationServices implements IReservationServices {
 
     response.setTotalPrice(orderCreate.totalPrice());
 
-    WebSocketEvent<SyncReservationResponse> event =
-        WebSocketEvent.created(
-            RESERVATION_ENTITY_TYPE,
-            reservation.getToken(),
-            _syncMapper.toSyncReservationResponse(reservation));
-    _notification.sendEventToTopic("/reservations/updates", event);
+    _syncPublisher.publishReservationCreate(reservation);
 
     return response;
   }
 
-  @Override
-  public PagedResult<ClientReservationResponse> history(
-      ClientReservationRequest request, PaggedRequest pagged, String userToken) {
-    String lang = LocaleContextHolder.getLocale().getLanguage();
-
-    Pageable pageable =
-        PageRequest.of(
-            Math.max(0, pagged.getPage() - 1),
-            pagged.getSize(),
-            Sort.by(Sort.Direction.ASC, "startTime"));
-
-    Specification<Reservations> spec =
-        (root, query, criteriaBuilder) -> {
-          List<Predicate> predicates = new ArrayList<>();
-
-          predicates.add(criteriaBuilder.equal(root.get("user").get("token"), userToken));
-
-          if (request.getFromDate() != null)
-            predicates.add(
-                criteriaBuilder.greaterThanOrEqualTo(root.get("startTime"), request.getFromDate()));
-
-          if (request.getToDate() != null)
-            predicates.add(
-                criteriaBuilder.lessThanOrEqualTo(root.get("startTime"), request.getToDate()));
-
-          if (request.getStatusToken() != null && !request.getStatusToken().isEmpty()) {
-            Join<Reservations, ReservationStatus> statusJoin = root.join("reservationStatus");
-            predicates.add(
-                criteriaBuilder.equal(statusJoin.get("token"), request.getStatusToken()));
-          }
-
-          return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
-
-    Page<Reservations> page = _reservationRepo.findAll(spec, pageable);
-
-    return new PagedResult<>(
-        page.map(r -> _reservationMapper.toClientReservationResponse(r, lang)));
-  }
-
-  @Override
-  public ReservationDetailsResponse details(String reservationToken, String userToken) {
-    return _reservationRepo
-        .findByTokenAndUserToken(reservationToken, userToken)
-        .map(
-            r -> {
-              ReservationDetailsResponse response =
-                  _reservationMapper.toReservationDetailsResponse(
-                      r, LocaleContextHolder.getLocale().getLanguage());
-
-              OrderSummaryDomain orderSummary =
-                  _orderServices.getOrderSummaryForReservation(r.getToken());
-
-              response.setDishes(orderSummary.dishes());
-              response.setTotalPrice(orderSummary.totalPrice());
-
-              return response;
-            })
-        .orElse(null);
-  }
-
   @Transactional
-  @Override
   public void cancel(String reservationToken, String userToken) {
     Reservations reservation =
         _reservationRepo
@@ -196,23 +104,16 @@ public class ReservationServices implements IReservationServices {
 
     _reservationRepo.save(reservation);
 
-    WebSocketEvent<SyncReservationResponse> event =
-        WebSocketEvent.updated(
-            RESERVATION_ENTITY_TYPE,
-            reservation.getToken(),
-            _syncMapper.toSyncReservationResponse(reservation));
-    _notification.sendEventToTopic("/reservations/updates", event);
+    _syncPublisher.publishReservationUpdated(reservation);
   }
 
   @Auditable(action = "REMOVE_ITEM_FROM_RESERVATION")
-  @Override
   public void removeItemFromReservation(
       String waiterToken, String reservationToken, ReservationDishRequest request) {
     _orderServices.removeItemFromReservation(waiterToken, reservationToken, request);
   }
 
   @Auditable(action = "ADD_ITEM_TO_RESERVATION")
-  @Override
   public void addItemFromReservation(
       String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
     _orderServices.addItemFromReservation(waiterToken, reservationToken, request);
@@ -220,7 +121,6 @@ public class ReservationServices implements IReservationServices {
 
   @Transactional
   @Auditable(action = "ASIGN_WAITER_TO_RESERVATION")
-  @Override
   public void assignWaiter(String reservationToken, String waiterToken) {
     if (!_userRepo.isInRole(ROLE_WAITER, waiterToken))
       throw new IllegalStateException(
@@ -237,16 +137,10 @@ public class ReservationServices implements IReservationServices {
 
     _orderServices.assignWaiterToOrders(reservationToken, waiterToken);
 
-    WebSocketEvent<SyncReservationResponse> event =
-        WebSocketEvent.updated(
-            RESERVATION_ENTITY_TYPE,
-            reservation.getToken(),
-            _syncMapper.toSyncReservationResponse(reservation));
-    _notification.sendEventToTopic("/reservations/updates", event);
+    _syncPublisher.publishReservationUpdated(reservation);
   }
 
   @Transactional
-  @Override
   @Auditable(action = "MARK_AS_ABSENT")
   public void isAbsent(String reservationToken) {
     Reservations reservation =
@@ -265,20 +159,6 @@ public class ReservationServices implements IReservationServices {
     _reservationRepo.save(reservation);
     _orderServices.isAbsent(reservationToken);
 
-    WebSocketEvent<SyncReservationResponse> event =
-        WebSocketEvent.updated(
-            RESERVATION_ENTITY_TYPE,
-            reservation.getToken(),
-            _syncMapper.toSyncReservationResponse(reservation));
-    _notification.sendEventToTopic("/reservations/updates", event);
-  }
-
-  @Override
-  @Cacheable(
-      value = "reservationStatuses",
-      key = "T(org.springframework.context.i18n.LocaleContextHolder).getLocale().getLanguage()")
-  public DictionaryResponse getDictionary() {
-    String lang = LocaleContextHolder.getLocale().getLanguage();
-    return new DictionaryResponse(DictionaryHelper.map(_reservationRepo.findAllStatuses(), lang));
+    _syncPublisher.publishReservationUpdated(reservation);
   }
 }

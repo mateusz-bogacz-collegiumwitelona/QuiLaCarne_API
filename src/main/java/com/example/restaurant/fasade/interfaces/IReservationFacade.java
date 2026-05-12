@@ -1,4 +1,4 @@
-package com.example.restaurant.services.interfaces;
+package com.example.restaurant.fasade.interfaces;
 
 import com.example.restaurant.dto.request.ClientReservationRequest;
 import com.example.restaurant.dto.request.PaggedRequest;
@@ -11,7 +11,7 @@ import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.helpers.PagedResult;
 import java.util.List;
 
-public interface IReservationServices {
+public interface IReservationFacade {
   ReservationResponse create(ReservationRequest request, String userToken);
 
   PagedResult<ClientReservationResponse> history(

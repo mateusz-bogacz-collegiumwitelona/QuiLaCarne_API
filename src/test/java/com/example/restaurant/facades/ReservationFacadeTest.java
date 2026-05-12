@@ -1,4 +1,4 @@
-package com.example.restaurant.services;
+package com.example.restaurant.facades;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,6 +19,7 @@ import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityNotFoundException;
+import com.example.restaurant.fasade.ReservationFacade;
 import com.example.restaurant.fasade.interfaces.IOrderFacade;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.ReservationMapper;
@@ -32,6 +33,12 @@ import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import java.time.OffsetDateTime;
 import java.util.*;
+
+import com.example.restaurant.services.NotificationServices;
+import com.example.restaurant.services.reservation.ReservationCommandService;
+import com.example.restaurant.services.reservation.ReservationDictionaryService;
+import com.example.restaurant.services.reservation.ReservationQueryService;
+import com.example.restaurant.services.reservation.ReservationSyncPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,8 +55,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ReservationServices Unit Tests")
-class ReservationServicesTest {
+@DisplayName("ReservationFasade Unit Tests")
+class ReservationFacadeTest {
   @Mock private ITableRespository _tableRepo;
 
   @Mock private IReservationRepository _reservationRepo;
@@ -62,13 +69,31 @@ class ReservationServicesTest {
 
   @Mock private NotificationServices _notification;
 
-  @InjectMocks private ReservationServices _reservationServices;
+  @InjectMocks private ReservationFacade _reservationFacade;
 
   @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
   @BeforeEach
   void setUp() {
     LocaleContextHolder.setLocale(Locale.ENGLISH);
+
+    ReservationSyncPublisher syncPublisher = new ReservationSyncPublisher(_notification, _syncMapper);
+
+    ReservationCommandService commandService = new ReservationCommandService(
+            _tableRepo, _reservationRepo, _userRepo, _orderServices, syncPublisher
+    );
+
+    ReservationQueryService queryService = new ReservationQueryService(
+            _reservationRepo, _orderServices, _reservationMapper
+    );
+
+    ReservationDictionaryService dictionaryService = new ReservationDictionaryService(
+            _reservationRepo
+    );
+
+    this._reservationFacade = new ReservationFacade(
+            commandService, dictionaryService, queryService
+    );
   }
 
   @Test
@@ -80,7 +105,7 @@ class ReservationServicesTest {
 
     assertThrows(
         IllegalStateException.class,
-        () -> _reservationServices.create(request, TestConstants.FAKE_USER_TOKEN));
+        () -> _reservationFacade.create(request, TestConstants.FAKE_USER_TOKEN));
   }
 
   @Test
@@ -90,7 +115,7 @@ class ReservationServicesTest {
     when(_tableRepo.isTableExist(anyString())).thenReturn(false);
 
     assertThrows(
-        EntityNotFoundException.class, () -> _reservationServices.create(request, "user-token"));
+        EntityNotFoundException.class, () -> _reservationFacade.create(request, "user-token"));
   }
 
   @Test
@@ -119,7 +144,7 @@ class ReservationServicesTest {
         .thenReturn(new ReservationDomain(List.of(dishDomain), 80));
 
     ReservationResponse response =
-        _reservationServices.create(request, TestConstants.FAKE_USER_TOKEN);
+        _reservationFacade.create(request, TestConstants.FAKE_USER_TOKEN);
 
     assertNotNull(response);
     assertTrue(response.isActive());
@@ -150,7 +175,7 @@ class ReservationServicesTest {
         .thenReturn(new ClientReservationResponse());
 
     PagedResult<ClientReservationResponse> result =
-        _reservationServices.history(new ClientReservationRequest(), pagged, "token");
+        _reservationFacade.history(new ClientReservationRequest(), pagged, "token");
 
     assertNotNull(result);
     assertEquals(1, result.getItems().size());
@@ -174,7 +199,7 @@ class ReservationServicesTest {
         .thenReturn(mockOrderSummary);
 
     ReservationDetailsResponse result =
-        _reservationServices.details(
+        _reservationFacade.details(
             TestConstants.FAKE_RESERVATION_TOKEN, TestConstants.FAKE_USER_TOKEN);
 
     assertNotNull(result);
@@ -193,7 +218,7 @@ class ReservationServicesTest {
         .thenReturn(Optional.of(mockReservation));
     when(_reservationRepo.findStatusByToken("CANCELLED")).thenReturn(new ReservationStatus());
 
-    assertDoesNotThrow(() -> _reservationServices.cancel("res-token", "user-token"));
+    assertDoesNotThrow(() -> _reservationFacade.cancel("res-token", "user-token"));
     verify(_reservationRepo).save(mockReservation);
     verify(_notification, times(1))
         .sendEventToTopic(
@@ -217,7 +242,7 @@ class ReservationServicesTest {
     when(_reservationRepo.findByToken(anyString())).thenReturn(Optional.of(mockReservation));
     when(_reservationRepo.findStatusByToken("IN_PROGRESS")).thenReturn(new ReservationStatus());
 
-    assertDoesNotThrow(() -> _reservationServices.assignWaiter("res-token", "waiter-token"));
+    assertDoesNotThrow(() -> _reservationFacade.assignWaiter("res-token", "waiter-token"));
     verify(_orderServices).assignWaiterToOrders("res-token", "waiter-token");
 
     verify(_notification, times(1))
@@ -239,7 +264,7 @@ class ReservationServicesTest {
 
     assertThrows(
         IllegalStateException.class,
-        () -> _reservationServices.assignWaiter("res-token", "user-token"));
+        () -> _reservationFacade.assignWaiter("res-token", "user-token"));
   }
 
   @Test
@@ -255,7 +280,7 @@ class ReservationServicesTest {
     when(_reservationRepo.findByToken(anyString())).thenReturn(Optional.of(mockRes));
     when(_reservationRepo.findStatusByToken("NO_SHOW")).thenReturn(new ReservationStatus());
 
-    assertDoesNotThrow(() -> _reservationServices.isAbsent("res-token"));
+    assertDoesNotThrow(() -> _reservationFacade.isAbsent("res-token"));
     verify(_orderServices).isAbsent("res-token");
 
     verify(_notification, times(1))
@@ -280,14 +305,14 @@ class ReservationServicesTest {
 
     when(_reservationRepo.findByToken(anyString())).thenReturn(Optional.of(mockRes));
 
-    assertThrows(IllegalStateException.class, () -> _reservationServices.isAbsent("res-token"));
+    assertThrows(IllegalStateException.class, () -> _reservationFacade.isAbsent("res-token"));
   }
 
   @Test
   @DisplayName("getDictionary: Returns empty list when repository returns empty")
   void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
     when(_reservationRepo.findAllStatuses()).thenReturn(new java.util.ArrayList<>());
-    DictionaryResponse result = _reservationServices.getDictionary();
+    DictionaryResponse result = _reservationFacade.getDictionary();
     assertTrue(result.getItem().isEmpty());
   }
 
@@ -303,7 +328,7 @@ class ReservationServicesTest {
 
     when(_reservationRepo.findAllStatuses()).thenReturn(List.of(status));
 
-    DictionaryResponse result = _reservationServices.getDictionary();
+    DictionaryResponse result = _reservationFacade.getDictionary();
 
     assertEquals(1, result.getItem().size());
     assertEquals(TestConstants.STATUS_ACTIVE, result.getItem().getFirst().getToken());
@@ -321,7 +346,7 @@ class ReservationServicesTest {
 
     when(_reservationRepo.findAllStatuses()).thenReturn(List.of(status));
 
-    DictionaryResponse result = _reservationServices.getDictionary();
+    DictionaryResponse result = _reservationFacade.getDictionary();
 
     assertEquals(1, result.getItem().size());
     assertEquals(TestConstants.STATUS_CANCELLED, result.getItem().getFirst().getToken());

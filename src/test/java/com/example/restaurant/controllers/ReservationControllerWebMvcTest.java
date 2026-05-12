@@ -13,7 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.restaurant.config.RateLimitConfig;
 import com.example.restaurant.exceptions.EntityNotFoundException;
-import com.example.restaurant.services.interfaces.IReservationServices;
+import com.example.restaurant.fasade.interfaces.IReservationFacade;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,7 +30,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @AutoConfigureMockMvc
 class ReservationControllerWebMvcTest extends AbstractControllerWebMvcTest {
 
-  @MockitoBean private IReservationServices _reservationServices;
+  @MockitoBean private IReservationFacade _reservationServices;
 
   @Test
   void create_path() throws Exception {
