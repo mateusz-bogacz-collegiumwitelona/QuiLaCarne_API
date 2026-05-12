@@ -1,30 +1,29 @@
 package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.models.Users;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.Optional;
-
 public interface IUserRepository {
-    boolean existsByUsername(String username);
+  boolean existsByUsername(String username);
 
-    boolean existByEmail(String email);
+  boolean existByEmail(String email);
 
-    boolean isInRole(String roleToken, String userToken);
+  boolean isInRole(String roleToken, String userToken);
 
-    Users findByToken(String token);
+  Users findByToken(String token);
 
-    Optional<Users> findByNormalizedUsername(String username);
+  Optional<Users> findByNormalizedUsername(String username);
 
-    void save(Users user);
+  void save(Users user);
 
-    void delete(Users user);
+  void delete(Users user);
 
-    Optional<Users> findByNormalizedEmail(String email);
+  Optional<Users> findByNormalizedEmail(String email);
 
-    Page<Users> findAllUsers(Specification<Users> spec, Pageable pageable);
+  Page<Users> findAllUsers(Specification<Users> spec, Pageable pageable);
 
-    long count();
+  long count();
 }

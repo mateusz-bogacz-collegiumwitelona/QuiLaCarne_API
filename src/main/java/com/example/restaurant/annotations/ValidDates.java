@@ -1,9 +1,8 @@
 package com.example.restaurant.annotations;
 
-import com.example.restaurant.validators.ReservationDatesValidator;
+import com.example.restaurant.validators.reservation.ReservationDatesValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-
 import java.lang.annotation.*;
 
 @Documented
@@ -11,9 +10,9 @@ import java.lang.annotation.*;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidDates {
-    String message() default "Invalid date";
+  String message() default "Invalid date";
 
-    Class<?>[] groups() default {};
+  Class<?>[] groups() default {};
 
-    Class<? extends Payload>[] payload() default {};
+  Class<? extends Payload>[] payload() default {};
 }

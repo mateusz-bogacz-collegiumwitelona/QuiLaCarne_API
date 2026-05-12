@@ -10,6 +10,6 @@ import lombok.Setter;
 @Setter
 @SuppressWarnings({"PMD.AbstractClassWithoutAnyMethod", "PMD.AbstractClassWithoutAbstractMethod"})
 public abstract class BaseNamedEntity extends BaseEntity {
-    @Column(nullable = false, unique = true)
-    private String name;
+  @Column(nullable = false, unique = true)
+  private String name;
 }

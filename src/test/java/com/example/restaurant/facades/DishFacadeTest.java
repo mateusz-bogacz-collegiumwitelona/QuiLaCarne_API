@@ -1,0 +1,781 @@
+package com.example.restaurant.facades;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+import com.example.restaurant.TestConstants;
+import com.example.restaurant.dto.request.*;
+import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.dto.response.DishListResponse;
+import com.example.restaurant.dto.response.DishResponse;
+import com.example.restaurant.dto.response.PublicMenuResponse;
+import com.example.restaurant.dto.sync.SyncDictionaryResponse;
+import com.example.restaurant.dto.sync.SyncDishResponse;
+import com.example.restaurant.enums.WebSocketEventType;
+import com.example.restaurant.fasade.DishFacade;
+import com.example.restaurant.helpers.PagedResult;
+import com.example.restaurant.mappers.DishMapper;
+import com.example.restaurant.mappers.SyncMapper;
+import com.example.restaurant.models.Dishes;
+import com.example.restaurant.models.Ingredients;
+import com.example.restaurant.models.lookup.Allergens;
+import com.example.restaurant.models.lookup.DishesCategories;
+import com.example.restaurant.repository.interfaces.IDishRepository;
+import com.example.restaurant.repository.interfaces.IIngredientsRepository;
+import com.example.restaurant.services.NotificationServices;
+import com.example.restaurant.services.S3StorageService;
+import com.example.restaurant.services.dish.DishCatalogService;
+import com.example.restaurant.services.dish.DishCategoryService;
+import com.example.restaurant.services.dish.DishMediaService;
+import com.example.restaurant.services.dish.DishSyncPublisher;
+import com.example.restaurant.validators.dish.DefaultDishSearchStrategy;
+import com.example.restaurant.validators.dish.DishSearchStrategy;
+import com.example.restaurant.validators.dish.ExcludeAllergensDishSearchStrategy;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+@ExtendWith(MockitoExtension.class)
+class DishFacadeTest {
+  @Mock private IDishRepository _dishRepo;
+
+  @Mock private DishMapper _dishMapper;
+
+  @Mock private IIngredientsRepository _ingredientsRepo;
+
+  @Mock private S3StorageService _s3Services;
+
+  @Mock private NotificationServices _notification;
+
+  @InjectMocks private DishFacade _dishFacade;
+
+  @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
+
+  @BeforeEach
+  void setUp() {
+    DishMediaService mediaService = new DishMediaService(_s3Services);
+
+    ReflectionTestUtils.setField(mediaService, "s3Endpoint", "http://localhost:9000");
+    ReflectionTestUtils.setField(mediaService, "s3BucketName", "restaurant-images");
+
+    DishSyncPublisher syncPublisher = new DishSyncPublisher(_notification, _syncMapper);
+    DishCategoryService categoryService = new DishCategoryService(_dishRepo, syncPublisher);
+
+    List<DishSearchStrategy> searchStrategies =
+        List.of(
+            new DefaultDishSearchStrategy(_dishRepo),
+            new ExcludeAllergensDishSearchStrategy(_dishRepo));
+
+    DishCatalogService catalogService =
+        new DishCatalogService(
+            _dishRepo,
+            _dishMapper,
+            _s3Services,
+            _ingredientsRepo,
+            mediaService,
+            syncPublisher,
+            searchStrategies);
+
+    this._dishFacade = new DishFacade(catalogService, categoryService);
+  }
+
+  @AfterEach
+  void tearDown() {
+    LocaleContextHolder.resetLocaleContext();
+  }
+
+  @Test
+  @DisplayName("get menu: should use the current language, map the dishes and add the URL to S3")
+  void getMenu_ShouldUseCurrentLocale_MapDishes_AndAppendS3Url() {
+    LocaleContextHolder.setLocale(Locale.ENGLISH);
+
+    Dishes mockDish = new Dishes();
+    Page<Dishes> mockPage = new PageImpl<>(List.of(mockDish), PageRequest.of(0, 10), 1);
+    DishListResponse dishResponse = DishListResponse.builder().imageUrl("steak.jpg").build();
+
+    when(_dishRepo.findAll(any(org.springframework.data.domain.Pageable.class)))
+        .thenReturn(mockPage);
+    when(_dishMapper.toDishListResponse(mockDish, "en")).thenReturn(dishResponse);
+
+    PagedResult<DishListResponse> result =
+        _dishFacade.getMenu(new DishFilterRequest(), new PaggedRequest());
+
+    assertNotNull(result);
+    assertEquals(
+        "http://localhost:9000/restaurant-images/steak.jpg",
+        result.getItems().getFirst().getImageUrl());
+  }
+
+  @Test
+  @DisplayName("Get menu: It should not modify the URL if it starts with 'http'")
+  void getMenu_ShouldNotModifyUrl_WhenItAlreadyStartsHttp() {
+    Page<Dishes> mockPage = new PageImpl<>(List.of(new Dishes()));
+    DishListResponse dishResponse =
+        DishListResponse.builder().imageUrl("https://external.com/img.jpg").build();
+
+    when(_dishRepo.findAll(any(org.springframework.data.domain.Pageable.class)))
+        .thenReturn(mockPage);
+    when(_dishMapper.toDishListResponse(any(), anyString())).thenReturn(dishResponse);
+
+    PagedResult<DishListResponse> result =
+        _dishFacade.getMenu(new DishFilterRequest(), new PaggedRequest());
+
+    assertEquals("https://external.com/img.jpg", result.getItems().getFirst().getImageUrl());
+  }
+
+  @Test
+  @DisplayName("Get Menu: It should handle a blank results page correctly")
+  void getMenu_ShouldHandleEmptyPage() {
+    when(_dishRepo.findAll(any(org.springframework.data.domain.Pageable.class)))
+        .thenReturn(Page.empty());
+
+    PagedResult<DishListResponse> result =
+        _dishFacade.getMenu(new DishFilterRequest(), new PaggedRequest());
+
+    assertTrue(result.getItems().isEmpty());
+  }
+
+  @Test
+  @DisplayName(
+      "remove: should disable the availability of the dish, "
+          + "add the reason and date of deletion (soft delete)")
+  void remove_ShouldMarkDishAsDeleted_AndSaveToRepository() {
+    Dishes dish = new Dishes();
+    dish.setToken(TestConstants.FAKE_DISH_TOKEN);
+    dish.setAvailable(true);
+    dish.setUnavailableReason(null);
+    dish.setDeletedAt(null);
+
+    when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+
+    _dishFacade.remove(TestConstants.FAKE_DISH_TOKEN);
+
+    assertNull(dish.getImageUrl());
+    verify(_s3Services, times(1)).deleteFile(any());
+
+    assertFalse(dish.isAvailable());
+    assertEquals("Dish is deleted", dish.getUnavailableReason());
+    assertNotNull(dish.getDeletedAt());
+
+    verify(_dishRepo, times(1)).findByToken(TestConstants.FAKE_DISH_TOKEN);
+    verify(_dishRepo, times(1)).save(dish);
+
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/menu/dishes"),
+            argThat(
+                event ->
+                    event != null
+                        && event.getEventType() == WebSocketEventType.DELETED
+                        && "DISH".equals(event.getEntityType())
+                        && TestConstants.FAKE_DISH_TOKEN.equals(event.getToken())
+                        && event.getPayload() == null));
+  }
+
+  @Test
+  @DisplayName("changeAvailable: should disable accessibility and set custom reason ")
+  void changeAvailable_ShouldSetUnavailable_AndSetCustomReason() {
+    Dishes dish = new Dishes();
+    dish.setToken(TestConstants.FAKE_DISH_TOKEN);
+    dish.setAvailable(true);
+
+    ChangeDishAvailableRequest request = new ChangeDishAvailableRequest();
+    request.setToken(TestConstants.FAKE_DISH_TOKEN);
+    request.setAvailable(false);
+    request.setUnavailableReason("   Brak świeżej bazylii   ");
+
+    when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+
+    _dishFacade.changeAvailable(request);
+
+    assertFalse(dish.isAvailable());
+    assertEquals("Brak świeżej bazylii", dish.getUnavailableReason());
+
+    verify(_dishRepo, times(1)).save(dish);
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/menu/dishes"),
+            argThat(
+                event ->
+                    event != null
+                        && event.getEventType() == WebSocketEventType.UPDATED
+                        && "DISH".equals(event.getEntityType())
+                        && TestConstants.FAKE_DISH_TOKEN.equals(event.getToken())
+                        && event.getPayload() != null
+                        && !((SyncDishResponse) event.getPayload()).isAvailable()
+                        && "Brak świeżej bazylii"
+                            .equals(
+                                ((SyncDishResponse) event.getPayload()).getUnavailableReason())));
+  }
+
+  @Test
+  @DisplayName(
+      "changeAvailable: should disable accessibility and set default reason when null/empty string is sent")
+  void changeAvailable_ShouldSetUnavailable_AndSetDefaultReason_WhenReasonIsNullOrBlank() {
+    Dishes dish = new Dishes();
+    dish.setToken(TestConstants.FAKE_DISH_TOKEN);
+    dish.setAvailable(true);
+
+    ChangeDishAvailableRequest request = new ChangeDishAvailableRequest();
+    request.setToken(TestConstants.FAKE_DISH_TOKEN);
+    request.setAvailable(false);
+    request.setUnavailableReason(null);
+
+    when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+
+    _dishFacade.changeAvailable(request);
+
+    assertFalse(dish.isAvailable());
+    assertEquals("Brak składników", dish.getUnavailableReason());
+
+    verify(_dishRepo, times(1)).save(dish);
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/menu/dishes"),
+            argThat(
+                event ->
+                    event != null
+                        && event.getEventType() == WebSocketEventType.UPDATED
+                        && "DISH".equals(event.getEntityType())
+                        && TestConstants.FAKE_DISH_TOKEN.equals(event.getToken())
+                        && event.getPayload() != null
+                        && "Brak składników"
+                            .equals(
+                                ((SyncDishResponse) event.getPayload()).getUnavailableReason())));
+  }
+
+  @Test
+  @DisplayName(
+      "edit: Should update basic dish properties (name, price) and save without interacting with S3")
+  void edit_ShouldUpdateBasicProperties_AndSave() {
+    EditDishRequest request = new EditDishRequest();
+    request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
+    request.setNewName(TestConstants.FAKE_DISH_NAME);
+    request.setPrice(1500);
+
+    Dishes dish = new Dishes();
+    dish.setToken(TestConstants.FAKE_DISH_TOKEN);
+    dish.setName("Old Name");
+    dish.setPrice(1000);
+
+    when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+
+    _dishFacade.edit(request);
+
+    assertEquals(
+        TestConstants.FAKE_DISH_NAME, dish.getName(), "Name should be updated and trimmed");
+    assertEquals(1500, dish.getPrice(), "Price should be updated");
+    verify(_dishRepo, times(1)).save(dish);
+    verifyNoInteractions(_s3Services);
+    verifyNoInteractions(_ingredientsRepo);
+
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/menu/dishes"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.UPDATED
+                        && event.getEntityType().equals("DISH")
+                        && event.getToken().equals(TestConstants.FAKE_DISH_TOKEN)
+                        && event.getPayload() != null));
+  }
+
+  @Test
+  @DisplayName("edit: Should update category and ingredients successfully")
+  void edit_ShouldUpdateCategoryAndIngredients() {
+    EditDishRequest request = new EditDishRequest();
+    request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
+    request.setCategoryToken(TestConstants.FAKE_DISH_CATEGORY);
+    request.setIngredientTokens(List.of(TestConstants.INGREDIENT_PL));
+
+    Dishes dish = new Dishes();
+    dish.setToken(TestConstants.FAKE_DISH_TOKEN);
+
+    DishesCategories category = new DishesCategories();
+    category.setToken(TestConstants.FAKE_DISH_CATEGORY);
+
+    Ingredients ingredient = new Ingredients();
+    ingredient.setToken(TestConstants.INGREDIENT_PL);
+
+    when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+    when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY)).thenReturn(category);
+    when(_ingredientsRepo.findByToken(TestConstants.INGREDIENT_PL)).thenReturn(ingredient);
+
+    _dishFacade.edit(request);
+
+    assertEquals(category, dish.getCategory());
+    assertEquals(1, dish.getIngredients().size());
+    assertTrue(dish.getIngredients().contains(ingredient));
+    verify(_dishRepo, times(1)).save(dish);
+
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/menu/dishes"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.UPDATED
+                        && event.getEntityType().equals("DISH")
+                        && event.getToken().equals(TestConstants.FAKE_DISH_TOKEN)
+                        && event.getPayload() != null
+                        && TestConstants.FAKE_DISH_CATEGORY.equals(
+                            ((SyncDishResponse) event.getPayload()).getCategoryToken())
+                        && ((SyncDishResponse) event.getPayload())
+                            .getIngredientTokens()
+                            .contains(TestConstants.INGREDIENT_PL)));
+  }
+
+  @Test
+  @DisplayName("edit: Should delete old photo, upload new photo to S3, and update imageUrl")
+  void edit_ShouldUpdatePhotoAndImageUrl() throws IOException {
+    EditDishRequest request = new EditDishRequest();
+    request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
+
+    MultipartFile mockPhoto = mock(MultipartFile.class);
+    when(mockPhoto.isEmpty()).thenReturn(false);
+    when(mockPhoto.getOriginalFilename()).thenReturn("steak.png");
+    when(mockPhoto.getContentType()).thenReturn("image/png");
+    when(mockPhoto.getSize()).thenReturn(1024L);
+
+    InputStream mockInputStream = mock(InputStream.class);
+    when(mockPhoto.getInputStream()).thenReturn(mockInputStream);
+
+    request.setPhoto(mockPhoto);
+
+    Dishes dish = new Dishes();
+    dish.setToken(TestConstants.FAKE_DISH_TOKEN);
+    dish.setImageUrl("old_steak_image.jpg");
+
+    when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+    when(_s3Services.generateUniqFileName("steak.png")).thenReturn("new_uuid_steak.png");
+    when(_s3Services.uploadFromStream(mockInputStream, "new_uuid_steak.png", "image/png", 1024L))
+        .thenReturn("new_uuid_steak.png");
+
+    _dishFacade.edit(request);
+
+    verify(_s3Services, times(1)).deleteFile("old_steak_image.jpg");
+    assertEquals("new_uuid_steak.png", dish.getImageUrl(), "Image URL should be updated");
+    verify(_dishRepo, times(1)).save(dish);
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/menu/dishes"),
+            argThat(
+                event ->
+                    event != null
+                        && event.getEventType() == WebSocketEventType.UPDATED
+                        && "DISH".equals(event.getEntityType())
+                        && TestConstants.FAKE_DISH_TOKEN.equals(event.getToken())
+                        && event.getPayload() != null
+                        && ((SyncDishResponse) event.getPayload())
+                            .getImageUrl()
+                            .contains("new_uuid_steak.png")));
+  }
+
+  @Test
+  @DisplayName("edit: Should throw RuntimeException when reading photo input stream fails")
+  void edit_ShouldThrowRuntimeException_WhenPhotoStreamFails() throws IOException {
+    EditDishRequest request = new EditDishRequest();
+    request.setDishToken(TestConstants.FAKE_DISH_TOKEN);
+
+    MultipartFile mockPhoto = mock(MultipartFile.class);
+    when(mockPhoto.isEmpty()).thenReturn(false);
+    when(mockPhoto.getOriginalFilename()).thenReturn("steak.png");
+    when(mockPhoto.getInputStream()).thenThrow(new IOException("Stream error"));
+
+    request.setPhoto(mockPhoto);
+
+    Dishes dish = new Dishes();
+    when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
+    when(_s3Services.generateUniqFileName("steak.png")).thenReturn("new_uuid_steak.png");
+
+    RuntimeException exception =
+        assertThrows(RuntimeException.class, () -> _dishFacade.edit(request));
+
+    assertEquals("Could not process photo file", exception.getMessage());
+    verify(_dishRepo, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("add: Should create basic dish with trimmed name, set available to true, and save")
+  void add_ShouldCreateBasicDish_AndSave() {
+    AddDishRequest request = new AddDishRequest();
+    request.setName(TestConstants.FAKE_DISH_NAME);
+    request.setPrice(2500);
+    request.setCategoryToken(TestConstants.FAKE_DISH_CATEGORY);
+
+    DishesCategories category = new DishesCategories();
+    category.setToken(TestConstants.FAKE_DISH_CATEGORY);
+    when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY)).thenReturn(category);
+
+    doAnswer(
+            invocation -> {
+              Dishes d = invocation.getArgument(0);
+              d.setToken("NEW_DISH_TOKEN");
+              return null;
+            })
+        .when(_dishRepo)
+        .save(any(Dishes.class));
+
+    _dishFacade.add(request);
+
+    ArgumentCaptor<Dishes> dishCaptor = ArgumentCaptor.forClass(Dishes.class);
+    verify(_dishRepo, times(1)).save(dishCaptor.capture());
+
+    Dishes savedDish = dishCaptor.getValue();
+    assertEquals(TestConstants.FAKE_DISH_NAME, savedDish.getName(), "Name should be trimmed");
+    assertEquals(2500, savedDish.getPrice(), "Price should be mapped correctly");
+    assertEquals(category, savedDish.getCategory(), "Category should be mapped");
+    assertTrue(savedDish.isAvailable(), "New dish should be available by default");
+    assertNull(savedDish.getImageUrl(), "Image URL should be null if no photo was uploaded");
+    assertTrue(savedDish.getIngredients().isEmpty(), "Ingredients should be empty");
+
+    verifyNoInteractions(_s3Services);
+    verifyNoInteractions(_ingredientsRepo);
+
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/menu/dishes"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.CREATED
+                        && event.getEntityType().equals("DISH")
+                        && "NEW_DISH_TOKEN".equals(event.getToken())
+                        && event.getPayload() != null
+                        && TestConstants.FAKE_DISH_CATEGORY.equals(
+                            ((SyncDishResponse) event.getPayload()).getCategoryToken())));
+  }
+
+  @Test
+  @DisplayName("add: Should correctly map category, ingredients, and upload photo to S3")
+  void add_ShouldCreateDishWithIngredientsAndPhoto() throws IOException {
+    AddDishRequest request = new AddDishRequest();
+    request.setName(TestConstants.FAKE_DISH_NAME);
+    request.setPrice(3000);
+    request.setCategoryToken(TestConstants.FAKE_DISH_CATEGORY);
+    request.setIngredientTokens(List.of(TestConstants.INGREDIENT_EN));
+
+    MultipartFile mockPhoto = mock(MultipartFile.class);
+    when(mockPhoto.isEmpty()).thenReturn(false);
+    when(mockPhoto.getOriginalFilename()).thenReturn("pizza.png");
+    when(mockPhoto.getContentType()).thenReturn("image/png");
+    when(mockPhoto.getSize()).thenReturn(2048L);
+    InputStream mockInputStream = mock(InputStream.class);
+    when(mockPhoto.getInputStream()).thenReturn(mockInputStream);
+
+    request.setPhoto(mockPhoto);
+
+    DishesCategories category = new DishesCategories();
+    category.setToken(TestConstants.FAKE_DISH_CATEGORY); // POPRAWKA: Brakowało tokena
+
+    Ingredients cheese = new Ingredients();
+    cheese.setToken(TestConstants.INGREDIENT_EN); // POPRAWKA: Brakowało tokena
+
+    when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY)).thenReturn(category);
+    when(_ingredientsRepo.findByToken(TestConstants.INGREDIENT_EN)).thenReturn(cheese);
+    when(_s3Services.generateUniqFileName("pizza.png")).thenReturn("uuid_pizza.png");
+    when(_s3Services.uploadFromStream(mockInputStream, "uuid_pizza.png", "image/png", 2048L))
+        .thenReturn("uuid_pizza.png");
+
+    doAnswer(
+            invocation -> {
+              Dishes d = invocation.getArgument(0);
+              d.setToken("NEW_PIZZA_TOKEN");
+              return null;
+            })
+        .when(_dishRepo)
+        .save(any(Dishes.class));
+
+    _dishFacade.add(request);
+
+    ArgumentCaptor<Dishes> dishCaptor = ArgumentCaptor.forClass(Dishes.class);
+    verify(_dishRepo, times(1)).save(dishCaptor.capture());
+
+    Dishes savedDish = dishCaptor.getValue();
+    assertEquals(TestConstants.FAKE_DISH_NAME, savedDish.getName());
+    assertEquals(category, savedDish.getCategory());
+    assertEquals(1, savedDish.getIngredients().size());
+    assertTrue(savedDish.getIngredients().contains(cheese));
+    assertEquals("uuid_pizza.png", savedDish.getImageUrl());
+
+    verify(_s3Services, never()).deleteFile(any());
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/menu/dishes"),
+            argThat(
+                event ->
+                    event != null
+                        && event.getEventType() == WebSocketEventType.CREATED
+                        && "DISH".equals(event.getEntityType())
+                        && "NEW_PIZZA_TOKEN".equals(event.getToken())
+                        && event.getPayload() != null
+                        && ((SyncDishResponse) event.getPayload())
+                            .getImageUrl()
+                            .contains("uuid_pizza.png")
+                        && ((SyncDishResponse) event.getPayload())
+                            .getIngredientTokens()
+                            .contains(TestConstants.INGREDIENT_EN)));
+  }
+
+  @Test
+  @DisplayName("add: Should throw RuntimeException when reading photo input stream fails")
+  void add_ShouldThrowRuntimeException_WhenPhotoStreamFails() throws IOException {
+    AddDishRequest request = new AddDishRequest();
+    request.setName(TestConstants.FAKE_DISH_NAME);
+    request.setPrice(3000);
+    request.setCategoryToken(TestConstants.FAKE_DISH_CATEGORY);
+
+    MultipartFile mockPhoto = mock(MultipartFile.class);
+    when(mockPhoto.isEmpty()).thenReturn(false);
+    when(mockPhoto.getOriginalFilename()).thenReturn("pizza.png");
+    when(mockPhoto.getInputStream()).thenThrow(new IOException("Stream error"));
+
+    request.setPhoto(mockPhoto);
+
+    when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY))
+        .thenReturn(new DishesCategories());
+    when(_s3Services.generateUniqFileName("pizza.png")).thenReturn("uuid_pizza.png");
+
+    RuntimeException exception =
+        assertThrows(RuntimeException.class, () -> _dishFacade.add(request));
+
+    assertEquals("Could not process photo file", exception.getMessage());
+    verify(_dishRepo, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("getDictionary: Returns empty list when repository returns empty")
+  void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
+    when(_dishRepo.findAllCategories()).thenReturn(new java.util.ArrayList<>());
+
+    DictionaryResponse result = _dishFacade.getDictionary();
+
+    assertTrue(result.getItem().isEmpty());
+  }
+
+  @Test
+  @DisplayName("getDictionary: Returns mapped elements with Polish names when language is pl")
+  void getDictionary_ShouldReturnPolishNames_WhenLanguageIsPl() {
+    LocaleContextHolder.setLocale(Locale.of(TestConstants.LANG_PL));
+
+    DishesCategories category = new DishesCategories();
+    category.setToken(TestConstants.TOKEN_SOUPS);
+    category.setNamePl("Zupy PL");
+    category.setNameEn("Soups EN");
+
+    when(_dishRepo.findAllCategories()).thenReturn(java.util.List.of(category));
+
+    DictionaryResponse result = _dishFacade.getDictionary();
+
+    assertEquals(1, result.getItem().size());
+    assertEquals(TestConstants.TOKEN_SOUPS, result.getItem().getFirst().getToken());
+    assertEquals("Zupy PL", result.getItem().getFirst().getName());
+  }
+
+  @Test
+  @DisplayName("getDictionary: Returns mapped elements with English names when language is not pl")
+  void getDictionary_ShouldReturnEnglishNames_WhenLanguageIsNotPl() {
+    Locale.of(TestConstants.LANG_EN);
+
+    DishesCategories category = new DishesCategories();
+    category.setToken(TestConstants.TOKEN_DESSERTS);
+    category.setNamePl("Desery PL");
+    category.setNameEn("Desserts EN");
+
+    when(_dishRepo.findAllCategories()).thenReturn(java.util.List.of(category));
+
+    DictionaryResponse result = _dishFacade.getDictionary();
+
+    assertEquals(1, result.getItem().size());
+    assertEquals(TestConstants.TOKEN_DESSERTS, result.getItem().getFirst().getToken());
+    assertEquals("Desserts EN", result.getItem().getFirst().getName());
+  }
+
+  @Test
+  @DisplayName("addCategory: Should save category when data is correct")
+  void addCategory_ShouldSaveCategory_WhenDataIsCorrect() {
+    AddEntityRequest request = new AddEntityRequest();
+    request.setNamePl("Przystawki PL");
+    request.setNameEn("Starters EN");
+
+    when(_dishRepo.isCategoryNameTaken(anyString(), anyString())).thenReturn(false);
+
+    assertDoesNotThrow(() -> _dishFacade.addCategory(request));
+
+    verify(_dishRepo, times(1))
+        .saveCategory(
+            argThat(
+                category ->
+                    category.getNamePl().equals("Przystawki PL")
+                        && category.getNameEn().equals("Starters EN")
+                        && category.getToken().equals("STARTERS_EN")));
+
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/dictionary/dish-categories"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.CREATED
+                        && event.getEntityType().equals("DISH_CATEGORY")
+                        && event.getPayload() != null
+                        && "Przystawki PL"
+                            .equals(((SyncDictionaryResponse) event.getPayload()).getNamePl())));
+  }
+
+  @Test
+  @DisplayName(
+      "removeCategory: Should soft delete category and reassign associated dishes to OTHER")
+  void removeCategory_ShouldSoftDelete_AndReassignDishesToOther() {
+    String tokenToRemove = "SOUPS_TOKEN";
+
+    DishesCategories categoryToRemove = new DishesCategories();
+    categoryToRemove.setId(java.util.UUID.randomUUID());
+    categoryToRemove.setToken(tokenToRemove);
+    categoryToRemove.setNameEn("Soups");
+    categoryToRemove.setNamePl("Zupy");
+
+    DishesCategories fallbackCategory = new DishesCategories();
+    fallbackCategory.setToken("OTHER");
+    fallbackCategory.setNameEn("Other");
+    fallbackCategory.setNamePl("Inne");
+
+    Dishes dish1 = new Dishes();
+    dish1.setCategory(categoryToRemove);
+
+    Dishes dish2 = new Dishes();
+    dish2.setCategory(categoryToRemove);
+
+    List<Dishes> affectedDishes = List.of(dish1, dish2);
+
+    when(_dishRepo.findCategoryByToken(tokenToRemove)).thenReturn(categoryToRemove);
+    when(_dishRepo.findCategoryByToken("OTHER")).thenReturn(fallbackCategory);
+    when(_dishRepo.findByCategoryId(categoryToRemove.getId())).thenReturn(affectedDishes);
+
+    assertDoesNotThrow(() -> _dishFacade.removeCategory(tokenToRemove));
+
+    assertEquals(fallbackCategory, dish1.getCategory());
+    assertEquals(fallbackCategory, dish2.getCategory());
+    verify(_dishRepo, times(1)).save(dish1);
+    verify(_dishRepo, times(1)).save(dish2);
+
+    assertTrue(categoryToRemove.getToken().startsWith("DELETED_"));
+    assertTrue(categoryToRemove.getNameEn().startsWith("DELETED_"));
+    assertNotNull(categoryToRemove.getDeletedAt());
+    verify(_dishRepo, times(1)).saveCategory(categoryToRemove);
+
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/dictionary/dish-categories"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.DELETED
+                        && event.getEntityType().equals("DISH_CATEGORY")
+                        && event.getToken().equals(tokenToRemove)
+                        && event.getPayload() == null));
+  }
+
+  @Test
+  @DisplayName("getPublicMenu: Should return empty menu when there are no dishes in repository")
+  void getPublicMenu_ShouldReturnEmptyMenu_WhenNoDishesExist() {
+    when(_dishRepo.findAll()).thenReturn(List.of());
+
+    PublicMenuResponse result = _dishFacade.getPublicMenu();
+
+    assertNotNull(result);
+    assertNotNull(result.getMenu());
+    assertTrue(result.getMenu().isEmpty());
+  }
+
+  @Test
+  @DisplayName("getPublicMenu: Should filter out unavailable dishes")
+  void getPublicMenu_ShouldFilterOutUnavailableDishes() {
+    DishesCategories category = new DishesCategories();
+    category.setNamePl("Zupy");
+    category.setNameEn("Soups");
+
+    Dishes availableDish = new Dishes();
+    availableDish.setName("Dostępne Danie");
+    availableDish.setAvailable(true);
+    availableDish.setCategory(category);
+    availableDish.setIngredients(Set.of());
+
+    Dishes unavailableDish = new Dishes();
+    unavailableDish.setName("Niedostępne Danie");
+    unavailableDish.setAvailable(false);
+    unavailableDish.setCategory(category);
+    unavailableDish.setIngredients(Set.of());
+
+    when(_dishRepo.findAll()).thenReturn(List.of(availableDish, unavailableDish));
+
+    PublicMenuResponse result = _dishFacade.getPublicMenu();
+
+    assertEquals(1, result.getMenu().size());
+    assertEquals(1, result.getMenu().getFirst().getDish().size());
+    assertEquals("Dostępne Danie", result.getMenu().getFirst().getDish().getFirst().getName());
+  }
+
+  @Test
+  @DisplayName(
+      "getPublicMenu: Should group by category, translate names to PL, "
+          + "map ingredients/allergens and append S3 url")
+  void getPublicMenu_ShouldGroupByCategory_AndTranslateToPl() {
+    LocaleContextHolder.setLocale(Locale.of("pl"));
+
+    DishesCategories soupCategory = new DishesCategories();
+    soupCategory.setNamePl("Zupy PL");
+    soupCategory.setNameEn("Soups EN");
+
+    Allergens gluten = new Allergens();
+    gluten.setNamePl("Gluten PL");
+    gluten.setNameEn("Gluten EN");
+
+    Ingredients pasta = new Ingredients();
+    pasta.setNamePl("Makaron PL");
+    pasta.setNameEn("Pasta EN");
+    pasta.setAllergens(Set.of(gluten));
+
+    Dishes dish1 = new Dishes();
+    dish1.setName("Rosół");
+    dish1.setPrice(1500);
+    dish1.setAvailable(true);
+    dish1.setCategory(soupCategory);
+    dish1.setImageUrl("rosol.jpg");
+    dish1.setIngredients(Set.of(pasta));
+
+    when(_dishRepo.findAll()).thenReturn(List.of(dish1));
+
+    PublicMenuResponse result = _dishFacade.getPublicMenu();
+
+    assertEquals(1, result.getMenu().size());
+    assertEquals("Zupy PL", result.getMenu().getFirst().getCategory());
+
+    DishResponse dto = result.getMenu().getFirst().getDish().getFirst();
+    assertEquals("Rosół", dto.getName());
+    assertEquals(1500, dto.getPrice());
+    assertEquals("http://localhost:9000/restaurant-images/rosol.jpg", dto.getImageUrl());
+
+    assertEquals(1, dto.getIngridents().size());
+    assertTrue(dto.getIngridents().contains("Makaron PL"), "Ingredient should be translated to PL");
+    assertEquals(1, dto.getAllergens().size());
+    assertTrue(dto.getAllergens().contains("Gluten PL"), "Allergen should be translated to PL");
+  }
+}

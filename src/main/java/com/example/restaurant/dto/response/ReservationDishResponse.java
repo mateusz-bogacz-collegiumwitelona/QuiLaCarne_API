@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReservationDishResponse {
-    private String dishName;
-    private int price;
-    private int quantity;
-    private String status;
+  private String dishName;
+  private int price;
+  private int quantity;
+  private String status;
 }

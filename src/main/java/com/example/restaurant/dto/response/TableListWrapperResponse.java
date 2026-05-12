@@ -1,16 +1,15 @@
 package com.example.restaurant.dto.response;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TableListWrapperResponse {
-    private List<TableListResponse> tables;
+  private List<TableListResponse> tables;
 }

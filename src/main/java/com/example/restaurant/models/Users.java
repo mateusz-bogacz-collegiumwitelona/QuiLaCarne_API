@@ -3,6 +3,10 @@ package com.example.restaurant.models;
 import com.example.restaurant.models.base.BaseEntity;
 import com.example.restaurant.models.lookup.Roles;
 import jakarta.persistence.*;
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLDelete;
@@ -11,12 +15,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.OffsetDateTime;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-
 @Entity
 @Table(name = "users")
 @Getter
@@ -24,59 +22,55 @@ import java.util.Set;
 @SQLDelete(sql = "UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
 public class Users extends BaseEntity implements UserDetails {
-    private String username;
+  private String username;
 
-    @Column(name = "normalized_username")
-    private String normalizedUsername;
+  @Column(name = "normalized_username")
+  private String normalizedUsername;
 
-    private String email;
+  private String email;
 
-    @Column(name = "normalized_email")
-    private String normalizedEmail;
+  @Column(name = "normalized_email")
+  private String normalizedEmail;
 
-    @Column(name = "pending_email")
-    private String pendingEmail;
+  @Column(name = "pending_email")
+  private String pendingEmail;
 
-    private String password;
+  private String password;
 
-    @Column(name = "is_two_factor_enabled")
-    private Boolean isTwoFactorEnabled = false;
+  @Column(name = "is_two_factor_enabled")
+  private Boolean isTwoFactorEnabled = false;
 
-    private String mfaSecret;
+  private String mfaSecret;
 
-    private Boolean isActive;
+  private Boolean isActive;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "x_user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Roles> roles = new HashSet<>();
+  @ManyToMany(fetch = FetchType.EAGER)
+  @JoinTable(
+      name = "x_user_roles",
+      joinColumns = @JoinColumn(name = "user_id"),
+      inverseJoinColumns = @JoinColumn(name = "role_id"))
+  private Set<Roles> roles = new HashSet<>();
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .toList();
-    }
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    return roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).toList();
+  }
 
-    @Column(name = "deleted_at")
-    private OffsetDateTime deletedAt;
+  @Column(name = "deleted_at")
+  private OffsetDateTime deletedAt;
 
-    @Override
-    public String getPassword() {
-        return this.password;
-    }
+  @Override
+  public String getPassword() {
+    return this.password;
+  }
 
-    @Override
-    public String getUsername() {
-        return this.username;
-    }
+  @Override
+  public String getUsername() {
+    return this.username;
+  }
 
-
-    @Override
-    public boolean isEnabled() {
-        return (this.isActive != null && this.isActive) && (this.deletedAt == null);
-    }
+  @Override
+  public boolean isEnabled() {
+    return (this.isActive != null && this.isActive) && (this.deletedAt == null);
+  }
 }

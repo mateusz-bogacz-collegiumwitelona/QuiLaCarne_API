@@ -6,53 +6,53 @@ import com.example.restaurant.models.lookup.BanStatus;
 import com.example.restaurant.repository.interfaces.IBanRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaBanRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaBanStatusRepository;
+import java.time.OffsetDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-
 @Repository
 @RequiredArgsConstructor
 public class BanRepository implements IBanRepository {
-    private final IJpaBanStatusRepository _jpaStatusRepo;
-    private final IJpaBanRepository _jpaBanRepo;
+  private final IJpaBanStatusRepository _jpaStatusRepo;
+  private final IJpaBanRepository _jpaBanRepo;
 
-    @Override
-    public BanStatus findStatusByToken(String token) {
-        return _jpaStatusRepo.findByToken(token)
-                .orElseThrow(() -> new EntityNotFoundException("Ban status not found"));
-    }
+  @Override
+  public BanStatus findStatusByToken(String token) {
+    return _jpaStatusRepo
+        .findByToken(token)
+        .orElseThrow(() -> new EntityNotFoundException("Ban status not found"));
+  }
 
-    @Override
-    public void save(Bans ban) {
-        _jpaBanRepo.save(ban);
-    }
+  @Override
+  public void save(Bans ban) {
+    _jpaBanRepo.save(ban);
+  }
 
-    @Override
-    public List<BanStatus> findAllStatuses() {
-        return _jpaStatusRepo.findAll();
-    }
+  @Override
+  public List<BanStatus> findAllStatuses() {
+    return _jpaStatusRepo.findAll();
+  }
 
-    @Override
-    public List<Bans> findExpiredActiveBans(OffsetDateTime time) {
-        return _jpaBanRepo.findByIsActiveTrueAndExpiresAtBefore(time);
-    }
+  @Override
+  public List<Bans> findExpiredActiveBans(OffsetDateTime time) {
+    return _jpaBanRepo.findByIsActiveTrueAndExpiresAtBefore(time);
+  }
 
-    @Override
-    public long countStatuses() {
-        return _jpaStatusRepo.count();
-    }
+  @Override
+  public long countStatuses() {
+    return _jpaStatusRepo.count();
+  }
 
-    @Override
-    public long count() {
-        return _jpaBanRepo.count();
-    }
+  @Override
+  public long count() {
+    return _jpaBanRepo.count();
+  }
 
-    @Override
-    public Page<Bans> findAll(Pageable pageable) {
-        return _jpaBanRepo.findAll(pageable);
-    }
+  @Override
+  public Page<Bans> findAll(Pageable pageable) {
+    return _jpaBanRepo.findAll(pageable);
+  }
 }

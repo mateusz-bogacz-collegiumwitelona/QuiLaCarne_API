@@ -5,8 +5,7 @@ import lombok.Data;
 
 @Data
 public class AddEmployeeRequest {
-    @Valid
-    private RegisterRequest register;
+  @Valid private RegisterRequest register;
 
-    private boolean isAdmin;
+  private boolean isAdmin;
 }

@@ -7,19 +7,21 @@ import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.TableListWrapperResponse;
 
 public interface ITableServices {
-    TableListWrapperResponse getTables(TableFilterRequest request);
+  TableListWrapperResponse getTables(TableFilterRequest request);
 
-    void changeStatusToClean(String tableToken);
+  void changeStatusToClean(String tableToken);
 
-    void changeStatusToOutOfService(String tableToken);
+  void changeStatusToOutOfService(String tableToken);
 
-    void add(AddTableRequest request);
+  void changeStatusToAvalaible(String tableToken);
 
-    void delete(String token);
+  void add(AddTableRequest request);
 
-    DictionaryResponse getDictionary();
+  void delete(String token);
 
-    void addStatus(AddEntityRequest request);
+  DictionaryResponse getDictionary();
 
-    void removeStatus(String token);
+  void addStatus(AddEntityRequest request);
+
+  void removeStatus(String token);
 }

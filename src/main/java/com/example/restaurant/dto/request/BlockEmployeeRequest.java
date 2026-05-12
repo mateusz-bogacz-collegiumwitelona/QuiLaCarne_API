@@ -5,8 +5,8 @@ import lombok.Data;
 
 @Data
 public class BlockEmployeeRequest {
-    @NotBlank(message = "Employee token is required")
-    private String employeeToken;
+  @NotBlank(message = "Employee token is required")
+  private String employeeToken;
 
-    private boolean isAvailable;
+  private boolean isAvailable;
 }

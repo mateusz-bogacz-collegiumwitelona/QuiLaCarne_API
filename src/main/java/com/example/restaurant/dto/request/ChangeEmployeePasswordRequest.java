@@ -8,19 +8,21 @@ import lombok.Data;
 
 @Data
 public class ChangeEmployeePasswordRequest {
-    @NotBlank(message = "Employee token is required")
-    private String employeeToken;
+  @NotBlank(message = "Employee token is required")
+  private String employeeToken;
 
-    @Schema(description = "Password (min. 6 chars, 1 uppercase, 1 digit, 1 special)", example = "SecurePass123!")
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, max = 100, message = "Password must be at least 6 characters long")
-    @Pattern(
-            regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\"{}|<>]).+$",
-            message = "Password must contain at least one uppercase letter, one number, and one special character"
-    )
-    private String password;
+  @Schema(
+      description = "Password (min. 6 chars, 1 uppercase, 1 digit, 1 special)",
+      example = "SecurePass123!")
+  @NotBlank(message = "Password is required")
+  @Size(min = 6, max = 100, message = "Password must be at least 6 characters long")
+  @Pattern(
+      regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\"{}|<>]).+$",
+      message =
+          "Password must contain at least one uppercase letter, one number, and one special character")
+  private String password;
 
-    @Schema(description = "Must match the password field", example = "SecurePass123!")
-    @NotBlank(message = "Confirm password is required")
-    private String confirmPassword;
+  @Schema(description = "Must match the password field", example = "SecurePass123!")
+  @NotBlank(message = "Confirm password is required")
+  private String confirmPassword;
 }
