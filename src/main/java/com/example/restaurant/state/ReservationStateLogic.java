@@ -1,11 +1,11 @@
-package com.example.restaurant.enums;
+package com.example.restaurant.state;
 
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import java.util.HashSet;
 import java.util.Set;
 
-public enum ReservationStateEnum {
+public enum ReservationStateLogic {
   ACTIVE {
     @Override
     public void assignWaiter(Reservations reservation, ReservationStatus newStatus) {
@@ -101,14 +101,14 @@ public enum ReservationStateEnum {
 
   public abstract void cancel(Reservations reservation, ReservationStatus newStatus);
 
-  public static ReservationStateEnum from(Reservations reservation) {
+  public static ReservationStateLogic from(Reservations reservation) {
     if (reservation.getReservationStatus() == null
         || reservation.getReservationStatus().isEmpty()) {
       return OTHER;
     }
     String token = reservation.getReservationStatus().iterator().next().getToken();
     try {
-      return ReservationStateEnum.valueOf(token);
+      return ReservationStateLogic.valueOf(token);
     } catch (IllegalArgumentException e) {
       return OTHER;
     }

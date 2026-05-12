@@ -8,12 +8,16 @@ import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.OrderItems;
 import com.example.restaurant.models.Orders;
 import com.example.restaurant.repository.interfaces.*;
+import com.example.restaurant.state.OrderItemStateLogic;
+import com.example.restaurant.state.OrderStateLogic;
 import jakarta.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderWorkflowService {
@@ -44,6 +48,7 @@ public class OrderWorkflowService {
     var table = _tableRepo.findByToken(tableToken);
 
     var status = _orderRepo.findStatusByToken("PENDING");
+    var itemPendingStatus = _orderRepo.findItemStatusByToken("PENDING");
 
     Orders order = new Orders();
     order.setReservation(reservation);
@@ -68,7 +73,7 @@ public class OrderWorkflowService {
       item.setQuantity(req.getQuantity());
       item.setPriceAtTimeOfOrder(dish.getPrice());
       item.setNote(req.getNote());
-      item.setStatuses(Set.of());
+      item.setStatuses(new HashSet<>(Set.of(itemPendingStatus)));
 
       orderItems.add(item);
 
@@ -109,16 +114,17 @@ public class OrderWorkflowService {
     var orderStatus = _orderRepo.findStatusByToken("IN_PROGRESS");
     var orderItemsStatus = _orderRepo.findItemStatusByToken("IN_PROGRESS");
 
-    order.setStatuses(new HashSet<>(Set.of(orderStatus)));
+    OrderStateLogic.from(order).assignWaiter(order, orderStatus);
     order.setWaiter(waiter);
 
     List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
 
     for (OrderItems item : items) {
-      boolean isPending = item.getStatuses().stream().anyMatch(s -> "PENDING".equals(s.getToken()));
-
-      if (isPending || item.getStatuses().isEmpty())
-        item.setStatuses(new HashSet<>(Set.of(orderItemsStatus)));
+      try {
+        OrderItemStateLogic.from(item).startPreparation(item, orderItemsStatus);
+      } catch (IllegalStateException e) {
+        log.error("Error while preparing order item: " + item, e);
+      }
     }
 
     _orderRepo.saveAllItems(items);
@@ -134,11 +140,15 @@ public class OrderWorkflowService {
       var orderStatus = _orderRepo.findStatusByToken("CANCELLED");
       var orderItemsStatus = _orderRepo.findItemStatusByToken("CANCELLED");
 
-      order.setStatuses(new HashSet<>(Set.of(orderStatus)));
+      OrderStateLogic.from(order).cancel(order, orderStatus);
 
       List<OrderItems> items = _orderRepo.findItemsByOrderToken(order.getToken());
       for (OrderItems item : items) {
-        item.setStatuses(new HashSet<>(Set.of(orderItemsStatus)));
+        try {
+          OrderItemStateLogic.from(item).cancel(item, orderItemsStatus);
+        } catch (IllegalStateException e) {
+          log.error("Error while preparing order item: " + item, e);
+        }
       }
 
       _orderRepo.saveAllItems(items);
@@ -191,6 +201,9 @@ public class OrderWorkflowService {
         item.setQuantity(r.getQuantity());
         item.setPriceAtTimeOfOrder(dish.getPrice());
         item.setNote(reqNote);
+
+        item.setStatuses(new HashSet<>(Set.of(_orderRepo.findItemStatusByToken("PENDING"))));
+
         _orderRepo.saveItem(item);
 
         addToPrice += dish.getPrice() * r.getQuantity();
@@ -237,7 +250,7 @@ public class OrderWorkflowService {
     if (quantityToRemove >= currentQuantity) {
       order.setTotalPrice(order.getTotalPrice() - (pricePerItem * currentQuantity));
 
-      itemToMod.setStatuses(new HashSet<>(Set.of(cancelledStatus)));
+      OrderItemStateLogic.from(itemToMod).cancel(itemToMod, cancelledStatus);
       _orderRepo.saveItem(itemToMod);
     } else {
       itemToMod.setQuantity(currentQuantity - quantityToRemove);
@@ -250,8 +263,11 @@ public class OrderWorkflowService {
       cancelledItem.setQuantity(quantityToRemove);
       cancelledItem.setPriceAtTimeOfOrder(pricePerItem);
       cancelledItem.setNote(itemToMod.getNote());
-      cancelledItem.setStatuses(new HashSet<>(Set.of(cancelledStatus)));
 
+      var pendingStatus = _orderRepo.findItemStatusByToken("PENDING");
+      cancelledItem.setStatuses(new HashSet<>(Set.of(pendingStatus)));
+
+      OrderItemStateLogic.from(cancelledItem).cancel(cancelledItem, cancelledStatus);
       _orderRepo.saveItem(cancelledItem);
     }
     _orderRepo.save(order);

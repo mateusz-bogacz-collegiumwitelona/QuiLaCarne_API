@@ -5,7 +5,6 @@ import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
-import com.example.restaurant.enums.ReservationStateEnum;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.fasade.interfaces.IOrderFacade;
 import com.example.restaurant.models.Reservations;
@@ -13,6 +12,7 @@ import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.state.ReservationStateLogic;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.util.HashSet;
@@ -101,7 +101,7 @@ public class ReservationCommandService {
             .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
     ReservationStatus cancelledStatus = _reservationRepo.findStatusByToken("CANCELLED");
-    ReservationStateEnum.from(reservation).cancel(reservation, cancelledStatus);
+    ReservationStateLogic.from(reservation).cancel(reservation, cancelledStatus);
 
     _reservationRepo.save(reservation);
 
@@ -133,7 +133,7 @@ public class ReservationCommandService {
             .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
     ReservationStatus inProgressStatus = _reservationRepo.findStatusByToken(STATUS_IN_PROGRESS);
-    ReservationStateEnum.from(reservation).assignWaiter(reservation, inProgressStatus);
+    ReservationStateLogic.from(reservation).assignWaiter(reservation, inProgressStatus);
 
     _reservationRepo.save(reservation);
 
@@ -151,7 +151,7 @@ public class ReservationCommandService {
             .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
     ReservationStatus noShowStatus = _reservationRepo.findStatusByToken(STATUS_NO_SHOW);
-    ReservationStateEnum.from(reservation).markAsAbsent(reservation, noShowStatus);
+    ReservationStateLogic.from(reservation).markAsAbsent(reservation, noShowStatus);
 
     _reservationRepo.save(reservation);
     _orderServices.isAbsent(reservationToken);

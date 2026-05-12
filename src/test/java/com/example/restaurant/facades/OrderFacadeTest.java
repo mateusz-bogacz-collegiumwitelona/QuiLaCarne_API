@@ -94,6 +94,9 @@ class OrderFacadeTest {
     OrderStatus status = new OrderStatus();
     status.setToken("PENDING");
 
+    OrderItemsStatus itemPendingStatus = new OrderItemsStatus();
+    itemPendingStatus.setToken("PENDING");
+
     Dishes dishEntity = new Dishes();
     dishEntity.setToken(TestConstants.FAKE_DISH_TOKEN);
     dishEntity.setName("Pizza");
@@ -105,6 +108,7 @@ class OrderFacadeTest {
         .thenReturn(Optional.of(reservation));
     when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
     when(_orderRepo.findStatusByToken("PENDING")).thenReturn(status);
+    when(_orderRepo.findItemStatusByToken("PENDING")).thenReturn(itemPendingStatus);
 
     doAnswer(
             invocation -> {
@@ -355,12 +359,15 @@ class OrderFacadeTest {
     Dishes mockDish = new Dishes();
     mockDish.setToken(TestConstants.FAKE_DISH_TOKEN);
 
+    OrderItemsStatus pendingStatus = new OrderItemsStatus();
+    pendingStatus.setToken("PENDING");
+
     OrderItems mockItem = new OrderItems();
     mockItem.setProduct(mockDish);
     mockItem.setQuantity(3);
     mockItem.setPriceAtTimeOfOrder(50);
     mockItem.setNote(null);
-    mockItem.setStatuses(new HashSet<>());
+    mockItem.setStatuses(new HashSet<>(Set.of(pendingStatus)));
 
     OrderItemsStatus cancelledStatus = new OrderItemsStatus();
     cancelledStatus.setToken("CANCELLED");
@@ -370,6 +377,7 @@ class OrderFacadeTest {
     when(_orderRepo.findItemsByOrderToken(TestConstants.FAKE_ORDER_TOKEN))
         .thenReturn(List.of(mockItem));
     when(_orderRepo.findItemStatusByToken("CANCELLED")).thenReturn(cancelledStatus);
+    when(_orderRepo.findItemStatusByToken("PENDING")).thenReturn(pendingStatus);
 
     _orderFacade.removeItemFromReservation(
         TestConstants.FAKE_USER_TOKEN, TestConstants.FAKE_RESERVATION_TOKEN, request);
@@ -413,12 +421,15 @@ class OrderFacadeTest {
     Dishes mockDish = new Dishes();
     mockDish.setToken(TestConstants.FAKE_DISH_TOKEN);
 
+    OrderItemsStatus pendingStatus = new OrderItemsStatus();
+    pendingStatus.setToken("PENDING");
+
     OrderItems mockItem = new OrderItems();
     mockItem.setProduct(mockDish);
     mockItem.setQuantity(2);
     mockItem.setPriceAtTimeOfOrder(50);
     mockItem.setNote(note);
-    mockItem.setStatuses(new HashSet<>());
+    mockItem.setStatuses(new HashSet<>(Set.of(pendingStatus)));
 
     OrderItemsStatus cancelledStatus = new OrderItemsStatus();
     cancelledStatus.setToken("CANCELLED");
@@ -499,11 +510,15 @@ class OrderFacadeTest {
     existingItem.setNote("bez życia");
     existingItem.setStatuses(new HashSet<>());
 
+    OrderItemsStatus pendingItemStatus = new OrderItemsStatus();
+    pendingItemStatus.setToken("PENDING");
+
     when(_orderRepo.findByReservationToken(TestConstants.FAKE_RESERVATION_TOKEN))
         .thenReturn(Optional.of(mockOrder));
     when(_orderRepo.findItemsByOrderToken(TestConstants.FAKE_ORDER_TOKEN))
         .thenReturn(List.of(existingItem));
     when(_dishRepo.listForOrder(anyList())).thenReturn(List.of(existingDish, newDish));
+    when(_orderRepo.findItemStatusByToken("PENDING")).thenReturn(pendingItemStatus);
 
     _orderFacade.addItemFromReservation(
         TestConstants.FAKE_USER_TOKEN, TestConstants.FAKE_RESERVATION_TOKEN, requests);
@@ -554,6 +569,10 @@ class OrderFacadeTest {
 
     Orders mockOrder = new Orders();
     mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
+
+    OrderStatus pendingOrderStatus = new OrderStatus();
+    pendingOrderStatus.setToken("PENDING");
+    mockOrder.setStatuses(new HashSet<>(Set.of(pendingOrderStatus)));
 
     Users mockWaiter = new Users();
     mockWaiter.setToken(TestConstants.FAKE_USER_TOKEN);
@@ -625,10 +644,17 @@ class OrderFacadeTest {
     Orders mockOrder = new Orders();
     mockOrder.setToken(TestConstants.FAKE_ORDER_TOKEN);
 
+    OrderStatus pendingOrderStatus = new OrderStatus();
+    pendingOrderStatus.setToken("PENDING");
+    mockOrder.setStatuses(new HashSet<>(Set.of(pendingOrderStatus)));
+
+    OrderItemsStatus pendingItemStatus = new OrderItemsStatus();
+    pendingItemStatus.setToken("PENDING");
+
     OrderItems mockItem1 = new OrderItems();
-    mockItem1.setStatuses(new HashSet<>());
+    mockItem1.setStatuses(new HashSet<>(Set.of(pendingItemStatus)));
     OrderItems mockItem2 = new OrderItems();
-    mockItem2.setStatuses(new HashSet<>());
+    mockItem2.setStatuses(new HashSet<>(Set.of(pendingItemStatus)));
     List<OrderItems> orderItems = List.of(mockItem1, mockItem2);
 
     OrderStatus cancelledStatus = new OrderStatus();
