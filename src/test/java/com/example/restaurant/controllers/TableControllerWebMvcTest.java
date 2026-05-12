@@ -144,4 +144,19 @@ class TableControllerWebMvcTest extends AbstractControllerWebMvcTest {
         .perform(delete("/api/tables/status/{token}", "MISSING").with(auth()).with(csrf()))
         .andExpect(status().isNotFound());
   }
+
+  @Test
+  void changeStatusToAvalaible_path() throws Exception {
+    mockMvc
+        .perform(patch("/api/tables/{token}/avalaible", "TABLE_1").with(auth()).with(csrf()))
+        .andExpect(status().isOk());
+
+    doThrow(new EntityNotFoundException("missing"))
+        .when(_tableServices)
+        .changeStatusToAvalaible("MISSING");
+
+    mockMvc
+        .perform(patch("/api/tables/{token}/avalaible", "MISSING").with(auth()).with(csrf()))
+        .andExpect(status().isNotFound());
+  }
 }

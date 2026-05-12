@@ -196,6 +196,24 @@ public class TableServices implements ITableServices {
     _notification.sendEventToTopic("/dictionary/table-statuses", event);
   }
 
+  @Override
+  @Transactional
+  @Auditable(action = "CHANGE_TABLE_STATUS_AVAILABLE")
+  @CacheEvict(value = "tablesList", allEntries = true)
+  public void changeStatusToAvalaible(String tableToken) {
+    RestaurantTables table = _tableRepo.findByToken(tableToken);
+    if (table == null) throw new EntityNotFoundException("Table not found");
+
+    TableStatus active = _tableRepo.findStatusByToken("AVAILABLE");
+    if (active == null)
+      throw new EntityNotFoundException("Table status 'OUT_OF_SERVICE' not found");
+
+    TableStateLogic.from(table).release(table, active);
+
+    _tableRepo.save(table);
+    publishTableUpdate(table);
+  }
+
   private void validateTimeRange(TableFilterRequest request) {
     if (request.getStartTime() != null
         && request.getEndTime() != null

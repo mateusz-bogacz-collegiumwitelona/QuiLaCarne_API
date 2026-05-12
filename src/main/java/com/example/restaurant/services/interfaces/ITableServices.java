@@ -13,6 +13,8 @@ public interface ITableServices {
 
   void changeStatusToOutOfService(String tableToken);
 
+  void changeStatusToAvalaible(String tableToken);
+
   void add(AddTableRequest request);
 
   void delete(String token);
