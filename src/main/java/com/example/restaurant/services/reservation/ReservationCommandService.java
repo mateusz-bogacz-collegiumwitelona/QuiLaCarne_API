@@ -5,6 +5,7 @@ import com.example.restaurant.dto.request.ReservationDishRequest;
 import com.example.restaurant.dto.request.ReservationRequest;
 import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
+import com.example.restaurant.enums.ReservationStateEnum;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.fasade.interfaces.IOrderFacade;
 import com.example.restaurant.models.Reservations;
@@ -100,7 +101,7 @@ public class ReservationCommandService {
             .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
     ReservationStatus cancelledStatus = _reservationRepo.findStatusByToken("CANCELLED");
-    reservation.setReservationStatus(new HashSet<>(Set.of(cancelledStatus)));
+    ReservationStateEnum.from(reservation).cancel(reservation, cancelledStatus);
 
     _reservationRepo.save(reservation);
 
@@ -132,7 +133,8 @@ public class ReservationCommandService {
             .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
     ReservationStatus inProgressStatus = _reservationRepo.findStatusByToken(STATUS_IN_PROGRESS);
-    reservation.setReservationStatus(new HashSet<>(Set.of(inProgressStatus)));
+    ReservationStateEnum.from(reservation).assignWaiter(reservation, inProgressStatus);
+
     _reservationRepo.save(reservation);
 
     _orderServices.assignWaiterToOrders(reservationToken, waiterToken);
@@ -148,14 +150,9 @@ public class ReservationCommandService {
             .findByToken(reservationToken)
             .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
 
-    boolean isActive =
-        reservation.getReservationStatus().stream()
-            .anyMatch(status -> STATUS_ACTIVE.equals(status.getToken()));
+    ReservationStatus noShowStatus = _reservationRepo.findStatusByToken(STATUS_NO_SHOW);
+    ReservationStateEnum.from(reservation).markAsAbsent(reservation, noShowStatus);
 
-    if (!isActive)
-      throw new IllegalStateException("Only ACTIVE reservations can be set to NO_SHOW");
-
-    reservation.setReservationStatus(Set.of(_reservationRepo.findStatusByToken(STATUS_NO_SHOW)));
     _reservationRepo.save(reservation);
     _orderServices.isAbsent(reservationToken);
 

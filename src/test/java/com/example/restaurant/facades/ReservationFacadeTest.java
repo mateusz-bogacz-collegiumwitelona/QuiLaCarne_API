@@ -31,14 +31,13 @@ import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
-import java.time.OffsetDateTime;
-import java.util.*;
-
 import com.example.restaurant.services.NotificationServices;
 import com.example.restaurant.services.reservation.ReservationCommandService;
 import com.example.restaurant.services.reservation.ReservationDictionaryService;
 import com.example.restaurant.services.reservation.ReservationQueryService;
 import com.example.restaurant.services.reservation.ReservationSyncPublisher;
+import java.time.OffsetDateTime;
+import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -77,23 +76,21 @@ class ReservationFacadeTest {
   void setUp() {
     LocaleContextHolder.setLocale(Locale.ENGLISH);
 
-    ReservationSyncPublisher syncPublisher = new ReservationSyncPublisher(_notification, _syncMapper);
+    ReservationSyncPublisher syncPublisher =
+        new ReservationSyncPublisher(_notification, _syncMapper);
 
-    ReservationCommandService commandService = new ReservationCommandService(
-            _tableRepo, _reservationRepo, _userRepo, _orderServices, syncPublisher
-    );
+    ReservationCommandService commandService =
+        new ReservationCommandService(
+            _tableRepo, _reservationRepo, _userRepo, _orderServices, syncPublisher);
 
-    ReservationQueryService queryService = new ReservationQueryService(
-            _reservationRepo, _orderServices, _reservationMapper
-    );
+    ReservationQueryService queryService =
+        new ReservationQueryService(_reservationRepo, _orderServices, _reservationMapper);
 
-    ReservationDictionaryService dictionaryService = new ReservationDictionaryService(
-            _reservationRepo
-    );
+    ReservationDictionaryService dictionaryService =
+        new ReservationDictionaryService(_reservationRepo);
 
-    this._reservationFacade = new ReservationFacade(
-            commandService, dictionaryService, queryService
-    );
+    this._reservationFacade =
+        new ReservationFacade(commandService, dictionaryService, queryService);
   }
 
   @Test
@@ -214,6 +211,10 @@ class ReservationFacadeTest {
     Reservations mockReservation = new Reservations();
     mockReservation.setToken("RES_TOKEN_TO_CANCEL");
 
+    ReservationStatus activeStatus = new ReservationStatus();
+    activeStatus.setToken("ACTIVE");
+    mockReservation.setReservationStatus(Set.of(activeStatus));
+
     when(_reservationRepo.findByTokenAndUserToken(anyString(), anyString()))
         .thenReturn(Optional.of(mockReservation));
     when(_reservationRepo.findStatusByToken("CANCELLED")).thenReturn(new ReservationStatus());
@@ -237,6 +238,10 @@ class ReservationFacadeTest {
   void assignWaiter_Successful() {
     Reservations mockReservation = new Reservations();
     mockReservation.setToken("RES_TOKEN_ASSIGN_WAITER");
+
+    ReservationStatus activeStatus = new ReservationStatus();
+    activeStatus.setToken("ACTIVE");
+    mockReservation.setReservationStatus(Set.of(activeStatus));
 
     when(_userRepo.isInRole(anyString(), anyString())).thenReturn(true);
     when(_reservationRepo.findByToken(anyString())).thenReturn(Optional.of(mockReservation));
