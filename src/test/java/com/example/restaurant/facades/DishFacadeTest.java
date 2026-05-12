@@ -1,4 +1,4 @@
-package com.example.restaurant.services;
+package com.example.restaurant.facades;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,6 +14,7 @@ import com.example.restaurant.dto.response.PublicMenuResponse;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.dto.sync.SyncDishResponse;
 import com.example.restaurant.enums.WebSocketEventType;
+import com.example.restaurant.fasade.DishFacade;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.mappers.DishMapper;
 import com.example.restaurant.mappers.SyncMapper;
@@ -23,6 +24,12 @@ import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
+import com.example.restaurant.services.NotificationServices;
+import com.example.restaurant.services.S3StorageService;
+import com.example.restaurant.services.dish.DishCatalogService;
+import com.example.restaurant.services.dish.DishCategoryService;
+import com.example.restaurant.services.dish.DishMediaService;
+import com.example.restaurant.services.dish.DishSyncPublisher;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -47,7 +54,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
-class DishServicesTest {
+class DishFacadeTest {
   @Mock private IDishRepository _dishRepo;
 
   @Mock private DishMapper _dishMapper;
@@ -58,16 +65,25 @@ class DishServicesTest {
 
   @Mock private NotificationServices _notification;
 
-  @InjectMocks private DishServices _dishServices;
+  @InjectMocks private DishFacade _dishFacade;
 
   @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
   @BeforeEach
   void setUp() {
-    ReflectionTestUtils.setField(_dishServices, "s3Endpoint", "http://localhost:9000");
-    ReflectionTestUtils.setField(_dishServices, "s3BucketName", "restaurant-images");
-    ReflectionTestUtils.setField(_syncMapper, "s3Endpoint", "http://localhost:9000");
-    ReflectionTestUtils.setField(_syncMapper, "s3BucketName", "restaurant-images");
+    DishMediaService mediaService = new DishMediaService(_s3Services);
+
+    ReflectionTestUtils.setField(mediaService, "s3Endpoint", "http://localhost:9000");
+    ReflectionTestUtils.setField(mediaService, "s3BucketName", "restaurant-images");
+
+    DishSyncPublisher syncPublisher = new DishSyncPublisher(_notification, _syncMapper);
+    DishCategoryService categoryService = new DishCategoryService(_dishRepo, syncPublisher);
+
+    DishCatalogService catalogService =
+        new DishCatalogService(
+            _dishRepo, _dishMapper, _s3Services, _ingredientsRepo, mediaService, syncPublisher);
+
+    this._dishFacade = new DishFacade(catalogService, categoryService);
   }
 
   @AfterEach
@@ -89,7 +105,7 @@ class DishServicesTest {
     when(_dishMapper.toDishListResponse(mockDish, "en")).thenReturn(dishResponse);
 
     PagedResult<DishListResponse> result =
-        _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
+        _dishFacade.getMenu(new DishFilterRequest(), new PaggedRequest());
 
     assertNotNull(result);
     assertEquals(
@@ -109,7 +125,7 @@ class DishServicesTest {
     when(_dishMapper.toDishListResponse(any(), anyString())).thenReturn(dishResponse);
 
     PagedResult<DishListResponse> result =
-        _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
+        _dishFacade.getMenu(new DishFilterRequest(), new PaggedRequest());
 
     assertEquals("https://external.com/img.jpg", result.getItems().getFirst().getImageUrl());
   }
@@ -121,7 +137,7 @@ class DishServicesTest {
         .thenReturn(Page.empty());
 
     PagedResult<DishListResponse> result =
-        _dishServices.getMenu(new DishFilterRequest(), new PaggedRequest());
+        _dishFacade.getMenu(new DishFilterRequest(), new PaggedRequest());
 
     assertTrue(result.getItems().isEmpty());
   }
@@ -139,7 +155,7 @@ class DishServicesTest {
 
     when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
 
-    _dishServices.remove(TestConstants.FAKE_DISH_TOKEN);
+    _dishFacade.remove(TestConstants.FAKE_DISH_TOKEN);
 
     assertNull(dish.getImageUrl());
     verify(_s3Services, times(1)).deleteFile(any());
@@ -177,7 +193,7 @@ class DishServicesTest {
 
     when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
 
-    _dishServices.changeAvailable(request);
+    _dishFacade.changeAvailable(request);
 
     assertFalse(dish.isAvailable());
     assertEquals("Brak świeżej bazylii", dish.getUnavailableReason());
@@ -214,7 +230,7 @@ class DishServicesTest {
 
     when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
 
-    _dishServices.changeAvailable(request);
+    _dishFacade.changeAvailable(request);
 
     assertFalse(dish.isAvailable());
     assertEquals("Brak składników", dish.getUnavailableReason());
@@ -251,7 +267,7 @@ class DishServicesTest {
 
     when(_dishRepo.findByToken(TestConstants.FAKE_DISH_TOKEN)).thenReturn(dish);
 
-    _dishServices.edit(request);
+    _dishFacade.edit(request);
 
     assertEquals(
         TestConstants.FAKE_DISH_NAME, dish.getName(), "Name should be updated and trimmed");
@@ -292,7 +308,7 @@ class DishServicesTest {
     when(_dishRepo.findCategoryByToken(TestConstants.FAKE_DISH_CATEGORY)).thenReturn(category);
     when(_ingredientsRepo.findByToken(TestConstants.INGREDIENT_PL)).thenReturn(ingredient);
 
-    _dishServices.edit(request);
+    _dishFacade.edit(request);
 
     assertEquals(category, dish.getCategory());
     assertEquals(1, dish.getIngredients().size());
@@ -341,7 +357,7 @@ class DishServicesTest {
     when(_s3Services.uploadFromStream(mockInputStream, "new_uuid_steak.png", "image/png", 1024L))
         .thenReturn("new_uuid_steak.png");
 
-    _dishServices.edit(request);
+    _dishFacade.edit(request);
 
     verify(_s3Services, times(1)).deleteFile("old_steak_image.jpg");
     assertEquals("new_uuid_steak.png", dish.getImageUrl(), "Image URL should be updated");
@@ -379,7 +395,7 @@ class DishServicesTest {
     when(_s3Services.generateUniqFileName("steak.png")).thenReturn("new_uuid_steak.png");
 
     RuntimeException exception =
-        assertThrows(RuntimeException.class, () -> _dishServices.edit(request));
+        assertThrows(RuntimeException.class, () -> _dishFacade.edit(request));
 
     assertEquals("Could not process photo file", exception.getMessage());
     verify(_dishRepo, never()).save(any());
@@ -406,7 +422,7 @@ class DishServicesTest {
         .when(_dishRepo)
         .save(any(Dishes.class));
 
-    _dishServices.add(request);
+    _dishFacade.add(request);
 
     ArgumentCaptor<Dishes> dishCaptor = ArgumentCaptor.forClass(Dishes.class);
     verify(_dishRepo, times(1)).save(dishCaptor.capture());
@@ -475,7 +491,7 @@ class DishServicesTest {
         .when(_dishRepo)
         .save(any(Dishes.class));
 
-    _dishServices.add(request);
+    _dishFacade.add(request);
 
     ArgumentCaptor<Dishes> dishCaptor = ArgumentCaptor.forClass(Dishes.class);
     verify(_dishRepo, times(1)).save(dishCaptor.capture());
@@ -526,7 +542,7 @@ class DishServicesTest {
     when(_s3Services.generateUniqFileName("pizza.png")).thenReturn("uuid_pizza.png");
 
     RuntimeException exception =
-        assertThrows(RuntimeException.class, () -> _dishServices.add(request));
+        assertThrows(RuntimeException.class, () -> _dishFacade.add(request));
 
     assertEquals("Could not process photo file", exception.getMessage());
     verify(_dishRepo, never()).save(any());
@@ -537,7 +553,7 @@ class DishServicesTest {
   void getDictionary_ShouldReturnEmptyList_WhenRepoReturnsEmpty() {
     when(_dishRepo.findAllCategories()).thenReturn(new java.util.ArrayList<>());
 
-    DictionaryResponse result = _dishServices.getDictionary();
+    DictionaryResponse result = _dishFacade.getDictionary();
 
     assertTrue(result.getItem().isEmpty());
   }
@@ -554,7 +570,7 @@ class DishServicesTest {
 
     when(_dishRepo.findAllCategories()).thenReturn(java.util.List.of(category));
 
-    DictionaryResponse result = _dishServices.getDictionary();
+    DictionaryResponse result = _dishFacade.getDictionary();
 
     assertEquals(1, result.getItem().size());
     assertEquals(TestConstants.TOKEN_SOUPS, result.getItem().getFirst().getToken());
@@ -573,7 +589,7 @@ class DishServicesTest {
 
     when(_dishRepo.findAllCategories()).thenReturn(java.util.List.of(category));
 
-    DictionaryResponse result = _dishServices.getDictionary();
+    DictionaryResponse result = _dishFacade.getDictionary();
 
     assertEquals(1, result.getItem().size());
     assertEquals(TestConstants.TOKEN_DESSERTS, result.getItem().getFirst().getToken());
@@ -589,7 +605,7 @@ class DishServicesTest {
 
     when(_dishRepo.isCategoryNameTaken(anyString(), anyString())).thenReturn(false);
 
-    assertDoesNotThrow(() -> _dishServices.addCategory(request));
+    assertDoesNotThrow(() -> _dishFacade.addCategory(request));
 
     verify(_dishRepo, times(1))
         .saveCategory(
@@ -640,7 +656,7 @@ class DishServicesTest {
     when(_dishRepo.findCategoryByToken("OTHER")).thenReturn(fallbackCategory);
     when(_dishRepo.findByCategoryId(categoryToRemove.getId())).thenReturn(affectedDishes);
 
-    assertDoesNotThrow(() -> _dishServices.removeCategory(tokenToRemove));
+    assertDoesNotThrow(() -> _dishFacade.removeCategory(tokenToRemove));
 
     assertEquals(fallbackCategory, dish1.getCategory());
     assertEquals(fallbackCategory, dish2.getCategory());
@@ -668,7 +684,7 @@ class DishServicesTest {
   void getPublicMenu_ShouldReturnEmptyMenu_WhenNoDishesExist() {
     when(_dishRepo.findAll()).thenReturn(List.of());
 
-    PublicMenuResponse result = _dishServices.getPublicMenu();
+    PublicMenuResponse result = _dishFacade.getPublicMenu();
 
     assertNotNull(result);
     assertNotNull(result.getMenu());
@@ -696,7 +712,7 @@ class DishServicesTest {
 
     when(_dishRepo.findAll()).thenReturn(List.of(availableDish, unavailableDish));
 
-    PublicMenuResponse result = _dishServices.getPublicMenu();
+    PublicMenuResponse result = _dishFacade.getPublicMenu();
 
     assertEquals(1, result.getMenu().size());
     assertEquals(1, result.getMenu().getFirst().getDish().size());
@@ -733,7 +749,7 @@ class DishServicesTest {
 
     when(_dishRepo.findAll()).thenReturn(List.of(dish1));
 
-    PublicMenuResponse result = _dishServices.getPublicMenu();
+    PublicMenuResponse result = _dishFacade.getPublicMenu();
 
     assertEquals(1, result.getMenu().size());
     assertEquals("Zupy PL", result.getMenu().getFirst().getCategory());

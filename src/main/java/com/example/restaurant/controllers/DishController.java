@@ -4,9 +4,9 @@ import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.dto.response.PublicMenuResponse;
+import com.example.restaurant.fasade.interfaces.IDishFacade;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.services.interfaces.IDishServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/api/dishes", produces = "application/json")
 @RequiredArgsConstructor
 public class DishController {
-  private final IDishServices _dishServices;
+  private final IDishFacade _dishServices;
 
   @Operation(
       summary = "Get full restaurant menu",

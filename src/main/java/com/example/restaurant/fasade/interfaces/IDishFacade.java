@@ -1,4 +1,4 @@
-package com.example.restaurant.services.interfaces;
+package com.example.restaurant.fasade.interfaces;
 
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.DictionaryResponse;
@@ -6,7 +6,7 @@ import com.example.restaurant.dto.response.DishListResponse;
 import com.example.restaurant.dto.response.PublicMenuResponse;
 import com.example.restaurant.helpers.PagedResult;
 
-public interface IDishServices {
+public interface IDishFacade {
   PagedResult<DishListResponse> getMenu(DishFilterRequest request, PaggedRequest pagged);
 
   void remove(String dishToken);
