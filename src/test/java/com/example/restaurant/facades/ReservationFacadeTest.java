@@ -36,6 +36,10 @@ import com.example.restaurant.services.reservation.ReservationCommandService;
 import com.example.restaurant.services.reservation.ReservationDictionaryService;
 import com.example.restaurant.services.reservation.ReservationQueryService;
 import com.example.restaurant.services.reservation.ReservationSyncPublisher;
+import com.example.restaurant.validators.ReservationCreateValidator;
+import com.example.restaurant.validators.ReservationDurationValidator;
+import com.example.restaurant.validators.TableAvailabilityValidator;
+import com.example.restaurant.validators.TableExistenceValidator;
 import java.time.OffsetDateTime;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,9 +83,15 @@ class ReservationFacadeTest {
     ReservationSyncPublisher syncPublisher =
         new ReservationSyncPublisher(_notification, _syncMapper);
 
+    List<ReservationCreateValidator> validators =
+        List.of(
+            new ReservationDurationValidator(),
+            new TableExistenceValidator(_tableRepo),
+            new TableAvailabilityValidator(_tableRepo));
+
     ReservationCommandService commandService =
         new ReservationCommandService(
-            _tableRepo, _reservationRepo, _userRepo, _orderServices, syncPublisher);
+            _tableRepo, _reservationRepo, _userRepo, _orderServices, syncPublisher, validators);
 
     ReservationQueryService queryService =
         new ReservationQueryService(_reservationRepo, _orderServices, _reservationMapper);

@@ -13,8 +13,8 @@ import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.state.ReservationStateLogic;
+import com.example.restaurant.validators.ReservationCreateValidator;
 import jakarta.transaction.Transactional;
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,6 +30,8 @@ public class ReservationCommandService {
   private final IOrderFacade _orderServices;
   private final ReservationSyncPublisher _syncPublisher;
 
+  private final List<ReservationCreateValidator> _validators;
+
   private static final String STATUS_ACTIVE = "ACTIVE";
   private static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
   private static final String STATUS_NO_SHOW = "NO_SHOW";
@@ -38,20 +40,9 @@ public class ReservationCommandService {
   @Transactional
   @Auditable(action = "CREATE_RESERVATION")
   public ReservationResponse create(ReservationRequest request, String userToken) {
-    Duration duration = Duration.between(request.getStartTime(), request.getEndTime());
-
-    if (duration.toMinutes() < 30)
-      throw new IllegalStateException("Reservation must be at least 30 minutes long");
-
-    if (duration.toHours() > 3)
-      throw new IllegalStateException("Reservation cannot exceed 3 hours");
-
-    if (!_tableRepo.isTableExist(request.getTableToken()))
-      throw new EntityNotFoundException("Table not found");
-
-    if (!_tableRepo.isTableAvailable(
-        request.getTableToken(), request.getStartTime(), request.getEndTime()))
-      throw new IllegalStateException("Table is already reserved for this time slot");
+    for (ReservationCreateValidator validator : _validators) {
+      validator.validate(request);
+    }
 
     var user = _userRepo.findByToken(userToken);
     var table = _tableRepo.findByToken(request.getTableToken());
