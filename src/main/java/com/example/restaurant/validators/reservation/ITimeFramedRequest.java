@@ -1,4 +1,4 @@
-package com.example.restaurant.validators;
+package com.example.restaurant.validators.reservation;
 
 import java.time.OffsetDateTime;
 

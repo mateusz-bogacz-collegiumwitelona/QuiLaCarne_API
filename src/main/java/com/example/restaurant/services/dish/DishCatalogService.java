@@ -13,7 +13,8 @@ import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.DishesCategories;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
-import com.example.restaurant.services.S3StorageService;
+import com.example.restaurant.services.interfaces.IStorageService;
+import com.example.restaurant.validators.dish.DishSearchStrategy;
 import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -38,10 +40,12 @@ import org.springframework.util.ObjectUtils;
 public class DishCatalogService {
   private final IDishRepository _dishRepo;
   private final DishMapper _dishMapper;
-  private final S3StorageService _s3Services;
+  private final IStorageService _s3Services;
   private final IIngredientsRepository _ingredientsRepo;
   private final DishMediaService _mediaService;
   private final DishSyncPublisher _syncPublisher;
+  @Autowired(required = false)
+  private java.util.List<DishSearchStrategy> searchStrategies;
 
   @Cacheable(
       value = "dishMenu",
@@ -55,12 +59,21 @@ public class DishCatalogService {
     Pageable pageable = PageRequest.of(pageIndex, pagged.getSize());
 
     Page<Dishes> dishPage;
-    var excludedAllergens = request.getExcludedAllergens();
 
-    if (excludedAllergens != null && !excludedAllergens.isEmpty()) {
-      dishPage = _dishRepo.findWithoutAllergens(excludedAllergens, pageable);
+    if (searchStrategies == null || searchStrategies.isEmpty()) {
+      var excludedAllergens = request.getExcludedAllergens();
+      if (excludedAllergens != null && !excludedAllergens.isEmpty()) {
+        dishPage = _dishRepo.findWithoutAllergens(excludedAllergens, pageable);
+      } else {
+        dishPage = _dishRepo.findAll(pageable);
+      }
     } else {
-      dishPage = _dishRepo.findAll(pageable);
+      dishPage =
+          searchStrategies.stream()
+              .filter(s -> s.supports(request))
+              .findFirst()
+              .orElseThrow(() -> new IllegalStateException("No strategy for dish search"))
+              .find(request, pageable);
     }
 
     Page<DishListResponse> result =

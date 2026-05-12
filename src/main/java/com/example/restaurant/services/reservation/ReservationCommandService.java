@@ -13,7 +13,7 @@ import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.state.ReservationStateLogic;
-import com.example.restaurant.validators.ReservationCreateValidator;
+import com.example.restaurant.validators.reservation.ReservationCreateValidator;
 import jakarta.transaction.Transactional;
 import java.util.HashSet;
 import java.util.List;

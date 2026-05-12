@@ -2,7 +2,7 @@ package com.example.restaurant.services.dish;
 
 import com.example.restaurant.exceptions.FileProcessingException;
 import com.example.restaurant.models.Dishes;
-import com.example.restaurant.services.S3StorageService;
+import com.example.restaurant.services.interfaces.IStorageService;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Slf4j
 public class DishMediaService {
-  private final S3StorageService _s3Services;
+  private final IStorageService _s3Services;
 
   @Value("${application.storage.s3.public-endpoint}")
   private String s3Endpoint;

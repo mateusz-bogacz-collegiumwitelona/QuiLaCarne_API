@@ -1,4 +1,4 @@
-package com.example.restaurant.validators;
+package com.example.restaurant.validators.reservation;
 
 import com.example.restaurant.dto.request.ReservationRequest;
 

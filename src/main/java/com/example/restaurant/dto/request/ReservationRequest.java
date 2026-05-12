@@ -1,7 +1,7 @@
 package com.example.restaurant.dto.request;
 
 import com.example.restaurant.annotations.ValidDates;
-import com.example.restaurant.validators.ITimeFramedRequest;
+import com.example.restaurant.validators.reservation.ITimeFramedRequest;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
