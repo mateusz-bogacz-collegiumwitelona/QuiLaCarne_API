@@ -30,6 +30,9 @@ import com.example.restaurant.services.dish.DishCatalogService;
 import com.example.restaurant.services.dish.DishCategoryService;
 import com.example.restaurant.services.dish.DishMediaService;
 import com.example.restaurant.services.dish.DishSyncPublisher;
+import com.example.restaurant.validators.dish.DefaultDishSearchStrategy;
+import com.example.restaurant.validators.dish.DishSearchStrategy;
+import com.example.restaurant.validators.dish.ExcludeAllergensDishSearchStrategy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -79,9 +82,20 @@ class DishFacadeTest {
     DishSyncPublisher syncPublisher = new DishSyncPublisher(_notification, _syncMapper);
     DishCategoryService categoryService = new DishCategoryService(_dishRepo, syncPublisher);
 
+    List<DishSearchStrategy> searchStrategies =
+        List.of(
+            new DefaultDishSearchStrategy(_dishRepo),
+            new ExcludeAllergensDishSearchStrategy(_dishRepo));
+
     DishCatalogService catalogService =
         new DishCatalogService(
-            _dishRepo, _dishMapper, _s3Services, _ingredientsRepo, mediaService, syncPublisher);
+            _dishRepo,
+            _dishMapper,
+            _s3Services,
+            _ingredientsRepo,
+            mediaService,
+            syncPublisher,
+            searchStrategies);
 
     this._dishFacade = new DishFacade(catalogService, categoryService);
   }

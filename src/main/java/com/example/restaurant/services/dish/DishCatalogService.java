@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -44,8 +43,8 @@ public class DishCatalogService {
   private final IIngredientsRepository _ingredientsRepo;
   private final DishMediaService _mediaService;
   private final DishSyncPublisher _syncPublisher;
-  @Autowired(required = false)
-  private java.util.List<DishSearchStrategy> searchStrategies;
+
+  private final List<DishSearchStrategy> _searchStrategies;
 
   @Cacheable(
       value = "dishMenu",
@@ -60,21 +59,12 @@ public class DishCatalogService {
 
     Page<Dishes> dishPage;
 
-    if (searchStrategies == null || searchStrategies.isEmpty()) {
-      var excludedAllergens = request.getExcludedAllergens();
-      if (excludedAllergens != null && !excludedAllergens.isEmpty()) {
-        dishPage = _dishRepo.findWithoutAllergens(excludedAllergens, pageable);
-      } else {
-        dishPage = _dishRepo.findAll(pageable);
-      }
-    } else {
-      dishPage =
-          searchStrategies.stream()
-              .filter(s -> s.supports(request))
-              .findFirst()
-              .orElseThrow(() -> new IllegalStateException("No strategy for dish search"))
-              .find(request, pageable);
-    }
+    dishPage =
+        _searchStrategies.stream()
+            .filter(s -> s.supports(request))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("No strategy for dish search"))
+            .find(request, pageable);
 
     Page<DishListResponse> result =
         dishPage.map(
