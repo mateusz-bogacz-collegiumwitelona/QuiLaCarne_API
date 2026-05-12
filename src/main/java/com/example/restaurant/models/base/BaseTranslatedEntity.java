@@ -11,7 +11,6 @@ import org.hibernate.annotations.SQLRestriction;
 @Getter
 @Setter
 @SQLRestriction("deleted_at IS NULL")
-@SuppressWarnings({"PMD.AbstractClassWithoutAnyMethod", "PMD.AbstractClassWithoutAbstractMethod"})
 public abstract class BaseTranslatedEntity extends BaseEntity {
   @Column(nullable = false, unique = true)
   private String namePl;

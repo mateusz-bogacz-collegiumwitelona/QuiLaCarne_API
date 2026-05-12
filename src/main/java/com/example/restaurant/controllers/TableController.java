@@ -111,6 +111,29 @@ public class TableController {
   }
 
   @Operation(
+      summary = "Change table status to avalaible",
+      description = "Updates the status of a specific table to AVALABLE.",
+      tags = {"Waiter"})
+  @ApiResponses(
+      value = {
+        @ApiResponse(responseCode = "200", description = "Table status changed successfully"),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized - Valid JWT token is required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_WAITER role"),
+        @ApiResponse(responseCode = "404", description = "Table or table status not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+      })
+  @PreAuthorize("hasAnyRole('ROLE_WAITER')")
+  @PatchMapping("/{token}/avalaible")
+  public ResponseEntity<ResultHandler<Void>> changeStatusToAvalaible(
+      @Parameter(description = "Table token") @PathVariable String token) {
+    _tableServices.changeStatusToAvalaible(token);
+    return ResponseEntity.ok(
+        ResultHandler.success("Status changed successfully", HttpStatus.OK.value()));
+  }
+
+  @Operation(
       summary = "Add a new restaurant table",
       description =
           "Creates a new table with the specified number and capacity. "

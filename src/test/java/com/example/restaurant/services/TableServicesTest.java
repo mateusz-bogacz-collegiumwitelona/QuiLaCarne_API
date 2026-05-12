@@ -493,4 +493,69 @@ class TableServicesTest {
                         && event.getToken().equals(tokenToRemove)
                         && event.getPayload() == null));
   }
+
+  @Test
+  @DisplayName("Change Status To Available: Success when table and status exist")
+  void changeStatusToAvailable_ShouldChangeStatus_WhenValid() {
+    RestaurantTables table = new RestaurantTables();
+    table.setToken(TestConstants.FAKE_TABLE_TOKEN);
+
+    TableStatus oosStatus = new TableStatus();
+    oosStatus.setToken("OUT_OF_SERVICE");
+    table.setTableStatus(new HashSet<>(Set.of(oosStatus)));
+
+    TableStatus availableStatus = new TableStatus();
+    availableStatus.setToken("AVAILABLE");
+    availableStatus.setNameEn("Available");
+
+    when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
+    when(_tableRepo.findStatusByToken("AVAILABLE")).thenReturn(availableStatus);
+
+    _tableServices.changeStatusToAvalaible(TestConstants.FAKE_TABLE_TOKEN);
+
+    assertTrue(table.getTableStatus().contains(availableStatus));
+    verify(_tableRepo, times(1)).save(table);
+
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/tables/updates"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.UPDATED
+                        && event.getEntityType().equals("TABLE")
+                        && event.getToken().equals(TestConstants.FAKE_TABLE_TOKEN)
+                        && event.getPayload() != null));
+  }
+
+  @Test
+  @DisplayName("Change Status To Available: Throws Exception when table is not found")
+  void changeStatusToAvailable_ShouldThrowException_WhenTableNotFound() {
+    when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(null);
+
+    EntityNotFoundException exception =
+        assertThrows(
+            EntityNotFoundException.class,
+            () -> _tableServices.changeStatusToAvalaible(TestConstants.FAKE_TABLE_TOKEN));
+
+    assertEquals("Table not found", exception.getMessage());
+    verify(_tableRepo, never()).save(any());
+  }
+
+  @Test
+  @DisplayName(
+      "Change Status To Available: Throws Exception when AVAILABLE status is missing in DB")
+  void changeStatusToAvailable_ShouldThrowException_WhenStatusNotFound() {
+    RestaurantTables table = new RestaurantTables();
+
+    when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(table);
+    when(_tableRepo.findStatusByToken("AVAILABLE")).thenReturn(null);
+
+    EntityNotFoundException exception =
+        assertThrows(
+            EntityNotFoundException.class,
+            () -> _tableServices.changeStatusToAvalaible(TestConstants.FAKE_TABLE_TOKEN));
+
+    assertEquals("Table status 'OUT_OF_SERVICE' not found", exception.getMessage());
+    verify(_tableRepo, never()).save(any());
+  }
 }
