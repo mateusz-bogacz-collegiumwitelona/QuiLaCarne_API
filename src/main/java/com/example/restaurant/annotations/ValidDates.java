@@ -1,6 +1,6 @@
 package com.example.restaurant.annotations;
 
-import com.example.restaurant.validators.ReservationDatesValidator;
+import com.example.restaurant.validators.reservation.ReservationDatesValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.*;

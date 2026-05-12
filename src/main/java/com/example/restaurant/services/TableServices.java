@@ -18,9 +18,9 @@ import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.services.interfaces.ITableServices;
+import com.example.restaurant.state.TableStateLogic;
 import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -70,8 +70,16 @@ public class TableServices implements ITableServices {
   @Auditable(action = "CHANGE_TABLE_STATUS_TO_CLEAN")
   @CacheEvict(value = "tablesList", allEntries = true)
   public void changeStatusToClean(String tableToken) {
-    String status = "CLEANING";
-    changeStatus(tableToken, status);
+    RestaurantTables table = _tableRepo.findByToken(tableToken);
+    if (table == null) throw new EntityNotFoundException("Table not found");
+
+    TableStatus cleanStatus = _tableRepo.findStatusByToken("CLEANING");
+    if (cleanStatus == null) throw new EntityNotFoundException("Table status 'CLEANING' not found");
+
+    TableStateLogic.from(table).markAsCleaning(table, cleanStatus);
+
+    _tableRepo.save(table);
+    publishTableUpdate(table);
   }
 
   @Override
@@ -79,8 +87,17 @@ public class TableServices implements ITableServices {
   @Auditable(action = "CHANGE_TABLE_STATUS_TO_OUT_OF_SERVICE")
   @CacheEvict(value = "tablesList", allEntries = true)
   public void changeStatusToOutOfService(String tableToken) {
-    String status = "OUT_OF_SERVICE";
-    changeStatus(tableToken, status);
+    RestaurantTables table = _tableRepo.findByToken(tableToken);
+    if (table == null) throw new EntityNotFoundException("Table not found");
+
+    TableStatus oosStatus = _tableRepo.findStatusByToken("OUT_OF_SERVICE");
+    if (oosStatus == null)
+      throw new EntityNotFoundException("Table status 'OUT_OF_SERVICE' not found");
+
+    TableStateLogic.from(table).takeOutOfService(table, oosStatus);
+
+    _tableRepo.save(table);
+    publishTableUpdate(table);
   }
 
   @Override
@@ -179,26 +196,6 @@ public class TableServices implements ITableServices {
     _notification.sendEventToTopic("/dictionary/table-statuses", event);
   }
 
-  private void changeStatus(String token, String statusToken) {
-    RestaurantTables table = _tableRepo.findByToken(token);
-    if (table == null) {
-      throw new EntityNotFoundException("Table with token " + token + " not found");
-    }
-
-    TableStatus cleanStatus = _tableRepo.findStatusByToken(statusToken);
-    if (cleanStatus == null) {
-      throw new EntityNotFoundException("Table status '" + statusToken + "' not found");
-    }
-
-    table.setTableStatus(new HashSet<>(Set.of(cleanStatus)));
-    _tableRepo.save(table);
-
-    WebSocketEvent<SyncTableResponse> event =
-        WebSocketEvent.updated(
-            TABLE_ENTITY_TYPE, table.getToken(), _syncMapper.toSyncTableResponse(table));
-    _notification.sendEventToTopic("/tables/updates", event);
-  }
-
   private void validateTimeRange(TableFilterRequest request) {
     if (request.getStartTime() != null
         && request.getEndTime() != null
@@ -245,5 +242,12 @@ public class TableServices implements ITableServices {
         .status(statusName)
         .updatedAt(table.getUpdatedAt())
         .build();
+  }
+
+  private void publishTableUpdate(RestaurantTables table) {
+    WebSocketEvent<SyncTableResponse> event =
+        WebSocketEvent.updated(
+            TABLE_ENTITY_TYPE, table.getToken(), _syncMapper.toSyncTableResponse(table));
+    _notification.sendEventToTopic("/tables/updates", event);
   }
 }

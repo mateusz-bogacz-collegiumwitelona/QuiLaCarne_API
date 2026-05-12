@@ -8,9 +8,9 @@ import com.example.restaurant.dto.response.ClientReservationResponse;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.ReservationDetailsResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
+import com.example.restaurant.fasade.interfaces.IReservationFacade;
 import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.services.interfaces.IReservationServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/api/reservations", produces = "application/json")
 @RequiredArgsConstructor
 public class ReservationController {
-  private final IReservationServices _reservationServices;
+  private final IReservationFacade _reservationServices;
 
   @Operation(
       summary = "Create a new table reservation",

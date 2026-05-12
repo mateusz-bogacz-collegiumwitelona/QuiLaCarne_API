@@ -19,6 +19,7 @@ import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -142,7 +143,13 @@ class TableServicesTest {
   void changeStatusToClean_Successful() {
     RestaurantTables mockTable = new RestaurantTables();
     mockTable.setToken(TestConstants.FAKE_TABLE_TOKEN);
+
+    TableStatus occupiedStatus = new TableStatus();
+    occupiedStatus.setToken("OCCUPIED");
+    mockTable.setTableStatus(new HashSet<>(Set.of(occupiedStatus)));
+
     TableStatus mockStatus = new TableStatus();
+    mockStatus.setToken("CLEANING");
 
     when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(mockTable);
     when(_tableRepo.findStatusByToken("CLEANING")).thenReturn(mockStatus);
@@ -193,6 +200,10 @@ class TableServicesTest {
     RestaurantTables table = new RestaurantTables();
     table.setToken(TestConstants.FAKE_TABLE_TOKEN);
 
+    TableStatus availableStatus = new TableStatus();
+    availableStatus.setToken("AVAILABLE");
+    table.setTableStatus(new HashSet<>(Set.of(availableStatus)));
+
     TableStatus outOfServiceStatus = new TableStatus();
     outOfServiceStatus.setToken("OUT_OF_SERVICE");
     outOfServiceStatus.setNameEn("Out of service");
@@ -227,9 +238,7 @@ class TableServicesTest {
             EntityNotFoundException.class,
             () -> _tableServices.changeStatusToOutOfService(TestConstants.FAKE_TABLE_TOKEN));
 
-    assertEquals(
-        "Table with token " + TestConstants.FAKE_TABLE_TOKEN + " not found",
-        exception.getMessage());
+    assertEquals("Table not found", exception.getMessage());
     verify(_tableRepo, never()).save(any());
   }
 

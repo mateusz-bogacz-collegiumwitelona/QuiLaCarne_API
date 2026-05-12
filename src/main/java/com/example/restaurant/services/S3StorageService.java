@@ -1,5 +1,6 @@
 package com.example.restaurant.services;
 
+import com.example.restaurant.services.interfaces.IStorageService;
 import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.util.List;
@@ -15,7 +16,7 @@ import software.amazon.awssdk.services.s3.model.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class S3StorageService {
+public class S3StorageService implements IStorageService {
   private final S3Client _s3Client;
 
   @Value("${application.storage.s3.bucket-name}")

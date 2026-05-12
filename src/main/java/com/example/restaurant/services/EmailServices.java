@@ -1,7 +1,7 @@
 package com.example.restaurant.services;
 
 import com.example.restaurant.dto.domain.EmailDomain;
-import com.example.restaurant.services.queue.EmailQueueProducer;
+import com.example.restaurant.queue.EmailQueueProducer;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

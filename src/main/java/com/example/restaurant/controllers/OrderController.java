@@ -2,8 +2,8 @@ package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
+import com.example.restaurant.fasade.interfaces.IOrderFacade;
 import com.example.restaurant.helpers.ResultHandler;
-import com.example.restaurant.services.interfaces.IOrderServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/api/order", produces = "application/json")
 @RequiredArgsConstructor
 public class OrderController {
-  private final IOrderServices _orderServices;
+  private final IOrderFacade _orderServices;
 
   @Operation(
       summary = "Get list of order statuses",
