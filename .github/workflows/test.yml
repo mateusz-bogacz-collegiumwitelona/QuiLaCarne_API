@@ -3,15 +3,19 @@ name: CI Pipeline
 on:
   push:
     branches: ["stage", "facade"]
-    paths-ignore:
-      - '**/*.md'
-      - "docs/*.html"
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/**'
 
   pull_request:
     branches: ["main"]
-    paths-ignore:
-      - '**/*.md'
-      - "docs/*.html"
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/**'
 
 jobs:
   test:
