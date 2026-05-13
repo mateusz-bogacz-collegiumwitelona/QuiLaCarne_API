@@ -623,7 +623,22 @@ class OrderFacadeTest {
     verify(_orderRepo, times(1)).saveAllItems(anyList());
     verify(_orderRepo, times(1)).save(mockOrder);
 
-    verify(_notification, never()).sendEventToTopic(anyString(), any());
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/orders/updates"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.UPDATED
+                        && event.getEntityType().equals("ORDER")
+                        && event.getToken().equals(TestConstants.FAKE_ORDER_TOKEN)));
+
+    verify(_notification, times(3))
+        .sendEventToTopic(
+            eq("/orders/items"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.UPDATED
+                        && event.getEntityType().equals("ORDER_ITEM")));
   }
 
   @Test

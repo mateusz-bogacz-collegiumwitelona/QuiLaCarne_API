@@ -91,6 +91,7 @@ public class AuthServices implements IAuthServices {
         _tokenServices.createToken(userToken, TokenTypeEnum.ACTIVATION, 24 * 60);
 
     _emailServices.sendActivationEmail(request.getEmail(), request.getUsername(), activationToken);
+    log.info("Register new user {}", request.getUsername());
   }
 
   @Override
@@ -102,6 +103,8 @@ public class AuthServices implements IAuthServices {
     if (userTokenOpt.isEmpty()) throw new InvalidDateException("Invalid or expired token");
 
     _userServices.activeUser(userTokenOpt.get());
+
+    log.info("User {} confirmed registration", userTokenOpt.get());
 
     return true;
   }
@@ -119,6 +122,7 @@ public class AuthServices implements IAuthServices {
           _tokenServices.createToken(userMiniml.token(), TokenTypeEnum.PASSWORD_RESET, 15);
 
       _emailServices.sendResetPasswordEmail(userMiniml.email(), userMiniml.username(), resetToken);
+      log.info("Reset password for user {}", userMiniml.username());
     }
   }
 
@@ -135,6 +139,8 @@ public class AuthServices implements IAuthServices {
     if (userTokenOpt.isEmpty()) throw new IllegalStateException("Invalid or expired token");
 
     _userServices.changePassword(userTokenOpt.get(), request.getConfirmPassword());
+
+    log.info("Change password for user {}", userTokenOpt.get());
 
     return true;
   }

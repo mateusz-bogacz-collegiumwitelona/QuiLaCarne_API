@@ -14,6 +14,7 @@ import com.example.restaurant.repository.interfaces.IIngredientsRepository;
 import com.example.restaurant.services.interfaces.IAllergensServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AllergensServices implements IAllergensServices {
   private final IAllergensRepository _allergenRepo;
   private final IIngredientsRepository _ingredientsRepo;
@@ -55,6 +57,7 @@ public class AllergensServices implements IAllergensServices {
     WebSocketEvent<SyncDictionaryResponse> event =
         WebSocketEvent.created(ENTITY_TYPE, allergen.getToken(), payload);
     _notification.sendEventToTopic("/dictionary/allergens", event);
+    log.info("Added allergens for dictionary: {}", allergen.getToken());
   }
 
   @Override
@@ -82,5 +85,6 @@ public class AllergensServices implements IAllergensServices {
     WebSocketEvent<Void> event = WebSocketEvent.deleted(ENTITY_TYPE, token);
 
     _notification.sendEventToTopic("/dictionary/allergens", event);
+    log.info("Removed allergens for dictionary: {}", token);
   }
 }

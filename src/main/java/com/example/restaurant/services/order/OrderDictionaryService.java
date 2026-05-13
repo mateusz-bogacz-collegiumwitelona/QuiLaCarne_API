@@ -12,6 +12,7 @@ import com.example.restaurant.repository.interfaces.IOrderRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderDictionaryService {
   private final IOrderRepository _orderRepo;
   private final OrderSyncPublisher _syncPublisher;
@@ -44,6 +46,7 @@ public class OrderDictionaryService {
     _orderRepo.saveStatus(status);
 
     _syncPublisher.publishOrderStatusChange(status, true);
+    log.info("Added order status: {}", status.getToken());
   }
 
   @Transactional
@@ -67,6 +70,7 @@ public class OrderDictionaryService {
         });
 
     _syncPublisher.publishOrderStatusDeleted(token);
+    log.info("Removed order status: {}", token);
   }
 
   @Cacheable(
@@ -89,6 +93,7 @@ public class OrderDictionaryService {
             "Order item status already exists");
     _orderRepo.saveItemStatus(status);
     _syncPublisher.publishOrderItemStatusChange(status, true);
+    log.info("Added order item status: {}", status.getToken());
   }
 
   @Transactional
@@ -111,5 +116,6 @@ public class OrderDictionaryService {
         });
 
     _syncPublisher.publishOrderItemStatusDeleted(token);
+    log.info("Removed order item status: {}", token);
   }
 }

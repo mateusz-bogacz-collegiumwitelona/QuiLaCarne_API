@@ -33,6 +33,7 @@ public class DishMediaService {
             _s3Services.uploadFromStream(
                 photo.getInputStream(), generatedName, photo.getContentType(), photo.getSize());
         dish.setImageUrl(finalFileName);
+        log.info("Uploaded file {}", finalFileName);
       } catch (IOException e) {
         log.error("Error reading photo input stream", e);
         throw new FileProcessingException("Could not process photo file", e);
