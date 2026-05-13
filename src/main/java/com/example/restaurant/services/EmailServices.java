@@ -18,7 +18,7 @@ public class EmailServices {
   @Value("${app.cors.allowed-origins}")
   private String _appUrl;
 
-  @Async
+  //@Async
   public void sendActivationEmail(String to, String username, String token) {
     validateInputs(to, username, token);
 
@@ -33,7 +33,7 @@ public class EmailServices {
     log.info("Activation email sent to {}", to);
   }
 
-  @Async
+ // @Async
   public void sendResetPasswordEmail(String to, String username, String token) {
     String resetUrl = String.format("%s/reset-password?email=%s&token=%s", _appUrl, to, token);
 
@@ -46,7 +46,7 @@ public class EmailServices {
     log.info("Reset email sent to {}", to);
   }
 
-  @Async
+ // @Async
   public void sendEmailChangeVerification(String to, String token) {
     String validationUrl =
         String.format("%s/confirm-email-change?email=%s&token=%s", _appUrl, to, token);
@@ -58,7 +58,7 @@ public class EmailServices {
     log.info("Email change verification email sent to {}", to);
   }
 
-  @Async
+  //@Async
   public void sendEmailSetBan(String to, String userName, String reason) {
     validateInputs(to, userName, reason);
 
