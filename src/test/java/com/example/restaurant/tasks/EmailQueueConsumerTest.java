@@ -9,7 +9,6 @@ import com.example.restaurant.dto.domain.EmailDomain;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.MimeMessage;
 import java.time.Duration;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,7 +48,7 @@ class EmailQueueConsumerTest {
   @DisplayName("processQueue: Should process email successfully when queue is not empty")
   void processQueue_ShouldSendEmail_WhenJobExists() throws Exception {
     String jsonJob =
-            "{\"to\":\"test@example.com\",\"subject\":\"Test\",\"template\":\"test_template\"}";
+        "{\"to\":\"test@example.com\",\"subject\":\"Test\",\"template\":\"test_template\"}";
     EmailDomain mockEmail = mock(EmailDomain.class);
 
     MimeMessage realMimeMessage = new JavaMailSenderImpl().createMimeMessage();
@@ -62,7 +61,7 @@ class EmailQueueConsumerTest {
     when(_listOperations.rightPop(eq("email_queue"), any(Duration.class))).thenReturn(jsonJob);
     when(_mapper.readValue(jsonJob, EmailDomain.class)).thenReturn(mockEmail);
     when(_templateEngine.process(eq("test_template"), any(Context.class)))
-            .thenReturn("<html>Test</html>");
+        .thenReturn("<html>Test</html>");
 
     when(_sender.createMimeMessage()).thenReturn(realMimeMessage);
 
