@@ -9,12 +9,14 @@ import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.TwoFactorServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserSecurityService {
   private final IUserRepository _userRepo;
   private final PasswordEncoder _passwordEncoder;
@@ -32,7 +34,7 @@ public class UserSecurityService {
       throw new BadCredentialsException("Invalid old password");
 
     user.setPassword(_passwordEncoder.encode(request.getConfirmPassword()));
-
+    log.info("Updated user password {}", user.getUsername());
     _userRepo.save(user);
   }
 
@@ -40,6 +42,7 @@ public class UserSecurityService {
   public void changePassword(String token, String newPassword) {
     Users user = _userRepo.findByToken(token);
     user.setPassword(_passwordEncoder.encode(newPassword));
+    log.info("Updated user password {}", user.getUsername());
     _userRepo.save(user);
   }
 
@@ -57,7 +60,7 @@ public class UserSecurityService {
     _userRepo.save(user);
 
     String qrUriCode = _2faServices.generateQrCodeImageUri(secret, user.getUsername());
-
+    log.info("Generated data for QR code for user {}", user.getUsername());
     return Generate2faResponse.builder().qrCodeUri(qrUriCode).manualCode(secret).build();
   }
 
@@ -78,6 +81,9 @@ public class UserSecurityService {
     if (!isValid) throw new IllegalStateException("Invalid 2FA code. Try again.");
 
     user.setIsTwoFactorEnabled(true);
+
+    log.info("Verifying 2FA code for user {}", user.getUsername());
+
     _userRepo.save(user);
   }
 }

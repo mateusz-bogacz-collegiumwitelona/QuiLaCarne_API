@@ -10,12 +10,14 @@ import jakarta.transaction.Transactional;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserAccountService {
   private final IUserRepository _userRepo;
   private final IRoleRepository _roleRepository;
@@ -32,12 +34,14 @@ public class UserAccountService {
 
     user.setIsActive(true);
     _userRepo.save(user);
+    log.info("Active user {} by {}", userToken, user.getUsername());
   }
 
   @Auditable(action = "DELETE_ACCOUNT")
   @CacheEvict(value = "usersList", allEntries = true)
   public void delete(String userToken) {
     _userHelper.deleteAccount(userToken);
+    log.info("User {} has been deleted", userToken);
   }
 
   @Transactional
@@ -69,6 +73,8 @@ public class UserAccountService {
 
     _userRepo.save(user);
 
+    log.info("Created user {} by {}", baseUserName, user.getUsername());
+
     return baseUserName;
   }
 
@@ -79,5 +85,6 @@ public class UserAccountService {
     Users user = _userRepo.findByToken(userToken);
     _userHelper.changeUsername(user, userName);
     _userRepo.save(user);
+    log.info("Updated user {} by {}", userName, user.getUsername());
   }
 }

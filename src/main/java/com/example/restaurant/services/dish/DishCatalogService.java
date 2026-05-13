@@ -99,6 +99,7 @@ public class DishCatalogService {
     _dishRepo.save(dish);
 
     _syncPublisher.publishDishDeleted(dishToken);
+    log.info("Dish removed {}", dishToken);
   }
 
   @Transactional
@@ -124,6 +125,7 @@ public class DishCatalogService {
     _dishRepo.save(dish);
 
     _syncPublisher.publishDishUpdated(dish);
+    log.info("Dish updated {}", dish.getToken());
   }
 
   @Transactional
@@ -145,6 +147,7 @@ public class DishCatalogService {
     _dishRepo.save(dish);
 
     _syncPublisher.publishDishCreated(dish);
+    log.info("Dish added {}", dish.getToken());
   }
 
   @Transactional
@@ -173,6 +176,7 @@ public class DishCatalogService {
     _dishRepo.save(dish);
 
     _syncPublisher.publishDishUpdated(dish);
+    log.info("Dish updated {}", dish.getToken());
   }
 
   @Cacheable(

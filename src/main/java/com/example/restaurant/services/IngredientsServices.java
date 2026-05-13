@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class IngredientsServices implements IIngredientsServices {
   private final IIngredientsRepository _ingredientsRepo;
   private final IAllergensRepository _allergensRepo;
@@ -67,6 +69,8 @@ public class IngredientsServices implements IIngredientsServices {
         WebSocketEvent.created(
             ENTITY_TYPE, ingredient.getToken(), _syncMapper.toSyncIngredientResponse(ingredient));
     _notification.sendEventToTopic("dictionary/sync", event);
+
+    log.info("Create new ingrediant {}", ingredient.getToken());
   }
 
   @Transactional
@@ -97,6 +101,7 @@ public class IngredientsServices implements IIngredientsServices {
     WebSocketEvent<Void> event = WebSocketEvent.deleted(ENTITY_TYPE, token);
 
     _notification.sendEventToTopic("menu/availability", event);
+    log.info("Delete ingrediant {}", token);
   }
 
   @Override
