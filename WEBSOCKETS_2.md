@@ -68,23 +68,23 @@ Każdy event ma wspólny envelope:
 
 ## 3. Lista wszystkich aktywnych kanałów
 
-| Kanał subskrypcji | Co oznacza | Kiedy przychodzi update | `entityType` | Payload |
-| --- | --- | --- | --- | --- |
-| `/topic/reports/updates` | Zgłoszenia użytkowników | dodanie reportu, zmiana statusu reportu | `REPORT` | `SyncReportResponse` |
-| `/topic/dictionary/allergens` | Słownik alergenów | dodanie / usunięcie alergenu | `ALLERGEN` | `SyncDictionaryResponse` lub `null` |
-| `/topic/tables/updates` | Stoliki | dodanie stolika, zmiana statusu stolika, usunięcie stolika | `TABLE` | `SyncTableResponse` lub `null` |
-| `/topic/dictionary/table-statuses` | Słownik statusów stolików | dodanie / usunięcie statusu stolika | `TABLE_STATUS` | `SyncDictionaryResponse` lub `null` |
-| `/topic/menu/availability` | Dostępność menu | usunięcie składnika, które wpływa na dostępność dań | `INGREDIENT` | `null` |
-| `/topic/dictionary/sync` | Słownik składników | dodanie składnika | `INGREDIENT` | `SyncIngredientResponse` |
-| `/topic/dictionary/dish-categories` | Kategorie dań | dodanie / usunięcie kategorii dań | `DISH_CATEGORY` | `SyncDictionaryResponse` lub `null` |
-| `/topic/menu/dishes` | Dania w menu | dodanie, edycja, zmiana dostępności, usunięcie dania | `DISH` | `SyncDishResponse` lub `null` |
-| `/topic/orders/updates` | Zamówienia | utworzenie zamówienia, update zamówienia, usunięcie zamówienia, zmiana statusów zamówienia | `ORDER` | `SyncOrderResponse` lub `null` |
-| `/topic/orders/items` | Pozycje zamówienia | utworzenie / update pozycji zamówienia | `ORDER_ITEM` | `SyncOrderItemResponse` |
-| `/topic/dictionary/order-statuses` | Słownik statusów zamówień | dodanie / usunięcie statusu zamówienia | `ORDER_STATUS` | `SyncDictionaryResponse` lub `null` |
-| `/topic/dictionary/order-item-statuses` | Słownik statusów pozycji zamówienia | dodanie / usunięcie statusu pozycji zamówienia | `ORDER_ITEM_STATUS` | `SyncDictionaryResponse` lub `null` |
-| `/topic/reservations/updates` | Rezerwacje | utworzenie rezerwacji, update rezerwacji | `RESERVATION` | `SyncReservationResponse` |
-| `/topic/personnel/updates` | Personel / pracownicy | utworzenie, update, usunięcie pracownika | `EMPLOYEE` | `SyncUserResponse` lub `null` |
-| `/topic/security/bans` | Bany użytkowników | nałożenie bana, automatyczne wygaśnięcie bana | `BAN` | `SyncBanResponse` |
+| Kanał subskrypcji                       | Co oznacza                          | Kiedy przychodzi update                                                                    | `entityType`        | Payload                             |
+|-----------------------------------------|-------------------------------------|--------------------------------------------------------------------------------------------|---------------------|-------------------------------------|
+| `/topic/reports/updates`                | Zgłoszenia użytkowników             | dodanie reportu, zmiana statusu reportu                                                    | `REPORT`            | `SyncReportResponse`                |
+| `/topic/dictionary/allergens`           | Słownik alergenów                   | dodanie / usunięcie alergenu                                                               | `ALLERGEN`          | `SyncDictionaryResponse` lub `null` |
+| `/topic/tables/updates`                 | Stoliki                             | dodanie stolika, zmiana statusu stolika, usunięcie stolika                                 | `TABLE`             | `SyncTableResponse` lub `null`      |
+| `/topic/dictionary/table-statuses`      | Słownik statusów stolików           | dodanie / usunięcie statusu stolika                                                        | `TABLE_STATUS`      | `SyncDictionaryResponse` lub `null` |
+| `/topic/menu/availability`              | Dostępność menu                     | usunięcie składnika, które wpływa na dostępność dań                                        | `INGREDIENT`        | `null`                              |
+| `/topic/dictionary/sync`                | Słownik składników                  | dodanie składnika                                                                          | `INGREDIENT`        | `SyncIngredientResponse`            |
+| `/topic/dictionary/dish-categories`     | Kategorie dań                       | dodanie / usunięcie kategorii dań                                                          | `DISH_CATEGORY`     | `SyncDictionaryResponse` lub `null` |
+| `/topic/menu/dishes`                    | Dania w menu                        | dodanie, edycja, zmiana dostępności, usunięcie dania                                       | `DISH`              | `SyncDishResponse` lub `null`       |
+| `/topic/orders/updates`                 | Zamówienia                          | utworzenie zamówienia, update zamówienia, usunięcie zamówienia, zmiana statusów zamówienia | `ORDER`             | `SyncOrderResponse` lub `null`      |
+| `/topic/orders/items`                   | Pozycje zamówienia                  | utworzenie / update pozycji zamówienia                                                     | `ORDER_ITEM`        | `SyncOrderItemResponse`             |
+| `/topic/dictionary/order-statuses`      | Słownik statusów zamówień           | dodanie / usunięcie statusu zamówienia                                                     | `ORDER_STATUS`      | `SyncDictionaryResponse` lub `null` |
+| `/topic/dictionary/order-item-statuses` | Słownik statusów pozycji zamówienia | dodanie / usunięcie statusu pozycji zamówienia                                             | `ORDER_ITEM_STATUS` | `SyncDictionaryResponse` lub `null` |
+| `/topic/reservations/updates`           | Rezerwacje                          | utworzenie rezerwacji, update rezerwacji                                                   | `RESERVATION`       | `SyncReservationResponse`           |
+| `/topic/personnel/updates`              | Personel / pracownicy               | utworzenie, update, usunięcie pracownika                                                   | `EMPLOYEE`          | `SyncUserResponse` lub `null`       |
+| `/topic/security/bans`                  | Bany użytkowników                   | nałożenie bana, automatyczne wygaśnięcie bana                                              | `BAN`               | `SyncBanResponse`                   |
 
 ## 4. Szczegółowy opis kanałów
 
