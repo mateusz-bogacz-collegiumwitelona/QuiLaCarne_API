@@ -14,11 +14,13 @@ import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserIdentityService {
   private final IUserRepository _userRepo;
   private final IVerificationTokenServices _tokenServices;
@@ -44,6 +46,7 @@ public class UserIdentityService {
 
     String token = _tokenServices.createToken(userToken, TokenTypeEnum.EMAIL_UPDATE, 60);
     _emailServices.sendEmailChangeVerification(email, token);
+    log.info("Updated email {} by {}", email, user.getNormalizedEmail());
   }
 
   @Transactional
@@ -65,6 +68,7 @@ public class UserIdentityService {
     user.setPendingEmail(null);
 
     _userRepo.save(user);
+    log.info("Confirmed email change {} by {}", user.getEmail(), user.getNormalizedEmail());
   }
 
   public Optional<UserDomain> findMinimalByEmail(String email) {
@@ -83,6 +87,7 @@ public class UserIdentityService {
   @Transactional
   @CacheEvict(value = "usersList", allEntries = true)
   public String create(RegisterRequest request, String userRole, boolean isActive) {
+    log.info("Created user {}", request.getUsername());
     return _userHelper.buildAndSaveUser(request, userRole, isActive).getToken();
   }
 }

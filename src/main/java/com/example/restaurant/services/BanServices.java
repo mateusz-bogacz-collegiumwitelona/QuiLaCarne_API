@@ -59,6 +59,7 @@ public class BanServices implements IBanServices {
         new CreateBanDomain(client, admin, request.getReason(), request.getExpiresAt());
 
     add(banDomain);
+    log.info("Created ban for {} by {}", banDomain.client().getUsername(), admin.getUsername());
   }
 
   @Override

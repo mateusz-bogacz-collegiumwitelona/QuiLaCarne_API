@@ -87,6 +87,8 @@ public class OrderWorkflowService {
 
     _syncPublisher.publishOrderCreated(order, orderItems);
 
+    log.info("Created order: {}", order);
+
     return new ReservationDomain(reservationDishes, totalPrice);
   }
 
@@ -100,6 +102,7 @@ public class OrderWorkflowService {
     _orderRepo.save(order);
 
     _syncPublisher.publishOrderUpdated(order, updatedItems);
+    log.info("Updated order: {}", order);
   }
 
   @Transactional
@@ -129,6 +132,8 @@ public class OrderWorkflowService {
 
     _orderRepo.saveAllItems(items);
     _orderRepo.save(order);
+    _syncPublisher.publishOrderUpdated(order, items);
+    log.info("Updated order: {}", order);
   }
 
   @Transactional
@@ -155,6 +160,7 @@ public class OrderWorkflowService {
       _orderRepo.save(order);
 
       _syncPublisher.publishOrderUpdated(order, items);
+      log.info("Updated order: {}", order);
     }
   }
 

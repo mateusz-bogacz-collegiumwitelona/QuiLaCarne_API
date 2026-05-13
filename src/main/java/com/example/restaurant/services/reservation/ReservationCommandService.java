@@ -19,10 +19,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationCommandService {
   private final ITableRespository _tableRepo;
   private final IReservationRepository _reservationRepo;
@@ -81,6 +83,8 @@ public class ReservationCommandService {
 
     _syncPublisher.publishReservationCreate(reservation);
 
+    log.info("Created reservation {}", reservation.getToken());
+
     return response;
   }
 
@@ -96,6 +100,8 @@ public class ReservationCommandService {
 
     _reservationRepo.save(reservation);
 
+    log.info("Cancelled reservation {}", reservation.getToken());
+
     _syncPublisher.publishReservationUpdated(reservation);
   }
 
@@ -103,12 +109,14 @@ public class ReservationCommandService {
   public void removeItemFromReservation(
       String waiterToken, String reservationToken, ReservationDishRequest request) {
     _orderServices.removeItemFromReservation(waiterToken, reservationToken, request);
+    log.info("Removed from reservation {} item {}", reservationToken, request.getDishToken());
   }
 
   @Auditable(action = "ADD_ITEM_TO_RESERVATION")
   public void addItemFromReservation(
       String waiterToken, String reservationToken, List<ReservationDishRequest> request) {
     _orderServices.addItemFromReservation(waiterToken, reservationToken, request);
+    log.info("Added from reservation {} items {}", reservationToken, List.of(request));
   }
 
   @Transactional
@@ -131,6 +139,7 @@ public class ReservationCommandService {
     _orderServices.assignWaiterToOrders(reservationToken, waiterToken);
 
     _syncPublisher.publishReservationUpdated(reservation);
+    log.info("Assigned waiter {} to reservation {}", waiterToken, reservationToken);
   }
 
   @Transactional
@@ -148,5 +157,6 @@ public class ReservationCommandService {
     _orderServices.isAbsent(reservationToken);
 
     _syncPublisher.publishReservationUpdated(reservation);
+    log.info("Absent reservation {}", reservationToken);
   }
 }

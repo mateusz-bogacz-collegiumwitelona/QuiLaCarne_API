@@ -24,6 +24,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TableServices implements ITableServices {
   private final ITableRespository _tableRepo;
   private final NotificationServices _notification;
@@ -80,6 +82,7 @@ public class TableServices implements ITableServices {
 
     _tableRepo.save(table);
     publishTableUpdate(table);
+    log.info("Table {} has been cleaned", tableToken);
   }
 
   @Override
@@ -98,6 +101,7 @@ public class TableServices implements ITableServices {
 
     _tableRepo.save(table);
     publishTableUpdate(table);
+    log.info("Table {} has been out of order", tableToken);
   }
 
   @Override
@@ -125,6 +129,7 @@ public class TableServices implements ITableServices {
         WebSocketEvent.created(
             TABLE_ENTITY_TYPE, table.getToken(), _syncMapper.toSyncTableResponse(table));
     _notification.sendEventToTopic("/tables/updates", event);
+    log.info("Table {} has been added", table.getToken());
   }
 
   @Override
@@ -140,6 +145,7 @@ public class TableServices implements ITableServices {
 
     WebSocketEvent<Void> event = WebSocketEvent.deleted(TABLE_ENTITY_TYPE, token);
     _notification.sendEventToTopic("/tables/updates", event);
+    log.info("Table {} has been deleted", table.getToken());
   }
 
   @Override
@@ -169,6 +175,7 @@ public class TableServices implements ITableServices {
     WebSocketEvent<SyncDictionaryResponse> event =
         WebSocketEvent.created(TABLE_STATUS_ENTITY_TYPE, status.getToken(), payload);
     _notification.sendEventToTopic("/dictionary/table-statuses", event);
+    log.info("Table status {} has been added", request.getNameEn());
   }
 
   @Override
@@ -194,6 +201,7 @@ public class TableServices implements ITableServices {
 
     WebSocketEvent<Void> event = WebSocketEvent.deleted(TABLE_STATUS_ENTITY_TYPE, token);
     _notification.sendEventToTopic("/dictionary/table-statuses", event);
+    log.info("Table status {} has been removed", token);
   }
 
   @Override
@@ -212,6 +220,7 @@ public class TableServices implements ITableServices {
 
     _tableRepo.save(table);
     publishTableUpdate(table);
+    log.info("Table {} has been released", table.getToken());
   }
 
   private void validateTimeRange(TableFilterRequest request) {

@@ -28,6 +28,7 @@ public class EmailServices {
             "activationUrl", token);
 
     enqueueHtmlEmail(to, "Qui la Carne - Confirm your account", "emails/activation", variables);
+    log.info("Activation email sent to {}", to);
   }
 
   @Async
@@ -38,6 +39,7 @@ public class EmailServices {
             "resetUrl", token);
 
     enqueueHtmlEmail(to, "Qui la Carne - Reset your password", "emails/reset-password", variables);
+    log.info("Reset email sent to {}", to);
   }
 
   @Async
@@ -46,6 +48,7 @@ public class EmailServices {
 
     enqueueHtmlEmail(
         to, "Qui la Carne - Confirm your new email address", "emails/email-update", variables);
+    log.info("Email change verification email sent to {}", to);
   }
 
   @Async
@@ -58,6 +61,7 @@ public class EmailServices {
             "reason", reason);
 
     enqueueHtmlEmail(to, "Qui la Carne - Account Suspension Notice", "emails/set_ban", variables);
+    log.info("Email set ban email sent to {}", to);
   }
 
   private void validateInputs(String to, String... params) {

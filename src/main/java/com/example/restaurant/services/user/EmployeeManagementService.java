@@ -11,12 +11,14 @@ import com.example.restaurant.repository.interfaces.IUserRepository;
 import jakarta.transaction.Transactional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmployeeManagementService {
   private final IUserRepository _userRepo;
   private final IRoleRepository _roleRepository;
@@ -39,6 +41,7 @@ public class EmployeeManagementService {
     }
 
     _userPublisher.publishUserCreated(employee);
+    log.info("Created employee {}", employee.getUsername());
   }
 
   @Transactional
@@ -58,6 +61,7 @@ public class EmployeeManagementService {
     _userRepo.save(employee);
 
     _userPublisher.publishUserUpdated(employee);
+    log.info("Updated employee {}", employee.getUsername());
   }
 
   @Transactional
@@ -89,6 +93,7 @@ public class EmployeeManagementService {
     _userRepo.save(user);
 
     _userPublisher.publishUserUpdated(user);
+    log.info("Updated employee role {}", user.getUsername());
   }
 
   @Transactional
@@ -108,6 +113,7 @@ public class EmployeeManagementService {
     _userRepo.save(user);
 
     _userPublisher.publishUserUpdated(user);
+    log.info("Blocked employee {}", user.getUsername());
   }
 
   @Transactional
@@ -120,6 +126,7 @@ public class EmployeeManagementService {
     _userHelper.deleteAccount(employeeToken);
 
     _userPublisher.publishUserDeleted(employeeToken);
+    log.info("Deleted employee {}", employeeToken);
   }
 
   @Transactional
@@ -136,6 +143,8 @@ public class EmployeeManagementService {
     user.setPassword(_passwordEncoder.encode(request.getConfirmPassword()));
 
     _userRepo.save(user);
+    _userPublisher.publishUserUpdated(user);
+    log.info("Changed employee password {}", user.getUsername());
   }
 
   private void changeEmail(Users user, String email) {

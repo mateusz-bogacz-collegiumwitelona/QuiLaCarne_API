@@ -16,10 +16,12 @@ import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReportServices implements IReportServices {
   private final IReportRepository _reportRepo;
   private final IUserRepository _userRepo;
@@ -54,6 +56,10 @@ public class ReportServices implements IReportServices {
         WebSocketEvent.created(
             REPORT_ENTITY_TYPE, report.getToken(), _syncMapper.toSyncReportResponse(report));
     _notification.sendEventToTopic("/reports/updates", event);
+    log.info(
+        "Added report to user {} by {}",
+        report.getGuest().getToken(),
+        report.getReporter().getUsername());
   }
 
   @Override
@@ -61,7 +67,7 @@ public class ReportServices implements IReportServices {
   @Auditable(action = "CHANGE_REPORT_STATUS")
   public void changeStatus(String adminToken, ChangeReportStatusRequest request) {
     var report = _reportRepo.findByToken(request.getReportToken());
-
+    String statusForLog;
     var admin = _userRepo.findByToken(adminToken);
 
     if (request.isAccepted()) {
@@ -76,10 +82,11 @@ public class ReportServices implements IReportServices {
 
       var status = _reportRepo.findStatusByToken("ACCEPTED");
       report.setStatuses(Set.of(status));
-
+      statusForLog = status.getNameEn();
     } else {
       var status = _reportRepo.findStatusByToken("REJECTED");
       report.setStatuses(Set.of(status));
+      statusForLog = status.getNameEn();
     }
 
     _reportRepo.save(report);
@@ -88,5 +95,6 @@ public class ReportServices implements IReportServices {
         WebSocketEvent.updated(
             REPORT_ENTITY_TYPE, report.getToken(), _syncMapper.toSyncReportResponse(report));
     _notification.sendEventToTopic("/reports/updates", event);
+    log.info("Changed report status to {} by {}", statusForLog, admin.getUsername());
   }
 }

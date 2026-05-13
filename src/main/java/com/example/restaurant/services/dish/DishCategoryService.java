@@ -10,6 +10,7 @@ import com.example.restaurant.repository.interfaces.IDishRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DishCategoryService {
   private final IDishRepository _dishRepo;
   private final DishSyncPublisher _syncPublisher;
@@ -44,6 +46,7 @@ public class DishCategoryService {
     _dishRepo.saveCategory(category);
 
     _syncPublisher.publishCategoryCreated(category);
+    log.info("Dish category added {}", category.getToken());
   }
 
   @Transactional
@@ -71,5 +74,6 @@ public class DishCategoryService {
         });
 
     _syncPublisher.publishCategoryDeleted(token);
+    log.info("Dish category removed {}", token);
   }
 }

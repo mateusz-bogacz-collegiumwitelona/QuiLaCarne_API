@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SyncServices implements ISyncServices {
   private final IUserRepository _userRepo;
   private final IAllergensRepository _allergenRepo;
@@ -61,6 +63,8 @@ public class SyncServices implements ISyncServices {
     addModuleMetadata(modules, "orderItems", _orderRepo.countItems());
     addModuleMetadata(modules, "reservations", _reservationRepo.count());
 
+    log.info("Somone call bootstrap Manifest");
+
     return SyncBootstrapResponse.builder()
         .modules(modules)
         .serverTime(OffsetDateTime.now())
@@ -70,6 +74,7 @@ public class SyncServices implements ISyncServices {
   @Override
   @Auditable(action = "GET_DICTIONARIES")
   public SyncDictionariesResponse getDictionaries() {
+    log.info("Somone call sync Dictionaries");
     return SyncDictionariesResponse.builder()
         .allergens(
             _allergenRepo.findAll().stream().map(_syncMapper::toSyncDictionaryResponse).toList())
@@ -105,6 +110,7 @@ public class SyncServices implements ISyncServices {
   @Override
   @Auditable(action = "GET_ROLES")
   public List<SyncRoleResponse> getRoles() {
+    log.info("Somone call sync Roles");
     return _roleRepo.findAll().stream()
         .map(r -> SyncRoleResponse.builder().token(r.getToken()).name(r.getName()).build())
         .toList();
@@ -117,6 +123,8 @@ public class SyncServices implements ISyncServices {
 
     Page<SyncDishResponse> response = dishesPage.map(_syncMapper::toSyncDishResponse);
 
+    log.info("Somone call sync dishes");
+
     return new PagedResult<>(response);
   }
 
@@ -127,6 +135,8 @@ public class SyncServices implements ISyncServices {
 
     Page<SyncBanResponse> response = bansPage.map(_syncMapper::toBanSyncResponse);
 
+    log.info("Somone call sync bans");
+
     return new PagedResult<>(response);
   }
 
@@ -136,6 +146,8 @@ public class SyncServices implements ISyncServices {
     Page<GuestReports> reportsPage = _reportRepo.findAll(null, calculatePageable(page));
 
     Page<SyncReportResponse> response = reportsPage.map(_syncMapper::toSyncReportResponse);
+
+    log.info("Somone call sync reports");
 
     return new PagedResult<>(response);
   }
@@ -148,6 +160,8 @@ public class SyncServices implements ISyncServices {
     Page<SyncIngredientResponse> response =
         ingredientsPage.map(_syncMapper::toSyncIngredientResponse);
 
+    log.info("Somone call sync ingredients");
+
     return new PagedResult<>(response);
   }
 
@@ -158,6 +172,8 @@ public class SyncServices implements ISyncServices {
 
     Page<SyncOrderResponse> response = ordersPage.map(_syncMapper::toSyncOrderResponse);
 
+    log.info("Somone call sync orders");
+
     return new PagedResult<>(response);
   }
 
@@ -167,6 +183,8 @@ public class SyncServices implements ISyncServices {
     Page<OrderItems> itemsPage = _orderRepo.findAllItems(calculatePageable(page));
 
     Page<SyncOrderItemResponse> response = itemsPage.map(_syncMapper::toSyncOrderItemResponse);
+
+    log.info("Somone call sync orders items");
 
     return new PagedResult<>(response);
   }
@@ -179,6 +197,8 @@ public class SyncServices implements ISyncServices {
     Page<SyncReservationResponse> response =
         reservationsPage.map(_syncMapper::toSyncReservationResponse);
 
+    log.info("Somone call sync reservations");
+
     return new PagedResult<>(response);
   }
 
@@ -189,6 +209,8 @@ public class SyncServices implements ISyncServices {
 
     Page<SyncTableResponse> response = tablesPage.map(_syncMapper::toSyncTableResponse);
 
+    log.info("Somone call sync tables");
+
     return new PagedResult<>(response);
   }
 
@@ -198,6 +220,8 @@ public class SyncServices implements ISyncServices {
     Page<Users> usersPage = _userRepo.findAllUsers(null, calculatePageable(page));
 
     Page<SyncUserResponse> response = usersPage.map(_syncMapper::toSyncUserResponse);
+
+    log.info("Somone call sync users");
 
     return new PagedResult<>(response);
   }
