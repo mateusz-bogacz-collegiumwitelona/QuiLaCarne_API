@@ -64,6 +64,19 @@ public class EmailServices {
     log.info("Email set ban email sent to {}", to);
   }
 
+  @Async
+  public void sendEmailReservationCancelled(String to, String userName) {
+    validateInputs(to, userName);
+    Map<String, Object> variables = Map.of("userName", userName);
+
+    enqueueHtmlEmail(
+        to,
+        "Qui la Carne - Reservation Cancellation Notice",
+        "emails/reservation_cancelled",
+        variables);
+    log.info("Reservation cancelled email sent to {}", to);
+  }
+
   private void validateInputs(String to, String... params) {
     if (to == null || to.isBlank() || !to.contains("@")) {
       throw new IllegalArgumentException("A valid destination email is required");

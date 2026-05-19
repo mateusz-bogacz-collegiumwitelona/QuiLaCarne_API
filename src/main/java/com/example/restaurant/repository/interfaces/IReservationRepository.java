@@ -2,6 +2,7 @@ package com.example.restaurant.repository.interfaces;
 
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -25,4 +26,8 @@ public interface IReservationRepository {
   long countStatuses();
 
   long count();
+
+  List<Reservations> findExpiredActiveReservations(OffsetDateTime deadline);
+
+  void saveAll(List<Reservations> reservations);
 }
