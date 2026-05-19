@@ -23,7 +23,7 @@ public class ReservationSyncPublisher {
             RESERVATION_ENTITY_TYPE,
             reservation.getToken(),
             _syncMapper.toSyncReservationResponse(reservation));
-    _notification.sendEventToTopic("/reservations/updates", event);
+    _notification.sendEventToTopic(RESERVATIONS_TOPIC, event);
   }
 
   public void publishReservationUpdated(Reservations reservation) {

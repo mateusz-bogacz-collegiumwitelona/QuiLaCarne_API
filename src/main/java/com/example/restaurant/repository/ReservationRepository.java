@@ -6,6 +6,7 @@ import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationStatusRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaReservationsRepository;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -60,5 +61,20 @@ public class ReservationRepository implements IReservationRepository {
   @Override
   public long count() {
     return _jpaReservationsRepo.count();
+  }
+
+  @Override
+  public List<Reservations> findExpiredActiveReservations(OffsetDateTime deadline) {
+    return _jpaReservationsRepo.findExpiredActiveReservations(deadline);
+  }
+
+  @Override
+  public void saveAll(List<Reservations> reservations) {
+    _jpaReservationsRepo.saveAll(reservations);
+  }
+
+  @Override
+  public List<Reservations> findExpiredInProgressReservations(OffsetDateTime deadline) {
+    return _jpaReservationsRepo.findExpiredInProgressReservations(deadline);
   }
 }
