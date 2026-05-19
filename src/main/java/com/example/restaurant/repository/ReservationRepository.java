@@ -72,4 +72,9 @@ public class ReservationRepository implements IReservationRepository {
   public void saveAll(List<Reservations> reservations) {
     _jpaReservationsRepo.saveAll(reservations);
   }
+
+  @Override
+  public List<Reservations> findExpiredInProgressReservations(OffsetDateTime deadline) {
+    return _jpaReservationsRepo.findExpiredInProgressReservations(deadline);
+  }
 }

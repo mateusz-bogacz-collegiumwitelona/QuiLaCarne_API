@@ -19,4 +19,8 @@ public interface IJpaReservationsRepository
   @Query(
       "SELECT r FROM Reservations r JOIN r.reservationStatus s WHERE s.token = 'ACTIVE' AND r.startTime < :deadline")
   List<Reservations> findExpiredActiveReservations(@Param("deadline") OffsetDateTime deadline);
+
+  @Query(
+      "SELECT r FROM Reservations r JOIN r.reservationStatus s WHERE s.token = 'IN_PROGRESS' AND r.endTime < :deadline")
+  List<Reservations> findExpiredInProgressReservations(@Param("deadline") OffsetDateTime deadline);
 }

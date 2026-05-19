@@ -30,4 +30,6 @@ public interface IReservationRepository {
   List<Reservations> findExpiredActiveReservations(OffsetDateTime deadline);
 
   void saveAll(List<Reservations> reservations);
+
+  List<Reservations> findExpiredInProgressReservations(OffsetDateTime deadline);
 }

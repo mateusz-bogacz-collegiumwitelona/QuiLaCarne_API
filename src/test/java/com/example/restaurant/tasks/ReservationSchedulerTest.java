@@ -31,8 +31,8 @@ class ReservationSchedulerTest {
   @InjectMocks private ReservationScheduler _reservationScheduler;
 
   @Test
-  @DisplayName("changeStatus: Should do nothing when there are no expired reservations")
-  void changeStatus_ShouldDoNothing_WhenNoExpiredReservations() {
+  @DisplayName("handleReservationNoShow: Should do nothing when there are no expired reservations")
+  void handleReservationNoShow_ShouldDoNothing_WhenNoExpiredReservations() {
     when(_reservationRepo.findExpiredActiveReservations(any(OffsetDateTime.class)))
         .thenReturn(Collections.emptyList());
 
@@ -46,8 +46,8 @@ class ReservationSchedulerTest {
 
   @Test
   @DisplayName(
-      "changeStatus: Should update status, save and send notifications for expired reservations")
-  void changeStatus_ShouldCancelAndNotify_WhenExpiredReservationsExist() {
+      "handleReservationNoShow: Should update status, save and send email + websocket for expired reservations")
+  void handleReservationNoShow_ShouldCancelAndNotify_WhenExpiredReservationsExist() {
     ReservationStatus cancelledStatus = new ReservationStatus();
     cancelledStatus.setToken("NO_SHOW");
 
@@ -81,12 +81,76 @@ class ReservationSchedulerTest {
   }
 
   @Test
-  @DisplayName("changeStatus: Should catch exception and not crash when database fails")
-  void changeStatus_ShouldCatchException_WhenDatabaseFails() {
+  @DisplayName("handleReservationNoShow: Should catch exception and not crash when database fails")
+  void handleReservationNoShow_ShouldCatchException_WhenDatabaseFails() {
     when(_reservationRepo.findExpiredActiveReservations(any(OffsetDateTime.class)))
         .thenThrow(new RuntimeException("Database connection error"));
 
     assertDoesNotThrow(() -> _reservationScheduler.handleReservationNoShow());
+
+    verify(_reservationRepo, never()).saveAll(any());
+    verifyNoInteractions(_emailServices);
+    verifyNoInteractions(_reservationSyncPublisher);
+  }
+
+  @Test
+  @DisplayName(
+      "handleReservationInProgress: Should do nothing when there are no expired reservations")
+  void handleReservationInProgress_ShouldDoNothing_WhenNoExpiredReservations() {
+    when(_reservationRepo.findExpiredInProgressReservations(any(OffsetDateTime.class)))
+        .thenReturn(Collections.emptyList());
+
+    assertDoesNotThrow(() -> _reservationScheduler.handleReservationInProgress());
+
+    verify(_reservationRepo, never()).findStatusByToken(anyString());
+    verify(_reservationRepo, never()).saveAll(any());
+    verifyNoInteractions(_emailServices);
+    verifyNoInteractions(_reservationSyncPublisher);
+  }
+
+  @Test
+  @DisplayName(
+      "handleReservationInProgress: Should update status, save and send ONLY websockets for expired reservations")
+  void handleReservationInProgress_ShouldCompleteAndNotify_WhenExpiredReservationsExist() {
+    ReservationStatus completedStatus = new ReservationStatus();
+    completedStatus.setToken("COMPLETED");
+
+    Users mockUser = new Users();
+    mockUser.setEmail("test@example.com");
+    mockUser.setUsername("testUser");
+
+    Reservations resWithUser = new Reservations();
+    resWithUser.setToken("RES_1");
+    resWithUser.setUser(mockUser);
+
+    Reservations resWithoutUser = new Reservations();
+    resWithoutUser.setToken("RES_2");
+    resWithoutUser.setUser(null);
+
+    List<Reservations> inProgressReservations = List.of(resWithUser, resWithoutUser);
+
+    when(_reservationRepo.findExpiredInProgressReservations(any(OffsetDateTime.class)))
+        .thenReturn(inProgressReservations);
+    when(_reservationRepo.findStatusByToken("COMPLETED")).thenReturn(completedStatus);
+
+    assertDoesNotThrow(() -> _reservationScheduler.handleReservationInProgress());
+
+    verify(_reservationRepo, times(1)).saveAll(inProgressReservations);
+
+    verifyNoInteractions(_emailServices);
+
+    verify(_reservationSyncPublisher, times(1)).publishReservationUpdated(resWithUser);
+    verify(_reservationSyncPublisher, times(1)).publishReservationUpdated(resWithoutUser);
+  }
+
+  @Test
+  @DisplayName(
+      "handleReservationInProgress: Should catch exception and not crash when database fails")
+  void handleReservationInProgress_ShouldCatchException_WhenDatabaseFails() {
+    when(_reservationRepo.findExpiredInProgressReservations(any(OffsetDateTime.class)))
+        .thenThrow(new RuntimeException("Database connection error"));
+
+    assertDoesNotThrow(() -> _reservationScheduler.handleReservationInProgress());
 
     verify(_reservationRepo, never()).saveAll(any());
     verifyNoInteractions(_emailServices);
