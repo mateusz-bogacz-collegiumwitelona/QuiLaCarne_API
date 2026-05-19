@@ -15,6 +15,7 @@ import com.example.restaurant.config.RateLimitConfig;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.exceptions.FileProcessingException;
 import com.example.restaurant.fasade.interfaces.IDishFacade;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -83,7 +84,8 @@ class DishControllerWebMvcTest extends AbstractControllerWebMvcTest {
   @Test
   void editDish_path() throws Exception {
     MockMultipartFile editPhoto =
-        new MockMultipartFile("photo", "dish.jpg", "image/jpeg", "x".getBytes());
+        new MockMultipartFile(
+            "photo", "dish.jpg", "image/jpeg", "x".getBytes(StandardCharsets.UTF_8));
     mockMvc
         .perform(
             multipart("/api/dishes")
@@ -121,7 +123,8 @@ class DishControllerWebMvcTest extends AbstractControllerWebMvcTest {
   @Test
   void addDish_path() throws Exception {
     MockMultipartFile addPhoto =
-        new MockMultipartFile("photo", "dish2.jpg", "image/jpeg", "x".getBytes());
+        new MockMultipartFile(
+            "photo", "dish2.jpg", "image/jpeg", "x".getBytes(StandardCharsets.UTF_8));
     mockMvc
         .perform(
             multipart("/api/dishes")

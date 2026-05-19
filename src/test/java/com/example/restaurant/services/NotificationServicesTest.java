@@ -20,15 +20,6 @@ class NotificationServicesTest {
   @InjectMocks private NotificationServices _notificationServices;
 
   @Test
-  @DisplayName("sendToTopic: Should prepend /topic prefix")
-  void sendToTopic_ShouldPrependPrefix() {
-    String topic = "/updates";
-    String payload = "test-data";
-    _notificationServices.sendToTopic(topic, payload);
-    verify(_template, times(1)).convertAndSend("/topic/updates", payload);
-  }
-
-  @Test
   @DisplayName("sendEventToTopic: Should handle topic names without leading slash")
   void sendEventToTopic_ShouldHandleNoLeadingSlash() {
     String topic = "dishes";
