@@ -7,6 +7,7 @@ import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.sync.SyncBanResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.helpers.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
@@ -85,7 +86,7 @@ public class BanServices implements IBanServices {
 
     WebSocketEvent<SyncBanResponse> event =
         WebSocketEvent.created(ENTITY_TYPE, ban.getToken(), _syncMapper.toBanSyncResponse(ban));
-    _notification.sendEventToTopic("/security/bans", event);
+    _notification.sendEventToTopic(WebSocketTopics.BAN_TOPIC, event);
   }
 
   @Override
@@ -120,7 +121,7 @@ public class BanServices implements IBanServices {
 
       WebSocketEvent<SyncBanResponse> event =
           WebSocketEvent.updated(ENTITY_TYPE, ban.getToken(), _syncMapper.toBanSyncResponse(ban));
-      _notification.sendEventToTopic("/security/bans", event);
+      _notification.sendEventToTopic(WebSocketTopics.BAN_TOPIC, event);
 
       if (log.isInfoEnabled()) {
         log.info("User {} has been automatically unbanned.", user.getUsername());

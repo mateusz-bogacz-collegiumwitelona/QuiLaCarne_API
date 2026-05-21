@@ -6,6 +6,7 @@ import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.helpers.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.Allergens;
@@ -56,7 +57,7 @@ public class AllergensServices implements IAllergensServices {
     SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(allergen);
     WebSocketEvent<SyncDictionaryResponse> event =
         WebSocketEvent.created(ENTITY_TYPE, allergen.getToken(), payload);
-    _notification.sendEventToTopic("/dictionary/allergens", event);
+    _notification.sendEventToTopic(WebSocketTopics.DICTIONARY_ALLERGENS, event);
     log.info("Added allergens for dictionary: {}", allergen.getToken());
   }
 
@@ -84,7 +85,7 @@ public class AllergensServices implements IAllergensServices {
 
     WebSocketEvent<Void> event = WebSocketEvent.deleted(ENTITY_TYPE, token);
 
-    _notification.sendEventToTopic("/dictionary/allergens", event);
+    _notification.sendEventToTopic(WebSocketTopics.DICTIONARY_ALLERGENS, event);
     log.info("Removed allergens for dictionary: {}", token);
   }
 }

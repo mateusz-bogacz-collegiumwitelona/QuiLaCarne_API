@@ -13,6 +13,7 @@ import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.helpers.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
@@ -128,7 +129,7 @@ public class TableServices implements ITableServices {
     WebSocketEvent<SyncTableResponse> event =
         WebSocketEvent.created(
             TABLE_ENTITY_TYPE, table.getToken(), _syncMapper.toSyncTableResponse(table));
-    _notification.sendEventToTopic("/tables/updates", event);
+    _notification.sendEventToTopic(WebSocketTopics.TABLE_TOPIC, event);
     log.info("Table {} has been added", table.getToken());
   }
 
@@ -144,7 +145,7 @@ public class TableServices implements ITableServices {
     _tableRepo.save(table);
 
     WebSocketEvent<Void> event = WebSocketEvent.deleted(TABLE_ENTITY_TYPE, token);
-    _notification.sendEventToTopic("/tables/updates", event);
+    _notification.sendEventToTopic(WebSocketTopics.TABLE_TOPIC, event);
     log.info("Table {} has been deleted", table.getToken());
   }
 
@@ -275,6 +276,6 @@ public class TableServices implements ITableServices {
     WebSocketEvent<SyncTableResponse> event =
         WebSocketEvent.updated(
             TABLE_ENTITY_TYPE, table.getToken(), _syncMapper.toSyncTableResponse(table));
-    _notification.sendEventToTopic("/tables/updates", event);
+    _notification.sendEventToTopic(WebSocketTopics.TABLE_TOPIC, event);
   }
 }
