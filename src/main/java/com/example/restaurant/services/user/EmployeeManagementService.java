@@ -3,6 +3,7 @@ package com.example.restaurant.services.user;
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
+import com.example.restaurant.helpers.RoleType;
 import com.example.restaurant.helpers.UserManagmentHelper;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
@@ -26,18 +27,15 @@ public class EmployeeManagementService {
   private final UserManagmentHelper _userHelper;
   private final UserSyncPublisher _userPublisher;
 
-  private static final String ROLE_MANAGER = "ROLE_MANAGER";
-  private static final String ROLE_WAITER = "ROLE_WAITER";
-
   @Transactional
   @Auditable(action = "ADD_NEW_EMPLOYEE")
   @CacheEvict(value = "usersList", allEntries = true)
   public void createEmployee(AddEmployeeRequest request) {
     Users employee;
     if (request.isAdmin()) {
-      employee = _userHelper.buildAndSaveUser(request.getRegister(), ROLE_MANAGER, true);
+      employee = _userHelper.buildAndSaveUser(request.getRegister(), RoleType.ROLE_MANAGER, true);
     } else {
-      employee = _userHelper.buildAndSaveUser(request.getRegister(), ROLE_WAITER, true);
+      employee = _userHelper.buildAndSaveUser(request.getRegister(), RoleType.ROLE_WAITER, true);
     }
 
     _userPublisher.publishUserCreated(employee);
@@ -74,7 +72,7 @@ public class EmployeeManagementService {
     Users user = _userRepo.findByToken(request.getEmployeeToken());
 
     boolean isCurrentlyManager =
-        user.getRoles().stream().anyMatch(r -> ROLE_MANAGER.equals(r.getName()));
+        user.getRoles().stream().anyMatch(r -> RoleType.ROLE_MANAGER.equals(r.getName()));
 
     if (request.isAdmin() && isCurrentlyManager)
       throw new IllegalStateException("User is already a Manager");
@@ -84,9 +82,9 @@ public class EmployeeManagementService {
 
     Roles role;
     if (request.isAdmin()) {
-      role = _roleRepository.setRole(ROLE_MANAGER);
+      role = _roleRepository.setRole(RoleType.ROLE_MANAGER);
     } else {
-      role = _roleRepository.setRole(ROLE_WAITER);
+      role = _roleRepository.setRole(RoleType.ROLE_WAITER);
     }
     user.setRoles(Set.of(role));
 

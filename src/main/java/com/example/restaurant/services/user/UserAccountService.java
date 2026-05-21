@@ -1,6 +1,7 @@
 package com.example.restaurant.services.user;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.helpers.RoleType;
 import com.example.restaurant.helpers.UserManagmentHelper;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
@@ -59,8 +60,7 @@ public class UserAccountService {
 
     String randomPassword = UUID.randomUUID() + "G00G1E#";
 
-    String roleClien = "ROLE_CLIENT";
-    Roles role = _roleRepository.setRole(roleClien);
+    Roles role = _roleRepository.setRole(RoleType.ROLE_CLIENT);
 
     Users user = new Users();
     user.setUsername(baseUserName);

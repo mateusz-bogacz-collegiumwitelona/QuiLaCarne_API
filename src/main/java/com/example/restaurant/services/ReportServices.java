@@ -5,6 +5,7 @@ import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.sync.SyncReportResponse;
+import com.example.restaurant.helpers.RoleType;
 import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.helpers.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
@@ -39,7 +40,7 @@ public class ReportServices implements IReportServices {
   public void add(String waiterToken, AddReportRequest request) {
     var client = _userRepo.findByToken(request.getClientToken());
 
-    if (!_userRepo.isInRole("ROLE_CLIENT", client.getToken()))
+    if (!_userRepo.isInRole(RoleType.ROLE_CLIENT, client.getToken()))
       throw new IllegalStateException("You can only report users with the client role");
 
     var waiter = _userRepo.findByToken(waiterToken);

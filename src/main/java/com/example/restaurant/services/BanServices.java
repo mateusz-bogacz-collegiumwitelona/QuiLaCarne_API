@@ -6,6 +6,7 @@ import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.sync.SyncBanResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
+import com.example.restaurant.helpers.RoleType;
 import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.helpers.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
@@ -36,9 +37,6 @@ public class BanServices implements IBanServices {
   private final SyncMapper _syncMapper;
 
   private static final String ENTITY_TYPE = "BAN";
-
-  private static final String ROLE_CLIENT = "ROLE_CLIENT";
-  private static final String ROLE_MANAGER = "ROLE_MANAGER";
   private static final String STATUS_ACTIVE = "ACTIVE";
 
   @Override
@@ -131,14 +129,14 @@ public class BanServices implements IBanServices {
 
   private void validatePermissions(Users admin, Users client) {
     boolean isAdminManager =
-        admin.getRoles().stream().anyMatch(r -> ROLE_MANAGER.equals(r.getName()));
+        admin.getRoles().stream().anyMatch(r -> RoleType.ROLE_MANAGER.equals(r.getName()));
 
     if (!isAdminManager) {
       throw new IllegalStateException("Only managers can issue bans");
     }
 
     boolean isTargetClient =
-        client.getRoles().stream().anyMatch(r -> ROLE_CLIENT.equals(r.getName()));
+        client.getRoles().stream().anyMatch(r -> RoleType.ROLE_CLIENT.equals(r.getName()));
 
     if (!isTargetClient) {
       throw new IllegalStateException("Targeted user must be a client");
