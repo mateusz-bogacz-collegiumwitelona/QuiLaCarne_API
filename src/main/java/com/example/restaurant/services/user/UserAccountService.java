@@ -1,8 +1,8 @@
 package com.example.restaurant.services.user;
 
 import com.example.restaurant.annotations.Auditable;
-import com.example.restaurant.helpers.RoleType;
 import com.example.restaurant.helpers.UserManagmentHelper;
+import com.example.restaurant.helpers.staics.RoleType;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;

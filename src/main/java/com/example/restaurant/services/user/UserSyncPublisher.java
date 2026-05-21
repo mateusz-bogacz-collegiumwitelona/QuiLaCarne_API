@@ -2,7 +2,7 @@ package com.example.restaurant.services.user;
 
 import com.example.restaurant.dto.sync.SyncUserResponse;
 import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.helpers.WebSocketTopics;
+import com.example.restaurant.helpers.staics.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.services.NotificationServices;

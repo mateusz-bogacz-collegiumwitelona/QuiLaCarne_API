@@ -6,7 +6,8 @@ import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.helpers.WebSocketTopics;
+import com.example.restaurant.helpers.staics.WebSocketEntityType;
+import com.example.restaurant.helpers.staics.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.Allergens;
@@ -32,8 +33,6 @@ public class AllergensServices implements IAllergensServices {
 
   private final SyncMapper _syncMapper;
 
-  private static final String ENTITY_TYPE = "ALLERGEN";
-
   @Override
   @Cacheable(
       value = "allergensDictionary",
@@ -56,7 +55,8 @@ public class AllergensServices implements IAllergensServices {
 
     SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(allergen);
     WebSocketEvent<SyncDictionaryResponse> event =
-        WebSocketEvent.created(ENTITY_TYPE, allergen.getToken(), payload);
+        WebSocketEvent.created(
+            WebSocketEntityType.ALLERGENS_ENTITY_TYPE, allergen.getToken(), payload);
     _notification.sendEventToTopic(WebSocketTopics.DICTIONARY_ALLERGENS, event);
     log.info("Added allergens for dictionary: {}", allergen.getToken());
   }
@@ -83,7 +83,8 @@ public class AllergensServices implements IAllergensServices {
           }
         });
 
-    WebSocketEvent<Void> event = WebSocketEvent.deleted(ENTITY_TYPE, token);
+    WebSocketEvent<Void> event =
+        WebSocketEvent.deleted(WebSocketEntityType.ALLERGENS_ENTITY_TYPE, token);
 
     _notification.sendEventToTopic(WebSocketTopics.DICTIONARY_ALLERGENS, event);
     log.info("Removed allergens for dictionary: {}", token);

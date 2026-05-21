@@ -1,4 +1,4 @@
-package com.example.restaurant.helpers;
+package com.example.restaurant.helpers.staics;
 
 public final class RoleType {
   private RoleType() {}

@@ -9,7 +9,7 @@ import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.GoogleAuthenticationException;
 import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.fasade.interfaces.IUserFacade;
-import com.example.restaurant.helpers.RoleType;
+import com.example.restaurant.helpers.staics.RoleType;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;

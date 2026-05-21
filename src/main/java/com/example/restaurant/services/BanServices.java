@@ -6,9 +6,10 @@ import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.sync.SyncBanResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
-import com.example.restaurant.helpers.RoleType;
 import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.helpers.WebSocketTopics;
+import com.example.restaurant.helpers.staics.RoleType;
+import com.example.restaurant.helpers.staics.WebSocketEntityType;
+import com.example.restaurant.helpers.staics.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
@@ -36,7 +37,6 @@ public class BanServices implements IBanServices {
 
   private final SyncMapper _syncMapper;
 
-  private static final String ENTITY_TYPE = "BAN";
   private static final String STATUS_ACTIVE = "ACTIVE";
 
   @Override
@@ -83,7 +83,10 @@ public class BanServices implements IBanServices {
         domain.client().getEmail(), domain.client().getUsername(), domain.reason());
 
     WebSocketEvent<SyncBanResponse> event =
-        WebSocketEvent.created(ENTITY_TYPE, ban.getToken(), _syncMapper.toBanSyncResponse(ban));
+        WebSocketEvent.created(
+            WebSocketEntityType.BANS_ENTITY_TYPE,
+            ban.getToken(),
+            _syncMapper.toBanSyncResponse(ban));
     _notification.sendEventToTopic(WebSocketTopics.BAN_TOPIC, event);
   }
 
@@ -118,7 +121,10 @@ public class BanServices implements IBanServices {
       _userRepo.save(user);
 
       WebSocketEvent<SyncBanResponse> event =
-          WebSocketEvent.updated(ENTITY_TYPE, ban.getToken(), _syncMapper.toBanSyncResponse(ban));
+          WebSocketEvent.updated(
+              WebSocketEntityType.BANS_ENTITY_TYPE,
+              ban.getToken(),
+              _syncMapper.toBanSyncResponse(ban));
       _notification.sendEventToTopic(WebSocketTopics.BAN_TOPIC, event);
 
       if (log.isInfoEnabled()) {

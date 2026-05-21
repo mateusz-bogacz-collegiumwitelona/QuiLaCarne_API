@@ -13,7 +13,8 @@ import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.helpers.WebSocketTopics;
+import com.example.restaurant.helpers.staics.WebSocketEntityType;
+import com.example.restaurant.helpers.staics.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
@@ -39,9 +40,6 @@ public class TableServices implements ITableServices {
   private final NotificationServices _notification;
 
   private final SyncMapper _syncMapper;
-
-  private static final String TABLE_ENTITY_TYPE = "TABLE";
-  private static final String TABLE_STATUS_ENTITY_TYPE = "TABLE_STATUS";
 
   @Override
   @Cacheable(
@@ -128,7 +126,9 @@ public class TableServices implements ITableServices {
 
     WebSocketEvent<SyncTableResponse> event =
         WebSocketEvent.created(
-            TABLE_ENTITY_TYPE, table.getToken(), _syncMapper.toSyncTableResponse(table));
+            WebSocketEntityType.TABLE_ENTITY_TYPE,
+            table.getToken(),
+            _syncMapper.toSyncTableResponse(table));
     _notification.sendEventToTopic(WebSocketTopics.TABLE_TOPIC, event);
     log.info("Table {} has been added", table.getToken());
   }
@@ -144,7 +144,8 @@ public class TableServices implements ITableServices {
 
     _tableRepo.save(table);
 
-    WebSocketEvent<Void> event = WebSocketEvent.deleted(TABLE_ENTITY_TYPE, token);
+    WebSocketEvent<Void> event =
+        WebSocketEvent.deleted(WebSocketEntityType.TABLE_ENTITY_TYPE, token);
     _notification.sendEventToTopic(WebSocketTopics.TABLE_TOPIC, event);
     log.info("Table {} has been deleted", table.getToken());
   }
@@ -174,7 +175,8 @@ public class TableServices implements ITableServices {
 
     SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(status);
     WebSocketEvent<SyncDictionaryResponse> event =
-        WebSocketEvent.created(TABLE_STATUS_ENTITY_TYPE, status.getToken(), payload);
+        WebSocketEvent.created(
+            WebSocketEntityType.TABLE_STATUS_ENTITY_TYPE, status.getToken(), payload);
     _notification.sendEventToTopic("/dictionary/table-statuses", event);
     log.info("Table status {} has been added", request.getNameEn());
   }
@@ -200,7 +202,8 @@ public class TableServices implements ITableServices {
           }
         });
 
-    WebSocketEvent<Void> event = WebSocketEvent.deleted(TABLE_STATUS_ENTITY_TYPE, token);
+    WebSocketEvent<Void> event =
+        WebSocketEvent.deleted(WebSocketEntityType.TABLE_STATUS_ENTITY_TYPE, token);
     _notification.sendEventToTopic("/dictionary/table-statuses", event);
     log.info("Table status {} has been removed", token);
   }
@@ -275,7 +278,9 @@ public class TableServices implements ITableServices {
   private void publishTableUpdate(RestaurantTables table) {
     WebSocketEvent<SyncTableResponse> event =
         WebSocketEvent.updated(
-            TABLE_ENTITY_TYPE, table.getToken(), _syncMapper.toSyncTableResponse(table));
+            WebSocketEntityType.TABLE_ENTITY_TYPE,
+            table.getToken(),
+            _syncMapper.toSyncTableResponse(table));
     _notification.sendEventToTopic(WebSocketTopics.TABLE_TOPIC, event);
   }
 }

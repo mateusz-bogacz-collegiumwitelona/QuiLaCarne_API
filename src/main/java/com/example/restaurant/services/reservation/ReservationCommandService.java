@@ -7,7 +7,7 @@ import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.fasade.interfaces.IOrderFacade;
-import com.example.restaurant.helpers.RoleType;
+import com.example.restaurant.helpers.staics.RoleType;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;

@@ -5,9 +5,10 @@ import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.dto.sync.SyncReportResponse;
-import com.example.restaurant.helpers.RoleType;
 import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.helpers.WebSocketTopics;
+import com.example.restaurant.helpers.staics.RoleType;
+import com.example.restaurant.helpers.staics.WebSocketEntityType;
+import com.example.restaurant.helpers.staics.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.repository.interfaces.IReportRepository;
@@ -32,8 +33,6 @@ public class ReportServices implements IReportServices {
 
   private final SyncMapper _syncMapper;
 
-  private static final String REPORT_ENTITY_TYPE = "REPORT";
-
   @Override
   @Transactional
   @Auditable(action = "ADD_REPORT")
@@ -56,7 +55,9 @@ public class ReportServices implements IReportServices {
 
     WebSocketEvent<SyncReportResponse> event =
         WebSocketEvent.created(
-            REPORT_ENTITY_TYPE, report.getToken(), _syncMapper.toSyncReportResponse(report));
+            WebSocketEntityType.REPORT_ENTITY_TYPE,
+            report.getToken(),
+            _syncMapper.toSyncReportResponse(report));
     _notification.sendEventToTopic(WebSocketTopics.REPORTS_TOPIC, event);
     log.info(
         "Added report to user {} by {}",
@@ -95,7 +96,9 @@ public class ReportServices implements IReportServices {
 
     WebSocketEvent<SyncReportResponse> event =
         WebSocketEvent.updated(
-            REPORT_ENTITY_TYPE, report.getToken(), _syncMapper.toSyncReportResponse(report));
+            WebSocketEntityType.REPORT_ENTITY_TYPE,
+            report.getToken(),
+            _syncMapper.toSyncReportResponse(report));
     _notification.sendEventToTopic(WebSocketTopics.REPORTS_TOPIC, event);
     log.info("Changed report status to {} by {}", statusForLog, admin.getUsername());
   }

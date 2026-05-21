@@ -6,6 +6,7 @@ import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.sync.SyncIngredientResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.helpers.staics.WebSocketEntityType;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
@@ -36,8 +37,6 @@ public class IngredientsServices implements IIngredientsServices {
 
   private final SyncMapper _syncMapper;
 
-  private static final String ENTITY_TYPE = "INGREDIENT";
-
   @Transactional
   @Override
   @Auditable(action = "ADD_INGREDIENTS")
@@ -67,7 +66,9 @@ public class IngredientsServices implements IIngredientsServices {
 
     WebSocketEvent<SyncIngredientResponse> event =
         WebSocketEvent.created(
-            ENTITY_TYPE, ingredient.getToken(), _syncMapper.toSyncIngredientResponse(ingredient));
+            WebSocketEntityType.INGREDIENTS_ENTITY_TYPE,
+            ingredient.getToken(),
+            _syncMapper.toSyncIngredientResponse(ingredient));
     _notification.sendEventToTopic("dictionary/sync", event);
 
     log.info("Create new ingrediant {}", ingredient.getToken());
@@ -98,7 +99,8 @@ public class IngredientsServices implements IIngredientsServices {
             _dishRepo.save(dish);
           }
         });
-    WebSocketEvent<Void> event = WebSocketEvent.deleted(ENTITY_TYPE, token);
+    WebSocketEvent<Void> event =
+        WebSocketEvent.deleted(WebSocketEntityType.INGREDIENTS_ENTITY_TYPE, token);
 
     _notification.sendEventToTopic("menu/availability", event);
     log.info("Delete ingrediant {}", token);
