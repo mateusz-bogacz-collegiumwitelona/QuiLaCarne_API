@@ -43,6 +43,7 @@ public class RedisCacheConfig {
             .withCacheConfiguration("tablesList", baseConfig.entryTtl(Duration.ofSeconds(15)))
             .withCacheConfiguration("dishMenu", baseConfig.entryTtl(Duration.ofMinutes(5)))
             .withCacheConfiguration("publicDishMenu", baseConfig.entryTtl(Duration.ofMinutes(5)))
-            .withCacheConfiguration("usersList", baseConfig.entryTtl(Duration.ofHours(1)));
+            .withCacheConfiguration("usersList", baseConfig.entryTtl(Duration.ofHours(1)))
+            .withCacheConfiguration("idempotencyKeys", baseConfig.entryTtl(Duration.ofHours(24)));
   }
 }

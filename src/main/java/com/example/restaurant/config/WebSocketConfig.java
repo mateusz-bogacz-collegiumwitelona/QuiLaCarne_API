@@ -1,5 +1,6 @@
 package com.example.restaurant.config;
 
+import com.example.restaurant.interceptors.InboundChannelInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
