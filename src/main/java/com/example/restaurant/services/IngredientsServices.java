@@ -7,6 +7,7 @@ import com.example.restaurant.dto.sync.SyncIngredientResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
 import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.helpers.staics.WebSocketEntityType;
+import com.example.restaurant.helpers.staics.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
@@ -69,7 +70,7 @@ public class IngredientsServices implements IIngredientsServices {
             WebSocketEntityType.INGREDIENTS_ENTITY_TYPE,
             ingredient.getToken(),
             _syncMapper.toSyncIngredientResponse(ingredient));
-    _notification.sendEventToTopic("dictionary/sync", event);
+    _notification.sendEventToTopic(WebSocketTopics.INGRIDIENTS_ADD_TOPIC, event);
 
     log.info("Create new ingrediant {}", ingredient.getToken());
   }
@@ -102,7 +103,7 @@ public class IngredientsServices implements IIngredientsServices {
     WebSocketEvent<Void> event =
         WebSocketEvent.deleted(WebSocketEntityType.INGREDIENTS_ENTITY_TYPE, token);
 
-    _notification.sendEventToTopic("menu/availability", event);
+    _notification.sendEventToTopic(WebSocketTopics.INGRIDIENTS_REMOVE_TOPIC, event);
     log.info("Delete ingrediant {}", token);
   }
 

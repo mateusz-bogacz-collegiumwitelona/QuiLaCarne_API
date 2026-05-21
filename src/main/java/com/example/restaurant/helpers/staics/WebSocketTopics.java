@@ -15,4 +15,6 @@ public final class WebSocketTopics {
   public static final String BAN_TOPIC = "/security/bans";
   public static final String TABLE_TOPIC = "/tables/updates";
   public static final String REPORTS_TOPIC = "/reports/updates";
+  public static final String INGRIDIENTS_ADD_TOPIC = "dictionary/sync";
+  public static final String INGRIDIENTS_REMOVE_TOPIC = "menu/availability";
 }
