@@ -93,7 +93,9 @@ public class SecurityConfig {
             "X-Requested-With",
             "Accept",
             "Origin",
-            "X-XSRF-TOKEN"));
+            "X-XSRF-TOKEN",
+            "X-CSRF-TOKEN",
+            "X-Request-ID"));
 
     configuration.setAllowCredentials(true);
 
