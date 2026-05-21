@@ -88,9 +88,12 @@ public class SecurityConfig {
         List.of(
             "Authorization",
             "Content-Type",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
             "X-XSRF-TOKEN",
-            "Access-Control-Allow-Origin",
-            "Access-Control-Allow-Credentials"));
+            "X-CSRF-TOKEN",
+            "X-Request-ID"));
 
     configuration.setAllowCredentials(true);
     configuration.setExposedHeaders(List.of("Set-Cookie"));
