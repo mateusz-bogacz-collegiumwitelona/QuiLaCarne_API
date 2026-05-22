@@ -7,6 +7,7 @@ import com.example.restaurant.dto.response.ReservationDishResponse;
 import com.example.restaurant.dto.response.ReservationResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.fasade.interfaces.IOrderFacade;
+import com.example.restaurant.helpers.staics.RoleType;
 import com.example.restaurant.models.Reservations;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
@@ -37,7 +38,6 @@ public class ReservationCommandService {
   private static final String STATUS_ACTIVE = "ACTIVE";
   private static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
   private static final String STATUS_NO_SHOW = "NO_SHOW";
-  private static final String ROLE_WAITER = "ROLE_WAITER";
 
   @Transactional
   @Auditable(action = "CREATE_RESERVATION")
@@ -122,7 +122,7 @@ public class ReservationCommandService {
   @Transactional
   @Auditable(action = "ASIGN_WAITER_TO_RESERVATION")
   public void assignWaiter(String reservationToken, String waiterToken) {
-    if (!_userRepo.isInRole(ROLE_WAITER, waiterToken))
+    if (!_userRepo.isInRole(RoleType.ROLE_WAITER, waiterToken))
       throw new IllegalStateException(
           "Only users with WAITER role can be assigned to reservations");
 
