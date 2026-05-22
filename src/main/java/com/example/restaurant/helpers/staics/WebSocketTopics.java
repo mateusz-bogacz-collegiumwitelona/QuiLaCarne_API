@@ -17,4 +17,5 @@ public final class WebSocketTopics {
   public static final String REPORTS_TOPIC = "/reports/updates";
   public static final String INGRIDIENTS_ADD_TOPIC = "dictionary/sync";
   public static final String INGRIDIENTS_REMOVE_TOPIC = "menu/availability";
+  public static final String TABLE_STATUS_TOPIC = "/dictionary/table-statuses";
 }

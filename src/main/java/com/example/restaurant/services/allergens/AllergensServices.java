@@ -1,14 +1,9 @@
-package com.example.restaurant.services;
+package com.example.restaurant.services.allergens;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
-import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.helpers.staics.WebSocketEntityType;
-import com.example.restaurant.helpers.staics.WebSocketTopics;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -29,9 +24,7 @@ import org.springframework.stereotype.Service;
 public class AllergensServices implements IAllergensServices {
   private final IAllergensRepository _allergenRepo;
   private final IIngredientsRepository _ingredientsRepo;
-  private final NotificationServices _notification;
-
-  private final SyncMapper _syncMapper;
+  private final AllergenSyncPublisher _syncPublisher;
 
   @Override
   @Cacheable(
@@ -53,11 +46,7 @@ public class AllergensServices implements IAllergensServices {
 
     _allergenRepo.save(allergen);
 
-    SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(allergen);
-    WebSocketEvent<SyncDictionaryResponse> event =
-        WebSocketEvent.created(
-            WebSocketEntityType.ALLERGENS_ENTITY_TYPE, allergen.getToken(), payload);
-    _notification.sendEventToTopic(WebSocketTopics.DICTIONARY_ALLERGENS, event);
+    _syncPublisher.publishAllergenCreate(allergen);
     log.info("Added allergens for dictionary: {}", allergen.getToken());
   }
 
@@ -83,10 +72,7 @@ public class AllergensServices implements IAllergensServices {
           }
         });
 
-    WebSocketEvent<Void> event =
-        WebSocketEvent.deleted(WebSocketEntityType.ALLERGENS_ENTITY_TYPE, token);
-
-    _notification.sendEventToTopic(WebSocketTopics.DICTIONARY_ALLERGENS, event);
+    _syncPublisher.publishAllergenDelete(token);
     log.info("Removed allergens for dictionary: {}", token);
   }
 }

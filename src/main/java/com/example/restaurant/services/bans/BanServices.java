@@ -1,20 +1,16 @@
-package com.example.restaurant.services;
+package com.example.restaurant.services.bans;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.sync.SyncBanResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
-import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.helpers.staics.RoleType;
-import com.example.restaurant.helpers.staics.WebSocketEntityType;
-import com.example.restaurant.helpers.staics.WebSocketTopics;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IBanRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.EmailServices;
 import com.example.restaurant.services.interfaces.IBanServices;
 import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
@@ -33,9 +29,7 @@ public class BanServices implements IBanServices {
   private final IBanRepository _banRepo;
   private final EmailServices _emailServices;
   private final IUserRepository _userRepo;
-  private final NotificationServices _notification;
-
-  private final SyncMapper _syncMapper;
+  private final BanSyncPublisher _syncPublisher;
 
   private static final String STATUS_ACTIVE = "ACTIVE";
 
@@ -82,12 +76,7 @@ public class BanServices implements IBanServices {
     _emailServices.sendEmailSetBan(
         domain.client().getEmail(), domain.client().getUsername(), domain.reason());
 
-    WebSocketEvent<SyncBanResponse> event =
-        WebSocketEvent.created(
-            WebSocketEntityType.BANS_ENTITY_TYPE,
-            ban.getToken(),
-            _syncMapper.toBanSyncResponse(ban));
-    _notification.sendEventToTopic(WebSocketTopics.BAN_TOPIC, event);
+    _syncPublisher.publishBanCreated(ban);
   }
 
   @Override
@@ -120,12 +109,7 @@ public class BanServices implements IBanServices {
       _banRepo.save(ban);
       _userRepo.save(user);
 
-      WebSocketEvent<SyncBanResponse> event =
-          WebSocketEvent.updated(
-              WebSocketEntityType.BANS_ENTITY_TYPE,
-              ban.getToken(),
-              _syncMapper.toBanSyncResponse(ban));
-      _notification.sendEventToTopic(WebSocketTopics.BAN_TOPIC, event);
+      _syncPublisher.publishBanUpdate(ban);
 
       if (log.isInfoEnabled()) {
         log.info("User {} has been automatically unbanned.", user.getUsername());

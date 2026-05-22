@@ -1,15 +1,10 @@
-package com.example.restaurant.services;
+package com.example.restaurant.services.report;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
-import com.example.restaurant.dto.sync.SyncReportResponse;
-import com.example.restaurant.helpers.WebSocketEvent;
 import com.example.restaurant.helpers.staics.RoleType;
-import com.example.restaurant.helpers.staics.WebSocketEntityType;
-import com.example.restaurant.helpers.staics.WebSocketTopics;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.repository.interfaces.IReportRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
@@ -29,9 +24,7 @@ public class ReportServices implements IReportServices {
   private final IReportRepository _reportRepo;
   private final IUserRepository _userRepo;
   private final IBanServices _banServices;
-  private final NotificationServices _notification;
-
-  private final SyncMapper _syncMapper;
+  private final ReportSyncPublisher _syncPublisher;
 
   @Override
   @Transactional
@@ -53,12 +46,8 @@ public class ReportServices implements IReportServices {
 
     _reportRepo.save(report);
 
-    WebSocketEvent<SyncReportResponse> event =
-        WebSocketEvent.created(
-            WebSocketEntityType.REPORT_ENTITY_TYPE,
-            report.getToken(),
-            _syncMapper.toSyncReportResponse(report));
-    _notification.sendEventToTopic(WebSocketTopics.REPORTS_TOPIC, event);
+    _syncPublisher.publishReportCreate(report);
+
     log.info(
         "Added report to user {} by {}",
         report.getGuest().getToken(),
@@ -94,12 +83,8 @@ public class ReportServices implements IReportServices {
 
     _reportRepo.save(report);
 
-    WebSocketEvent<SyncReportResponse> event =
-        WebSocketEvent.updated(
-            WebSocketEntityType.REPORT_ENTITY_TYPE,
-            report.getToken(),
-            _syncMapper.toSyncReportResponse(report));
-    _notification.sendEventToTopic(WebSocketTopics.REPORTS_TOPIC, event);
+    _syncPublisher.publishReportUpdate(report);
+
     log.info("Changed report status to {} by {}", statusForLog, admin.getUsername());
   }
 }

@@ -15,8 +15,11 @@ import com.example.restaurant.models.lookup.GuestReportStatus;
 import com.example.restaurant.repository.interfaces.IReportRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IBanServices;
+import com.example.restaurant.services.report.ReportServices;
 import java.time.OffsetDateTime;
 import java.util.Locale;
+
+import com.example.restaurant.services.report.ReportSyncPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +40,7 @@ class ReportServicesTest {
 
   @Mock private IBanServices _banServices;
 
-  @Mock private NotificationServices _notification;
+  @Mock private ReportSyncPublisher _syncPublisher;
 
   @InjectMocks private ReportServices _reportServices;
 
@@ -81,17 +84,7 @@ class ReportServicesTest {
     assertDoesNotThrow(() -> _reportServices.add(waiterToken, request));
 
     verify(_reportRepo, times(1)).save(any(GuestReports.class));
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/reports/updates"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.CREATED
-                        && event.getEntityType().equals("REPORT")
-                        && "NEW_REPORT_TOKEN".equals(event.getToken())
-                        && event.getPayload() != null
-                        && "Inappropriate behavior at the table."
-                            .equals(((SyncReportResponse) event.getPayload()).getReason())));
+    verify(_syncPublisher, times(1)).publishReportCreate(any(GuestReports.class));
   }
 
   @Test
@@ -133,15 +126,7 @@ class ReportServicesTest {
     verify(_banServices, times(1)).add(any());
     verify(_reportRepo, times(1)).save(report);
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/reports/updates"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.UPDATED
-                        && event.getEntityType().equals("REPORT")
-                        && "REPORT_TOKEN".equals(event.getToken())
-                        && event.getPayload() != null));
+    verify(_syncPublisher, times(1)).publishReportUpdate(report);
   }
 
   @Test
@@ -178,15 +163,6 @@ class ReportServicesTest {
     verify(_banServices, never()).add(any());
     verify(_reportRepo, times(1)).save(report);
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/reports/updates"),
-            argThat(
-                event ->
-                    event != null
-                        && event.getEventType() == WebSocketEventType.UPDATED
-                        && "REPORT".equals(event.getEntityType())
-                        && "REPORT_TOKEN".equals(event.getToken())
-                        && event.getPayload() != null));
+    verify(_syncPublisher, times(1)).publishReportUpdate(report);
   }
 }

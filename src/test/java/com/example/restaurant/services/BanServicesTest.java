@@ -14,10 +14,13 @@ import com.example.restaurant.models.lookup.BanStatus;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IBanRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.bans.BanServices;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+
+import com.example.restaurant.services.bans.BanSyncPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +41,7 @@ class BanServicesTest {
 
   @Mock private IUserRepository _userRepo;
 
-  @Mock private NotificationServices _notification;
+  @Mock private BanSyncPublisher _syncPublisher;
 
   @InjectMocks private BanServices _banServices;
 
@@ -86,15 +89,7 @@ class BanServicesTest {
     verify(_userRepo).save(client);
     verify(_emailServices).sendEmailSetBan(anyString(), anyString(), eq("Violation"));
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/security/bans"),
-            argThat(
-                event ->
-                    event != null
-                        && event.getEventType() == WebSocketEventType.CREATED
-                        && "BAN".equals(event.getEntityType())
-                        && event.getPayload() != null));
+    verify(_syncPublisher, times(1)).publishBanCreated(any(Bans.class));
   }
 
   @Test

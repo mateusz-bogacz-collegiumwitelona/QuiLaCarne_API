@@ -1,14 +1,9 @@
-package com.example.restaurant.services;
+package com.example.restaurant.services.ingridients;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.sync.SyncIngredientResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
-import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.helpers.staics.WebSocketEntityType;
-import com.example.restaurant.helpers.staics.WebSocketTopics;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
@@ -34,9 +29,7 @@ public class IngredientsServices implements IIngredientsServices {
   private final IIngredientsRepository _ingredientsRepo;
   private final IAllergensRepository _allergensRepo;
   private final IDishRepository _dishRepo;
-  private final NotificationServices _notification;
-
-  private final SyncMapper _syncMapper;
+  private final IngredientSyncPublisher _syncPublisher;
 
   @Transactional
   @Override
@@ -65,12 +58,7 @@ public class IngredientsServices implements IIngredientsServices {
 
     _ingredientsRepo.save(ingredient);
 
-    WebSocketEvent<SyncIngredientResponse> event =
-        WebSocketEvent.created(
-            WebSocketEntityType.INGREDIENTS_ENTITY_TYPE,
-            ingredient.getToken(),
-            _syncMapper.toSyncIngredientResponse(ingredient));
-    _notification.sendEventToTopic(WebSocketTopics.INGRIDIENTS_ADD_TOPIC, event);
+    _syncPublisher.publishIngredientsCreate(ingredient);
 
     log.info("Create new ingrediant {}", ingredient.getToken());
   }
@@ -100,10 +88,9 @@ public class IngredientsServices implements IIngredientsServices {
             _dishRepo.save(dish);
           }
         });
-    WebSocketEvent<Void> event =
-        WebSocketEvent.deleted(WebSocketEntityType.INGREDIENTS_ENTITY_TYPE, token);
 
-    _notification.sendEventToTopic(WebSocketTopics.INGRIDIENTS_REMOVE_TOPIC, event);
+    _syncPublisher.publishIngredientsDelete(token);
+
     log.info("Delete ingrediant {}", token);
   }
 

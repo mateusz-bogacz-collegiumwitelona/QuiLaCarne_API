@@ -18,11 +18,14 @@ import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
+import com.example.restaurant.services.table.TableServices;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+
+import com.example.restaurant.services.table.TableSyncPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +43,7 @@ class TableServicesTest {
 
   @Mock private ITableRespository _tableRepo;
 
-  @Mock private NotificationServices _notification;
+  @Mock private TableSyncPublisher _syncPublisher;
 
   @InjectMocks private TableServices _tableServices;
 
@@ -159,15 +162,7 @@ class TableServicesTest {
     verify(_tableRepo).save(mockTable);
     assertTrue(mockTable.getTableStatus().contains(mockStatus));
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/tables/updates"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.UPDATED
-                        && event.getEntityType().equals("TABLE")
-                        && event.getToken().equals(TestConstants.FAKE_TABLE_TOKEN)
-                        && event.getPayload() != null));
+    verify(_syncPublisher, times(1)).publishTableUpdate(any(RestaurantTables.class));
   }
 
   @Test
@@ -216,15 +211,7 @@ class TableServicesTest {
     assertTrue(table.getTableStatus().contains(outOfServiceStatus));
     verify(_tableRepo, times(1)).save(table);
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/tables/updates"),
-            argThat(
-                event ->
-                    event.getEventType() == com.example.restaurant.enums.WebSocketEventType.UPDATED
-                        && event.getEntityType().equals("TABLE")
-                        && event.getToken().equals(TestConstants.FAKE_TABLE_TOKEN)
-                        && event.getPayload() != null));
+    verify(_syncPublisher, times(1)).publishTableUpdate(any(RestaurantTables.class));
   }
 
   @Test
@@ -291,16 +278,7 @@ class TableServicesTest {
                         && table.getCapacity() == 4
                         && table.getTableStatus().contains(availableStatus)));
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/tables/updates"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.CREATED
-                        && event.getEntityType().equals("TABLE")
-                        && "NEW_TABLE_TOKEN".equals(event.getToken())
-                        && event.getPayload() != null
-                        && ((SyncTableResponse) event.getPayload()).getTableNumber() == 5));
+    verify(_syncPublisher, times(1)).publishTableCreate(any(RestaurantTables.class));
   }
 
   @Test
@@ -349,15 +327,7 @@ class TableServicesTest {
     assertNotNull(table.getDeletedAt());
     verify(_tableRepo, times(1)).save(table);
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/tables/updates"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.DELETED
-                        && event.getEntityType().equals("TABLE")
-                        && event.getToken().equals(TestConstants.FAKE_TABLE_TOKEN)
-                        && event.getPayload() == null));
+    verify(_syncPublisher, times(1)).publishTableDelete(TestConstants.FAKE_TABLE_TOKEN);
   }
 
   @Test
@@ -447,16 +417,7 @@ class TableServicesTest {
                         && status.getNameEn().equals("New Table Status EN")
                         && status.getToken().equals("NEW_TABLE_STATUS_EN")));
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/dictionary/table-statuses"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.CREATED
-                        && event.getEntityType().equals("TABLE_STATUS")
-                        && event.getPayload() != null
-                        && "Nowy Status Stolika PL"
-                            .equals(((SyncDictionaryResponse) event.getPayload()).getNamePl())));
+    verify(_syncPublisher, times(1)).publishTableStatusCreate(any(TableStatus.class));
   }
 
   @Test
@@ -483,15 +444,7 @@ class TableServicesTest {
     verify(_tableRepo, times(1)).saveStatus(statusToRemove);
     verify(_tableRepo, times(1)).save(table);
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/dictionary/table-statuses"),
-            argThat(
-                event ->
-                    event.getEventType() == com.example.restaurant.enums.WebSocketEventType.DELETED
-                        && event.getEntityType().equals("TABLE_STATUS")
-                        && event.getToken().equals(tokenToRemove)
-                        && event.getPayload() == null));
+    verify(_syncPublisher, times(1)).publishTableStatusDelete(tokenToRemove);
   }
 
   @Test
@@ -516,15 +469,7 @@ class TableServicesTest {
     assertTrue(table.getTableStatus().contains(availableStatus));
     verify(_tableRepo, times(1)).save(table);
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/tables/updates"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.UPDATED
-                        && event.getEntityType().equals("TABLE")
-                        && event.getToken().equals(TestConstants.FAKE_TABLE_TOKEN)
-                        && event.getPayload() != null));
+    verify(_syncPublisher, times(1)).publishTableUpdate(any(RestaurantTables.class));
   }
 
   @Test

@@ -17,6 +17,8 @@ import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
 import com.example.restaurant.repository.interfaces.IDishRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
+import com.example.restaurant.services.ingridients.IngredientSyncPublisher;
+import com.example.restaurant.services.ingridients.IngredientsServices;
 import java.util.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +39,7 @@ class IngredientsServicesTest {
 
   @Mock private IDishRepository _dishRepo;
 
-  @Mock private NotificationServices _notification;
+  @Mock private IngredientSyncPublisher _syncPublisher;
 
   @InjectMocks private IngredientsServices _ingredientsServices;
 
@@ -76,16 +78,7 @@ class IngredientsServicesTest {
                             .getToken()
                             .equals(TestConstants.INGREDIENT_EN.toUpperCase())));
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("dictionary/sync"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.CREATED
-                        && event.getEntityType().equals("INGREDIENT")
-                        && event.getPayload() != null
-                        && TestConstants.INGREDIENT_PL.equals(
-                            ((SyncIngredientResponse) event.getPayload()).getNamePl())));
+    verify(_syncPublisher, times(1)).publishIngredientsCreate(any(Ingredients.class));
   }
 
   @Test
@@ -151,15 +144,7 @@ class IngredientsServicesTest {
     assertEquals(TestConstants.INGREDIENT_EN + " is deleted", dish.getUnavailableReason());
     verify(_dishRepo).save(dish);
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("menu/availability"),
-            argThat(
-                event ->
-                    event.getEventType() == WebSocketEventType.DELETED
-                        && event.getEntityType().equals("INGREDIENT")
-                        && token.equals(event.getToken())
-                        && event.getPayload() == null));
+    verify(_syncPublisher, times(1)).publishIngredientsDelete(token);
   }
 
   @Test
