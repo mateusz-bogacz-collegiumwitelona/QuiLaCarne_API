@@ -59,5 +59,5 @@ docker compose -f compose.test.yml run --rm test
 ## Ważne info
 
 1. **Po klucz do google zgłosić się do matiego**
-2. **Dokumentacja WebSockets jest dostępna w pliku [WEBSOCKETS.md](WEBSOCKETS_2.md)**
+2. **Dokumentacja WebSockets jest dostępna w pliku [WEBSOCKETS.md](WEBSOCKETS.md)**
 3. **Dokumentacja api online [API](https://mateusz-bogacz-collegiumwitelona.github.io/QuiLaCarne_API/)**
