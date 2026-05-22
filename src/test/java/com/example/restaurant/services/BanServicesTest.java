@@ -6,8 +6,6 @@ import static org.mockito.Mockito.*;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.enums.WebSocketEventType;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.BanStatus;
@@ -15,21 +13,18 @@ import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IBanRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.bans.BanServices;
+import com.example.restaurant.services.bans.BanSyncPublisher;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-
-import com.example.restaurant.services.bans.BanSyncPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -44,8 +39,6 @@ class BanServicesTest {
   @Mock private BanSyncPublisher _syncPublisher;
 
   @InjectMocks private BanServices _banServices;
-
-  @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
   private Users admin;
   private Users client;

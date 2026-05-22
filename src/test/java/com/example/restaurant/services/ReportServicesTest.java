@@ -6,9 +6,6 @@ import static org.mockito.Mockito.*;
 
 import com.example.restaurant.dto.request.AddReportRequest;
 import com.example.restaurant.dto.request.ChangeReportStatusRequest;
-import com.example.restaurant.dto.sync.SyncReportResponse;
-import com.example.restaurant.enums.WebSocketEventType;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.GuestReports;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.GuestReportStatus;
@@ -16,19 +13,16 @@ import com.example.restaurant.repository.interfaces.IReportRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IBanServices;
 import com.example.restaurant.services.report.ReportServices;
+import com.example.restaurant.services.report.ReportSyncPublisher;
 import java.time.OffsetDateTime;
 import java.util.Locale;
-
-import com.example.restaurant.services.report.ReportSyncPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -43,8 +37,6 @@ class ReportServicesTest {
   @Mock private ReportSyncPublisher _syncPublisher;
 
   @InjectMocks private ReportServices _reportServices;
-
-  @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
   @BeforeEach
   void setUp() {

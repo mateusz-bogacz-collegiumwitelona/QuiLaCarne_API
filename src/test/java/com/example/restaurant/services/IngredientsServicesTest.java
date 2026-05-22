@@ -7,10 +7,7 @@ import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.request.AddIngredientRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.sync.SyncIngredientResponse;
-import com.example.restaurant.enums.WebSocketEventType;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.Ingredients;
 import com.example.restaurant.models.lookup.Allergens;
@@ -24,10 +21,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -42,8 +37,6 @@ class IngredientsServicesTest {
   @Mock private IngredientSyncPublisher _syncPublisher;
 
   @InjectMocks private IngredientsServices _ingredientsServices;
-
-  @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
 
   @AfterEach
   void tearDown() {
