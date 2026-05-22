@@ -1,4 +1,4 @@
-package com.example.restaurant.services;
+package com.example.restaurant.services.table;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.AddEntityRequest;
@@ -7,13 +7,9 @@ import com.example.restaurant.dto.request.TableFilterRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
 import com.example.restaurant.dto.response.TableListResponse;
 import com.example.restaurant.dto.response.TableListWrapperResponse;
-import com.example.restaurant.dto.sync.SyncDictionaryResponse;
-import com.example.restaurant.dto.sync.SyncTableResponse;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.helpers.DictionaryHelper;
-import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import com.example.restaurant.repository.interfaces.ITableRespository;
@@ -35,12 +31,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class TableServices implements ITableServices {
   private final ITableRespository _tableRepo;
-  private final NotificationServices _notification;
-
-  private final SyncMapper _syncMapper;
-
-  private static final String TABLE_ENTITY_TYPE = "TABLE";
-  private static final String TABLE_STATUS_ENTITY_TYPE = "TABLE_STATUS";
+  private final TableSyncPublisher _syncPublisher;
 
   @Override
   @Cacheable(
@@ -81,7 +72,9 @@ public class TableServices implements ITableServices {
     TableStateLogic.from(table).markAsCleaning(table, cleanStatus);
 
     _tableRepo.save(table);
-    publishTableUpdate(table);
+
+    _syncPublisher.publishTableUpdate(table);
+
     log.info("Table {} has been cleaned", tableToken);
   }
 
@@ -100,7 +93,9 @@ public class TableServices implements ITableServices {
     TableStateLogic.from(table).takeOutOfService(table, oosStatus);
 
     _tableRepo.save(table);
-    publishTableUpdate(table);
+
+    _syncPublisher.publishTableUpdate(table);
+
     log.info("Table {} has been out of order", tableToken);
   }
 
@@ -125,10 +120,8 @@ public class TableServices implements ITableServices {
 
     _tableRepo.save(table);
 
-    WebSocketEvent<SyncTableResponse> event =
-        WebSocketEvent.created(
-            TABLE_ENTITY_TYPE, table.getToken(), _syncMapper.toSyncTableResponse(table));
-    _notification.sendEventToTopic("/tables/updates", event);
+    _syncPublisher.publishTableCreate(table);
+
     log.info("Table {} has been added", table.getToken());
   }
 
@@ -143,8 +136,7 @@ public class TableServices implements ITableServices {
 
     _tableRepo.save(table);
 
-    WebSocketEvent<Void> event = WebSocketEvent.deleted(TABLE_ENTITY_TYPE, token);
-    _notification.sendEventToTopic("/tables/updates", event);
+    _syncPublisher.publishTableDelete(token);
     log.info("Table {} has been deleted", table.getToken());
   }
 
@@ -171,10 +163,8 @@ public class TableServices implements ITableServices {
 
     _tableRepo.saveStatus(status);
 
-    SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(status);
-    WebSocketEvent<SyncDictionaryResponse> event =
-        WebSocketEvent.created(TABLE_STATUS_ENTITY_TYPE, status.getToken(), payload);
-    _notification.sendEventToTopic("/dictionary/table-statuses", event);
+    _syncPublisher.publishTableStatusCreate(status);
+
     log.info("Table status {} has been added", request.getNameEn());
   }
 
@@ -199,8 +189,7 @@ public class TableServices implements ITableServices {
           }
         });
 
-    WebSocketEvent<Void> event = WebSocketEvent.deleted(TABLE_STATUS_ENTITY_TYPE, token);
-    _notification.sendEventToTopic("/dictionary/table-statuses", event);
+    _syncPublisher.publishTableStatusDelete(token);
     log.info("Table status {} has been removed", token);
   }
 
@@ -219,7 +208,9 @@ public class TableServices implements ITableServices {
     TableStateLogic.from(table).release(table, active);
 
     _tableRepo.save(table);
-    publishTableUpdate(table);
+
+    _syncPublisher.publishTableUpdate(table);
+
     log.info("Table {} has been released", table.getToken());
   }
 
@@ -269,12 +260,5 @@ public class TableServices implements ITableServices {
         .status(statusName)
         .updatedAt(table.getUpdatedAt())
         .build();
-  }
-
-  private void publishTableUpdate(RestaurantTables table) {
-    WebSocketEvent<SyncTableResponse> event =
-        WebSocketEvent.updated(
-            TABLE_ENTITY_TYPE, table.getToken(), _syncMapper.toSyncTableResponse(table));
-    _notification.sendEventToTopic("/tables/updates", event);
   }
 }

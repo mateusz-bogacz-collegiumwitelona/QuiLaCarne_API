@@ -9,6 +9,7 @@ import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.GoogleAuthenticationException;
 import com.example.restaurant.exceptions.InvalidDateException;
 import com.example.restaurant.fasade.interfaces.IUserFacade;
+import com.example.restaurant.helpers.staics.RoleType;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IAuthServices;
@@ -84,8 +85,7 @@ public class AuthServices implements IAuthServices {
     if (!request.getPassword().equals(request.getConfirmPassword()))
       throw new IllegalStateException("Passwords do not match");
 
-    String role = "ROLE_CLIENT";
-    String userToken = _userServices.create(request, role, false);
+    String userToken = _userServices.create(request, RoleType.ROLE_CLIENT, false);
 
     String activationToken =
         _tokenServices.createToken(userToken, TokenTypeEnum.ACTIVATION, 24 * 60);

@@ -1,17 +1,16 @@
-package com.example.restaurant.services;
+package com.example.restaurant.services.bans;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.CreateBanDomain;
 import com.example.restaurant.dto.request.CreateBanRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.dto.sync.SyncBanResponse;
 import com.example.restaurant.helpers.DictionaryHelper;
-import com.example.restaurant.helpers.WebSocketEvent;
-import com.example.restaurant.mappers.SyncMapper;
+import com.example.restaurant.helpers.staics.RoleType;
 import com.example.restaurant.models.Bans;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IBanRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.EmailServices;
 import com.example.restaurant.services.interfaces.IBanServices;
 import jakarta.transaction.Transactional;
 import java.time.OffsetDateTime;
@@ -30,14 +29,8 @@ public class BanServices implements IBanServices {
   private final IBanRepository _banRepo;
   private final EmailServices _emailServices;
   private final IUserRepository _userRepo;
-  private final NotificationServices _notification;
+  private final BanSyncPublisher _syncPublisher;
 
-  private final SyncMapper _syncMapper;
-
-  private static final String ENTITY_TYPE = "BAN";
-
-  private static final String ROLE_CLIENT = "ROLE_CLIENT";
-  private static final String ROLE_MANAGER = "ROLE_MANAGER";
   private static final String STATUS_ACTIVE = "ACTIVE";
 
   @Override
@@ -83,9 +76,7 @@ public class BanServices implements IBanServices {
     _emailServices.sendEmailSetBan(
         domain.client().getEmail(), domain.client().getUsername(), domain.reason());
 
-    WebSocketEvent<SyncBanResponse> event =
-        WebSocketEvent.created(ENTITY_TYPE, ban.getToken(), _syncMapper.toBanSyncResponse(ban));
-    _notification.sendEventToTopic("/security/bans", event);
+    _syncPublisher.publishBanCreated(ban);
   }
 
   @Override
@@ -118,9 +109,7 @@ public class BanServices implements IBanServices {
       _banRepo.save(ban);
       _userRepo.save(user);
 
-      WebSocketEvent<SyncBanResponse> event =
-          WebSocketEvent.updated(ENTITY_TYPE, ban.getToken(), _syncMapper.toBanSyncResponse(ban));
-      _notification.sendEventToTopic("/security/bans", event);
+      _syncPublisher.publishBanUpdate(ban);
 
       if (log.isInfoEnabled()) {
         log.info("User {} has been automatically unbanned.", user.getUsername());
@@ -130,14 +119,14 @@ public class BanServices implements IBanServices {
 
   private void validatePermissions(Users admin, Users client) {
     boolean isAdminManager =
-        admin.getRoles().stream().anyMatch(r -> ROLE_MANAGER.equals(r.getName()));
+        admin.getRoles().stream().anyMatch(r -> RoleType.ROLE_MANAGER.equals(r.getName()));
 
     if (!isAdminManager) {
       throw new IllegalStateException("Only managers can issue bans");
     }
 
     boolean isTargetClient =
-        client.getRoles().stream().anyMatch(r -> ROLE_CLIENT.equals(r.getName()));
+        client.getRoles().stream().anyMatch(r -> RoleType.ROLE_CLIENT.equals(r.getName()));
 
     if (!isTargetClient) {
       throw new IllegalStateException("Targeted user must be a client");

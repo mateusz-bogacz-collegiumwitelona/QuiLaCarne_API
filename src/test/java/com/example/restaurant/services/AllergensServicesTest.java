@@ -6,11 +6,11 @@ import static org.mockito.Mockito.*;
 import com.example.restaurant.TestConstants;
 import com.example.restaurant.dto.request.AddEntityRequest;
 import com.example.restaurant.dto.response.DictionaryResponse;
-import com.example.restaurant.enums.WebSocketEventType;
-import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.lookup.Allergens;
 import com.example.restaurant.repository.interfaces.IAllergensRepository;
 import com.example.restaurant.repository.interfaces.IIngredientsRepository;
+import com.example.restaurant.services.allergens.AllergenSyncPublisher;
+import com.example.restaurant.services.allergens.AllergensServices;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -18,10 +18,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.i18n.LocaleContextHolder;
 
@@ -32,11 +30,9 @@ class AllergensServicesTest {
 
   @Mock private IIngredientsRepository _ingredientsRepo;
 
-  @Mock private NotificationServices _notification;
-
   @InjectMocks private AllergensServices _allergensServices;
 
-  @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
+  @Mock private AllergenSyncPublisher _syncPublisher;
 
   @AfterEach
   void tearDown() {
@@ -113,15 +109,7 @@ class AllergensServicesTest {
                             .equals(
                                 TestConstants.FAKE_ALLERGEN_EN.toUpperCase().replace(" ", "_"))));
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/dictionary/allergens"),
-            argThat(
-                event ->
-                    event != null
-                        && event.getEventType() == WebSocketEventType.CREATED
-                        && "ALLERGEN".equals(event.getEntityType())
-                        && event.getPayload() != null));
+    verify(_syncPublisher, times(1)).publishAllergenCreate(any(Allergens.class));
   }
 
   @Test
@@ -157,15 +145,6 @@ class AllergensServicesTest {
     assertNotNull(allergen.getDeletedAt());
     verify(_allergenRepo, times(1)).save(allergen);
 
-    verify(_notification, times(1))
-        .sendEventToTopic(
-            eq("/dictionary/allergens"),
-            argThat(
-                event ->
-                    event != null
-                        && event.getEventType() == WebSocketEventType.DELETED
-                        && "ALLERGEN".equals(event.getEntityType())
-                        && token.equals(event.getToken())
-                        && event.getPayload() == null));
+    verify(_syncPublisher, times(1)).publishAllergenDelete(token);
   }
 }

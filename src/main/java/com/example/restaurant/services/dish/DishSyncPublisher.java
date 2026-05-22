@@ -3,6 +3,8 @@ package com.example.restaurant.services.dish;
 import com.example.restaurant.dto.sync.SyncDictionaryResponse;
 import com.example.restaurant.dto.sync.SyncDishResponse;
 import com.example.restaurant.helpers.WebSocketEvent;
+import com.example.restaurant.helpers.staics.WebSocketEntityType;
+import com.example.restaurant.helpers.staics.WebSocketTopics;
 import com.example.restaurant.mappers.SyncMapper;
 import com.example.restaurant.models.Dishes;
 import com.example.restaurant.models.lookup.DishesCategories;
@@ -18,12 +20,6 @@ public class DishSyncPublisher {
   private final NotificationServices _notification;
   private final SyncMapper _syncMapper;
 
-  private static final String DISH_ENTITY_TYPE = "DISH";
-  private static final String CATEGORY_ENTITY_TYPE = "DISH_CATEGORY";
-
-  private static final String DISHES_TOPIC = "/menu/dishes";
-  private static final String CATEGORIES_TOPIC = "/dictionary/dish-categories";
-
   public void publishDishCreated(Dishes dish) {
     sendDishEvent(dish, true);
   }
@@ -33,28 +29,32 @@ public class DishSyncPublisher {
   }
 
   public void publishDishDeleted(String token) {
-    WebSocketEvent<Void> event = WebSocketEvent.deleted(DISH_ENTITY_TYPE, token);
-    _notification.sendEventToTopic(DISHES_TOPIC, event);
+    WebSocketEvent<Void> event =
+        WebSocketEvent.deleted(WebSocketEntityType.DISH_ENTITY_TYPE, token);
+    _notification.sendEventToTopic(WebSocketTopics.DISHES_TOPIC, event);
   }
 
   public void publishCategoryCreated(DishesCategories category) {
     SyncDictionaryResponse payload = _syncMapper.toSyncDictionaryResponse(category);
     WebSocketEvent<SyncDictionaryResponse> event =
-        WebSocketEvent.created(CATEGORY_ENTITY_TYPE, category.getToken(), payload);
-    _notification.sendEventToTopic(CATEGORIES_TOPIC, event);
+        WebSocketEvent.created(
+            WebSocketEntityType.CATEGORY_ENTITY_TYPE, category.getToken(), payload);
+    _notification.sendEventToTopic(WebSocketTopics.CATEGORIES_TOPIC, event);
   }
 
   public void publishCategoryDeleted(String token) {
-    WebSocketEvent<Void> event = WebSocketEvent.deleted(CATEGORY_ENTITY_TYPE, token);
-    _notification.sendEventToTopic(CATEGORIES_TOPIC, event);
+    WebSocketEvent<Void> event =
+        WebSocketEvent.deleted(WebSocketEntityType.CATEGORY_ENTITY_TYPE, token);
+    _notification.sendEventToTopic(WebSocketTopics.CATEGORIES_TOPIC, event);
   }
 
   private void sendDishEvent(Dishes dish, boolean isNew) {
     SyncDishResponse payload = _syncMapper.toSyncDishResponse(dish);
     WebSocketEvent<SyncDishResponse> event =
         isNew
-            ? WebSocketEvent.created(DISH_ENTITY_TYPE, dish.getToken(), payload)
-            : WebSocketEvent.updated(DISH_ENTITY_TYPE, dish.getToken(), payload);
-    _notification.sendEventToTopic(DISHES_TOPIC, event);
+            ? WebSocketEvent.created(WebSocketEntityType.DISH_ENTITY_TYPE, dish.getToken(), payload)
+            : WebSocketEvent.updated(
+                WebSocketEntityType.DISH_ENTITY_TYPE, dish.getToken(), payload);
+    _notification.sendEventToTopic(WebSocketTopics.DISHES_TOPIC, event);
   }
 }
