@@ -67,16 +67,22 @@ class UserFacadeTest {
 
     EmployeeManagementService employee =
         new EmployeeManagementService(
-            _userRepo, _roleRepository, _passwordEncoder, userHelper, userPublisher);
+            _userRepo,
+            _roleRepository,
+            _passwordEncoder,
+            userHelper,
+            userPublisher,
+            _tokenServices);
 
     UserAccountService account =
-        new UserAccountService(_userRepo, _roleRepository, _passwordEncoder, userHelper);
+        new UserAccountService(
+            _userRepo, _roleRepository, _passwordEncoder, userHelper, _tokenServices);
 
     UserIdentityService identity =
         new UserIdentityService(_userRepo, _tokenServices, _emailServices, userHelper);
 
     UserSecurityService security =
-        new UserSecurityService(_userRepo, _passwordEncoder, _2faServices);
+        new UserSecurityService(_userRepo, _passwordEncoder, _2faServices, _tokenServices);
 
     this._userFacade = new UserFacade(employee, account, identity, security);
   }

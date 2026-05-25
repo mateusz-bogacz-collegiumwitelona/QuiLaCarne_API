@@ -68,6 +68,7 @@ public class UserIdentityService {
     user.setPendingEmail(null);
 
     _userRepo.save(user);
+    _tokenServices.revokeTokensForUser(userToken, TokenTypeEnum.REFRESH_TOKEN);
     log.info("Confirmed email change {} by {}", user.getEmail(), user.getNormalizedEmail());
   }
 
