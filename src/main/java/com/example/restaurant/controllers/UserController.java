@@ -52,8 +52,8 @@ public class UserController {
     _userServices.updatePassword(userToken, request);
 
     return ResponseEntity.ok()
-            .headers(clearSessionCookies())
-            .body(ResultHandler.success("Password updated", HttpStatus.OK.value()));
+        .headers(clearSessionCookies())
+        .body(ResultHandler.success("Password updated", HttpStatus.OK.value()));
   }
 
   @Operation(
@@ -114,8 +114,8 @@ public class UserController {
       @AuthenticationPrincipal(expression = "token") String userToken) {
     _userServices.confirmEmailChange(userToken, verificationToken);
     return ResponseEntity.ok()
-            .headers(clearSessionCookies())
-            .body(ResultHandler.success("Email updated successfully", HttpStatus.OK.value()));
+        .headers(clearSessionCookies())
+        .body(ResultHandler.success("Email updated successfully", HttpStatus.OK.value()));
   }
 
   @Operation(
@@ -136,8 +136,8 @@ public class UserController {
     _userServices.updateUserName(userName, userToken);
 
     return ResponseEntity.ok()
-            .headers(clearSessionCookies())
-            .body(ResultHandler.success("User name changed successfully", HttpStatus.OK.value()));
+        .headers(clearSessionCookies())
+        .body(ResultHandler.success("User name changed successfully", HttpStatus.OK.value()));
   }
 
   @Operation(
@@ -157,8 +157,8 @@ public class UserController {
     _userServices.delete(userToken);
 
     return ResponseEntity.ok()
-            .headers(clearSessionCookies())
-            .body(ResultHandler.success("User deleted successfully", HttpStatus.OK.value()));
+        .headers(clearSessionCookies())
+        .body(ResultHandler.success("User deleted successfully", HttpStatus.OK.value()));
   }
 
   @Operation(
@@ -486,28 +486,28 @@ public class UserController {
     HttpHeaders headers = new HttpHeaders();
 
     headers.add(
-            HttpHeaders.SET_COOKIE,
-            org.springframework.http.ResponseCookie.from("accessToken", "")
-                    .httpOnly(true)
-                    .path("/")
-                    .domain(".quilacarne.com.pl")
-                    .secure(true)
-                    .sameSite("None")
-                    .maxAge(0)
-                    .build()
-                    .toString());
+        HttpHeaders.SET_COOKIE,
+        org.springframework.http.ResponseCookie.from("accessToken", "")
+            .httpOnly(true)
+            .path("/")
+            .domain(".quilacarne.com.pl")
+            .secure(true)
+            .sameSite("None")
+            .maxAge(0)
+            .build()
+            .toString());
 
     headers.add(
-            HttpHeaders.SET_COOKIE,
-            org.springframework.http.ResponseCookie.from("refreshToken", "")
-                    .httpOnly(true)
-                    .path("/api/auth/refresh")
-                    .secure(true)
-                    .domain(".quilacarne.com.pl")
-                    .sameSite("None")
-                    .maxAge(0)
-                    .build()
-                    .toString());
+        HttpHeaders.SET_COOKIE,
+        org.springframework.http.ResponseCookie.from("refreshToken", "")
+            .httpOnly(true)
+            .path("/api/auth/refresh")
+            .secure(true)
+            .domain(".quilacarne.com.pl")
+            .sameSite("None")
+            .maxAge(0)
+            .build()
+            .toString());
 
     return headers;
   }

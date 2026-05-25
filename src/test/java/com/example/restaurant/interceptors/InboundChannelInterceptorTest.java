@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.example.restaurant.services.JwtServices;
 import java.util.Collections;
+import java.util.Objects;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,13 +56,17 @@ class InboundChannelInterceptorTest {
     accessor.setNativeHeader("Authorization", "Bearer " + token);
     Message<?> message = MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
 
-    Message<?> resultMessage = interceptor.preSend(message, channel);
+    Message<?> resultMessage =
+        Objects.requireNonNull(
+            interceptor.preSend(message, channel), "ResultMessage must not be null");
 
     StompHeaderAccessor resultAccessor =
-        StompHeaderAccessor.getAccessor(resultMessage, StompHeaderAccessor.class);
-    assertNotNull(resultAccessor);
+        Objects.requireNonNull(
+            StompHeaderAccessor.getAccessor(resultMessage, StompHeaderAccessor.class),
+            "ResultAccessor must not be null");
+
     assertNotNull(resultAccessor.getUser());
-    assertTrue(resultAccessor.getUser() instanceof UsernamePasswordAuthenticationToken);
+    assertInstanceOf(UsernamePasswordAuthenticationToken.class, resultAccessor.getUser());
   }
 
   @Test
@@ -71,11 +76,15 @@ class InboundChannelInterceptorTest {
     accessor.setNativeHeader("Authorization", "Bearer some.token");
     Message<?> message = MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
 
-    Message<?> resultMessage = interceptor.preSend(message, channel);
+    Message<?> resultMessage =
+        Objects.requireNonNull(
+            interceptor.preSend(message, channel), "ResultMessage must not be null");
 
     StompHeaderAccessor resultAccessor =
-        StompHeaderAccessor.getAccessor(resultMessage, StompHeaderAccessor.class);
-    assertNotNull(resultAccessor);
+        Objects.requireNonNull(
+            StompHeaderAccessor.getAccessor(resultMessage, StompHeaderAccessor.class),
+            "ResultAccessor must not be null");
+
     assertNull(resultAccessor.getUser());
     verifyNoInteractions(jwtServices, userDetailsService);
   }
@@ -86,11 +95,15 @@ class InboundChannelInterceptorTest {
     StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.CONNECT);
     Message<?> message = MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
 
-    Message<?> resultMessage = interceptor.preSend(message, channel);
+    Message<?> resultMessage =
+        Objects.requireNonNull(
+            interceptor.preSend(message, channel), "ResultMessage must not be null");
 
     StompHeaderAccessor resultAccessor =
-        StompHeaderAccessor.getAccessor(resultMessage, StompHeaderAccessor.class);
-    assertNotNull(resultAccessor);
+        Objects.requireNonNull(
+            StompHeaderAccessor.getAccessor(resultMessage, StompHeaderAccessor.class),
+            "ResultAccessor must not be null");
+
     assertNull(resultAccessor.getUser());
     verifyNoInteractions(jwtServices, userDetailsService);
   }
@@ -111,11 +124,15 @@ class InboundChannelInterceptorTest {
     accessor.setNativeHeader("Authorization", "Bearer " + token);
     Message<?> message = MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
 
-    Message<?> resultMessage = interceptor.preSend(message, channel);
+    Message<?> resultMessage =
+        Objects.requireNonNull(
+            interceptor.preSend(message, channel), "ResultMessage must not be null");
 
     StompHeaderAccessor resultAccessor =
-        StompHeaderAccessor.getAccessor(resultMessage, StompHeaderAccessor.class);
-    assertNotNull(resultAccessor);
+        Objects.requireNonNull(
+            StompHeaderAccessor.getAccessor(resultMessage, StompHeaderAccessor.class),
+            "ResultAccessor must not be null");
+
     assertNull(resultAccessor.getUser());
   }
 }
