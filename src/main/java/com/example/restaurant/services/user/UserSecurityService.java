@@ -4,9 +4,11 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.ChangePasswordRequest;
 import com.example.restaurant.dto.request.Verify2faRequest;
 import com.example.restaurant.dto.response.Generate2faResponse;
+import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.TwoFactorServices;
+import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ public class UserSecurityService {
   private final IUserRepository _userRepo;
   private final PasswordEncoder _passwordEncoder;
   private final TwoFactorServices _2faServices;
+  private final IVerificationTokenServices _tokenServices;
 
   @Auditable(action = "UPDATE_PASSWORD")
   @Transactional
@@ -34,16 +37,18 @@ public class UserSecurityService {
       throw new BadCredentialsException("Invalid old password");
 
     user.setPassword(_passwordEncoder.encode(request.getConfirmPassword()));
-    log.info("Updated user password {}", user.getUsername());
     _userRepo.save(user);
+    _tokenServices.revokeTokensForUser(userToken, TokenTypeEnum.REFRESH_TOKEN);
+    log.info("Updated user password {}", user.getUsername());
   }
 
   @Transactional
   public void changePassword(String token, String newPassword) {
     Users user = _userRepo.findByToken(token);
     user.setPassword(_passwordEncoder.encode(newPassword));
-    log.info("Updated user password {}", user.getUsername());
     _userRepo.save(user);
+    _tokenServices.revokeTokensForUser(token, TokenTypeEnum.REFRESH_TOKEN);
+    log.info("Updated user password {}", user.getUsername());
   }
 
   @Transactional
@@ -82,8 +87,8 @@ public class UserSecurityService {
 
     user.setIsTwoFactorEnabled(true);
 
-    log.info("Verifying 2FA code for user {}", user.getUsername());
-
     _userRepo.save(user);
+    _tokenServices.revokeTokensForUser(userToken, TokenTypeEnum.REFRESH_TOKEN);
+    log.info("Verifying 2FA code for user {}", user.getUsername());
   }
 }

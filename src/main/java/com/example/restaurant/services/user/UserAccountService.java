@@ -1,12 +1,14 @@
 package com.example.restaurant.services.user;
 
 import com.example.restaurant.annotations.Auditable;
+import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.helpers.UserManagmentHelper;
 import com.example.restaurant.helpers.staics.RoleType;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import jakarta.transaction.Transactional;
 import java.util.Set;
 import java.util.UUID;
@@ -24,6 +26,7 @@ public class UserAccountService {
   private final IRoleRepository _roleRepository;
   private final PasswordEncoder _passwordEncoder;
   private final UserManagmentHelper _userHelper;
+  private final IVerificationTokenServices _tokenServices;
 
   @Transactional
   @CacheEvict(value = "usersList", allEntries = true)
@@ -42,6 +45,7 @@ public class UserAccountService {
   @CacheEvict(value = "usersList", allEntries = true)
   public void delete(String userToken) {
     _userHelper.deleteAccount(userToken);
+    _tokenServices.revokeTokensForUser(userToken, TokenTypeEnum.REFRESH_TOKEN);
     log.info("User {} has been deleted", userToken);
   }
 
@@ -85,6 +89,7 @@ public class UserAccountService {
     Users user = _userRepo.findByToken(userToken);
     _userHelper.changeUsername(user, userName);
     _userRepo.save(user);
+    _tokenServices.revokeTokensForUser(userToken, TokenTypeEnum.REFRESH_TOKEN);
     log.info("Updated user {} by {}", userName, user.getUsername());
   }
 }
