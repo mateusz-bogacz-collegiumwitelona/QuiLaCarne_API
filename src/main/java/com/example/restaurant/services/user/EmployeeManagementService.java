@@ -2,6 +2,7 @@ package com.example.restaurant.services.user;
 
 import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.request.*;
+import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.EntityAlreadyExistsException;
 import com.example.restaurant.helpers.UserManagmentHelper;
 import com.example.restaurant.helpers.staics.RoleType;
@@ -9,6 +10,7 @@ import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.Roles;
 import com.example.restaurant.repository.interfaces.IRoleRepository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.interfaces.IVerificationTokenServices;
 import jakarta.transaction.Transactional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class EmployeeManagementService {
   private final PasswordEncoder _passwordEncoder;
   private final UserManagmentHelper _userHelper;
   private final UserSyncPublisher _userPublisher;
+  private final IVerificationTokenServices _tokenServices;
 
   @Transactional
   @Auditable(action = "ADD_NEW_EMPLOYEE")
@@ -59,6 +62,7 @@ public class EmployeeManagementService {
     _userRepo.save(employee);
 
     _userPublisher.publishUserUpdated(employee);
+    _tokenServices.revokeTokensForUser(request.getEmployeeToken(), TokenTypeEnum.REFRESH_TOKEN);
     log.info("Updated employee {}", employee.getUsername());
   }
 
@@ -91,6 +95,7 @@ public class EmployeeManagementService {
     _userRepo.save(user);
 
     _userPublisher.publishUserUpdated(user);
+    _tokenServices.revokeTokensForUser(request.getEmployeeToken(), TokenTypeEnum.REFRESH_TOKEN);
     log.info("Updated employee role {}", user.getUsername());
   }
 
@@ -111,6 +116,7 @@ public class EmployeeManagementService {
     _userRepo.save(user);
 
     _userPublisher.publishUserUpdated(user);
+    _tokenServices.revokeTokensForUser(request.getEmployeeToken(), TokenTypeEnum.REFRESH_TOKEN);
     log.info("Blocked employee {}", user.getUsername());
   }
 
@@ -124,6 +130,7 @@ public class EmployeeManagementService {
     _userHelper.deleteAccount(employeeToken);
 
     _userPublisher.publishUserDeleted(employeeToken);
+    _tokenServices.revokeTokensForUser(employeeToken, TokenTypeEnum.REFRESH_TOKEN);
     log.info("Deleted employee {}", employeeToken);
   }
 
@@ -142,6 +149,7 @@ public class EmployeeManagementService {
 
     _userRepo.save(user);
     _userPublisher.publishUserUpdated(user);
+    _tokenServices.revokeTokensForUser(request.getEmployeeToken(), TokenTypeEnum.REFRESH_TOKEN);
     log.info("Changed employee password {}", user.getUsername());
   }
 
