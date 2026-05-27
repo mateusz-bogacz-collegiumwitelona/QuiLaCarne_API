@@ -32,4 +32,6 @@ public interface IReservationFacade {
   void isAbsent(String reservationToken);
 
   DictionaryResponse getDictionary();
+
+  void markAsComplete(String reservationToken);
 }

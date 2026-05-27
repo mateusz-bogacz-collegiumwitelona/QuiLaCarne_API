@@ -6,10 +6,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.example.restaurant.models.Reservations;
+import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.services.EmailServices;
+import com.example.restaurant.services.interfaces.ITableServices;
 import com.example.restaurant.services.reservation.ReservationSyncPublisher;
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -27,6 +29,7 @@ class ReservationSchedulerTest {
   @Mock private IReservationRepository _reservationRepo;
   @Mock private EmailServices _emailServices;
   @Mock private ReservationSyncPublisher _reservationSyncPublisher;
+  @Mock private ITableServices _tableServices;
 
   @InjectMocks private ReservationScheduler _reservationScheduler;
 
@@ -42,6 +45,7 @@ class ReservationSchedulerTest {
     verify(_reservationRepo, never()).saveAll(any());
     verifyNoInteractions(_emailServices);
     verifyNoInteractions(_reservationSyncPublisher);
+    verifyNoInteractions(_tableServices);
   }
 
   @Test
@@ -78,6 +82,8 @@ class ReservationSchedulerTest {
 
     verify(_reservationSyncPublisher, times(1)).publishReservationUpdated(resWithUser);
     verify(_reservationSyncPublisher, times(1)).publishReservationUpdated(resWithoutUser);
+
+    verifyNoInteractions(_tableServices);
   }
 
   @Test
@@ -91,6 +97,7 @@ class ReservationSchedulerTest {
     verify(_reservationRepo, never()).saveAll(any());
     verifyNoInteractions(_emailServices);
     verifyNoInteractions(_reservationSyncPublisher);
+    verifyNoInteractions(_tableServices);
   }
 
   @Test
@@ -106,11 +113,12 @@ class ReservationSchedulerTest {
     verify(_reservationRepo, never()).saveAll(any());
     verifyNoInteractions(_emailServices);
     verifyNoInteractions(_reservationSyncPublisher);
+    verifyNoInteractions(_tableServices);
   }
 
   @Test
   @DisplayName(
-      "handleReservationInProgress: Should update status, save and send ONLY websockets for expired reservations")
+      "handleReservationInProgress: Should update status, clean table, and send ONLY websockets for expired reservations")
   void handleReservationInProgress_ShouldCompleteAndNotify_WhenExpiredReservationsExist() {
     ReservationStatus completedStatus = new ReservationStatus();
     completedStatus.setToken("COMPLETED");
@@ -119,9 +127,13 @@ class ReservationSchedulerTest {
     mockUser.setEmail("test@example.com");
     mockUser.setUsername("testUser");
 
+    RestaurantTables mockTable = new RestaurantTables();
+    mockTable.setToken("TABLE_1");
+
     Reservations resWithUser = new Reservations();
     resWithUser.setToken("RES_1");
     resWithUser.setUser(mockUser);
+    resWithUser.setTableId(mockTable);
 
     Reservations resWithoutUser = new Reservations();
     resWithoutUser.setToken("RES_2");
@@ -141,6 +153,8 @@ class ReservationSchedulerTest {
 
     verify(_reservationSyncPublisher, times(1)).publishReservationUpdated(resWithUser);
     verify(_reservationSyncPublisher, times(1)).publishReservationUpdated(resWithoutUser);
+
+    verify(_tableServices, times(1)).changeStatusToClean("TABLE_1");
   }
 
   @Test
@@ -155,5 +169,6 @@ class ReservationSchedulerTest {
     verify(_reservationRepo, never()).saveAll(any());
     verifyNoInteractions(_emailServices);
     verifyNoInteractions(_reservationSyncPublisher);
+    verifyNoInteractions(_tableServices);
   }
 }

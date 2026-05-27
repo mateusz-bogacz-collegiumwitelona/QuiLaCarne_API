@@ -8,6 +8,8 @@ import com.example.restaurant.repository.interfaces.jpa.IJpaTableRepository;
 import com.example.restaurant.repository.interfaces.jpa.IJpaTableStatusRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -100,5 +102,10 @@ public class TableRespository implements ITableRespository {
   @Override
   public long count() {
     return _jpaTableRepo.count();
+  }
+
+  @Override
+  public Optional<RestaurantTables> findById(UUID id) {
+    return _jpaTableRepo.findById(id);
   }
 }

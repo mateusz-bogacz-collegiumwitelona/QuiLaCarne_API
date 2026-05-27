@@ -32,6 +32,7 @@ import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.NotificationServices;
+import com.example.restaurant.services.interfaces.ITableServices;
 import com.example.restaurant.services.reservation.ReservationCommandService;
 import com.example.restaurant.services.reservation.ReservationDictionaryService;
 import com.example.restaurant.services.reservation.ReservationQueryService;
@@ -72,6 +73,8 @@ class ReservationFacadeTest {
 
   @Mock private NotificationServices _notification;
 
+  @Mock private ITableServices _tableServices;
+
   @InjectMocks private ReservationFacade _reservationFacade;
 
   @Spy private SyncMapper _syncMapper = Mappers.getMapper(SyncMapper.class);
@@ -91,7 +94,13 @@ class ReservationFacadeTest {
 
     ReservationCommandService commandService =
         new ReservationCommandService(
-            _tableRepo, _reservationRepo, _userRepo, _orderServices, syncPublisher, validators);
+            _tableRepo,
+            _reservationRepo,
+            _userRepo,
+            _orderServices,
+            syncPublisher,
+            _tableServices,
+            validators);
 
     ReservationQueryService queryService =
         new ReservationQueryService(_reservationRepo, _orderServices, _reservationMapper);
@@ -366,6 +375,54 @@ class ReservationFacadeTest {
     assertEquals(1, result.getItem().size());
     assertEquals(TestConstants.STATUS_CANCELLED, result.getItem().getFirst().getToken());
     assertEquals("Cancelled EN", result.getItem().getFirst().getName());
+  }
+
+  @Test
+  @DisplayName("Mark As Complete: Success - Should set status to COMPLETED and table to CLEANING")
+  void markAsComplete_Successful() {
+    Reservations mockReservation = new Reservations();
+    mockReservation.setToken("RES_TOKEN_COMPLETE");
+
+    RestaurantTables mockTable = new RestaurantTables();
+    mockTable.setToken("TABLE_TOKEN");
+    mockReservation.setTableId(mockTable);
+
+    ReservationStatus inProgressStatus = new ReservationStatus();
+    inProgressStatus.setToken("IN_PROGRESS");
+    mockReservation.setReservationStatus(Set.of(inProgressStatus));
+
+    when(_reservationRepo.findByToken(anyString())).thenReturn(Optional.of(mockReservation));
+    when(_reservationRepo.findStatusByToken("COMPLETED")).thenReturn(new ReservationStatus());
+
+    assertDoesNotThrow(() -> _reservationFacade.markAsComplete("RES_TOKEN_COMPLETE"));
+
+    verify(_reservationRepo).save(mockReservation);
+    verify(_tableServices).changeStatusToClean("TABLE_TOKEN");
+
+    verify(_notification, times(1))
+        .sendEventToTopic(
+            eq("/reservations/updates"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.UPDATED
+                        && event.getEntityType().equals("RESERVATION")
+                        && "RES_TOKEN_COMPLETE".equals(event.getToken())
+                        && event.getPayload() != null));
+  }
+
+  @Test
+  @DisplayName(
+      "Mark As Complete: Failure - Should throw IllegalStateException when reservation is not IN_PROGRESS")
+  void markAsComplete_ThrowsException_WhenNotInProgress() {
+    Reservations mockReservation = new Reservations();
+    ReservationStatus activeStatus = new ReservationStatus();
+    activeStatus.setToken("ACTIVE");
+    mockReservation.setReservationStatus(Set.of(activeStatus));
+
+    when(_reservationRepo.findByToken(anyString())).thenReturn(Optional.of(mockReservation));
+
+    assertThrows(
+        IllegalStateException.class, () -> _reservationFacade.markAsComplete("RES_TOKEN_COMPLETE"));
   }
 
   private ReservationRequest createValidRequest() {
