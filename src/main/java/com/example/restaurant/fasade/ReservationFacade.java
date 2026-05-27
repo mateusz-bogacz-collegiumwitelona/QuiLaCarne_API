@@ -68,4 +68,9 @@ public class ReservationFacade implements IReservationFacade {
   public DictionaryResponse getDictionary() {
     return _dictionaryService.getDictionary();
   }
+
+  @Override
+  public void markAsComplete(String reservationToken) {
+    _commandService.markAsComplete(reservationToken);
+  }
 }

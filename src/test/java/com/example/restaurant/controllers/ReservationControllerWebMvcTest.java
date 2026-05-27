@@ -193,4 +193,16 @@ class ReservationControllerWebMvcTest extends AbstractControllerWebMvcTest {
         .perform(get("/api/reservations/dictionary").with(auth()).with(csrf()))
         .andExpect(status().isBadRequest());
   }
+
+  @Test
+  void complete_path() throws Exception {
+    mockMvc
+        .perform(patch("/api/reservations/{token}/complete", "RES_1").with(auth()).with(csrf()))
+        .andExpect(status().isOk());
+
+    doThrow(new IllegalStateException("bad")).when(_reservationServices).markAsComplete("RES_1");
+    mockMvc
+        .perform(patch("/api/reservations/{token}/complete", "RES_1").with(auth()).with(csrf()))
+        .andExpect(status().isBadRequest());
+  }
 }
