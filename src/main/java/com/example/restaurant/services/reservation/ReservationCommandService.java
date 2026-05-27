@@ -13,6 +13,7 @@ import com.example.restaurant.models.lookup.ReservationStatus;
 import com.example.restaurant.repository.interfaces.IReservationRepository;
 import com.example.restaurant.repository.interfaces.ITableRespository;
 import com.example.restaurant.repository.interfaces.IUserRepository;
+import com.example.restaurant.services.interfaces.ITableServices;
 import com.example.restaurant.state.ReservationStateLogic;
 import com.example.restaurant.validators.reservation.ReservationCreateValidator;
 import jakarta.transaction.Transactional;
@@ -32,6 +33,7 @@ public class ReservationCommandService {
   private final IUserRepository _userRepo;
   private final IOrderFacade _orderServices;
   private final ReservationSyncPublisher _syncPublisher;
+  private final ITableServices _tableServices;
 
   private final List<ReservationCreateValidator> _validators;
 
@@ -158,5 +160,27 @@ public class ReservationCommandService {
 
     _syncPublisher.publishReservationUpdated(reservation);
     log.info("Absent reservation {}", reservationToken);
+  }
+
+  @Transactional
+  @Auditable(action = "MARK_AS_COMPLETE")
+  public void markAsComplete(String reservationToken) {
+    Reservations reservation =
+        _reservationRepo
+            .findByToken(reservationToken)
+            .orElseThrow(() -> new EntityNotFoundException("Reservation not found"));
+
+    ReservationStatus completedStatus = _reservationRepo.findStatusByToken("COMPLETED");
+
+    ReservationStateLogic.from(reservation).markAsCompleted(reservation, completedStatus);
+    _reservationRepo.save(reservation);
+
+    if (reservation.getTableId() != null) {
+      _tableServices.changeStatusToClean(reservation.getTableId().getToken());
+    }
+
+    _syncPublisher.publishReservationUpdated(reservation);
+
+    log.info("Completed reservation {}", reservationToken);
   }
 }

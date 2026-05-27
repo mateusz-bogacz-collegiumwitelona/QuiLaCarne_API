@@ -21,6 +21,11 @@ public enum ReservationStateLogic {
     public void cancel(Reservations reservation, ReservationStatus newStatus) {
       reservation.setReservationStatus(new HashSet<>(Set.of(newStatus)));
     }
+
+    @Override
+    public void markAsCompleted(Reservations reservation, ReservationStatus newStatus) {
+      throw new IllegalStateException("Operation not allowed in current status.");
+    }
   },
 
   IN_PROGRESS {
@@ -41,6 +46,11 @@ public enum ReservationStateLogic {
       throw new IllegalStateException(
           "You cannot cancel a reservation that is already in progress.");
     }
+
+    @Override
+    public void markAsCompleted(Reservations reservation, ReservationStatus newStatus) {
+      reservation.setReservationStatus(new HashSet<>(Set.of(newStatus)));
+    }
   },
 
   NO_SHOW {
@@ -59,6 +69,11 @@ public enum ReservationStateLogic {
     public void cancel(Reservations reservation, ReservationStatus newStatus) {
       throw new IllegalStateException("NO_SHOW reservations cannot be canceled.");
     }
+
+    @Override
+    public void markAsCompleted(Reservations reservation, ReservationStatus newStatus) {
+      throw new IllegalStateException("Operation not allowed in current status.");
+    }
   },
 
   CANCELLED {
@@ -75,6 +90,11 @@ public enum ReservationStateLogic {
     @Override
     public void cancel(Reservations reservation, ReservationStatus newStatus) {
       throw new IllegalStateException("The reservation is already canceled.");
+    }
+
+    @Override
+    public void markAsCompleted(Reservations reservation, ReservationStatus newStatus) {
+      throw new IllegalStateException("Operation not allowed in current status.");
     }
   },
 
@@ -93,6 +113,31 @@ public enum ReservationStateLogic {
     public void cancel(Reservations reservation, ReservationStatus newStatus) {
       throw new IllegalStateException("Operation not allowed in current status.");
     }
+
+    @Override
+    public void markAsCompleted(Reservations reservation, ReservationStatus newStatus) {
+      throw new IllegalStateException("Operation not allowed in current status.");
+    }
+  },
+  COMPLETED {
+    public void assignWaiter(Reservations reservation, ReservationStatus newStatus) {
+      throw new IllegalStateException("The reservation is complete, a waiter cannot be assigned.");
+    }
+
+    @Override
+    public void markAsAbsent(Reservations reservation, ReservationStatus newStatus) {
+      throw new IllegalStateException("Reservation is complete, cannot be marked as NO_SHOW.");
+    }
+
+    @Override
+    public void cancel(Reservations reservation, ReservationStatus newStatus) {
+      throw new IllegalStateException("Reservation is complete, cannot be marked as CANCELLED.");
+    }
+
+    @Override
+    public void markAsCompleted(Reservations reservation, ReservationStatus newStatus) {
+      throw new IllegalStateException("Operation not allowed in current status.");
+    }
   };
 
   public abstract void assignWaiter(Reservations reservation, ReservationStatus newStatus);
@@ -100,6 +145,8 @@ public enum ReservationStateLogic {
   public abstract void markAsAbsent(Reservations reservation, ReservationStatus newStatus);
 
   public abstract void cancel(Reservations reservation, ReservationStatus newStatus);
+
+  public abstract void markAsCompleted(Reservations reservation, ReservationStatus newStatus);
 
   public static ReservationStateLogic from(Reservations reservation) {
     if (reservation.getReservationStatus() == null

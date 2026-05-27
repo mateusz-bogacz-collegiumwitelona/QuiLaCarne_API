@@ -4,6 +4,8 @@ import com.example.restaurant.models.RestaurantTables;
 import com.example.restaurant.models.lookup.TableStatus;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -38,4 +40,6 @@ public interface ITableRespository {
   long countStatuses();
 
   long count();
+
+  Optional<RestaurantTables> findById(UUID id);
 }

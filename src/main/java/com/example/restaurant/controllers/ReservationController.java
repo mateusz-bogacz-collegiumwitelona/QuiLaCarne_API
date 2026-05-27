@@ -302,4 +302,38 @@ public class ReservationController {
     return ResponseEntity.ok(
         ResultHandler.success("Dictionary review successfully", HttpStatus.OK.value(), result));
   }
+
+  @Operation(
+      summary = "Mark reservation as complete",
+      description =
+          "Marks an in-progress reservation as COMPLETED. "
+              + "This action automatically finishes the reservation and changes the associated table's status to CLEANING. "
+              + "Requires the reservation to be in the IN_PROGRESS state. Available only for waiters.",
+      tags = {"Waiter"})
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Successfully marked the reservation as complete and table for cleaning",
+            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid state (e.g., reservation is not in the IN_PROGRESS state)"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - valid JWT token required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - requires ROLE_WAITER role"),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Reservation with the provided token not found"),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error during status change")
+      })
+  @PreAuthorize("hasAnyRole('ROLE_WAITER')")
+  @PatchMapping("/{token}/complete")
+  public ResponseEntity<ResultHandler<Void>> complete(
+      @Parameter(description = "Reservation token") @PathVariable String token) {
+    _reservationServices.markAsComplete(token);
+    return ResponseEntity.ok(
+        ResultHandler.success("Reservation completed successfully", HttpStatus.OK.value()));
+  }
 }
