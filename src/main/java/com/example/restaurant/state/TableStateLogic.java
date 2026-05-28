@@ -19,7 +19,7 @@ public enum TableStateLogic {
 
     @Override
     public void release(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Stolik jest już wolny.");
+      throw new IllegalStateException("The table is now free.");
     }
 
     @Override
@@ -29,14 +29,14 @@ public enum TableStateLogic {
 
     @Override
     public void markAsCleaning(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Wolny stolik nie wymaga sprzątania.");
+      throw new IllegalStateException("A free table does not require cleaning.");
     }
   },
 
   RESERVED {
     @Override
     public void reserve(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Stolik jest już zarezerwowany.");
+      throw new IllegalStateException("The table is already booked.");
     }
 
     @Override
@@ -51,34 +51,34 @@ public enum TableStateLogic {
 
     @Override
     public void takeOutOfService(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Najpierw anuluj rezerwację.");
+      throw new IllegalStateException("Please cancel your reservation first.");
     }
 
     @Override
     public void markAsCleaning(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Zarezerwowany stolik nie powinien być sprzątany.");
+      throw new IllegalStateException("A reserved table should not be cleaned.");
     }
   },
 
   OCCUPIED {
     @Override
     public void reserve(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Nie można zarezerwować zajętego stolika.");
+      throw new IllegalStateException("It is not possible to reserve a table that is already occupied.");
     }
 
     @Override
     public void occupy(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Stolik jest już zajęty.");
+      throw new IllegalStateException("The table is already occupied.");
     }
 
     @Override
     public void release(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Zajęty stolik musi najpierw zostać posprzątany.");
+      throw new IllegalStateException("An occupied table must first be cleaned up..");
     }
 
     @Override
     public void takeOutOfService(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Nie można wyłączyć z użytku zajętego stolika.");
+      throw new IllegalStateException("You cannot put an occupied table out of service.");
     }
 
     @Override
@@ -90,12 +90,12 @@ public enum TableStateLogic {
   CLEANING {
     @Override
     public void reserve(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Nie można rezerwować stolika w trakcie sprzątania.");
+      throw new IllegalStateException("You cannot reserve a table during cleaning.");
     }
 
     @Override
     public void occupy(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Najpierw posprzątaj stolik, by go zająć.");
+      throw new IllegalStateException("First, clear the table to occupy it.");
     }
 
     @Override
@@ -110,19 +110,19 @@ public enum TableStateLogic {
 
     @Override
     public void markAsCleaning(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Stolik jest już w trakcie sprzątania.");
+      throw new IllegalStateException("The table is already being cleaned.");
     }
   },
 
   OUT_OF_SERVICE {
     @Override
     public void reserve(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Stolik wyłączony z użytku.");
+      throw new IllegalStateException("The table is out of use.");
     }
 
     @Override
     public void occupy(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Stolik wyłączony z użytku.");
+      throw new IllegalStateException("The table is out of use.");
     }
 
     @Override
@@ -132,39 +132,39 @@ public enum TableStateLogic {
 
     @Override
     public void takeOutOfService(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Stolik jest już wyłączony z użytku.");
+      throw new IllegalStateException("The table is no longer in use.");
     }
 
     @Override
     public void markAsCleaning(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Stolik wyłączony z użytku.");
+      throw new IllegalStateException("The table is out of use.");
     }
   },
 
   OTHER {
     @Override
     public void reserve(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Niedozwolona operacja.");
+      throw new IllegalStateException("Illegal operation.");
     }
 
     @Override
     public void occupy(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Niedozwolona operacja.");
+      throw new IllegalStateException("Illegal operation.");
     }
 
     @Override
     public void release(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Niedozwolona operacja.");
+      throw new IllegalStateException("Illegal operation.");
     }
 
     @Override
     public void takeOutOfService(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Niedozwolona operacja.");
+      throw new IllegalStateException("Illegal operation.");
     }
 
     @Override
     public void markAsCleaning(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("Niedozwolona operacja.");
+      throw new IllegalStateException("Illegal operation.");
     }
   };
 
