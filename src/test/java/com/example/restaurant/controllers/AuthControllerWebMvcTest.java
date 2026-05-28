@@ -224,6 +224,15 @@ class AuthControllerWebMvcTest extends AbstractControllerWebMvcTest {
 
   @Test
   void getCurrentUserProfile_path() throws Exception {
+    when(_authServices.getCurrentUserProfile(anyString()))
+        .thenReturn(
+            UserProfileResponse.builder()
+                .username("admin")
+                .email("admin@test.com")
+                .is2FaEnable(false)
+                .roles(List.of("ROLE_MANAGER"))
+                .build());
+
     mockMvc.perform(get("/api/auth/me").with(auth())).andExpect(status().isOk());
   }
 }
