@@ -140,6 +140,10 @@ public class ReservationCommandService {
 
     _orderServices.assignWaiterToOrders(reservationToken, waiterToken);
 
+    if (reservation.getTableId() != null) {
+      _tableServices.changeStatusToOccupied(reservation.getTableId().getToken());
+    }
+
     _syncPublisher.publishReservationUpdated(reservation);
     log.info("Assigned waiter {} to reservation {}", waiterToken, reservationToken);
   }

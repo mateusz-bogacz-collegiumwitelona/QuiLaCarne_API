@@ -214,6 +214,27 @@ public class TableServices implements ITableServices {
     log.info("Table {} has been released", table.getToken());
   }
 
+  @Override
+  @Transactional
+  @Auditable(action = "CHANGE_TABLE_STATUS_TO_OCCUPIED")
+  @CacheEvict(value = "tablesList", allEntries = true)
+  public void changeStatusToOccupied(String tableToken) {
+    RestaurantTables table = _tableRepo.findByToken(tableToken);
+    if (table == null) throw new EntityNotFoundException("Table not found");
+
+    TableStatus occupiedStatus = _tableRepo.findStatusByToken("OCCUPIED");
+    if (occupiedStatus == null)
+      throw new EntityNotFoundException("Table status 'OCCUPIED' not found");
+
+    TableStateLogic.from(table).occupy(table, occupiedStatus);
+
+    _tableRepo.save(table);
+
+    _syncPublisher.publishTableUpdate(table);
+
+    log.info("Table {} has been occupied", tableToken);
+  }
+
   private void validateTimeRange(TableFilterRequest request) {
     if (request.getStartTime() != null
         && request.getEndTime() != null

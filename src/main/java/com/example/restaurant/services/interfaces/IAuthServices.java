@@ -2,6 +2,7 @@ package com.example.restaurant.services.interfaces;
 
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.dto.response.UserProfileResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 
 public interface IAuthServices {
@@ -22,4 +23,6 @@ public interface IAuthServices {
   AuthResponse verify2faLogin(Verify2faLoginRequest request);
 
   AuthResponse refreshToken(RefreshTokenRequest request);
+
+  UserProfileResponse getCurrentUserProfile(String token);
 }

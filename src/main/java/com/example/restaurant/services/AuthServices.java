@@ -4,6 +4,7 @@ import com.example.restaurant.annotations.Auditable;
 import com.example.restaurant.dto.domain.UserDomain;
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.dto.response.UserProfileResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.GoogleAuthenticationException;
@@ -22,12 +23,14 @@ import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -64,6 +67,7 @@ public class AuthServices implements IAuthServices {
       return AuthResponse.builder()
           .token(preAuthToken)
           .username(user.getUsername())
+          .roles(getUserRoles(user))
           .requires2fa(true)
           .build();
     }
@@ -209,6 +213,22 @@ public class AuthServices implements IAuthServices {
     return buildSuccessAuthResponse(userDetails);
   }
 
+  @Override
+  public UserProfileResponse getCurrentUserProfile(String token) {
+    Users user = _userRepo.findByToken(token);
+
+    if (user == null) {
+      throw new BadCredentialsException("User not found");
+    }
+
+    return UserProfileResponse.builder()
+        .username(user.getUsername())
+        .email(user.getEmail())
+        .is2FaEnable(user.getIsTwoFactorEnabled())
+        .roles(getUserRoles(user))
+        .build();
+  }
+
   private AuthResponse buildSuccessAuthResponse(UserDetails userDetails) {
     if (!userDetails.isEnabled()) throw new BadCredentialsException("User not enabled");
 
@@ -232,6 +252,7 @@ public class AuthServices implements IAuthServices {
         .token(jwtToken)
         .refreshToken(refreshToken)
         .username(userDetails.getUsername())
+        .roles(getUserRoles(user))
         .requires2fa(false)
         .build();
   }
@@ -249,5 +270,9 @@ public class AuthServices implements IAuthServices {
     } catch (GeneralSecurityException | IOException ex) {
       throw new GoogleAuthenticationException("Failed to verify Google token", ex);
     }
+  }
+
+  private List<String> getUserRoles(Users user) {
+    return user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
   }
 }
