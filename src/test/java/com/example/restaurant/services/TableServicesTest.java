@@ -519,25 +519,27 @@ class TableServicesTest {
   }
 
   @Test
-  @DisplayName("Change Status To Occupied: Failure - Should throw EntityNotFoundException when table is missing")
+  @DisplayName(
+      "Change Status To Occupied: Failure - Should throw EntityNotFoundException when table is missing")
   void changeStatusToOccupied_ShouldThrowEntityNotFound_WhenTableMissing() {
     when(_tableRepo.findByToken(anyString())).thenReturn(null);
 
     assertThrows(
-            EntityNotFoundException.class,
-            () -> _tableServices.changeStatusToOccupied(TestConstants.FAKE_TABLE_TOKEN));
+        EntityNotFoundException.class,
+        () -> _tableServices.changeStatusToOccupied(TestConstants.FAKE_TABLE_TOKEN));
     verify(_tableRepo, never()).save(any());
   }
 
   @Test
-  @DisplayName("Change Status To Occupied: Failure - Should throw EntityNotFoundException when status token is missing in DB")
+  @DisplayName(
+      "Change Status To Occupied: Failure - Should throw EntityNotFoundException when status token is missing in DB")
   void changeStatusToOccupied_ShouldThrowEntityNotFound_WhenStatusMissing() {
     when(_tableRepo.findByToken(anyString())).thenReturn(new RestaurantTables());
     when(_tableRepo.findStatusByToken("OCCUPIED")).thenReturn(null);
 
     assertThrows(
-            EntityNotFoundException.class,
-            () -> _tableServices.changeStatusToOccupied(TestConstants.FAKE_TABLE_TOKEN));
+        EntityNotFoundException.class,
+        () -> _tableServices.changeStatusToOccupied(TestConstants.FAKE_TABLE_TOKEN));
     verify(_tableRepo, never()).save(any());
   }
 }

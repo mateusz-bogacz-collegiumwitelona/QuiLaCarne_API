@@ -253,7 +253,7 @@ class ReservationFacadeTest {
 
   @Test
   @DisplayName(
-          "Assign Waiter: Success - Should set status to IN_PROGRESS, delegate to OrderServices and update table status")
+      "Assign Waiter: Success - Should set status to IN_PROGRESS, delegate to OrderServices and update table status")
   void assignWaiter_Successful() {
     Reservations mockReservation = new Reservations();
     mockReservation.setToken("RES_TOKEN_ASSIGN_WAITER");
@@ -277,14 +277,14 @@ class ReservationFacadeTest {
     verify(_tableServices).changeStatusToOccupied("TABLE_TOKEN");
 
     verify(_notification, times(1))
-            .sendEventToTopic(
-                    eq("/reservations/updates"),
-                    argThat(
-                            event ->
-                                    event.getEventType() == WebSocketEventType.UPDATED
-                                            && event.getEntityType().equals("RESERVATION")
-                                            && "RES_TOKEN_ASSIGN_WAITER".equals(event.getToken())
-                                            && event.getPayload() != null));
+        .sendEventToTopic(
+            eq("/reservations/updates"),
+            argThat(
+                event ->
+                    event.getEventType() == WebSocketEventType.UPDATED
+                        && event.getEntityType().equals("RESERVATION")
+                        && "RES_TOKEN_ASSIGN_WAITER".equals(event.getToken())
+                        && event.getPayload() != null));
   }
 
   @Test
