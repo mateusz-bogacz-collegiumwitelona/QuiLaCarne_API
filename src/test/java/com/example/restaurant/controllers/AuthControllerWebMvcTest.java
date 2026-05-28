@@ -11,8 +11,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.restaurant.config.RateLimitConfig;
+import com.example.restaurant.dto.response.UserProfileResponse;
 import com.example.restaurant.exceptions.EntityNotFoundException;
 import com.example.restaurant.services.interfaces.IAuthServices;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -39,6 +41,15 @@ class AuthControllerWebMvcTest extends AbstractControllerWebMvcTest {
     when(_authServices.refreshToken(any())).thenReturn(authResponse());
     when(_authServices.registerConfirm(anyString())).thenReturn(true);
     when(_authServices.setNewPassword(any())).thenReturn(true);
+
+    when(_authServices.getCurrentUserProfile(anyString()))
+        .thenReturn(
+            UserProfileResponse.builder()
+                .username("admin")
+                .email("admin@test.com")
+                .is2FaEnable(false)
+                .roles(List.of("ROLE_MANAGER"))
+                .build());
   }
 
   @Test
@@ -209,5 +220,10 @@ class AuthControllerWebMvcTest extends AbstractControllerWebMvcTest {
     mockMvc
         .perform(post("/api/auth/refresh").with(auth()).with(csrf()))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void getCurrentUserProfile_path() throws Exception {
+    mockMvc.perform(get("/api/auth/me").with(auth())).andExpect(status().isOk());
   }
 }
