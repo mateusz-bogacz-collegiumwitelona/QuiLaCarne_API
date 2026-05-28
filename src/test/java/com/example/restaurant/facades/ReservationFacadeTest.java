@@ -253,10 +253,14 @@ class ReservationFacadeTest {
 
   @Test
   @DisplayName(
-      "Assign Waiter: Success - Should set status to IN_PROGRESS and delegate to OrderServices")
+      "Assign Waiter: Success - Should set status to IN_PROGRESS, delegate to OrderServices and update table status")
   void assignWaiter_Successful() {
     Reservations mockReservation = new Reservations();
     mockReservation.setToken("RES_TOKEN_ASSIGN_WAITER");
+
+    RestaurantTables mockTable = new RestaurantTables();
+    mockTable.setToken("TABLE_TOKEN");
+    mockReservation.setTableId(mockTable);
 
     ReservationStatus activeStatus = new ReservationStatus();
     activeStatus.setToken("ACTIVE");
@@ -267,7 +271,10 @@ class ReservationFacadeTest {
     when(_reservationRepo.findStatusByToken("IN_PROGRESS")).thenReturn(new ReservationStatus());
 
     assertDoesNotThrow(() -> _reservationFacade.assignWaiter("res-token", "waiter-token"));
+
     verify(_orderServices).assignWaiterToOrders("res-token", "waiter-token");
+
+    verify(_tableServices).changeStatusToOccupied("TABLE_TOKEN");
 
     verify(_notification, times(1))
         .sendEventToTopic(

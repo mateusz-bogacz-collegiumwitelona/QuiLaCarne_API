@@ -11,6 +11,7 @@ import com.example.restaurant.dto.request.RefreshTokenRequest;
 import com.example.restaurant.dto.request.RegisterRequest;
 import com.example.restaurant.dto.request.ResetPasswordRequest;
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.dto.response.UserProfileResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.InvalidDateException;
@@ -18,6 +19,7 @@ import com.example.restaurant.fasade.interfaces.IUserFacade;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.interfaces.IVerificationTokenServices;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +33,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
@@ -83,6 +86,9 @@ class AuthServicesTest {
     when(_user.getIsTwoFactorEnabled()).thenReturn(false);
     when(_user.isEnabled()).thenReturn(true);
     when(_user.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
+
+    doReturn(List.of(new SimpleGrantedAuthority("ROLE_CLIENT"))).when(_user).getAuthorities();
+
     when(_jwtServices.generateToken(any(UserDetails.class)))
         .thenReturn(TestConstants.FAKE_ACTION_TOKEN);
 
@@ -97,6 +103,7 @@ class AuthServicesTest {
     assertEquals(TestConstants.FAKE_ACTION_TOKEN, result.getToken());
     assertEquals("fake-refresh-token", result.getRefreshToken());
     assertEquals(TestConstants.FAKE_USERNAME, result.getUsername());
+    assertTrue(result.getRoles().contains("ROLE_CLIENT"));
   }
 
   @Test
@@ -114,6 +121,7 @@ class AuthServicesTest {
     when(_user.getIsTwoFactorEnabled()).thenReturn(true);
     when(_user.getToken()).thenReturn(TestConstants.FAKE_USER_TOKEN);
     when(_user.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
+    doReturn(List.of(new SimpleGrantedAuthority("ROLE_MANAGER"))).when(_user).getAuthorities();
     when(_tokenServices.createToken(TestConstants.FAKE_USER_TOKEN, TokenTypeEnum.PRE_AUTH_2FA, 5))
         .thenReturn(preAuthToken);
 
@@ -123,6 +131,7 @@ class AuthServicesTest {
     assertTrue(result.isRequires2fa());
     assertEquals(preAuthToken, result.getToken());
     assertEquals(TestConstants.FAKE_USERNAME, result.getUsername());
+    assertTrue(result.getRoles().contains("ROLE_MANAGER"));
     verify(_jwtServices, never()).generateToken(any());
   }
 
@@ -163,6 +172,7 @@ class AuthServicesTest {
     when(_2faServices.isOptValid(fakeSecret, 123456)).thenReturn(true);
     when(_user.isEnabled()).thenReturn(true);
     when(_user.getUsername()).thenReturn(TestConstants.FAKE_USERNAME);
+    doReturn(List.of(new SimpleGrantedAuthority("ROLE_CLIENT"))).when(_user).getAuthorities();
     when(_jwtServices.generateToken(_user)).thenReturn(TestConstants.FAKE_ACTION_TOKEN);
 
     when(_userRepo.findByNormalizedUsername(anyString())).thenReturn(Optional.of(_user));
@@ -322,9 +332,10 @@ class AuthServicesTest {
     RefreshTokenRequest request = new RefreshTokenRequest();
     request.setRefreshToken("valid-refresh-token");
 
-    Users mockUser = new Users();
-    mockUser.setUsername("client");
-    mockUser.setToken("user-token-123");
+    Users mockUser = mock(Users.class);
+    when(mockUser.getUsername()).thenReturn("client");
+    when(mockUser.getToken()).thenReturn("user-token-123");
+    doReturn(List.of(new SimpleGrantedAuthority("ROLE_CLIENT"))).when(mockUser).getAuthorities();
 
     UserDetails mockUserDetails = mock(UserDetails.class);
     when(mockUserDetails.getUsername()).thenReturn("client");
@@ -351,5 +362,35 @@ class AuthServicesTest {
 
     verify(_tokenServices, times(1))
         .revokeTokensForUser("user-token-123", TokenTypeEnum.REFRESH_TOKEN);
+  }
+
+  @Test
+  @DisplayName("Get Current User Profile: Success")
+  void getCurrentUserProfile_ShouldReturnProfile_WhenUserExists() {
+    String token = "valid-user-token";
+
+    when(_userRepo.findByToken(token)).thenReturn(_user);
+    when(_user.getUsername()).thenReturn("client_user");
+    when(_user.getEmail()).thenReturn("client@test.com");
+    when(_user.getIsTwoFactorEnabled()).thenReturn(true);
+    doReturn(List.of(new SimpleGrantedAuthority("ROLE_CLIENT"))).when(_user).getAuthorities();
+
+    UserProfileResponse response = _authServices.getCurrentUserProfile(token);
+
+    assertNotNull(response);
+    assertEquals("client_user", response.getUsername());
+    assertEquals("client@test.com", response.getEmail());
+    assertTrue(response.is2FaEnable());
+    assertTrue(response.getRoles().contains("ROLE_CLIENT"));
+  }
+
+  @Test
+  @DisplayName("Get Current User Profile: Throws Exception when User not found")
+  void getCurrentUserProfile_ShouldThrowException_WhenUserNotFound() {
+    String invalidToken = "invalid-token";
+    when(_userRepo.findByToken(invalidToken)).thenReturn(null);
+
+    assertThrows(
+        BadCredentialsException.class, () -> _authServices.getCurrentUserProfile(invalidToken));
   }
 }

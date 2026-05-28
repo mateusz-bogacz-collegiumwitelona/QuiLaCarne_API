@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.repository.interfaces.IUserRepository;
 import com.example.restaurant.services.IdempotencyService;
 import com.example.restaurant.services.JwtServices;
 import com.example.restaurant.services.interfaces.IAuditLogServices;
@@ -27,6 +28,8 @@ abstract class AbstractControllerWebMvcTest {
   @MockitoBean protected ProxyManager<byte[]> proxyManager;
 
   @MockitoBean protected IdempotencyService idempotencyService;
+
+  @MockitoBean protected IUserRepository userRepository;
 
   protected RequestPostProcessor auth() {
     return authWithRoles("ROLE_MANAGER", "ROLE_WAITER", "ROLE_CLIENT");

@@ -2,6 +2,7 @@ package com.example.restaurant.controllers;
 
 import com.example.restaurant.dto.request.*;
 import com.example.restaurant.dto.response.AuthResponse;
+import com.example.restaurant.dto.response.UserProfileResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IAuthServices;
@@ -292,6 +293,27 @@ public class AuthController {
       @Parameter(hidden = true) CsrfToken csrfToken) {
     return ResponseEntity.ok(
         ResultHandler.success("CSRF Token", HttpStatus.OK.value(), csrfToken.getToken()));
+  }
+
+  @Operation(
+      summary = "Download the logged-in user's profile",
+      description =
+          "Returns information about the logged in user and their roles based on a JWT token.",
+      tags = {"Manager", "Client", "Waiter"})
+  @ApiResponses(
+      value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved user profile"),
+        @ApiResponse(responseCode = "401", description = "No authorization.")
+      })
+  @GetMapping("/me")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ResultHandler<UserProfileResponse>> getCurrentUserProfile(
+      @AuthenticationPrincipal(expression = "token") String userToken) {
+    var response = _authServices.getCurrentUserProfile(userToken);
+
+    return ResponseEntity.ok(
+        ResultHandler.success(
+            "Successfully retrieved user profile", HttpStatus.OK.value(), response));
   }
 
   private HttpHeaders createLoginCookieHeaders(AuthResponse response) {
