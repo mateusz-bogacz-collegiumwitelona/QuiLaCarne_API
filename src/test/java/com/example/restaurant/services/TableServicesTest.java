@@ -494,4 +494,50 @@ class TableServicesTest {
     assertEquals("Table status 'OUT_OF_SERVICE' not found", exception.getMessage());
     verify(_tableRepo, never()).save(any());
   }
+
+  @Test
+  @DisplayName("Change Status To Occupied: Success - Should update table status to OCCUPIED")
+  void changeStatusToOccupied_Successful() {
+    RestaurantTables mockTable = new RestaurantTables();
+    mockTable.setToken(TestConstants.FAKE_TABLE_TOKEN);
+
+    TableStatus availableStatus = new TableStatus();
+    availableStatus.setToken("AVAILABLE");
+    mockTable.setTableStatus(new HashSet<>(Set.of(availableStatus)));
+
+    TableStatus mockStatus = new TableStatus();
+    mockStatus.setToken("OCCUPIED");
+
+    when(_tableRepo.findByToken(TestConstants.FAKE_TABLE_TOKEN)).thenReturn(mockTable);
+    when(_tableRepo.findStatusByToken("OCCUPIED")).thenReturn(mockStatus);
+
+    assertDoesNotThrow(() -> _tableServices.changeStatusToOccupied(TestConstants.FAKE_TABLE_TOKEN));
+
+    verify(_tableRepo).save(mockTable);
+    assertTrue(mockTable.getTableStatus().contains(mockStatus));
+    verify(_syncPublisher, times(1)).publishTableUpdate(any(RestaurantTables.class));
+  }
+
+  @Test
+  @DisplayName("Change Status To Occupied: Failure - Should throw EntityNotFoundException when table is missing")
+  void changeStatusToOccupied_ShouldThrowEntityNotFound_WhenTableMissing() {
+    when(_tableRepo.findByToken(anyString())).thenReturn(null);
+
+    assertThrows(
+            EntityNotFoundException.class,
+            () -> _tableServices.changeStatusToOccupied(TestConstants.FAKE_TABLE_TOKEN));
+    verify(_tableRepo, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("Change Status To Occupied: Failure - Should throw EntityNotFoundException when status token is missing in DB")
+  void changeStatusToOccupied_ShouldThrowEntityNotFound_WhenStatusMissing() {
+    when(_tableRepo.findByToken(anyString())).thenReturn(new RestaurantTables());
+    when(_tableRepo.findStatusByToken("OCCUPIED")).thenReturn(null);
+
+    assertThrows(
+            EntityNotFoundException.class,
+            () -> _tableServices.changeStatusToOccupied(TestConstants.FAKE_TABLE_TOKEN));
+    verify(_tableRepo, never()).save(any());
+  }
 }

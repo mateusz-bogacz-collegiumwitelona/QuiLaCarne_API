@@ -24,4 +24,6 @@ public interface ITableServices {
   void addStatus(AddEntityRequest request);
 
   void removeStatus(String token);
+
+  void changeStatusToOccupied(String tableToken);
 }
