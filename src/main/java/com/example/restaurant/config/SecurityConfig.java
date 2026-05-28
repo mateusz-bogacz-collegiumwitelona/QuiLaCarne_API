@@ -81,7 +81,8 @@ public class SecurityConfig {
                         "/api/auth/verify-2fa",
                         "/api/auth/refresh",
                         "/api/auth/csrf",
-                        "/api/dishes/menu/public")
+                        "/api/dishes/menu/public",
+                        "/actuator/health")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
