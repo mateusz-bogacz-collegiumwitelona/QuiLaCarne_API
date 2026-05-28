@@ -63,7 +63,8 @@ public enum TableStateLogic {
   OCCUPIED {
     @Override
     public void reserve(RestaurantTables table, TableStatus newStatus) {
-      throw new IllegalStateException("It is not possible to reserve a table that is already occupied.");
+      throw new IllegalStateException(
+          "It is not possible to reserve a table that is already occupied.");
     }
 
     @Override
