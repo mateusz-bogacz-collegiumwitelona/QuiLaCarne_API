@@ -44,6 +44,8 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
 
+    csrfTokenRepository.setCookieCustomizer(cookie -> cookie.domain("quilacarne.com.pl"));
+
     CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
     requestHandler.setCsrfRequestAttributeName(null);
 
