@@ -34,30 +34,47 @@ class ReservationControllerWebMvcTest extends AbstractControllerWebMvcTest {
 
   @Test
   void create_path() throws Exception {
-    String request =
-        "{\"tableToken\":\"TABLE_1\",\"startTime\":\""
-            + OffsetDateTime.now().plusHours(2)
-            + "\",\"endTime\":\""
-            + OffsetDateTime.now().plusHours(3)
-            + "\",\"dishes\":[]}";
+    String validRequest =
+            "{\"tableToken\":\"TABLE_1\",\"startTime\":\""
+                    + OffsetDateTime.now().plusHours(2)
+                    + "\",\"endTime\":\""
+                    + OffsetDateTime.now().plusHours(3)
+                    + "\",\"dishes\":[{\"dishToken\":\"DISH_1\",\"quantity\":1}]}";
+
     mockMvc
-        .perform(
-            post("/api/reservations")
-                .with(auth())
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
-        .andExpect(status().isOk());
+            .perform(
+                    post("/api/reservations")
+                            .with(auth())
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(validRequest))
+            .andExpect(status().isOk());
+
+    String emptyDishesRequest =
+            "{\"tableToken\":\"TABLE_1\",\"startTime\":\""
+                    + OffsetDateTime.now().plusHours(2)
+                    + "\",\"endTime\":\""
+                    + OffsetDateTime.now().plusHours(3)
+                    + "\",\"dishes\":[]}";
+
+    mockMvc
+            .perform(
+                    post("/api/reservations")
+                            .with(auth())
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(emptyDishesRequest))
+            .andExpect(status().isBadRequest());
 
     doThrow(new IllegalStateException("bad")).when(_reservationServices).create(any(), anyString());
     mockMvc
-        .perform(
-            post("/api/reservations")
-                .with(auth())
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
-        .andExpect(status().isBadRequest());
+            .perform(
+                    post("/api/reservations")
+                            .with(auth())
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(validRequest))
+            .andExpect(status().isBadRequest());
   }
 
   @Test
