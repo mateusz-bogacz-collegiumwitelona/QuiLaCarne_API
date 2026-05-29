@@ -5,6 +5,7 @@ import com.example.restaurant.validators.reservation.ITimeFramedRequest;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 public class ReservationRequest implements ITimeFramedRequest {
   @Valid
   @Parameter(description = "List of dishes token")
+  @NotEmpty(message = "Reservation must contain at least one dish")
   private List<ReservationDishRequest> dishes;
 
   @NotBlank(message = "Table token is required")
