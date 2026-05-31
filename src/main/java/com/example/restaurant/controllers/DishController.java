@@ -10,7 +10,6 @@ import com.example.restaurant.helpers.ResultHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -46,10 +45,7 @@ public class DishController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Menu retrieved successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Menu retrieved successfully"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping
@@ -75,26 +71,15 @@ public class DishController {
       schema = @Schema(type = "string"))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dish removed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Unauthorized - User is not logged in",
-            content = @Content),
+        @ApiResponse(responseCode = "200", description = "Dish removed successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in"),
         @ApiResponse(
             responseCode = "403",
-            description = "Forbidden - User does not have the required ROLE_MANAGER role",
-            content = @Content),
+            description = "Forbidden - User does not have the required ROLE_MANAGER role"),
         @ApiResponse(
             responseCode = "404",
-            description = "Not Found - Dish with the provided token does not exist",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+            description = "Not Found - Dish with the provided token does not exist"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @DeleteMapping("/{token}")
   @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
@@ -113,30 +98,16 @@ public class DishController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dish availability changed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Bad Request - Invalid input data",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Unauthorized - User is not logged in",
-            content = @Content),
+        @ApiResponse(responseCode = "200", description = "Dish availability changed successfully"),
+        @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in"),
         @ApiResponse(
             responseCode = "403",
-            description = "Forbidden - User does not have the required ROLE_MANAGER role",
-            content = @Content),
+            description = "Forbidden - User does not have the required ROLE_MANAGER role"),
         @ApiResponse(
             responseCode = "404",
-            description = "Not Found - Dish with the provided token does not exist",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+            description = "Not Found - Dish with the provided token does not exist"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @PatchMapping
   @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
@@ -155,27 +126,12 @@ public class DishController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dish edited successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "400",
-            description = "Bad Request - Invalid input data",
-            content = @Content),
-        @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Forbidden - Requires ROLE_MANAGER",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "404",
-            description = "Not Found - Dish not found",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Dish edited successfully"),
+        @ApiResponse(responseCode = "400", description = "Bad Request - Invalid input data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER"),
+        @ApiResponse(responseCode = "404", description = "Not Found - Dish not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
@@ -194,30 +150,18 @@ public class DishController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Dish created successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Dish created successfully"),
         @ApiResponse(
             responseCode = "400",
-            description = "Bad Request - Invalid input data or invalid file format",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Unauthorized - User is not logged in",
-            content = @Content),
+            description = "Bad Request - Invalid input data or invalid file format"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in"),
         @ApiResponse(
             responseCode = "403",
-            description = "Forbidden - User does not have the required ROLE_MANAGER role",
-            content = @Content),
+            description = "Forbidden - User does not have the required ROLE_MANAGER role"),
         @ApiResponse(
             responseCode = "404",
-            description = "Not Found - Category or Ingredient token does not exist",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+            description = "Not Found - Category or Ingredient token does not exist"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
@@ -245,14 +189,8 @@ public class DishController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dictionary review successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Dictionary review successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping("/dictionary")
   public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
@@ -269,10 +207,7 @@ public class DishController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Dish category created successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Dish category created successfully"),
         @ApiResponse(
             responseCode = "400",
             description = "Validation error or Category name already exists"),
@@ -305,26 +240,15 @@ public class DishController {
       schema = @Schema(type = "string"))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dish category removed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Unauthorized - User is not logged in",
-            content = @Content),
+        @ApiResponse(responseCode = "200", description = "Dish category removed successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in"),
         @ApiResponse(
             responseCode = "403",
-            description = "Forbidden - User does not have the required ROLE_MANAGER role",
-            content = @Content),
+            description = "Forbidden - User does not have the required ROLE_MANAGER role"),
         @ApiResponse(
             responseCode = "404",
-            description = "Not Found - Category with the provided token does not exist",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+            description = "Not Found - Category with the provided token does not exist"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @DeleteMapping("/category/{token}")
   @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
@@ -355,14 +279,8 @@ public class DishController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Public menu retrieved successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Public menu retrieved successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping("/menu/public")
   public ResponseEntity<ResultHandler<PublicMenuResponse>> getPublicMenu() {

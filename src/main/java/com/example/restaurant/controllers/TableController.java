@@ -10,7 +10,6 @@ import com.example.restaurant.services.interfaces.ITableServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -45,10 +44,7 @@ public class TableController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Table list retrieved successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Table list retrieved successfully"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping
@@ -141,26 +137,15 @@ public class TableController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Table created successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Table created successfully"),
         @ApiResponse(
             responseCode = "400",
-            description = "Bad Request - Table number already exists or invalid input",
-            content = @Content),
+            description = "Bad Request - Table number already exists or invalid input"),
         @ApiResponse(
             responseCode = "401",
-            description = "Unauthorized - Valid JWT token is required",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Forbidden - Requires ROLE_MANAGER role",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+            description = "Unauthorized - Valid JWT token is required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @PostMapping
   @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
@@ -179,23 +164,13 @@ public class TableController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Table deleted successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Table deleted successfully"),
         @ApiResponse(
             responseCode = "401",
-            description = "Unauthorized - Valid JWT token is required",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Forbidden - Requires ROLE_MANAGER role",
-            content = @Content),
-        @ApiResponse(responseCode = "404", description = "Table not found", content = @Content),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+            description = "Unauthorized - Valid JWT token is required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role"),
+        @ApiResponse(responseCode = "404", description = "Table not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @DeleteMapping("/{token}/delete")
   @PreAuthorize("hasAnyRole('ROLE_MANAGER')")
@@ -224,14 +199,8 @@ public class TableController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dictionary review successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Dictionary review successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping("/dictionary")
   public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
@@ -248,10 +217,7 @@ public class TableController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Table status created successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Table status created successfully"),
         @ApiResponse(
             responseCode = "400",
             description = "Validation error or table status already exists"),
@@ -277,10 +243,7 @@ public class TableController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Table status removed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Table status removed successfully"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER"),
         @ApiResponse(responseCode = "404", description = "Status not found"),

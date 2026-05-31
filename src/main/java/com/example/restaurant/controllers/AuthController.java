@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -63,8 +62,7 @@ public class AuthController {
             responseCode = "200",
             description =
                 "Login successful. "
-                    + "Returns either a final JWT Token or a Pre-Auth token if 2FA is required.",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+                    + "Returns either a final JWT Token or a Pre-Auth token if 2FA is required."),
         @ApiResponse(responseCode = "401", description = "Invalid username/email or password"),
         @ApiResponse(
             responseCode = "403",
@@ -89,18 +87,9 @@ public class AuthController {
       tags = {"Manager", "Client", "Waiter"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Logged out successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Unauthorized - User is not logged in",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Logged out successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @PostMapping("/logout")
   @PreAuthorize("isAuthenticated()")
@@ -202,8 +191,7 @@ public class AuthController {
       value = {
         @ApiResponse(
             responseCode = "200",
-            description = "User successfully logged in, token returned",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            description = "User successfully logged in, token returned"),
         @ApiResponse(responseCode = "401", description = "Invalid username/email or password"),
         @ApiResponse(
             responseCode = "403",
@@ -229,8 +217,7 @@ public class AuthController {
       value = {
         @ApiResponse(
             responseCode = "200",
-            description = "2FA verified successfully, JWT token returned",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            description = "2FA verified successfully, JWT token returned"),
         @ApiResponse(responseCode = "400", description = "Invalid 2FA code"),
         @ApiResponse(responseCode = "401", description = "Pre-Auth token is invalid or expired"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
@@ -251,10 +238,7 @@ public class AuthController {
       tags = {"Manager", "Client", "Waiter"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Token refreshed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request format"),
         @ApiResponse(responseCode = "401", description = "Refresh token is invalid or expired"),
         @ApiResponse(responseCode = "500", description = "Internal server error")

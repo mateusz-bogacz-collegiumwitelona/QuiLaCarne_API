@@ -5,8 +5,6 @@ import com.example.restaurant.dto.request.ChangeReportStatusRequest;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.IReportServices;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -32,10 +30,7 @@ public class ReportController {
       tags = {"Manager", "Waiter"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Report created successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Report created successfully"),
         @ApiResponse(
             responseCode = "400",
             description = "Validation failed or the reported user is not a client"),
@@ -71,30 +66,20 @@ public class ReportController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Report status changed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Report status changed successfully"),
         @ApiResponse(
             responseCode = "400",
-            description = "Validation error (e.g., missing token or invalid date format)",
-            content = @Content),
+            description = "Validation error (e.g., missing token or invalid date format)"),
         @ApiResponse(
             responseCode = "401",
-            description = "Unauthorized - Valid JWT token is required",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "403",
-            description = "Forbidden - Requires ROLE_MANAGER role",
-            content = @Content),
+            description = "Unauthorized - Valid JWT token is required"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER role"),
         @ApiResponse(
             responseCode = "404",
-            description = "Report or required internal statuses not found",
-            content = @Content),
+            description = "Report or required internal statuses not found"),
         @ApiResponse(
             responseCode = "500",
-            description = "Internal server error (e.g., email sending failure)",
-            content = @Content)
+            description = "Internal server error (e.g., email sending failure)")
       })
   @PutMapping("/change-status")
   @PreAuthorize("hasAnyRole('ROLE_MANAGER')")

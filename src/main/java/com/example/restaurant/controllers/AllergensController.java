@@ -7,7 +7,6 @@ import com.example.restaurant.services.interfaces.IAllergensServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -41,14 +40,8 @@ public class AllergensController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dictionary review successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Dictionary review successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping("/allergens/dictionary")
   public ResponseEntity<ResultHandler<DictionaryResponse>> getAllergensDictionary() {
@@ -66,10 +59,7 @@ public class AllergensController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Allergen created successful",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Allergen created successful"),
         @ApiResponse(
             responseCode = "400",
             description = "Validation error or Ingredient name already exists"),
@@ -102,26 +92,15 @@ public class AllergensController {
       schema = @Schema(type = "string"))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Allergen removed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "401",
-            description = "Unauthorized - User is not logged in",
-            content = @Content),
+        @ApiResponse(responseCode = "200", description = "Allergen removed successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - User is not logged in"),
         @ApiResponse(
             responseCode = "403",
-            description = "Forbidden - User does not have the required ROLE_MANAGER role",
-            content = @Content),
+            description = "Forbidden - User does not have the required ROLE_MANAGER role"),
         @ApiResponse(
             responseCode = "404",
-            description = "Not Found - Dish with the provided token does not exist",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+            description = "Not Found - Dish with the provided token does not exist"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @DeleteMapping("/allergen/{token}")
   @PreAuthorize("hasAnyRole('ROLE_MANAGER')")

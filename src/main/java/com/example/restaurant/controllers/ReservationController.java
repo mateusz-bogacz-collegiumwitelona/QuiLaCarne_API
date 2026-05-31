@@ -14,7 +14,6 @@ import com.example.restaurant.helpers.ResultHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -42,10 +41,7 @@ public class ReservationController {
       tags = {"Client"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Reservation created successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Reservation created successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request data or dates"),
         @ApiResponse(
             responseCode = "401",
@@ -77,10 +73,7 @@ public class ReservationController {
       tags = {"Manager", "Client", "Waiter"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Reservations retrieved successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Reservations retrieved successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid pagination or filter parameters"),
         @ApiResponse(
             responseCode = "401",
@@ -109,8 +102,7 @@ public class ReservationController {
       value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Reservation details retrieved successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            description = "Reservation details retrieved successfully"),
         @ApiResponse(
             responseCode = "401",
             description = "Unauthorized - Valid JWT token is required"),
@@ -151,10 +143,7 @@ public class ReservationController {
       tags = {"Waiter"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dish removed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Dish removed successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request data"),
         @ApiResponse(
             responseCode = "401",
@@ -185,10 +174,7 @@ public class ReservationController {
       tags = {"Waiter"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Items added successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Items added successfully"),
         @ApiResponse(
             responseCode = "400",
             description = "Invalid request data (e.g. missing dish tokens)"),
@@ -219,10 +205,7 @@ public class ReservationController {
       tags = {"Waiter"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Waiter assigned successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Waiter assigned successfully"),
         @ApiResponse(responseCode = "403", description = "User does not have waiter privileges"),
         @ApiResponse(responseCode = "404", description = "Reservation or Waiter not found"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
@@ -287,14 +270,8 @@ public class ReservationController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dictionary review successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Dictionary review successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping("/dictionary")
   public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
@@ -314,8 +291,7 @@ public class ReservationController {
       value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Successfully marked the reservation as complete and table for cleaning",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+            description = "Successfully marked the reservation as complete and table for cleaning"),
         @ApiResponse(
             responseCode = "400",
             description = "Invalid state (e.g., reservation is not in the IN_PROGRESS state)"),

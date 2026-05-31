@@ -5,8 +5,6 @@ import com.example.restaurant.helpers.PagedResult;
 import com.example.restaurant.helpers.ResultHandler;
 import com.example.restaurant.services.interfaces.ISyncServices;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.List;
@@ -33,10 +31,7 @@ public class SyncController {
       tags = {"Manager", "Waiter"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Manifest downloaded successfully",
-            content = @Content(schema = @Schema(implementation = SyncBootstrapResponse.class))),
+        @ApiResponse(responseCode = "200", description = "Manifest downloaded successfully"),
         @ApiResponse(responseCode = "401", description = "No authorization"),
         @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
@@ -57,10 +52,7 @@ public class SyncController {
       tags = {"Manager", "Waiter"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dictionaries fetched successfully",
-            content = @Content(schema = @Schema(implementation = SyncDictionariesResponse.class))),
+        @ApiResponse(responseCode = "200", description = "Dictionaries fetched successfully"),
         @ApiResponse(responseCode = "401", description = "No authorization"),
         @ApiResponse(responseCode = "403", description = "Forbidden - Requires appropriate role"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
