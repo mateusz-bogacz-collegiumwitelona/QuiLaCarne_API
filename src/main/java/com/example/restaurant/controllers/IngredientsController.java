@@ -7,7 +7,6 @@ import com.example.restaurant.services.interfaces.IIngredientsServices;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -32,10 +31,7 @@ public class IngredientsController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Ingredient created successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Ingredient created successfully"),
         @ApiResponse(
             responseCode = "400",
             description = "Validation error or Ingredient name already exists"),
@@ -62,10 +58,7 @@ public class IngredientsController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Ingredient removed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Ingredient removed successfully"),
         @ApiResponse(
             responseCode = "401",
             description = "Unauthorized - Valid JWT token is required"),
@@ -98,14 +91,8 @@ public class IngredientsController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dictionary review successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Dictionary review successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping("/dictionary")
   public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
