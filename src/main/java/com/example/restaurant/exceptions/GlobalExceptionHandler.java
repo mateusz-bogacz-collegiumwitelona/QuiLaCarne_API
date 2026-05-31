@@ -127,6 +127,6 @@ public class GlobalExceptionHandler {
       log.warn("Blocked user attempted to access the system: {}", ex.getMessage());
     }
     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-            .body(ResultHandler.failure(ex.getMessage(), HttpStatus.FORBIDDEN.value()));
+        .body(ResultHandler.failure(ex.getMessage(), HttpStatus.FORBIDDEN.value()));
   }
 }

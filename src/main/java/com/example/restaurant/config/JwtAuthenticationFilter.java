@@ -28,9 +28,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final HandlerExceptionResolver _resolver;
 
   public JwtAuthenticationFilter(
-          JwtServices jwtServices,
-          IUserRepository userRepo,
-          @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
+      JwtServices jwtServices,
+      IUserRepository userRepo,
+      @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
     this._jwtServices = jwtServices;
     this._userRepo = userRepo;
     this._resolver = resolver;
@@ -38,10 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(
-          @NonNull HttpServletRequest request,
-          @NonNull HttpServletResponse response,
-          @NonNull FilterChain chain)
-          throws ServletException, IOException {
+      @NonNull HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain chain)
+      throws ServletException, IOException {
 
     String jwt = extractJwtFromRequest(request);
 
@@ -75,7 +75,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     return null;
   }
 
-  private boolean authenticateUserFromJwt(String jwt, HttpServletRequest request, HttpServletResponse response) {
+  private boolean authenticateUserFromJwt(
+      String jwt, HttpServletRequest request, HttpServletResponse response) {
     if (SecurityContextHolder.getContext().getAuthentication() != null) {
       return false;
     }
@@ -94,16 +95,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (!user.isEnabled()) {
           _resolver.resolveException(
-                  request,
-                  response,
-                  null,
-                  new UserBlockedException("User account is blocked or inactive.")
-          );
+              request,
+              response,
+              null,
+              new UserBlockedException("User account is blocked or inactive."));
           return true;
         }
 
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
