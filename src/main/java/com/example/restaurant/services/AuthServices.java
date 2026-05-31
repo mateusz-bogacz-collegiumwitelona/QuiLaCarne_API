@@ -232,7 +232,7 @@ public class AuthServices implements IAuthServices {
 
   private AuthResponse buildSuccessAuthResponse(UserDetails userDetails) {
     if (!userDetails.isEnabled()) {
-      throw new UserBlockedException("Konto użytkownika zostało zablokowane lub jest nieaktywne.");
+      throw new UserBlockedException("User account is blocked or inactive.");
     }
 
     String jwtToken = _jwtServices.generateToken(userDetails);
