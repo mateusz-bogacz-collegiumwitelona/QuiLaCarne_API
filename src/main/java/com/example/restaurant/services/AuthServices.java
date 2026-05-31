@@ -9,6 +9,7 @@ import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.GoogleAuthenticationException;
 import com.example.restaurant.exceptions.InvalidDateException;
+import com.example.restaurant.exceptions.UserBlockedException;
 import com.example.restaurant.fasade.interfaces.IUserFacade;
 import com.example.restaurant.helpers.staics.RoleType;
 import com.example.restaurant.models.Users;
@@ -230,7 +231,9 @@ public class AuthServices implements IAuthServices {
   }
 
   private AuthResponse buildSuccessAuthResponse(UserDetails userDetails) {
-    if (!userDetails.isEnabled()) throw new BadCredentialsException("User not enabled");
+    if (!userDetails.isEnabled()) {
+      throw new UserBlockedException("User account is blocked or inactive.");
+    }
 
     String jwtToken = _jwtServices.generateToken(userDetails);
 

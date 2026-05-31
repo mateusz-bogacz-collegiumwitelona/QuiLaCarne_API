@@ -15,6 +15,7 @@ import com.example.restaurant.dto.response.UserProfileResponse;
 import com.example.restaurant.dto.response.Verify2faLoginRequest;
 import com.example.restaurant.enums.TokenTypeEnum;
 import com.example.restaurant.exceptions.InvalidDateException;
+import com.example.restaurant.exceptions.UserBlockedException;
 import com.example.restaurant.fasade.interfaces.IUserFacade;
 import com.example.restaurant.models.Users;
 import com.example.restaurant.repository.interfaces.IUserRepository;
@@ -144,7 +145,7 @@ class AuthServicesTest {
     when(_user.getIsTwoFactorEnabled()).thenReturn(false);
     when(_user.isEnabled()).thenReturn(false);
 
-    assertThrows(AuthenticationException.class, () -> _authServices.authenticate(loginRequest));
+    assertThrows(UserBlockedException.class, () -> _authServices.authenticate(loginRequest));
   }
 
   @Test
