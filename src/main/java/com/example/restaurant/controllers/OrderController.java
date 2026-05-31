@@ -7,7 +7,6 @@ import com.example.restaurant.helpers.ResultHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -41,14 +40,8 @@ public class OrderController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dictionary review successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Dictionary review successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping("/dictionary")
   public ResponseEntity<ResultHandler<DictionaryResponse>> getDictionary() {
@@ -74,14 +67,8 @@ public class OrderController {
               allowableValues = {"pl", "en"}))
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Dictionary review successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
-        @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
-            content = @Content)
+        @ApiResponse(responseCode = "200", description = "Dictionary review successfully"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
       })
   @GetMapping("/item/dictionary")
   public ResponseEntity<ResultHandler<DictionaryResponse>> getItemStatusesDictionary() {
@@ -98,10 +85,7 @@ public class OrderController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Order status created successful",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Order status created successful"),
         @ApiResponse(
             responseCode = "400",
             description = "Validation error or order status name already exists"),
@@ -128,10 +112,7 @@ public class OrderController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Order status created successful",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "201", description = "Order status created successful"),
         @ApiResponse(
             responseCode = "400",
             description = "Validation error or Ingredient name already exists"),
@@ -158,10 +139,7 @@ public class OrderController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Order status removed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Order status removed successfully"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER"),
         @ApiResponse(responseCode = "404", description = "Status not found"),
@@ -183,10 +161,7 @@ public class OrderController {
       tags = {"Manager"})
   @ApiResponses(
       value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Order item status removed successfully",
-            content = @Content(schema = @Schema(implementation = ResultHandler.class))),
+        @ApiResponse(responseCode = "200", description = "Order item status removed successfully"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "403", description = "Forbidden - Requires ROLE_MANAGER"),
         @ApiResponse(responseCode = "404", description = "Status not found"),
