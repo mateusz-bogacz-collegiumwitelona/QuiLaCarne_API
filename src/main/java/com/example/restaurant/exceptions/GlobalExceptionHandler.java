@@ -120,4 +120,13 @@ public class GlobalExceptionHandler {
             ResultHandler.failure(
                 "Server error during proccessed file", HttpStatus.INTERNAL_SERVER_ERROR.value()));
   }
+
+  @ExceptionHandler(UserBlockedException.class)
+  public ResponseEntity<ResultHandler<Object>> handleUserBlockedException(UserBlockedException ex) {
+    if (log.isWarnEnabled()) {
+      log.warn("Blocked user attempted to access the system: {}", ex.getMessage());
+    }
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ResultHandler.failure(ex.getMessage(), HttpStatus.FORBIDDEN.value()));
+  }
 }
