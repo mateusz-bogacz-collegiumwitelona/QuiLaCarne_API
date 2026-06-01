@@ -326,7 +326,7 @@ class SyncServicesTest {
     ingredient.setAllergens(java.util.Set.of(allergen));
 
     Page<Ingredients> mockPage = new PageImpl<>(List.of(ingredient), PageRequest.of(0, 20), 1);
-    when(_ingredientsRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+    when(_ingredientsRepo.findByDeletedAtIsNull(any(Pageable.class))).thenReturn(mockPage);
 
     PagedResult<SyncIngredientResponse> result = _syncServices.getIngredientsSync(1);
 
@@ -351,7 +351,7 @@ class SyncServicesTest {
     ingredient.setNamePl("Woda");
 
     Page<Ingredients> mockPage = new PageImpl<>(List.of(ingredient), PageRequest.of(0, 20), 1);
-    when(_ingredientsRepo.findAll(any(Pageable.class))).thenReturn(mockPage);
+    when(_ingredientsRepo.findByDeletedAtIsNull(any(Pageable.class))).thenReturn(mockPage);
 
     PagedResult<SyncIngredientResponse> result = _syncServices.getIngredientsSync(1);
 

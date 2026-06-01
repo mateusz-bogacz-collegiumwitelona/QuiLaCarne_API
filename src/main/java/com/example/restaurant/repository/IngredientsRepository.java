@@ -47,4 +47,9 @@ public class IngredientsRepository implements IIngredientsRepository {
   public long count() {
     return _jpaIngredientsRepo.count();
   }
+
+  @Override
+  public Page<Ingredients> findByDeletedAtIsNull(Pageable pageable) {
+    return _jpaIngredientsRepo.findByDeletedAtIsNull(pageable);
+  }
 }
