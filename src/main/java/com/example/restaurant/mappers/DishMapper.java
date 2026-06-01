@@ -26,6 +26,17 @@ public interface DishMapper {
   @Mapping(target = "allergens", source = "allergens", qualifiedByName = "mapAllergenList")
   IngredientListResponse toIngredientListResponse(Ingredients ingredients, @Context String lang);
 
+  default List<IngredientListResponse> mapActiveIngredients(
+      Set<Ingredients> ingredients, @Context String lang) {
+    if (ingredients == null) {
+      return new ArrayList<>();
+    }
+    return ingredients.stream()
+        .filter(i -> i.getDeletedAt() == null)
+        .map(i -> toIngredientListResponse(i, lang))
+        .toList();
+  }
+
   @Named("translateByLang")
   default String translateByLang(BaseTranslatedEntity entity, @Context String lang) {
     if (entity == null) return null;

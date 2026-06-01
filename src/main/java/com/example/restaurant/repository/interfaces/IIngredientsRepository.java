@@ -17,4 +17,6 @@ public interface IIngredientsRepository {
   Page<Ingredients> findAll(Pageable pageable);
 
   long count();
+
+  Page<Ingredients> findByDeletedAtIsNull(Pageable pageable);
 }

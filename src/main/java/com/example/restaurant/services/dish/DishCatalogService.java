@@ -218,10 +218,15 @@ public class DishCatalogService {
   }
 
   private DishResponse mapToDishResponse(Dishes dish, String lang) {
-    List<String> ingridents = dish.getIngredients().stream().map(i -> i.translate(lang)).toList();
+    List<String> ingridents =
+        dish.getIngredients().stream()
+            .filter(i -> i.getDeletedAt() == null)
+            .map(i -> i.translate(lang))
+            .toList();
 
     List<String> allergens =
         dish.getIngredients().stream()
+            .filter(i -> i.getDeletedAt() == null)
             .flatMap(i -> i.getAllergens().stream())
             .map(a -> a.translate(lang))
             .distinct()
