@@ -155,7 +155,8 @@ public class SyncServices implements ISyncServices {
   @Override
   @Auditable(action = "SYNC_INGREDIENTS")
   public PagedResult<SyncIngredientResponse> getIngredientsSync(int page) {
-    Page<Ingredients> ingredientsPage = _ingredientsRepo.findAll(calculatePageable(page));
+    Page<Ingredients> ingredientsPage =
+        _ingredientsRepo.findByDeletedAtIsNull(calculatePageable(page));
 
     Page<SyncIngredientResponse> response =
         ingredientsPage.map(_syncMapper::toSyncIngredientResponse);
